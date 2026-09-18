@@ -84,7 +84,7 @@ const DICT = {
     t_sla: "SLA zadania (s)", t_sla_hint: "Od startu uruchomienia; alert jeśli to zadanie nie zakończyło się w czasie. 0 = wyłączone.", t_timeout_hint: "Zabij pojedyncze wykonanie po tylu sekundach. 0 = brak.",
     danger_title: "Strefa niebezpieczeństwa", danger_del_hint: "Zarchiwizuj ten przepływ: brak dalszego planowania; historia zachowana.",
     nd_more: "Harmonogram i więcej", nd_less: "Ukryj",
-    nav_resources: "Zmienne i połączenia", nav_audit: "Audyt", nav_api: "API", nav_ai_providers: "AI Provider", nv_ai_providers: "AI Provider",
+    nav_resources: "Zmienne i połączenia", nav_audit: "Audyt", nav_api: "API", nav_ai_providers: "AI Provider", nv_ai_providers: "AI Provider", nav_aiwiki: "AI wiki", nv_aiwiki: "AI wiki",
     ai_title: "AI Provider", ai_sub: "Skonfiguruj lokalny serwer zgodny z OpenAI. Token jest szyfrowany AES-256-GCM.",
     ai_id: "ID", ai_name: "Nazwa wyświetlana", ai_url: "Base URL", ai_model: "Model", ai_token: "API Token", ai_default: "Ustaw jako domyślny",
     ai_url_ph: "http://127.0.0.1:4141/v1", ai_model_ph: "np. gpt-4o-mini", ai_name_ph: "Lokalny serwer",
@@ -337,7 +337,7 @@ const DICT = {
     nv_see_log: "zobacz log",
     nv_step_extract: "Pobierz dane", nv_step_transform: "Przekształć", nv_step_load: "Załaduj wyniki",
     nv_step_fetch: "Pobierz dane", nv_step_render: "Wygeneruj i wyślij raport", nv_step_1: "Pierwszy krok",
-    aiwiki_title: "AI wiki — cronova", aiwiki_placeholder: "Zapytaj np. jak zrobić DAG…", aiwiki_send: "Wyślij", aiwiki_close: "Zamknij",
+    aiwiki_title: "AI wiki — cronova", aiwiki_sub: "Zadaj pytanie o cronova. Odpowiedź powstanie na podstawie dokumentacji i DAG-ów.", aiwiki_placeholder: "Zapytaj np. jak zrobić DAG…", aiwiki_send: "Wyślij", aiwiki_close: "Zamknij",
     aiwiki_welcome: "Witaj! Jestem AI wiki cronova. Zapytaj mnie np. \"Jak zrobić DAG?\" lub \"Co to jest retry?\"",
     aiwiki_error: "Błąd połączenia z AI wiki: ", aiwiki_copied: "Skopiowano do schowka", aiwiki_triggered: "Wyzwolono DAG ", aiwiki_no_runs: "Brak runów dla DAG ",
     aiwiki_run_dag: "Uruchom ten DAG", aiwiki_dag_runs: "Historia runów", aiwiki_show_logs: "Pokaż logi", aiwiki_copy_cmd: "Kopiuj komendę CLI",
@@ -392,7 +392,7 @@ const DICT = {
     t_sla: "Task SLA (sec)", t_sla_hint: "From run start; alert if this task hasn't finished in time. 0 = off.", t_timeout_hint: "Kill a single execution after this many seconds. 0 = none.",
     danger_title: "Danger zone", danger_del_hint: "Archive this workflow: no more scheduling; history is kept.",
     nd_more: "Schedule & more options", nd_less: "Hide",
-    nav_resources: "Variables & Connections", nav_audit: "Audit", nav_api: "API", nav_ai_providers: "AI Provider", nv_ai_providers: "AI Provider",
+    nav_resources: "Variables & Connections", nav_audit: "Audit", nav_api: "API", nav_ai_providers: "AI Provider", nv_ai_providers: "AI Provider", nav_aiwiki: "AI wiki", nv_aiwiki: "AI wiki",
     ai_title: "AI Provider", ai_sub: "Configure one OpenAI-compatible local proxy. The token is sealed with AES-256-GCM.",
     ai_id: "ID", ai_name: "Display name", ai_url: "Base URL", ai_model: "Model", ai_token: "API Token", ai_default: "Set as default",
     ai_url_ph: "http://127.0.0.1:4141/v1", ai_model_ph: "e.g. gpt-4o-mini", ai_name_ph: "Local proxy",
@@ -649,7 +649,7 @@ const DICT = {
     nv_see_log: "view log",
     nv_step_extract: "Extract data", nv_step_transform: "Transform", nv_step_load: "Load results",
     nv_step_fetch: "Fetch data", nv_step_render: "Render & send report", nv_step_1: "First step",
-    aiwiki_title: "AI wiki — cronova", aiwiki_placeholder: "Ask something like how to create a DAG…", aiwiki_send: "Send", aiwiki_close: "Close",
+    aiwiki_title: "AI wiki — cronova", aiwiki_sub: "Ask a question about cronova. The answer is built from the documentation and DAGs.", aiwiki_placeholder: "Ask something like how to create a DAG…", aiwiki_send: "Send", aiwiki_close: "Close",
     aiwiki_welcome: "Hi! I'm the cronova AI wiki. Ask me e.g. \"How do I create a DAG?\" or \"What is retry?\"",
     aiwiki_error: "AI wiki connection error: ", aiwiki_copied: "Copied to clipboard", aiwiki_triggered: "Triggered DAG ", aiwiki_no_runs: "No runs for DAG ",
     aiwiki_run_dag: "Run this DAG", aiwiki_dag_runs: "Run history", aiwiki_show_logs: "Show logs", aiwiki_copy_cmd: "Copy CLI command",
@@ -1291,7 +1291,7 @@ function setNav(navKey, crumb) {
   document.body.dataset.screen = view; // lets CSS hide chrome per screen (e.g. mode toggle on the wizard)
   document.querySelectorAll(".nav-item[data-nav]").forEach((n) => n.classList.toggle("active", n.dataset.nav === navKey));
   // novice mode names the same pages in its own words (shared config / my workflows)
-  const label = crumb != null ? crumb : (navKey === "pools" ? "Pools" : navKey === "graph" ? t("graph_title") : navKey === "resources" ? t(nvMode() ? "nv_shared" : "nav_resources") : navKey === "ai-providers" ? t(nvMode() ? "nv_ai_providers" : "nav_ai_providers") : navKey === "audit" ? t("nav_audit") : navKey === "workers" ? t("nav_workers") : navKey === "api" ? t("nav_api") : t(nvMode() ? "nv_myflows" : "nav_dags"));
+  const label = crumb != null ? crumb : (navKey === "pools" ? "Pools" : navKey === "graph" ? t("graph_title") : navKey === "resources" ? t(nvMode() ? "nv_shared" : "nav_resources") : navKey === "ai-providers" ? t(nvMode() ? "nv_ai_providers" : "nav_ai_providers") : navKey === "aiwiki" ? t(nvMode() ? "nv_aiwiki" : "nav_aiwiki") : navKey === "audit" ? t("nav_audit") : navKey === "workers" ? t("nav_workers") : navKey === "api" ? t("nav_api") : t(nvMode() ? "nv_myflows" : "nav_dags"));
   $("crumb").textContent = label;
   // the topbar search only filters the dashboard list — hide it elsewhere.
   // search stays visible everywhere now (global jump-to-DAG), not just the dashboard
@@ -1329,4 +1329,5 @@ function setLang(l) {
   else if (view === "workers") { setNav("workers"); renderWorkers(); } // crumb + table from in-memory WK, no refetch
   else if (view === "api") renderApi(); // from in-memory TOKENS, no refetch
   else if (view === "ai-providers") renderAIProviders(); // from in-memory AIP, no refetch
+  else if (view === "aiwiki") renderAIWiki();
 }

@@ -1,57 +1,44 @@
-// AI wiki chat widget for cronova console.
-// Provides a floating button + chat window that talks to POST /api/ask.
+// AI wiki chat for cronova console.
+// Renders as a full main view reached from the sidebar, plus an in-app doc viewer modal.
 (function () {
-  const root = document.getElementById('aiwiki-root');
-  if (!root) return;
-
-  let open = false;
   let busy = false;
+  let msgsEl = null;
+  let inputEl = null;
+  let sendBtn = null;
 
-  const fab = document.createElement('button');
-  fab.className = 'aiwiki-fab';
-  fab.title = 'AI wiki / ' + t('aiwiki_title');
-  fab.innerHTML = '✦';
-  fab.setAttribute('aria-label', t('aiwiki_title'));
-
-  const win = document.createElement('div');
-  win.className = 'aiwiki-window aiwiki-hidden';
-  win.innerHTML = `
-    <div class="aiwiki-head">
-      <b>${t('aiwiki_title')}</b>
-      <button id="aiwiki-close" title="${t('aiwiki_close')}">✕</button>
-    </div>
-    <div class="aiwiki-msgs" id="aiwiki-msgs"></div>
-    <div class="aiwiki-input">
-      <input id="aiwiki-q" type="text" placeholder="${t('aiwiki_placeholder')}" autocomplete="off" />
-      <button id="aiwiki-send" class="primary">${t('aiwiki_send')}</button>
-    </div>
-  `;
-
-  root.appendChild(fab);
-  root.appendChild(win);
-
-  const msgs = win.querySelector('#aiwiki-msgs');
-  const input = win.querySelector('#aiwiki-q');
-  const sendBtn = win.querySelector('#aiwiki-send');
-  const closeBtn = win.querySelector('#aiwiki-close');
-
-  function toggle(show) {
-    open = show !== undefined ? show : !open;
-    win.classList.toggle('aiwiki-hidden', !open);
-    fab.setAttribute('aria-label', open ? t('aiwiki_close') : t('aiwiki_title'));
-    if (open) setTimeout(() => input.focus(), 50);
+  function buildUI() {
+    main.innerHTML = `<div class="aiwiki-page">
+      <div class="aiwiki-page-head"><h1>${esc(t('aiwiki_title'))}</h1><p>${esc(t('aiwiki_sub'))}</p></div>
+      <div class="aiwiki-msgs" id="aiwiki-msgs"></div>
+      <div class="aiwiki-input">
+        <input id="aiwiki-q" type="text" placeholder="${esc(t('aiwiki_placeholder'))}" autocomplete="off" />
+        <button id="aiwiki-send" class="primary">${esc(t('aiwiki_send'))}</button>
+      </div>
+    </div>`;
+    msgsEl = $('aiwiki-msgs');
+    inputEl = $('aiwiki-q');
+    sendBtn = $('aiwiki-send');
+    sendBtn.onclick = ask;
+    inputEl.onkeydown = e => { if (e.key === 'Enter') ask(); };
+    inputEl.focus();
+    if (!msgsEl.childElementCount) addMsg(t('aiwiki_welcome'), 'bot');
   }
 
-  fab.addEventListener('click', () => toggle());
-  closeBtn.addEventListener('click', () => toggle(false));
+  window.showAIWiki = function () {
+    view = 'aiwiki';
+    setNav('aiwiki');
+    buildUI();
+  };
+  window.renderAIWiki = buildUI;
 
   function addMsg(text, who, extras) {
+    if (!msgsEl) return;
     const div = document.createElement('div');
     div.className = 'aiwiki-msg ' + who;
     div.textContent = text;
     if (extras) div.appendChild(extras);
-    msgs.appendChild(div);
-    msgs.scrollTop = msgs.scrollHeight;
+    msgsEl.appendChild(div);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
   }
 
   function renderSources(sources) {
@@ -152,12 +139,13 @@
   }
 
   async function ask() {
-    const q = input.value.trim();
+    if (!inputEl || !sendBtn) return;
+    const q = inputEl.value.trim();
     if (!q || busy) return;
     busy = true;
     sendBtn.disabled = true;
     addMsg(q, 'user');
-    input.value = '';
+    inputEl.value = '';
 
     try {
       const resp = await fetch('/api/ask', {
@@ -178,19 +166,9 @@
     } finally {
       busy = false;
       sendBtn.disabled = false;
-      input.focus();
+      inputEl.focus();
     }
   }
-
-  sendBtn.addEventListener('click', ask);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
-
-  // Welcome message.
-  setTimeout(() => {
-    if (!msgs.childElementCount) {
-      addMsg(t('aiwiki_welcome'), 'bot');
-    }
-  }, 500);
 
   // Open a documentation markdown file in an in-app modal viewer.
   function openDocViewer(path) {
@@ -216,12 +194,7 @@
 
   // Re-render labels when language changes.
   document.addEventListener('cronova:langchanged', () => {
-    fab.title = 'AI wiki / ' + t('aiwiki_title');
-    fab.setAttribute('aria-label', open ? t('aiwiki_close') : t('aiwiki_title'));
-    win.querySelector('.aiwiki-head b').textContent = t('aiwiki_title');
-    win.querySelector('#aiwiki-close').title = t('aiwiki_close');
-    input.placeholder = t('aiwiki_placeholder');
-    sendBtn.textContent = t('aiwiki_send');
+    if (view === 'aiwiki') buildUI();
     // Re-render action buttons in existing messages.
     document.querySelectorAll('.aiwiki-msg.bot .actions button').forEach(btn => {
       const type = btn.dataset.actionType;

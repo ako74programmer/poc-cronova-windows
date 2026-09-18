@@ -29,6 +29,7 @@ try { var _m = localStorage.getItem("cnv_mode"); if (_m === "novice" || _m === "
         <div class="nav-item" data-nav="audit" role="link" tabindex="0" aria-label="Audyt / Audit" title="Audyt / Audit"><span class="ic">☰</span> <span data-i18n="nav_audit">Audyt</span></div>
         <div class="nav-item" data-nav="api" role="link" tabindex="0" aria-label="API" title="API"><span class="ic">⧉</span> <span data-i18n="nav_api">API</span></div>
         <div class="nav-item" data-nav="ai-providers" role="link" tabindex="0" aria-label="AI Provider" title="AI Provider"><span class="ic">◈</span> <span data-i18n="nav_ai_providers">AI Provider</span></div>
+        <div class="nav-item" data-nav="aiwiki" role="link" tabindex="0" aria-label="AI wiki" title="AI wiki"><span class="ic">✦</span> <span data-i18n="nav_aiwiki">AI wiki</span></div>
       </nav>
     </div>
     <div id="side-novice">
@@ -37,6 +38,7 @@ try { var _m = localStorage.getItem("cnv_mode"); if (_m === "novice" || _m === "
         <div class="nav-item active" data-nav="dags" role="link" tabindex="0" aria-label="Moje przepływy / My workflows"><span class="ic">▦</span> <span data-i18n="nv_myflows">Moje przepływy</span> <span class="count" id="nav-flows">·</span></div>
         <div class="nav-item" data-nav="resources" role="link" tabindex="0" aria-label="Wspólna konfiguracja / Shared config"><span class="ic">❖</span> <span data-i18n="nv_shared">Wspólna konfiguracja</span></div>
         <div class="nav-item" data-nav="ai-providers" role="link" tabindex="0" aria-label="AI Provider"><span class="ic">◈</span> <span data-i18n="nv_ai_providers">AI Provider</span></div>
+        <div class="nav-item" data-nav="aiwiki" role="link" tabindex="0" aria-label="AI wiki" title="AI wiki"><span class="ic">✦</span> <span data-i18n="nav_aiwiki">AI wiki</span></div>
         <div class="nav-item" data-nav="help" role="link" tabindex="0" aria-label="Centrum pomocy / Help center"><span class="ic">✧</span> <span data-i18n="nv_help">Centrum pomocy</span></div>
       </nav>
     </div>
@@ -71,8 +73,7 @@ try { var _m = localStorage.getItem("cnv_mode"); if (_m === "novice" || _m === "
 <div id="modal-root"></div>
 <div id="toast-root" class="toast-stack" aria-live="polite"></div>
 <div id="login-root"></div>
-<!-- AI wiki chat widget -->
-<div id="aiwiki-root"></div>
+
 <!-- classic scripts in load order share one global scope (no build step):
      base = state/i18n/helpers · views = pages · builder = schedule/templates/new-DAG · boot = wiring -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>

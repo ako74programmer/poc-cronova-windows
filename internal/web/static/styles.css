@@ -94,24 +94,21 @@ input:focus, textarea:focus { border-color: var(--accent); }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }
 
-/* ---- AI wiki chat widget ---- */
-.aiwiki-fab { position: fixed; right: 22px; bottom: 22px; width: 52px; height: 52px; border-radius: 50%; background: var(--accent); border: none; color: #fff; font-size: 22px; box-shadow: 0 6px 20px rgba(0,0,0,.25); z-index: 100; display: flex; align-items: center; justify-content: center; }
-.aiwiki-fab:hover { background: var(--accent-d); }
-.aiwiki-window { position: fixed; right: 22px; bottom: 84px; width: 360px; max-width: calc(100vw - 44px); height: 480px; max-height: calc(100vh - 120px); background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--r); box-shadow: 0 12px 40px rgba(0,0,0,.35); z-index: 100; display: flex; flex-direction: column; overflow: hidden; }
-.aiwiki-head { padding: 12px 14px; background: var(--panel-2); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
-.aiwiki-head b { font-size: 14px; }
-.aiwiki-head button { background: transparent; border: none; color: var(--muted); padding: 2px 6px; }
-.aiwiki-msgs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-.aiwiki-msg { padding: 10px 12px; border-radius: var(--r-sm); max-width: 92%; line-height: 1.45; }
+/* ---- AI wiki page ---- */
+.aiwiki-page { display: flex; flex-direction: column; height: calc(100vh - 64px); padding: 18px 22px; }
+.aiwiki-page-head { margin-bottom: 14px; }
+.aiwiki-page-head h1 { font-size: 20px; margin: 0 0 4px; }
+.aiwiki-page-head p { margin: 0; color: var(--muted); font-size: 13px; }
+.aiwiki-msgs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--r); margin-bottom: 12px; }
+.aiwiki-msg { padding: 10px 12px; border-radius: var(--r-sm); max-width: 80%; line-height: 1.45; }
 .aiwiki-msg.user { align-self: flex-end; background: var(--accent); color: #fff; }
 .aiwiki-msg.bot { align-self: flex-start; background: var(--panel-2); border: 1px solid var(--line); }
 .aiwiki-msg .src { margin-top: 8px; font-size: 11px; color: var(--faint); }
 .aiwiki-msg .actions { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
 .aiwiki-msg .actions button { font-size: 12px; padding: 4px 8px; }
-.aiwiki-input { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); }
+.aiwiki-input { display: flex; gap: 8px; }
 .aiwiki-input input { flex: 1; }
 .aiwiki-input button { white-space: nowrap; }
-.aiwiki-hidden { display: none !important; }
 
 /* ---- shell ---- */
 .app { display: grid; grid-template-columns: 232px 1fr; grid-template-rows: 100vh; }
