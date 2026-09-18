@@ -154,17 +154,19 @@ func (w *Wiki) refreshLLM(ctx context.Context) {
 }
 
 func buildAnswer(question string, c Chunk) string {
-	// Simple templated answer. A future version can call an LLM here.
+	q := strings.ToLower(question)
 	switch {
-	case strings.Contains(strings.ToLower(question), "retry"):
+	case strings.Contains(q, "retry") || strings.Contains(q, "ponow"):
 		return "W cronova retry ustawiasz w definicji taska polem `retries`. Możesz też dodać `retry_delay` i `timeout`. Zobacz przykład w źródle."
-	case strings.Contains(strings.ToLower(question), "dag") && strings.Contains(strings.ToLower(question), "zrobi"):
+	case strings.Contains(q, "co to jest dag") || strings.Contains(q, "czym jest dag") || strings.Contains(q, "co oznacza dag") || strings.Contains(q, "skrót dag"):
+		return "DAG to skrót od Directed Acyclic Graph — skierowany graf acykliczny. W cronova DAG to jeden plik YAML opisujący workflow: zadania (tasks) oraz krawędzie zależności (deps), które mówią, co musi się wykonać przed czym. DAG ma też harmonogram (`schedule`) mówiący, kiedy uruchamiać nowe instancje."
+	case strings.Contains(q, "dag") && strings.Contains(q, "zrobi"):
 		return "DAG to plik YAML w katalogu `dags/`. Definiujesz `dag_id`, `schedule`, listę `tasks` i ich `deps`. Źródło pokazuje przykład."
-	case strings.Contains(strings.ToLower(question), "schedule") || strings.Contains(strings.ToLower(question), "harmonogram"):
+	case strings.Contains(q, "schedule") || strings.Contains(q, "harmonogram"):
 		return "Harmonogram ustawiasz polem `schedule` w DAG-u. Może to być cron (`0 2 * * *`) lub interwał (`@every 30s`)."
-	case strings.Contains(strings.ToLower(question), "project") || strings.Contains(strings.ToLower(question), "projekt"):
+	case strings.Contains(q, "project") || strings.Contains(q, "projekt"):
 		return "Własne skrypty wrzucasz jako project w UI (task editor → Project), a potem wskazujesz `project: nazwa` w shell tasku."
-	case strings.Contains(strings.ToLower(question), "ai") || strings.Contains(strings.ToLower(question), "mcp"):
+	case strings.Contains(q, "ai") || strings.Contains(q, "mcp"):
 		return "cronova ma wbudowany MCP server (`cronova mcp`) oraz AI-SDLC workflow'y, w których AI generuje kod i naprawia błędy kompilacji."
 	default:
 		return "Oto informacja z bazy wiedzy: " + c.Section + ". Szczegóły znajdziesz w źródle."
