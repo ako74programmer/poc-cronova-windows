@@ -1,0 +1,47 @@
+dag_id: sdlc_springboot
+schedule: "0 2 * * *"        # nightly build; remove for manual-only
+start_date: "2026-09-01"
+catchup: false
+max_active_runs: 1
+default_retries: 0
+
+# AI-SDLC pipeline:
+# 1. scaffold          -> generate Spring Boot skeleton
+# 2. compile_skeleton  -> verify skeleton compiles
+# 3. ai_add_crud       -> AI adds a simple CRUD controller + model + fixes pom.xml
+# 4. compile_loop      -> compile + AI reviewer fix loop (max 3 iterations)
+# 5. tests             -> run generated tests
+
+tasks:
+  - id: scaffold
+    type: shell
+    timeout: 120
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot/scaffold.sh
+
+  - id: compile_skeleton
+    type: shell
+    timeout: 300
+    deps:
+      - scaffold
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot/compile_skeleton.sh
+
+  - id: ai_add_crud
+    type: shell
+    timeout: 300
+    deps:
+      - compile_skeleton
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot/ai_add_crud.sh
+
+  - id: compile_loop
+    type: shell
+    timeout: 900
+    deps:
+      - ai_add_crud
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot/compile_loop.sh
+
+  - id: tests
+    type: shell
+    timeout: 300
+    deps:
+      - compile_loop
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot/tests.sh

@@ -1,0 +1,41 @@
+# cronova configuration - written by 'cronova init'.
+# Precedence: flag > CRONOVA_* env > this file > built-in default.
+
+db: data/cronova.db
+dags: dags
+logs: logs
+projects: ""
+workspaces: ""
+tick: 2s
+executor: ""
+http: 127.0.0.1:8090
+reload: ""
+allow_unauthenticated_remote: false
+retention: 2160h
+audit_retention: 8760h
+max_queued_runs_global: 10000
+max_active_runs_global: 1000
+max_concurrent_tasks: 64
+key_file: cronova.key
+worker_listen: ""
+worker_advertise: ""
+worker_join_tokens: []
+notify:
+    url: ""
+    format: ""
+    group: ""
+smtp:
+    host: ""
+    port: 0
+    username: ""
+    password: ""
+    from: ""
+    allow_plaintext: false
+log:
+    level: ""
+    format: ""
+auth:
+    enabled: true
+    session_ttl: 24h
+    secure_cookie: false
+    admin_user: admin

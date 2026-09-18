@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  cronova launchd LaunchDaemon — the macOS counterpart of deploy/cronova.service.
+  install-macos.sh substitutes __USER__/__GROUP__ with the invoking (sudo) user so
+  tasks run unprivileged, not as root. The setup command seeds the admin directly
+  into SQLite, so this job never needs a plaintext bootstrap password.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.cronova</string>
+
+  <!-- run as the console user, not root (tasks are arbitrary host commands) -->
+  <key>UserName</key>
+  <string>__USER__</string>
+  <key>GroupName</key>
+  <string>__GROUP__</string>
+
+  <key>WorkingDirectory</key>
+  <string>/usr/local/var/cronova</string>
+
+  <!-- Admin credentials are seeded directly by `cronova init`; no shell sources
+       a task-readable plaintext env file. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/cronova</string>
+    <string>serve</string>
+    <string>-config</string>
+    <string>/usr/local/etc/cronova/cronova.yaml</string>
+    <string>-db</string>
+    <string>/usr/local/var/cronova/cronova.db</string>
+    <string>-dags</string>
+    <string>/usr/local/var/cronova/dags</string>
+    <string>-logs</string>
+    <string>/usr/local/var/log/cronova</string>
+    <string>-projects</string>
+    <string>/usr/local/var/cronova/projects</string>
+    <string>-workspaces</string>
+    <string>/usr/local/var/cronova/workspaces</string>
+    <string>-executor</string>
+    <string>unix:///usr/local/var/cronova/run/executor.sock</string>
+  </array>
+
+  <!-- cronova only SCHEDULES; each task runs with the host's own interpreters.
+       launchd hands a minimal PATH, so cover Homebrew (Apple Silicon + Intel)
+       and the system dirs. Add more via `sudo launchctl` overrides if needed. -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <!-- restart on failure only (mirrors Restart=on-failure) -->
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/usr/local/var/log/cronova/service.log</string>
+  <key>StandardErrorPath</key>
+  <string>/usr/local/var/log/cronova/service.log</string>
+</dict>
+</plist>

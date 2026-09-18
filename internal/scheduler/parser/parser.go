@@ -1,0 +1,640 @@
+// Package parser turns a YAML workflow definition into a validated model.DAG.
+// Validation covers: non-empty dag_id, unique task ids, dependencies that
+// reference existing tasks, acyclicity, and a parseable cron schedule. A DAG may
+// have zero tasks (a "shell" created by the builder before tasks are added); it
+// is valid to store but never scheduled/triggered until it has a task. See
+// docs/ARCHITECTURE.md §14 for the YAML spec.
+package parser
+
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/robfig/cron/v3"
+	"github.com/zoyluo/cronova/internal/datetmpl"
+	"github.com/zoyluo/cronova/internal/model"
+	"gopkg.in/yaml.v3"
+)
+
+// idPattern restricts dag_id and task ids to safe identifier characters. This
+// also prevents path traversal: dag_id is used as a filename when a DAG is
+// created via the API (see scheduler.CreateDAG).
+var idPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.-]*$`)
+
+// eventKeyPattern additionally allows ":" so external event keys can namespace
+// (e.g. "warehouse:orders_ready") without loosening dag/task id rules.
+var eventKeyPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.:-]*$`)
+
+const (
+	MaxDefinitionBytes = 1 << 20
+	MaxTasks           = 1000
+	MaxActiveRuns      = 1000
+	maxIdentifierBytes = 128
+	maxDependencies    = 10000
+	maxDepsPerTask     = 256
+	maxRetries         = 100
+	maxDurationSeconds = 365 * 24 * 3600
+	maxCommandBytes    = 256 << 10
+)
+
+type taskYAML struct {
+	ID            string   `yaml:"id"`
+	Type          string   `yaml:"type"`
+	Command       string   `yaml:"command"`
+	Deps          []string `yaml:"deps"`
+	Pool          string   `yaml:"pool"`
+	Priority      int      `yaml:"priority"`
+	Retries       *int     `yaml:"retries"`         // pointer: distinguishes "unset" from 0
+	RetryDelay    *int     `yaml:"retry_delay"`     // seconds
+	RetryBackoff  string   `yaml:"retry_backoff"`   // "" | fixed | exponential
+	RetryDelayMax int      `yaml:"retry_delay_max"` // seconds; caps exponential growth
+	Timeout       int      `yaml:"timeout"`         // seconds
+	SLA           int      `yaml:"sla"`             // seconds from run start (soft alert)
+	TriggerRule   string   `yaml:"trigger_rule"`
+	When          string   `yaml:"when"` // runtime condition template; falsy render => skipped
+	// WorkerGroup routes the task to a dial-in worker group ("" = the DAG's
+	// worker_group default; both empty = the scheduler's local executor).
+	WorkerGroup string `yaml:"worker_group"`
+	// DependsOnDag holds the task until another DAG's matching period run
+	// succeeds (cross-DAG wait).
+	DependsOnDag *struct {
+		Dag       string `yaml:"dag"`
+		Offset    string `yaml:"offset"`     // datetmpl grammar; "" or "same" = same logical date
+		Timeout   int    `yaml:"timeout"`    // seconds from run start
+		OnTimeout string `yaml:"on_timeout"` // fail (default) | skip
+	} `yaml:"depends_on_dag"`
+	// Foreach fans this task out into one task per item at PARSE time: task id
+	// becomes <id>_<index>, {{ item }} / {{ item_index }} in command/when are
+	// replaced per shard, and downstream deps on <id> depend on every shard.
+	// Each shard keeps its own retries, log, and state.
+	Foreach []string `yaml:"foreach"`
+	Conn    string   `yaml:"conn"`    // connection id for type: sql
+	Project string   `yaml:"project"` // uploaded project dir to stage as cwd (shell tasks)
+	Subdag  string   `yaml:"subdag"`  // target dag id for type: subdag (runs it as a child run)
+	HTTP    *struct {
+		Method         string            `yaml:"method"`
+		URL            string            `yaml:"url"`
+		Headers        map[string]string `yaml:"headers"`
+		Body           string            `yaml:"body"`
+		ExpectedStatus []int             `yaml:"expected_status"`
+	} `yaml:"http"`
+}
+
+type dagYAML struct {
+	DagID    string `yaml:"dag_id"`
+	Schedule string `yaml:"schedule"`
+	// Timezone is the IANA zone the cron fields (and a date-only start_date)
+	// are evaluated in; empty = UTC (the historic behavior).
+	Timezone      string `yaml:"timezone"`
+	StartDate     string `yaml:"start_date"`
+	Catchup       bool   `yaml:"catchup"`
+	MaxActiveRuns int    `yaml:"max_active_runs"`
+	// ExecutionPolicy gates queued-run admission: parallel (default),
+	// serial_wait, serial_discard, or serial_priority. Serial policies admit at
+	// most one active run at a time regardless of max_active_runs.
+	ExecutionPolicy string `yaml:"execution_policy"`
+	// WorkerGroup is the default dial-in worker group for every task that does
+	// not set its own ("" = tasks run on the scheduler's local executor).
+	WorkerGroup string `yaml:"worker_group"`
+	// MaxActiveTasks caps this DAG's concurrently queued/running TASKS across
+	// all of its runs (0 = unlimited). Complements pools: this is a per-DAG
+	// budget, pools are a shared global one.
+	MaxActiveTasks    int        `yaml:"max_active_tasks"`
+	DefaultRetries    int        `yaml:"default_retries"`
+	DefaultRetryDelay int        `yaml:"default_retry_delay"`
+	SLA               int        `yaml:"sla"`            // run soft deadline, seconds from start
+	DagrunTimeout     int        `yaml:"dagrun_timeout"` // run hard deadline, seconds from start
+	Tasks             []taskYAML `yaml:"tasks"`
+	TriggerAfter      []struct {
+		DagID string `yaml:"dag_id"`
+	} `yaml:"trigger_after"`
+	// TriggerOnEvent subscribes this DAG to external event keys (published via
+	// POST /api/events); each matching event creates one event-triggered run.
+	TriggerOnEvent []string `yaml:"trigger_on_event"`
+	Notify         struct {
+		URL    string   `yaml:"url"`
+		On     []string `yaml:"on"`     // "failure", "success"
+		Format string   `yaml:"format"` // ""/raw | slack | feishu | dingtalk | email
+		Group  string   `yaml:"group"`  // alert group name; wins over url when set
+	} `yaml:"notify"`
+}
+
+// CronParser parses standard 5-field cron plus @descriptors and @every.
+var cronParser = cron.NewParser(
+	cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
+)
+
+// ParseSchedule parses a schedule string into a cron.Schedule. An empty string
+// is an error here; callers should check for "" (manual/event-only) first.
+func ParseSchedule(spec string) (cron.Schedule, error) {
+	return cronParser.Parse(spec)
+}
+
+// ParseScheduleIn parses a schedule evaluated in the named IANA timezone
+// (e.g. "Asia/Shanghai"): cron fields mean wall-clock time THERE, DST included.
+// tz "" keeps the historic UTC behavior; @every intervals are tz-independent.
+func ParseScheduleIn(spec, tz string) (cron.Schedule, error) {
+	if tz == "" || strings.HasPrefix(spec, "@") || strings.HasPrefix(spec, "CRON_TZ=") || strings.HasPrefix(spec, "TZ=") {
+		return cronParser.Parse(spec)
+	}
+	return cronParser.Parse("CRON_TZ=" + tz + " " + spec)
+}
+
+// Parse parses and validates a DAG definition. The raw bytes are retained in
+// DefinitionYAML for UI round-tripping.
+func Parse(raw []byte) (*model.DAG, error) {
+	if len(raw) == 0 {
+		return nil, fmt.Errorf("yaml: empty definition")
+	}
+	if len(raw) > MaxDefinitionBytes {
+		return nil, fmt.Errorf("yaml: definition exceeds %d bytes", MaxDefinitionBytes)
+	}
+	var y dagYAML
+	dec := yaml.NewDecoder(bytes.NewReader(raw))
+	dec.KnownFields(true)
+	if err := dec.Decode(&y); err != nil {
+		return nil, fmt.Errorf("yaml: %w", err)
+	}
+	var extra any
+	if err := dec.Decode(&extra); err != io.EOF {
+		if err == nil {
+			return nil, fmt.Errorf("yaml: multiple documents are not allowed")
+		}
+		return nil, fmt.Errorf("yaml: trailing document: %w", err)
+	}
+	if y.DagID == "" {
+		return nil, fmt.Errorf("dag_id is required")
+	}
+	if len(y.DagID) > maxIdentifierBytes {
+		return nil, fmt.Errorf("dag_id exceeds %d bytes", maxIdentifierBytes)
+	}
+	if !idPattern.MatchString(y.DagID) {
+		return nil, fmt.Errorf("invalid dag_id %q: use letters, digits, '_', '-', '.'", y.DagID)
+	}
+	// timezone: cron fields (and a date-only start_date) mean wall-clock time
+	// in this IANA zone; empty keeps the historic UTC behavior. Validated here
+	// so a bad zone fails at definition time, not silently at schedule time.
+	loc := time.UTC
+	y.Timezone = strings.TrimSpace(y.Timezone)
+	if y.Timezone != "" {
+		l, err := time.LoadLocation(y.Timezone)
+		if err != nil {
+			return nil, fmt.Errorf("dag %q: invalid timezone %q (use an IANA name like Asia/Shanghai): %w", y.DagID, y.Timezone, err)
+		}
+		loc = l
+	}
+	// A DAG may legitimately have zero tasks: the builder creates a "shell" DAG
+	// first, then tasks are added incrementally. A 0-task DAG is valid to store
+	// but is never scheduled or triggered (gated in the scheduler) until it has
+	// at least one task.
+	if y.Schedule != "" {
+		if _, err := ParseScheduleIn(y.Schedule, y.Timezone); err != nil {
+			return nil, fmt.Errorf("dag %q: invalid schedule %q: %w", y.DagID, y.Schedule, err)
+		}
+	}
+
+	if y.MaxActiveRuns < 0 || y.MaxActiveRuns > MaxActiveRuns {
+		return nil, fmt.Errorf("dag %q: max_active_runs must be between 1 and %d when set", y.DagID, MaxActiveRuns)
+	}
+	maxActive := y.MaxActiveRuns
+	if maxActive == 0 {
+		maxActive = 1
+	}
+	if y.MaxActiveTasks < 0 || y.MaxActiveTasks > MaxTasks {
+		return nil, fmt.Errorf("dag %q: max_active_tasks must be between 0 and %d", y.DagID, MaxTasks)
+	}
+	policy := strings.TrimSpace(y.ExecutionPolicy)
+	if !model.ValidExecutionPolicy(policy) {
+		return nil, fmt.Errorf("dag %q: invalid execution_policy %q (parallel, serial_wait, serial_discard, or serial_priority)", y.DagID, policy)
+	}
+	if policy == "parallel" {
+		policy = model.PolicyParallel // canonical: empty
+	}
+
+	startDate, err := parseStartDate(y.StartDate, loc)
+	if err != nil {
+		return nil, fmt.Errorf("dag %q: %w", y.DagID, err)
+	}
+
+	if y.DefaultRetries < 0 || y.DefaultRetries > maxRetries {
+		return nil, fmt.Errorf("dag %q: default_retries must be between 0 and %d", y.DagID, maxRetries)
+	}
+	if y.DefaultRetryDelay < 0 || y.DefaultRetryDelay > maxDurationSeconds {
+		return nil, fmt.Errorf("dag %q: default_retry_delay must be between 0 and %d seconds", y.DagID, maxDurationSeconds)
+	}
+	if y.SLA < 0 || y.SLA > maxDurationSeconds || y.DagrunTimeout < 0 || y.DagrunTimeout > maxDurationSeconds {
+		return nil, fmt.Errorf("dag %q: sla/dagrun_timeout must be between 0 and %d seconds", y.DagID, maxDurationSeconds)
+	}
+	if len(y.Tasks) > MaxTasks {
+		return nil, fmt.Errorf("dag %q: task count exceeds %d", y.DagID, MaxTasks)
+	}
+	if len(y.TriggerAfter) > MaxTasks {
+		return nil, fmt.Errorf("dag %q: trigger_after count exceeds %d", y.DagID, MaxTasks)
+	}
+	d := &model.DAG{
+		DagID:           y.DagID,
+		Schedule:        y.Schedule,
+		Timezone:        y.Timezone,
+		StartDate:       startDate,
+		Catchup:         y.Catchup,
+		MaxActiveRuns:   maxActive,
+		MaxActiveTasks:  y.MaxActiveTasks,
+		ExecutionPolicy: policy,
+		DefaultRetries:  y.DefaultRetries,
+		SLA:             y.SLA,
+		DagrunTimeout:   y.DagrunTimeout,
+		DefinitionYAML:  string(raw),
+	}
+	seenTriggers := map[string]bool{}
+	for _, ta := range y.TriggerAfter {
+		if ta.DagID != "" {
+			if len(ta.DagID) > maxIdentifierBytes || !idPattern.MatchString(ta.DagID) {
+				return nil, fmt.Errorf("dag %q: invalid trigger_after dag_id %q", y.DagID, ta.DagID)
+			}
+			if seenTriggers[ta.DagID] {
+				return nil, fmt.Errorf("dag %q: duplicate trigger_after dag_id %q", y.DagID, ta.DagID)
+			}
+			seenTriggers[ta.DagID] = true
+			d.TriggerAfter = append(d.TriggerAfter, ta.DagID)
+		}
+	}
+	if len(y.TriggerOnEvent) > MaxTasks {
+		return nil, fmt.Errorf("dag %q: trigger_on_event count exceeds %d", y.DagID, MaxTasks)
+	}
+	seenEvents := map[string]bool{}
+	for _, ek := range y.TriggerOnEvent {
+		ek = strings.TrimSpace(ek)
+		if ek == "" {
+			continue
+		}
+		if len(ek) > maxIdentifierBytes || !eventKeyPattern.MatchString(ek) {
+			return nil, fmt.Errorf("dag %q: invalid trigger_on_event key %q (letters/digits/_.:- only)", y.DagID, ek)
+		}
+		if seenEvents[ek] {
+			return nil, fmt.Errorf("dag %q: duplicate trigger_on_event key %q", y.DagID, ek)
+		}
+		seenEvents[ek] = true
+		d.TriggerOnEvent = append(d.TriggerOnEvent, ek)
+	}
+	// notify: an outbound webhook fired when a run finishes in a listed state.
+	d.NotifyURL = strings.TrimSpace(y.Notify.URL)
+	if len(d.NotifyURL) > 8192 {
+		return nil, fmt.Errorf("dag %q: notify.url exceeds 8192 bytes", y.DagID)
+	}
+	for _, ev := range y.Notify.On {
+		ev = strings.TrimSpace(ev)
+		if ev == "failure" || ev == "success" {
+			d.NotifyOn = append(d.NotifyOn, ev)
+		} else if ev != "" {
+			return nil, fmt.Errorf("dag %q: invalid notify.on %q (want failure or success)", y.DagID, ev)
+		}
+	}
+	if d.NotifyURL != "" {
+		// scheme is case-insensitive (RFC 3986) — match the console's client check.
+		lower := strings.ToLower(d.NotifyURL)
+		if !strings.HasPrefix(lower, "http://") && !strings.HasPrefix(lower, "https://") &&
+			!strings.HasPrefix(lower, "mailto:") {
+			return nil, fmt.Errorf("dag %q: notify.url must be http(s) or mailto:", y.DagID)
+		}
+	}
+	switch y.Notify.Format {
+	case "", "raw", "slack", "feishu", "dingtalk", "email":
+		d.NotifyFormat = y.Notify.Format
+	default:
+		return nil, fmt.Errorf("dag %q: invalid notify.format %q (raw, slack, feishu, dingtalk, or email)", y.DagID, y.Notify.Format)
+	}
+	d.NotifyGroup = strings.TrimSpace(y.Notify.Group)
+	if len(d.NotifyGroup) > 128 {
+		return nil, fmt.Errorf("dag %q: notify.group exceeds 128 bytes", y.DagID)
+	}
+
+	// foreach fan-out expands at PARSE time, so the scheduler's state machine
+	// sees N ordinary tasks — per-shard retries/logs/state come for free and no
+	// runtime machinery is added. Items are static YAML strings (dynamic lists
+	// are out of scope by design; see docs). Downstream deps on the original id
+	// are rewritten to depend on every shard.
+	if expanded, err := expandForeach(y.DagID, y.Tasks); err != nil {
+		return nil, err
+	} else {
+		y.Tasks = expanded
+	}
+
+	seen := make(map[string]bool, len(y.Tasks))
+	totalDeps := 0
+	for _, t := range y.Tasks {
+		if t.ID == "" {
+			return nil, fmt.Errorf("dag %q: a task has an empty id", y.DagID)
+		}
+		if len(t.ID) > maxIdentifierBytes || !idPattern.MatchString(t.ID) {
+			return nil, fmt.Errorf("dag %q: invalid task id %q", y.DagID, t.ID)
+		}
+		if seen[t.ID] {
+			return nil, fmt.Errorf("dag %q: duplicate task id %q", y.DagID, t.ID)
+		}
+		seen[t.ID] = true
+
+		taskType := orDefault(strings.TrimSpace(t.Type), "shell")
+		switch taskType {
+		case "shell", "python", "sql", "jar", "http", "subdag":
+		default:
+			return nil, fmt.Errorf("dag %q: task %q has unsupported type %q", y.DagID, t.ID, taskType)
+		}
+		if taskType == "subdag" {
+			target := strings.TrimSpace(t.Subdag)
+			if target == "" || len(target) > maxIdentifierBytes || !idPattern.MatchString(target) {
+				return nil, fmt.Errorf("dag %q: task %q needs subdag: <target dag id>", y.DagID, t.ID)
+			}
+			if target == y.DagID {
+				return nil, fmt.Errorf("dag %q: task %q cannot run its own dag as a subdag", y.DagID, t.ID)
+			}
+		} else if strings.TrimSpace(t.Subdag) != "" {
+			return nil, fmt.Errorf("dag %q: task %q sets subdag but type is %q (want type: subdag)", y.DagID, t.ID, taskType)
+		}
+		if len(t.Deps) > maxDepsPerTask {
+			return nil, fmt.Errorf("dag %q: task %q has more than %d dependencies", y.DagID, t.ID, maxDepsPerTask)
+		}
+		totalDeps += len(t.Deps)
+		if totalDeps > maxDependencies {
+			return nil, fmt.Errorf("dag %q: dependency count exceeds %d", y.DagID, maxDependencies)
+		}
+		if len(t.Command) > maxCommandBytes {
+			return nil, fmt.Errorf("dag %q: task %q command exceeds %d bytes", y.DagID, t.ID, maxCommandBytes)
+		}
+		pool := orDefault(strings.TrimSpace(t.Pool), model.DefaultPoolName)
+		if len(pool) > maxIdentifierBytes || !idPattern.MatchString(pool) {
+			return nil, fmt.Errorf("dag %q: task %q has invalid pool %q", y.DagID, t.ID, pool)
+		}
+		group := orDefault(strings.TrimSpace(t.WorkerGroup), strings.TrimSpace(y.WorkerGroup))
+		if group != "" && (len(group) > maxIdentifierBytes || !idPattern.MatchString(group)) {
+			return nil, fmt.Errorf("dag %q: task %q has invalid worker_group %q", y.DagID, t.ID, group)
+		}
+		if group != "" && strings.TrimSpace(t.Project) != "" {
+			// Project staging happens on the scheduler's filesystem; a dial-in
+			// worker cannot see it. Refuse at save time, not at 2am dispatch.
+			return nil, fmt.Errorf("dag %q: task %q combines project: with worker_group: — uploaded projects require the local executor", y.DagID, t.ID)
+		}
+		task := model.Task{
+			ID:          t.ID,
+			Type:        taskType,
+			Command:     t.Command,
+			Deps:        t.Deps,
+			Pool:        pool,
+			Priority:    t.Priority,
+			Retries:     y.DefaultRetries,
+			RetryDelay:  y.DefaultRetryDelay,
+			Timeout:     t.Timeout,
+			SLA:         t.SLA,
+			Conn:        strings.TrimSpace(t.Conn),
+			Subdag:      strings.TrimSpace(t.Subdag),
+			Project:     strings.TrimSpace(t.Project),
+			TriggerRule: orDefault(t.TriggerRule, model.RuleAllSuccess),
+			When:        strings.TrimSpace(t.When),
+			WorkerGroup: group,
+		}
+		if !model.ValidTriggerRule(task.TriggerRule) {
+			return nil, fmt.Errorf("dag %q: task %q has invalid trigger_rule %q", y.DagID, t.ID, t.TriggerRule)
+		}
+		if dep := t.DependsOnDag; dep != nil {
+			target := strings.TrimSpace(dep.Dag)
+			if target == "" || len(target) > maxIdentifierBytes || !idPattern.MatchString(target) {
+				return nil, fmt.Errorf("dag %q: task %q depends_on_dag.dag %q is not a valid dag id", y.DagID, t.ID, dep.Dag)
+			}
+			if target == y.DagID {
+				return nil, fmt.Errorf("dag %q: task %q cannot depend on its own dag", y.DagID, t.ID)
+			}
+			offset := strings.TrimSpace(dep.Offset)
+			if offset == "same" {
+				offset = ""
+			}
+			if !datetmpl.ValidOffset(offset) {
+				return nil, fmt.Errorf("dag %q: task %q depends_on_dag.offset %q does not parse (examples: \"- 1d\", \".month_start\")", y.DagID, t.ID, dep.Offset)
+			}
+			if dep.Timeout < 0 || dep.Timeout > maxDurationSeconds {
+				return nil, fmt.Errorf("dag %q: task %q depends_on_dag.timeout must be between 0 and %d seconds", y.DagID, t.ID, maxDurationSeconds)
+			}
+			onTimeout := orDefault(strings.TrimSpace(dep.OnTimeout), "fail")
+			if onTimeout != "fail" && onTimeout != "skip" {
+				return nil, fmt.Errorf("dag %q: task %q depends_on_dag.on_timeout must be fail or skip", y.DagID, t.ID)
+			}
+			task.DependsOnDag = &model.DependsOnDag{Dag: target, Offset: offset, Timeout: dep.Timeout, OnTimeout: onTimeout}
+		}
+		if t.Timeout < 0 || t.Timeout > maxDurationSeconds || t.SLA < 0 || t.SLA > maxDurationSeconds {
+			return nil, fmt.Errorf("dag %q: task %q timeout/sla must be between 0 and %d seconds", y.DagID, t.ID, maxDurationSeconds)
+		}
+		if !model.ValidRetryBackoff(t.RetryBackoff) {
+			return nil, fmt.Errorf("dag %q: task %q has invalid retry_backoff %q (use fixed or exponential)", y.DagID, t.ID, t.RetryBackoff)
+		}
+		if t.RetryDelayMax < 0 {
+			return nil, fmt.Errorf("dag %q: task %q retry_delay_max must be >= 0 seconds", y.DagID, t.ID)
+		}
+		// 30 days caps both delays: far past any real-world retry, and keeps the
+		// exponential shift-math safely inside int64.
+		const maxDelaySec = 30 * 24 * 3600
+		if (t.RetryDelay != nil && *t.RetryDelay > maxDelaySec) || t.RetryDelayMax > maxDelaySec {
+			return nil, fmt.Errorf("dag %q: task %q retry_delay/retry_delay_max must be <= %d seconds (30 days)", y.DagID, t.ID, maxDelaySec)
+		}
+		task.RetryBackoff = t.RetryBackoff
+		task.RetryDelayMax = t.RetryDelayMax
+		if t.Retries != nil {
+			task.Retries = *t.Retries
+		}
+		if t.RetryDelay != nil {
+			task.RetryDelay = *t.RetryDelay
+		}
+		if task.Retries < 0 || task.Retries > maxRetries {
+			return nil, fmt.Errorf("dag %q: task %q retries must be between 0 and %d", y.DagID, t.ID, maxRetries)
+		}
+		if task.RetryDelay < 0 {
+			return nil, fmt.Errorf("dag %q: task %q retry_delay must be >= 0 seconds", y.DagID, t.ID)
+		}
+		if task.Type == "http" {
+			// an http task carries a request spec instead of a shell command.
+			if t.HTTP == nil || strings.TrimSpace(t.HTTP.URL) == "" {
+				return nil, fmt.Errorf("dag %q: http task %q requires http.url", y.DagID, t.ID)
+			}
+			for _, code := range t.HTTP.ExpectedStatus {
+				if code < 100 || code > 599 {
+					return nil, fmt.Errorf("dag %q: task %q invalid expected_status %d", y.DagID, t.ID, code)
+				}
+			}
+			if len(t.HTTP.URL) > 8192 || len(t.HTTP.Body) > maxCommandBytes || len(t.HTTP.Headers) > 100 || len(t.HTTP.ExpectedStatus) > 100 {
+				return nil, fmt.Errorf("dag %q: task %q http specification exceeds limits", y.DagID, t.ID)
+			}
+			task.HTTP = &model.HTTPSpec{
+				Method: t.HTTP.Method, URL: strings.TrimSpace(t.HTTP.URL),
+				Headers: t.HTTP.Headers, Body: t.HTTP.Body, ExpectedStatus: t.HTTP.ExpectedStatus,
+			}
+		} else if t.HTTP != nil {
+			return nil, fmt.Errorf("dag %q: non-http task %q cannot define http", y.DagID, t.ID)
+		} else if task.Command == "" {
+			// shell/python/sql/jar all carry code/query/command in Command.
+			return nil, fmt.Errorf("dag %q: task %q has empty command", y.DagID, t.ID)
+		}
+		if task.Type == "sql" && task.Conn == "" {
+			return nil, fmt.Errorf("dag %q: sql task %q requires a conn (connection id)", y.DagID, t.ID)
+		}
+		d.Tasks = append(d.Tasks, task)
+	}
+
+	// deps must reference existing tasks
+	for _, t := range d.Tasks {
+		seenDeps := map[string]bool{}
+		for _, dep := range t.Deps {
+			if seenDeps[dep] {
+				return nil, fmt.Errorf("dag %q: task %q has duplicate dependency %q", y.DagID, t.ID, dep)
+			}
+			seenDeps[dep] = true
+			if !seen[dep] {
+				return nil, fmt.Errorf("dag %q: task %q depends on unknown task %q", y.DagID, t.ID, dep)
+			}
+			if dep == t.ID {
+				return nil, fmt.Errorf("dag %q: task %q depends on itself", y.DagID, t.ID)
+			}
+		}
+	}
+
+	if err := detectCycle(d.Tasks); err != nil {
+		return nil, fmt.Errorf("dag %q: %w", y.DagID, err)
+	}
+	return d, nil
+}
+
+func parseStartDate(s string, loc *time.Location) (time.Time, error) {
+	if loc == nil {
+		loc = time.UTC
+	}
+	if s == "" {
+		return time.Now().UTC().Truncate(24 * time.Hour), nil
+	}
+	// Layouts without an explicit offset are interpreted in the DAG's timezone
+	// (UTC when none is set), so "2026-01-01" means that date THERE.
+	for _, layout := range []string{"2006-01-02", "2006-01-02 15:04:05"} {
+		if t, err := time.ParseInLocation(layout, s, loc); err == nil {
+			return t.UTC(), nil
+		}
+	}
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
+		return t.UTC(), nil
+	}
+	return time.Time{}, fmt.Errorf("invalid start_date %q", s)
+}
+
+func orDefault(v, def string) string {
+	if v == "" {
+		return def
+	}
+	return v
+}
+
+// detectCycle runs a DFS three-coloring over the dependency graph (edge
+// task -> dep). A gray node reached again indicates a cycle.
+func detectCycle(tasks []model.Task) error {
+	const (
+		white = 0
+		gray  = 1
+		black = 2
+	)
+	adj := make(map[string][]string, len(tasks))
+	for _, t := range tasks {
+		adj[t.ID] = t.Deps
+	}
+	color := make(map[string]int, len(tasks))
+
+	var visit func(string, []string) error
+	visit = func(n string, path []string) error {
+		color[n] = gray
+		path = append(path, n)
+		for _, m := range adj[n] {
+			switch color[m] {
+			case gray:
+				return fmt.Errorf("dependency cycle detected: %v -> %s", path, m)
+			case white:
+				if err := visit(m, path); err != nil {
+					return err
+				}
+			}
+		}
+		color[n] = black
+		return nil
+	}
+
+	for _, t := range tasks {
+		if color[t.ID] == white {
+			if err := visit(t.ID, nil); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// itemRe / itemIndexRe substitute the per-shard placeholders in a foreach
+// task's command and when-condition.
+var (
+	itemRe      = regexp.MustCompile(`\{\{\s*item\s*\}\}`)
+	itemIndexRe = regexp.MustCompile(`\{\{\s*item_index\s*\}\}`)
+)
+
+// expandForeach turns each task carrying a foreach list into one task per item
+// (id `<id>_<index>`), and rewrites every dependency on the original id into
+// dependencies on all shards. Tasks without foreach pass through unchanged.
+func expandForeach(dagID string, tasks []taskYAML) ([]taskYAML, error) {
+	hasAny := false
+	for _, t := range tasks {
+		if len(t.Foreach) > 0 {
+			hasAny = true
+			break
+		}
+	}
+	if !hasAny {
+		return tasks, nil
+	}
+	out := make([]taskYAML, 0, len(tasks))
+	shards := map[string][]string{}
+	for _, t := range tasks {
+		if len(t.Foreach) == 0 {
+			out = append(out, t)
+			continue
+		}
+		if t.ID == "" {
+			return nil, fmt.Errorf("dag %q: foreach task needs an id", dagID)
+		}
+		if len(t.Foreach) > MaxTasks {
+			return nil, fmt.Errorf("dag %q: task %q foreach expands to more than %d shards", dagID, t.ID, MaxTasks)
+		}
+		for i, item := range t.Foreach {
+			c := t
+			c.Foreach = nil
+			c.ID = fmt.Sprintf("%s_%d", t.ID, i)
+			idx := strconv.Itoa(i)
+			c.Command = itemIndexRe.ReplaceAllString(itemRe.ReplaceAllString(t.Command, item), idx)
+			c.When = itemIndexRe.ReplaceAllString(itemRe.ReplaceAllString(t.When, item), idx)
+			c.Deps = append([]string(nil), t.Deps...)
+			shards[t.ID] = append(shards[t.ID], c.ID)
+			out = append(out, c)
+		}
+	}
+	if len(out) > MaxTasks {
+		return nil, fmt.Errorf("dag %q: foreach expansion exceeds %d tasks", dagID, MaxTasks)
+	}
+	for i := range out {
+		if len(out[i].Deps) == 0 {
+			continue
+		}
+		var nd []string
+		for _, dep := range out[i].Deps {
+			if sh, ok := shards[dep]; ok {
+				nd = append(nd, sh...)
+			} else {
+				nd = append(nd, dep)
+			}
+		}
+		out[i].Deps = nd
+	}
+	return out, nil
+}

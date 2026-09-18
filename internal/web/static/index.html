@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>cronova console</title>
+<link rel="stylesheet" href="/styles.css" />
+<script>/* pre-paint: apply the saved UI mode so the sidebar doesn't flash the wrong nav */
+try { var _m = localStorage.getItem("cnv_mode"); if (_m === "novice" || _m === "expert") document.documentElement.dataset.mode = _m; } catch (e) {}</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="side-head">
+      <div class="logo">✦</div>
+      <div>
+        <div class="brand">cronova</div>
+        <div class="ver" id="side-version">scheduler</div>
+      </div>
+    </div>
+    <div id="side-expert">
+      <div class="side-label" data-i18n="workspace">工作区</div>
+      <nav class="nav">
+        <div class="nav-item active" data-nav="dags" role="link" tabindex="0" aria-label="工作流 / Workflows" title="工作流 / Workflows"><span class="ic">▦</span> <span data-i18n="nav_dags">工作流</span> <span class="count" id="nav-dags">·</span></div>
+        <div class="nav-item" data-nav="graph" role="link" tabindex="0" aria-label="关系图 / Graph" title="关系图 / Graph"><span class="ic">⛓</span> <span data-i18n="nav_graph">关系图</span></div>
+        <div class="nav-item" data-nav="pools" role="link" tabindex="0" aria-label="Pools" title="Pools"><span class="ic">▥</span> Pools <span class="count" id="nav-pools">·</span></div>
+        <div class="nav-item" data-nav="resources" role="link" tabindex="0" aria-label="变量与连接 / Resources" title="变量与连接 / Resources"><span class="ic">❖</span> <span data-i18n="nav_resources">变量 &amp; 连接</span></div>
+        <div class="nav-item" data-nav="workers" role="link" tabindex="0" aria-label="工作节点 / Workers" title="工作节点 / Workers"><span class="ic">⇄</span> <span data-i18n="nav_workers">工作节点</span> <span class="count" id="nav-workers">·</span></div>
+        <div class="nav-item" data-nav="audit" role="link" tabindex="0" aria-label="审计 / Audit" title="审计 / Audit"><span class="ic">☰</span> <span data-i18n="nav_audit">审计</span></div>
+        <div class="nav-item" data-nav="api" role="link" tabindex="0" aria-label="API" title="API"><span class="ic">⧉</span> <span data-i18n="nav_api">API</span></div>
+        <div class="nav-item" data-nav="ai-providers" role="link" tabindex="0" aria-label="AI Provider" title="AI Provider"><span class="ic">◈</span> <span data-i18n="nav_ai_providers">AI Provider</span></div>
+      </nav>
+    </div>
+    <div id="side-novice">
+      <div class="side-label" data-i18n="nv_workbench">工作台</div>
+      <nav class="nav">
+        <div class="nav-item active" data-nav="dags" role="link" tabindex="0" aria-label="我的工作流 / My workflows"><span class="ic">▦</span> <span data-i18n="nv_myflows">我的工作流</span> <span class="count" id="nav-flows">·</span></div>
+        <div class="nav-item" data-nav="resources" role="link" tabindex="0" aria-label="共享配置 / Shared config"><span class="ic">❖</span> <span data-i18n="nv_shared">共享配置</span></div>
+        <div class="nav-item" data-nav="ai-providers" role="link" tabindex="0" aria-label="AI Provider"><span class="ic">◈</span> <span data-i18n="nv_ai_providers">AI Provider</span></div>
+        <div class="nav-item" data-nav="help" role="link" tabindex="0" aria-label="帮助中心 / Help center"><span class="ic">✧</span> <span data-i18n="nv_help">帮助中心</span></div>
+      </nav>
+    </div>
+    <div class="side-foot">
+      <div class="user-chip" id="user-chip" hidden></div>
+      <div id="foot-expert">
+        <div class="stat-row"><span class="dot"></span><span class="lbl">executor</span><span class="sub" id="f-exec">—</span></div>
+        <div class="stat-row"><span class="dot" style="background:var(--accent);box-shadow:0 0 0 3px rgba(107,123,255,.15)"></span><span class="lbl">scheduler</span><span class="sub" id="f-tick">—</span></div>
+      </div>
+      <div id="foot-novice">
+        <div class="stat-row"><span class="dot"></span><span class="lbl" data-i18n="nv_sys_ok">系统运行正常</span></div>
+      </div>
+    </div>
+  </aside>
+  <div class="content">
+    <div class="topbar">
+      <div class="crumb">cronova / <b id="crumb">工作流</b></div>
+      <div class="grow"></div>
+      <div class="search"><input id="search" placeholder="搜索工作流…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="jump-menu" /><div class="jump-menu" id="jump-menu" role="listbox" hidden></div></div>
+      <div class="proj-modes" id="mode-toggle" role="group" hidden>
+        <button class="seg" id="mode-nov" data-i18n="mode_novice" aria-pressed="false">新手</button>
+        <button class="seg" id="mode-exp" data-i18n="mode_expert" aria-pressed="false">专家</button>
+      </div>
+      <div class="tick"><span class="dot"></span><span id="tick">tick —</span><span class="tzlab" id="tzlab"></span></div>
+      <button class="icon" id="theme" title="主题 / Theme" style="font-size:15px">☀</button>
+      <button class="icon" id="lang" title="切换语言 / Switch language" style="font-weight:600">EN</button>
+      <button class="primary" id="newdag" data-i18n="newdag">+ 新建工作流</button>
+    </div>
+    <div class="main" id="main"></div>
+  </div>
+</div>
+<div id="modal-root"></div>
+<div id="toast-root" class="toast-stack" aria-live="polite"></div>
+<div id="login-root"></div>
+<!-- classic scripts in load order share one global scope (no build step):
+     base = state/i18n/helpers · views = pages · builder = schedule/templates/new-DAG · boot = wiring -->
+<script src="/base.js"></script>
+<script src="/views.js"></script>
+<script src="/builder.js"></script>
+<script src="/boot.js"></script>
+</body>
+</html>

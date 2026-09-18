@@ -1,0 +1,85 @@
+# cronova configuration — copy to cronova.yaml (every key is optional).
+# `cronova init` writes this file for you; edit by hand for advanced tweaks.
+# Precedence, highest first:  flag  >  CRONOVA_* env  >  this file  >  built-in default.
+
+# ── HTTP console + API ──────────────────────────────────────────────────────
+# "127.0.0.1:8090" this machine only (safe default; use a reverse proxy for remote use)
+# ":8090"          all interfaces (requires auth, unless the dangerous override below is true)
+# ""               disables the console/API entirely (scheduler still runs)
+http: "127.0.0.1:8090"
+
+# DANGEROUS: required to bind an unauthenticated console to a non-loopback IP.
+# Leave false for normal deployments.
+allow_unauthenticated_remote: false
+
+# ── Scheduler ───────────────────────────────────────────────────────────────
+tick: 2s                    # how often the loop wakes to schedule/poll work
+
+# GitOps hot-reload: re-scan the dags directory for changed YAML this often, so
+# a `git pull` goes live without a restart. "0" (default) disables.
+reload: "0"
+
+# Manual `cronova serve` defaults to the in-process executor when this is empty.
+# Installed systemd/launchd services override it with the standalone executor so
+# scheduler restarts do not kill running tasks, e.g.:
+#   executor: "unix:///run/cronova/executor.sock"
+# The socket parent must be private (0700). A scheduler on ANOTHER machine can
+# reach an executor over mandatory mutual TLS:
+#   executor: "tcp://worker-host:9445"
+# with CRONOVA_EXEC_TLS_CERT / _KEY / _CA pointing at the PEM files, and
+# cronova-executor started with -listen-tcp + its certificate flags.
+executor: ""
+
+# Bound work admitted from every trigger source and across every pool.
+max_queued_runs_global: 10000
+max_active_runs_global: 1000
+max_concurrent_tasks: 64
+
+# Finished runs/logs are retained for 90 days; audit records for one year.
+# Use "0" to keep either class forever.
+retention: 2160h
+audit_retention: 8760h
+
+# ── Alerting ────────────────────────────────────────────────────────────────
+# Instance-wide default webhook: DAGs without their own notify_url alert here
+# (failure-only unless they set notify_on), and scheduler-level events
+# (executor unreachable/recovered, retention failures) post here too.
+# format: raw | slack | feishu | dingtalk
+notify:
+  url: ""
+  format: ""
+
+# ── Logging ─────────────────────────────────────────────────────────────────
+# level: debug | info | warn | error;  format: text | json (for Loki/ELK).
+log:
+  level: info
+  format: text
+
+# ── Authentication ──────────────────────────────────────────────────────────
+auth:
+  enabled: true             # require login for the console + API (recommended)
+  session_ttl: 24h          # how long a login session stays valid
+  secure_cookie: false      # set true when served over HTTPS (marks the cookie Secure)
+  admin_user: admin         # non-secret default shown by the next `cronova init`
+  # Only trust forwarding headers from these reverse-proxy IPs/CIDRs. Loopback
+  # peers are trusted automatically. Leave empty when no reverse proxy is used.
+  trusted_proxies: []
+
+# `cronova init` writes/rotates the admin directly in SQLite. It never persists
+# the plaintext password in this file or cronova.env.
+
+# ── Storage paths ───────────────────────────────────────────────────────────
+# Under systemd these are set by the service unit's flags (which win over this
+# file); uncomment only for a manual, non-systemd run.
+# db:   data/cronova.db     # SQLite metadata database
+# dags: dags                # directory of DAG YAML definitions
+# logs: logs                # directory for per-task log files
+# key_file: cronova.key      # AES-256-GCM key for connection passwords (0600)
+
+# Uploaded project files (console: task editor → 工程/Project). Each project is
+# a directory here; a shell task with `project: <name>` runs its command inside
+# a fresh temp copy of it. Default: ~/.cronova/projects (of the service user).
+# Requires the scheduler and executor to share a filesystem (same host). Use an
+# explicit workspace path outside /tmp when they run as separate services.
+# projects: ~/.cronova/projects
+# workspaces: ~/.cronova/workspaces
