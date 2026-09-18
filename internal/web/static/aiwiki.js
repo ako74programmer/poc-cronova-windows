@@ -127,14 +127,16 @@
         }
         break;
       case 'open_editor':
-      case 'open_docs':
         if (a.path && a.path.startsWith('dags/')) {
           const dagId = a.path.replace('dags/', '').replace('.yaml', '');
           window.location.hash = '#/dags/' + encodeURIComponent(dagId);
-        } else if (a.path && a.path.startsWith('/doc/')) {
-          const sep = a.path.includes('?') ? '&' : '?';
-          const l = (typeof lang !== 'undefined' ? lang : 'en');
-          window.open(a.path + sep + 'lang=' + encodeURIComponent(l), '_blank');
+        } else if (a.path) {
+          window.open(a.path, '_blank');
+        }
+        break;
+      case 'open_docs':
+        if (a.path && a.path.startsWith('/doc/')) {
+          openDocViewer(a.path);
         } else if (a.path) {
           window.open(a.path, '_blank');
         }
@@ -189,6 +191,28 @@
       addMsg(t('aiwiki_welcome'), 'bot');
     }
   }, 500);
+
+  // Open a documentation markdown file in an in-app modal viewer.
+  function openDocViewer(path) {
+    const url = path + (path.includes('?') ? '&' : '?') + 'lang=' + encodeURIComponent(typeof lang !== 'undefined' ? lang : 'en');
+    fetch(url)
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(md => {
+        const html = (typeof marked !== 'undefined' ? marked.parse(md) : esc(md).replace(/\n/g, '<br>'));
+        const title = path.split('/').pop().replace(/\.pl\.md$/, '.md');
+        const root = $('modal-root');
+        root.innerHTML = `<div class="overlay" id="doc-ovl"><div class="modal wide doc-viewer" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+          <h2>${esc(title)} <button id="doc-close" class="icon" title="${esc(t('aiwiki_close'))}">✕</button></h2>
+          <div class="body markdown-body">${html}</div>
+        </div></div>`;
+        const close = () => { document.removeEventListener('keydown', onKey); root.innerHTML = ''; };
+        const onKey = (e) => { if (e.key === 'Escape') close(); };
+        document.addEventListener('keydown', onKey);
+        $('doc-close').onclick = close;
+        $('doc-ovl').onclick = (e) => { if (e.target.id === 'doc-ovl') close(); };
+      })
+      .catch(e => window.toast && window.toast('Error: ' + e.message, 'error'));
+  }
 
   // Re-render labels when language changes.
   document.addEventListener('cronova:langchanged', () => {

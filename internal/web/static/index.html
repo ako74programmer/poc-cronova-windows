@@ -75,6 +75,7 @@ try { var _m = localStorage.getItem("cnv_mode"); if (_m === "novice" || _m === "
 <div id="aiwiki-root"></div>
 <!-- classic scripts in load order share one global scope (no build step):
      base = state/i18n/helpers · views = pages · builder = schedule/templates/new-DAG · boot = wiring -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="/base.js"></script>
 <script src="/views.js"></script>
 <script src="/builder.js"></script>
