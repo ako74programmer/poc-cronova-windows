@@ -129,7 +129,9 @@
           const dagId = a.path.replace('dags/', '').replace('.yaml', '');
           window.location.hash = '#/dags/' + encodeURIComponent(dagId);
         } else if (a.path && a.path.startsWith('/doc/')) {
-          window.open(a.path, '_blank');
+          const sep = a.path.includes('?') ? '&' : '?';
+          const l = (typeof lang !== 'undefined' ? lang : 'en');
+          window.open(a.path + sep + 'lang=' + encodeURIComponent(l), '_blank');
         } else if (a.path) {
           window.open(a.path, '_blank');
         }
@@ -156,7 +158,7 @@
       const resp = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: q }),
+        body: JSON.stringify({ question: q, lang: (typeof lang !== 'undefined' ? lang : 'en') }),
       });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const data = await resp.json();

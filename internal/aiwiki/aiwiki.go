@@ -75,7 +75,9 @@ func New(st store.Store) (*Wiki, error) {
 // Ask answers a user question using BM25 retrieval and, if an AI provider is
 // configured, an LLM-generated answer. Falls back to canned templates when no
 // provider is available so the feature works offline and with zero config.
-func (w *Wiki) Ask(ctx context.Context, question string) Answer {
+// The lang parameter requests a documentation language ("pl" or "en") for
+// open_docs actions; it defaults to "en".
+func (w *Wiki) Ask(ctx context.Context, question, lang string) Answer {
 	// Ensure the LLM client is up to date before answering.
 	w.refreshLLM(ctx)
 
@@ -119,7 +121,7 @@ func (w *Wiki) Ask(ctx context.Context, question string) Answer {
 		})
 	}
 
-	actions := suggestActions(hits[0].chunk)
+	actions := suggestActions(hits[0].chunk, lang)
 
 	return Answer{
 		Answer:  answer,
@@ -169,7 +171,7 @@ func buildAnswer(question string, c Chunk) string {
 	}
 }
 
-func suggestActions(c Chunk) []Action {
+func suggestActions(c Chunk, lang string) []Action {
 	actions := []Action{}
 	src := strings.ToLower(c.Source)
 	switch {
@@ -185,6 +187,9 @@ func suggestActions(c Chunk) []Action {
 		path := c.Source
 		if strings.HasPrefix(path, "docs/") {
 			path = strings.TrimPrefix(path, "docs/")
+		}
+		if lang == "pl" {
+			path = strings.TrimSuffix(path, ".md") + ".pl.md"
 		}
 		actions = append(actions,
 			Action{Type: "open_docs", Label: "Otwórz dokumentację", Path: "/doc/" + path},

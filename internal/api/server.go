@@ -235,6 +235,7 @@ func (s *Server) Handler() http.Handler {
 func (s *Server) askWiki(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Question string `json:"question"`
+		Lang     string `json:"lang"`
 	}
 	if err := decodeJSON(r, &req); err != nil {
 		httpErr(w, http.StatusBadRequest, "invalid request")
@@ -244,12 +245,14 @@ func (s *Server) askWiki(w http.ResponseWriter, r *http.Request) {
 		httpErr(w, http.StatusBadRequest, "question is required")
 		return
 	}
-	answer := s.wiki.Ask(r.Context(), req.Question)
+	answer := s.wiki.Ask(r.Context(), req.Question, req.Lang)
 	writeJSON(w, http.StatusOK, answer)
 }
 
 // docFile serves an embedded project documentation markdown file.
 // Path is rooted at docs/ (e.g. /doc/DAG_REFERENCE.md or /doc/tutorial/first-dag.md).
+// It respects the user's language: Polish (*.pl.md) when available, otherwise
+// falls back to the English default.
 func (s *Server) docFile(w http.ResponseWriter, r *http.Request) {
 	path := r.PathValue("path")
 	if path == "" {
@@ -261,14 +264,68 @@ func (s *Server) docFile(w http.ResponseWriter, r *http.Request) {
 		httpErr(w, http.StatusNotFound, "not found")
 		return
 	}
-	data, err := fs.ReadFile(docs.FS(), path)
-	if err != nil {
+	lang := docLang(r)
+	data, resolved := readDocLocalized(path, lang)
+	if data == nil {
 		httpErr(w, http.StatusNotFound, "not found")
 		return
 	}
 	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("X-Doc-Resolved", resolved)
 	_, _ = w.Write(data)
+}
+
+// docLang detects the requested documentation language from query, cookie, or
+// Accept-Language header. Supported values: en, pl. Defaults to en.
+func docLang(r *http.Request) string {
+	if q := r.URL.Query().Get("lang"); q == "pl" || q == "en" {
+		return q
+	}
+	if c, err := r.Cookie("cnv_lang"); err == nil && (c.Value == "pl" || c.Value == "en") {
+		return c.Value
+	}
+	if al := r.Header.Get("Accept-Language"); al != "" {
+		// Simple prefix match; Polish has priority if present.
+		if strings.Contains(strings.ToLower(al), "pl") {
+			return "pl"
+		}
+		if strings.Contains(strings.ToLower(al), "en") {
+			return "en"
+		}
+	}
+	return "en"
+}
+
+// readDocLocalized returns the requested markdown file in the given language.
+// For Polish it tries the *.pl.md variant first and falls back to the English
+// default. The second return value is the resolved file name for debugging.
+func readDocLocalized(path, lang string) ([]byte, string) {
+	if lang == "pl" {
+		if localized := localizeDocPath(path); localized != path {
+			if data, err := fs.ReadFile(docs.FS(), localized); err == nil {
+				return data, localized
+			}
+		}
+	}
+	data, err := fs.ReadFile(docs.FS(), path)
+	if err != nil {
+		return nil, ""
+	}
+	return data, path
+}
+
+// localizeDocPath turns "foo.md" into "foo.pl.md" and "dir/foo.md" into
+// "dir/foo.pl.md". It leaves paths that already contain a language suffix
+// unchanged.
+func localizeDocPath(path string) string {
+	if strings.HasSuffix(path, ".pl.md") || strings.HasSuffix(path, ".en.md") {
+		return path
+	}
+	if !strings.HasSuffix(path, ".md") {
+		return path
+	}
+	return strings.TrimSuffix(path, ".md") + ".pl.md"
 }
 
 func (s *Server) withAccessLog(next http.Handler) http.Handler {

@@ -21,7 +21,7 @@ func TestAskRetry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error: %v", err)
 	}
-	ans := wiki.Ask(context.Background(), "Jak ustawić retry dla taska?")
+	ans := wiki.Ask(context.Background(), "Jak ustawić retry dla taska?", "pl")
 	if ans.Answer == "" {
 		t.Fatal("expected non-empty answer")
 	}
@@ -38,7 +38,7 @@ func TestAskUnknown(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error: %v", err)
 	}
-	ans := wiki.Ask(context.Background(), "xyzabc123 notfound")
+	ans := wiki.Ask(context.Background(), "xyzabc123 notfound", "en")
 	if ans.Answer == "" {
 		t.Fatal("expected fallback answer")
 	}
