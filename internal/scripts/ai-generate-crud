@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+WORKSPACE=""
+PROJECT="demo"
+PACKAGE="com.example.demo"
+PYTHON="${PYTHON:-/c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python}"
+
+usage() {
+  cat <<EOF
+Usage: ai-generate-crud [-w WORKSPACE] [-p PROJECT] [-k PACKAGE] [-y PYTHON] [-h]
+
+Options:
+  -w WORKSPACE  Target workspace directory. Default: workspaces/springboot-demo
+  -p PROJECT    Project subdirectory inside workspace. Default: demo
+  -k PACKAGE    Java package. Default: com.example.demo
+  -y PYTHON     Path to Python interpreter. Default: /c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python
+  -h            Show this help message.
+
+Example:
+  ai-generate-crud
+  ai-generate-crud -w workspaces/my-app -p app -k com.example.app
+EOF
+}
+
+while getopts ":w:p:k:y:h" opt; do
+  case $opt in
+    w) WORKSPACE="$OPTARG" ;;
+    p) PROJECT="$OPTARG" ;;
+    k) PACKAGE="$OPTARG" ;;
+    y) PYTHON="$OPTARG" ;;
+    h) usage; exit 0 ;;
+    \?) echo "Invalid option: -$OPTARG" >&2; usage >&2; exit 1 ;;
+    :) echo "Option -$OPTARG requires an argument." >&2; usage >&2; exit 1 ;;
+  esac
+done
+
+if [[ -z "$WORKSPACE" ]]; then
+  WORKSPACE="$REPO_ROOT/workspaces/springboot-demo"
+fi
+
+PROJECT_DIR="$WORKSPACE/$PROJECT"
+TMP_DIR="$REPO_ROOT/.tmp"
+
+if [[ ! -d "$PROJECT_DIR" ]]; then
+  echo "Error: project directory not found: $PROJECT_DIR" >&2
+  exit 1
+fi
+
+mkdir -p "$TMP_DIR"
+mkdir -p "$PROJECT_DIR/src/main/java/$(echo "$PACKAGE" | tr '.' '/')/api"
+mkdir -p "$PROJECT_DIR/src/main/java/$(echo "$PACKAGE" | tr '.' '/')/model"
+
+POM=$(cat "$PROJECT_DIR/pom.xml")
+APP=$(cat "$PROJECT_DIR/src/main/java/$(echo "$PACKAGE" | tr '.' '/')/DemoApplication.java")
+
+PROMPT_FILE="$TMP_DIR/ai_prompt.txt"
+REQ_FILE="$TMP_DIR/ai_request.json"
+RESP_FILE="$TMP_DIR/ai_response.json"
+
+cat > "$PROMPT_FILE" <<PROMPT_EOF
+You are a Java/Spring Boot code generator.
+Given the pom.xml and DemoApplication.java below, do two things:
+1. Rewrite pom.xml to add spring-boot-starter-web and spring-boot-starter-validation dependencies (keep everything else intact).
+2. Add a simple Item CRUD: create Item.java in model package and ItemController.java in api package.
+   Item fields: Long id, String name. Controller: REST endpoints GET /items, POST /items, GET /items/{id}, DELETE /items/{id}.
+   Store items in a java.util.Map<Long, Item> in the controller.
+Return ONLY a JSON object with keys: pom_xml, Item_java, ItemController_java.
+Escape newlines in strings as \\n and quotes as \\".
+
+pom.xml:
+$POM
+
+DemoApplication.java:
+$APP
+PROMPT_EOF
+
+echo "Calling AI proxy to generate CRUD..."
+"$PYTHON" "$REPO_ROOT/workflows/sdlc_springboot/ai_add_crud.py" "$PROJECT_DIR" "$(echo "$PACKAGE" | tr '.' '/')" "$PROMPT_FILE" "$REQ_FILE" "$RESP_FILE"
+
+echo "AI added CRUD to $PROJECT_DIR"

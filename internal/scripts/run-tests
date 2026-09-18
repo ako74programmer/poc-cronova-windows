@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+WORKSPACE=""
+PROJECT="demo"
+
+usage() {
+  cat <<EOF
+Usage: run-tests [-w WORKSPACE] [-p PROJECT] [-h]
+
+Options:
+  -w WORKSPACE  Target workspace directory. Default: workspaces/springboot-demo
+  -p PROJECT    Project subdirectory inside workspace. Default: demo
+  -h            Show this help message.
+
+Example:
+  run-tests
+  run-tests -w workspaces/my-app -p app
+EOF
+}
+
+while getopts ":w:p:h" opt; do
+  case $opt in
+    w) WORKSPACE="$OPTARG" ;;
+    p) PROJECT="$OPTARG" ;;
+    h) usage; exit 0 ;;
+    \?) echo "Invalid option: -$OPTARG" >&2; usage >&2; exit 1 ;;
+    :) echo "Option -$OPTARG requires an argument." >&2; usage >&2; exit 1 ;;
+  esac
+done
+
+if [[ -z "$WORKSPACE" ]]; then
+  WORKSPACE="$REPO_ROOT/workspaces/springboot-demo"
+fi
+
+PROJECT_DIR="$WORKSPACE/$PROJECT"
+M2_DIR="$REPO_ROOT/.m2/repository"
+
+if [[ ! -d "$PROJECT_DIR" ]]; then
+  echo "Error: project directory not found: $PROJECT_DIR" >&2
+  exit 1
+fi
+
+mkdir -p "$M2_DIR"
+cd "$PROJECT_DIR"
+
+export JAVA_HOME=/c/Program\ Files/Java/jdk-25
+export PATH="/c/apache-maven-3.9.14/bin:/mingw64/bin:/usr/bin:/bin:/c/Windows/system32:/c/Windows:$PATH"
+
+echo "Running tests in $PROJECT_DIR"
+mvn -B -Dmaven.repo.local="$M2_DIR" test
+
+echo "All tests passed in $PROJECT_DIR"

@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+TEMPLATE=""
+WORKSPACE=""
+PROJECT="demo"
+CLEAN=false
+
+usage() {
+  cat <<EOF
+Usage: copy-template-to-workspace -t TEMPLATE [-w WORKSPACE] [-p PROJECT] [-c] [-h]
+
+Options:
+  -t TEMPLATE   Template name (required). Must match a directory under templates/.
+  -w WORKSPACE  Target workspace directory. Default: workspaces/springboot-demo
+  -p PROJECT    Project subdirectory inside workspace. Default: demo
+  -c            Clean target directory before copying.
+  -h            Show this help message.
+
+Example:
+  copy-template-to-workspace -t springboot-simple
+  copy-template-to-workspace -t springboot-simple -w workspaces/my-app -p app -c
+EOF
+}
+
+while getopts ":t:w:p:ch" opt; do
+  case $opt in
+    t) TEMPLATE="$OPTARG" ;;
+    w) WORKSPACE="$OPTARG" ;;
+    p) PROJECT="$OPTARG" ;;
+    c) CLEAN=true ;;
+    h) usage; exit 0 ;;
+    \?) echo "Invalid option: -$OPTARG" >&2; usage >&2; exit 1 ;;
+    :) echo "Option -$OPTARG requires an argument." >&2; usage >&2; exit 1 ;;
+  esac
+done
+
+if [[ -z "$TEMPLATE" ]]; then
+  echo "Error: -t TEMPLATE is required." >&2
+  usage >&2
+  exit 1
+fi
+
+TEMPLATE_DIR="$REPO_ROOT/templates/$TEMPLATE"
+if [[ ! -d "$TEMPLATE_DIR" ]]; then
+  echo "Error: template directory not found: $TEMPLATE_DIR" >&2
+  exit 1
+fi
+
+if [[ -z "$WORKSPACE" ]]; then
+  WORKSPACE="$REPO_ROOT/workspaces/springboot-demo"
+fi
+
+TARGET_DIR="$WORKSPACE/$PROJECT"
+
+if [[ "$CLEAN" == true ]]; then
+  echo "Cleaning target directory: $TARGET_DIR"
+  rm -rf "$TARGET_DIR"
+fi
+
+mkdir -p "$TARGET_DIR"
+echo "Copying template '$TEMPLATE' to '$TARGET_DIR'..."
+cp -r "$TEMPLATE_DIR"/. "$TARGET_DIR/"
+
+echo "Template copied successfully to $TARGET_DIR"

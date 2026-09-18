@@ -73,8 +73,8 @@ Compile error:
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD FAILURE
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  3.501 s
-[INFO] Finished at: 2026-09-18T01:34:05+02:00
+[INFO] Total time:  4.643 s
+[INFO] Finished at: 2026-09-18T10:08:36+02:00
 [INFO] ------------------------------------------------------------------------
 [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project demo: Compilation failure: Compilation failure: 
 [ERROR] /C:/Users/Andrzej/Downloads/sdlc/cronova/workspaces/springboot-demo/demo/src/main/java/com/example/demo/model/Item.java:[3,36] package javax.validation.constraints does not exist
