@@ -185,17 +185,6 @@ func suggestActions(c Chunk, lang string) []Action {
 			Action{Type: "show_logs", Label: "Pokaż logi", DagID: dagID},
 			Action{Type: "copy_command", Label: "Kopiuj komendę CLI", Command: "cronova trigger " + dagID},
 		)
-	case strings.HasPrefix(src, "docs/") || src == "readme.md":
-		path := c.Source
-		if strings.HasPrefix(path, "docs/") {
-			path = strings.TrimPrefix(path, "docs/")
-		}
-		if lang == "pl" {
-			path = strings.TrimSuffix(path, ".md") + ".pl.md"
-		}
-		actions = append(actions,
-			Action{Type: "open_docs", Label: "Otwórz dokumentację", Path: "/doc/" + path},
-		)
 	}
 	return actions
 }
