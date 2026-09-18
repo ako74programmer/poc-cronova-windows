@@ -23,6 +23,7 @@ import (
 
 	"github.com/zoyluo/cronova/internal/aiwiki"
 	"github.com/zoyluo/cronova/internal/certs"
+	"github.com/zoyluo/cronova/internal/docs"
 	"github.com/zoyluo/cronova/internal/model"
 	"github.com/zoyluo/cronova/internal/scheduler/parser"
 	"github.com/zoyluo/cronova/internal/store"
@@ -213,6 +214,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/tokens/{id}", s.deleteToken)
 	mux.HandleFunc("GET /openapi.json", s.openAPISpec) // unauthenticated (non-/api/ path)
 	mux.HandleFunc("GET /docs", s.docsPage)            // unauthenticated (non-/api/ path)
+	mux.HandleFunc("GET /doc/{path...}", s.docFile)    // embedded project docs for AI wiki
 	mux.HandleFunc("POST /api/ask", s.askWiki)         // AI wiki chat endpoint
 	if s.web != nil {
 		// no-cache: embedded assets share a fixed modtime, so without this a
@@ -244,6 +246,29 @@ func (s *Server) askWiki(w http.ResponseWriter, r *http.Request) {
 	}
 	answer := s.wiki.Ask(r.Context(), req.Question)
 	writeJSON(w, http.StatusOK, answer)
+}
+
+// docFile serves an embedded project documentation markdown file.
+// Path is rooted at docs/ (e.g. /doc/DAG_REFERENCE.md or /doc/tutorial/first-dag.md).
+func (s *Server) docFile(w http.ResponseWriter, r *http.Request) {
+	path := r.PathValue("path")
+	if path == "" {
+		httpErr(w, http.StatusNotFound, "not found")
+		return
+	}
+	// Security: prevent directory traversal.
+	if strings.Contains(path, "..") || strings.Contains(path, "\\") {
+		httpErr(w, http.StatusNotFound, "not found")
+		return
+	}
+	data, err := fs.ReadFile(docs.FS(), path)
+	if err != nil {
+		httpErr(w, http.StatusNotFound, "not found")
+		return
+	}
+	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	_, _ = w.Write(data)
 }
 
 func (s *Server) withAccessLog(next http.Handler) http.Handler {

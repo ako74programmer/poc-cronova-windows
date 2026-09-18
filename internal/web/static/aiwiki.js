@@ -128,6 +128,8 @@
         if (a.path && a.path.startsWith('dags/')) {
           const dagId = a.path.replace('dags/', '').replace('.yaml', '');
           window.location.hash = '#/dags/' + encodeURIComponent(dagId);
+        } else if (a.path && a.path.startsWith('/doc/')) {
+          window.open(a.path, '_blank');
         } else if (a.path) {
           window.open(a.path, '_blank');
         }
