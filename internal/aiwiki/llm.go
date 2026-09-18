@@ -69,10 +69,6 @@ When the context mentions YAML fields, explain how to use them in a DAG definiti
 	}
 
 	url := c.provider.BaseURL
-	if url[len(url)-1] != '/' {
-		url += "/"
-	}
-	url += "v1/chat/completions"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {

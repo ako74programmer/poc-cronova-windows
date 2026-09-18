@@ -9,6 +9,8 @@ prompt_file = sys.argv[3]
 req_file = sys.argv[4]
 resp_file = sys.argv[5]
 ai_model = sys.argv[6] if len(sys.argv) > 6 else os.environ.get("CRONOVA_AI_MODEL", "gpt-4o-mini")
+ai_base_url = sys.argv[7] if len(sys.argv) > 7 else os.environ.get("CRONOVA_AI_BASE_URL", "")
+ai_token = sys.argv[8] if len(sys.argv) > 8 else os.environ.get("CRONOVA_AI_TOKEN", "")
 
 with open(prompt_file, "r", encoding="utf-8") as f:
     prompt = f.read()
@@ -27,13 +29,14 @@ with open(req_file, "w", encoding="utf-8") as f:
 with open(req_file, "rb") as f:
     data = f.read()
 
+headers = {"Content-Type": "application/json"}
+if ai_token:
+    headers["Authorization"] = f"Bearer {ai_token}"
+
 req_obj = urllib.request.Request(
-    "http://127.0.0.1:4141/v1/chat/completions",
+    ai_base_url,
     data=data,
-    headers={
-        "Content-Type": "application/json",
-        "Authorization": "Bearer sk-local-proxy-token",
-    },
+    headers=headers,
     method="POST",
 )
 with urllib.request.urlopen(req_obj) as resp:

@@ -84,10 +84,10 @@ if "!DEV_MODE!"=="1" (
     if not exist ".tmp" mkdir .tmp
     if exist "!DB!" del /F /Q "!DB!"
     echo [app.cmd] Starting cronova dev mode on http://%HOST%:%PORT% (auth=false)
-    start "cronova-dev" /MIN "%BINARY%" serve -http %HOST%:%PORT% -db "!DB!" -dags "%DAGS%" -logs "%LOGS%" -auth=false
+    "%BINARY%" serve -http %HOST%:%PORT% -db "!DB!" -dags "%DAGS%" -logs "%LOGS%" -auth=false
     exit /b 0
 )
 
 echo [app.cmd] Starting cronova on http://%HOST%:%PORT%
-start "cronova" /MIN "%BINARY%" serve -config "%CONFIG%" -http %HOST%:%PORT%
+"%BINARY%" serve -config "%CONFIG%" -http %HOST%:%PORT%
 exit /b 0

@@ -12,16 +12,16 @@ MODEL=""
 PYTHON="${PYTHON:-/c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python}"
 DB_FILE="${CRONOVA_DB:-$REPO_ROOT/data/cronova.db}"
 
-# Resolve the default AI model from the cronova SQLite database.
-# Falls back to CRONOVA_AI_MODEL env var, then to empty (caller must supply -m).
-resolve_default_model() {
-  if [[ -n "${CRONOVA_AI_MODEL:-}" ]]; then
-    echo "$CRONOVA_AI_MODEL"
+# Resolve AI provider configuration from the cronova SQLite database.
+# Falls back to CRONOVA_AI_* env vars, then to empty (caller must supply -r/-m).
+resolve_provider() {
+  if [[ -n "${CRONOVA_AI_BASE_URL:-}" && -n "${CRONOVA_AI_MODEL:-}" ]]; then
+    echo "${CRONOVA_AI_BASE_URL}|${CRONOVA_AI_MODEL}|${CRONOVA_AI_TOKEN:-}"
     return 0
   fi
   if [[ -f "$DB_FILE" ]]; then
-    local model
-    model=$("$PYTHON" - "$DB_FILE" "$PROVIDER_ID" <<'PY'
+    local out
+    out=$("$PYTHON" - "$DB_FILE" "$PROVIDER_ID" <<'PY'
 import sqlite3, sys
 db = sys.argv[1]
 provider_id = sys.argv[2] if len(sys.argv) > 2 else None
@@ -29,17 +29,17 @@ try:
     con = sqlite3.connect(db)
     cur = con.cursor()
     if provider_id:
-        row = cur.execute("SELECT model FROM ai_providers WHERE id=?", (provider_id,)).fetchone()
+        row = cur.execute("SELECT base_url, model, token FROM ai_providers WHERE id=?", (provider_id,)).fetchone()
     else:
-        row = cur.execute("SELECT model FROM ai_providers WHERE is_default=1 LIMIT 1").fetchone()
+        row = cur.execute("SELECT base_url, model, token FROM ai_providers WHERE is_default=1 LIMIT 1").fetchone()
     if row:
-        print(row[0])
+        print("|".join(str(c) for c in row))
 except Exception:
     pass
 PY
     )
-    if [[ -n "$model" ]]; then
-      echo "$model"
+    if [[ -n "$out" ]]; then
+      echo "$out"
       return 0
     fi
   fi
@@ -80,11 +80,18 @@ while getopts ":w:p:k:r:m:y:h" opt; do
   esac
 done
 
-if [[ -z "$MODEL" ]]; then
-  MODEL=$(resolve_default_model) || true
+AI_BASE_URL="${CRONOVA_AI_BASE_URL:-}"
+AI_TOKEN="${CRONOVA_AI_TOKEN:-}"
+if [[ -z "$MODEL" || -z "$AI_BASE_URL" ]]; then
+  PROVIDER_INFO=$(resolve_provider) || true
+  if [[ -n "$PROVIDER_INFO" ]]; then
+    AI_BASE_URL="${AI_BASE_URL:-$(echo "$PROVIDER_INFO" | cut -d'|' -f1)}"
+    MODEL="${MODEL:-$(echo "$PROVIDER_INFO" | cut -d'|' -f2)}"
+    AI_TOKEN="${AI_TOKEN:-$(echo "$PROVIDER_INFO" | cut -d'|' -f3)}"
+  fi
 fi
-if [[ -z "$MODEL" ]]; then
-  echo "Error: could not determine AI model. Configure a default AI provider in cronova, set CRONOVA_AI_MODEL, or pass -m MODEL." >&2
+if [[ -z "$MODEL" || -z "$AI_BASE_URL" ]]; then
+  echo "Error: could not determine AI provider. Configure a default AI provider in cronova, set CRONOVA_AI_BASE_URL and CRONOVA_AI_MODEL, or pass -r PROVIDER_ID and -m MODEL." >&2
   exit 1
 fi
 
@@ -129,7 +136,7 @@ DemoApplication.java:
 $APP
 PROMPT_EOF
 
-echo "Calling AI proxy to generate CRUD (model: $MODEL)..."
-"$PYTHON" "$REPO_ROOT/workflows/sdlc_springboot/ai_add_crud.py" "$PROJECT_DIR" "$(echo "$PACKAGE" | tr '.' '/')" "$PROMPT_FILE" "$REQ_FILE" "$RESP_FILE" "$MODEL"
+echo "Calling AI provider (model: $MODEL, url: $AI_BASE_URL)..."
+"$PYTHON" "$REPO_ROOT/workflows/sdlc_springboot/ai_add_crud.py" "$PROJECT_DIR" "$(echo "$PACKAGE" | tr '.' '/')" "$PROMPT_FILE" "$REQ_FILE" "$RESP_FILE" "$MODEL" "$AI_BASE_URL" "$AI_TOKEN"
 
 echo "AI added CRUD to $PROJECT_DIR"

@@ -8,4 +8,4 @@ exec "$REPO_ROOT/internal/scripts/ai-review-fix-loop" \
   -w "$REPO_ROOT/workspaces/springboot-startio" \
   -p app \
   -k com.example.demo \
-  -m "kimi-k2.7-code"
+  -r default

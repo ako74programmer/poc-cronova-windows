@@ -9,4 +9,4 @@ exec "$REPO_ROOT/internal/scripts/ai-generate-feature" \
   -w "$REPO_ROOT/workspaces/sdlc_maven_luhn" \
   -p app \
   -k com.example.luhn \
-  -m "kimi-k2.7-code"
+  -r default
