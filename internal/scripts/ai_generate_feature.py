@@ -7,12 +7,13 @@ project_dir = sys.argv[1]
 prompt_file = sys.argv[2]
 req_file = sys.argv[3]
 resp_file = sys.argv[4]
+ai_model = sys.argv[5] if len(sys.argv) > 5 else os.environ.get("CRONOVA_AI_MODEL", "gpt-4o-mini")
 
 with open(prompt_file, "r", encoding="utf-8") as f:
     prompt = f.read()
 
 req = {
-    "model": "gpt-4o-mini",
+    "model": ai_model,
     "messages": [
         {"role": "system", "content": "You output only valid JSON where keys are relative file paths and values are file contents."},
         {"role": "user", "content": prompt},

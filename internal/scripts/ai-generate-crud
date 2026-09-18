@@ -7,36 +7,86 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 WORKSPACE=""
 PROJECT="demo"
 PACKAGE="com.example.demo"
+PROVIDER_ID=""
+MODEL=""
 PYTHON="${PYTHON:-/c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python}"
+DB_FILE="${CRONOVA_DB:-$REPO_ROOT/data/cronova.db}"
+
+# Resolve the default AI model from the cronova SQLite database.
+# Falls back to CRONOVA_AI_MODEL env var, then to empty (caller must supply -m).
+resolve_default_model() {
+  if [[ -n "${CRONOVA_AI_MODEL:-}" ]]; then
+    echo "$CRONOVA_AI_MODEL"
+    return 0
+  fi
+  if [[ -f "$DB_FILE" ]]; then
+    local model
+    model=$("$PYTHON" - "$DB_FILE" "$PROVIDER_ID" <<'PY'
+import sqlite3, sys
+db = sys.argv[1]
+provider_id = sys.argv[2] if len(sys.argv) > 2 else None
+try:
+    con = sqlite3.connect(db)
+    cur = con.cursor()
+    if provider_id:
+        row = cur.execute("SELECT model FROM ai_providers WHERE id=?", (provider_id,)).fetchone()
+    else:
+        row = cur.execute("SELECT model FROM ai_providers WHERE is_default=1 LIMIT 1").fetchone()
+    if row:
+        print(row[0])
+except Exception:
+    pass
+PY
+    )
+    if [[ -n "$model" ]]; then
+      echo "$model"
+      return 0
+    fi
+  fi
+  return 1
+}
 
 usage() {
   cat <<EOF
-Usage: ai-generate-crud [-w WORKSPACE] [-p PROJECT] [-k PACKAGE] [-y PYTHON] [-h]
+Usage: ai-generate-crud [-w WORKSPACE] [-p PROJECT] [-k PACKAGE] [-r PROVIDER_ID] [-m MODEL] [-y PYTHON] [-h]
 
 Options:
-  -w WORKSPACE  Target workspace directory. Default: workspaces/springboot-demo
-  -p PROJECT    Project subdirectory inside workspace. Default: demo
-  -k PACKAGE    Java package. Default: com.example.demo
-  -y PYTHON     Path to Python interpreter. Default: /c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python
-  -h            Show this help message.
+  -w WORKSPACE   Target workspace directory. Default: workspaces/springboot-demo
+  -p PROJECT     Project subdirectory inside workspace. Default: demo
+  -k PACKAGE     Java package. Default: com.example.demo
+  -r PROVIDER_ID AI provider id from cronova config. Default: provider marked as default
+  -m MODEL       AI model to use. Default: model from default provider (or CRONOVA_AI_MODEL env)
+  -y PYTHON      Path to Python interpreter. Default: /c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python
+  -h             Show this help message.
 
 Example:
   ai-generate-crud
   ai-generate-crud -w workspaces/my-app -p app -k com.example.app
+  ai-generate-crud -m "Kimi K2.7 Code"
 EOF
 }
 
-while getopts ":w:p:k:y:h" opt; do
+while getopts ":w:p:k:r:m:y:h" opt; do
   case $opt in
     w) WORKSPACE="$OPTARG" ;;
     p) PROJECT="$OPTARG" ;;
     k) PACKAGE="$OPTARG" ;;
+    r) PROVIDER_ID="$OPTARG" ;;
+    m) MODEL="$OPTARG" ;;
     y) PYTHON="$OPTARG" ;;
     h) usage; exit 0 ;;
     \?) echo "Invalid option: -$OPTARG" >&2; usage >&2; exit 1 ;;
     :) echo "Option -$OPTARG requires an argument." >&2; usage >&2; exit 1 ;;
   esac
 done
+
+if [[ -z "$MODEL" ]]; then
+  MODEL=$(resolve_default_model) || true
+fi
+if [[ -z "$MODEL" ]]; then
+  echo "Error: could not determine AI model. Configure a default AI provider in cronova, set CRONOVA_AI_MODEL, or pass -m MODEL." >&2
+  exit 1
+fi
 
 if [[ -z "$WORKSPACE" ]]; then
   WORKSPACE="$REPO_ROOT/workspaces/springboot-demo"
@@ -79,7 +129,7 @@ DemoApplication.java:
 $APP
 PROMPT_EOF
 
-echo "Calling AI proxy to generate CRUD..."
-"$PYTHON" "$REPO_ROOT/workflows/sdlc_springboot/ai_add_crud.py" "$PROJECT_DIR" "$(echo "$PACKAGE" | tr '.' '/')" "$PROMPT_FILE" "$REQ_FILE" "$RESP_FILE"
+echo "Calling AI proxy to generate CRUD (model: $MODEL)..."
+"$PYTHON" "$REPO_ROOT/workflows/sdlc_springboot/ai_add_crud.py" "$PROJECT_DIR" "$(echo "$PACKAGE" | tr '.' '/')" "$PROMPT_FILE" "$REQ_FILE" "$RESP_FILE" "$MODEL"
 
 echo "AI added CRUD to $PROJECT_DIR"

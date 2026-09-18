@@ -8,12 +8,13 @@ package = sys.argv[2]
 prompt_file = sys.argv[3]
 req_file = sys.argv[4]
 resp_file = sys.argv[5]
+ai_model = sys.argv[6] if len(sys.argv) > 6 else os.environ.get("CRONOVA_AI_MODEL", "gpt-4o-mini")
 
 with open(prompt_file, "r", encoding="utf-8") as f:
     prompt = f.read()
 
 req = {
-    "model": "gpt-4o-mini",
+    "model": ai_model,
     "messages": [
         {"role": "system", "content": "You output only valid JSON. Keys: pom_xml plus relative java file paths you modify."},
         {"role": "user", "content": prompt},

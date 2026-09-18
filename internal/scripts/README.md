@@ -128,12 +128,17 @@ internal/scripts/ai-generate-crud -k com.example.store
 
 # Inny projekt i interpreter Pythona
 internal/scripts/ai-generate-crud -w workspaces/my-app -p app -k com.example.app -y /usr/bin/python3
+
+# Wymuś model (zamiast domyślnego z konfiguracji cronova)
+internal/scripts/ai-generate-crud -m "kimi-k2.7-code"
 ```
 
 Parametry:
 - `-w WORKSPACE` — workspace
 - `-p PROJECT` — podkatalog projektu
 - `-k PACKAGE` — pakiet Java (domyślnie `com.example.demo`)
+- `-r PROVIDER_ID` — id dostawcy AI z konfiguracji cronova (domyślnie dostawca oznaczony jako default)
+- `-m MODEL` — model AI (domyślnie model z domyślnego dostawcy lub zmienna `CRONOVA_AI_MODEL`)
 - `-y PYTHON` — ścieżka do Pythona
 - `-h` — pomoc
 
@@ -152,6 +157,9 @@ internal/scripts/ai-review-fix-loop -i 5
 
 # Inny projekt i pakiet
 internal/scripts/ai-review-fix-loop -w workspaces/my-app -p app -k com.example.app -i 5
+
+# Wymuż model
+internal/scripts/ai-review-fix-loop -m "kimi-k2.7-code"
 ```
 
 Parametry:
@@ -159,6 +167,8 @@ Parametry:
 - `-p PROJECT` — podkatalog projektu
 - `-k PACKAGE` — pakiet Java
 - `-i ITERATIONS` — maksymalna liczba iteracji (domyślnie `3`)
+- `-r PROVIDER_ID` — id dostawcy AI z konfiguracji cronova (domyślnie dostawca oznaczony jako default)
+- `-m MODEL` — model AI (domyślnie model z domyślnego dostawcy lub zmienna `CRONOVA_AI_MODEL`)
 - `-y PYTHON` — ścieżka do Pythona
 - `-h` — pomoc
 
@@ -232,6 +242,9 @@ internal/scripts/ai-generate-feature \
   -w workspaces/sdlc_maven_luhn \
   -p app \
   -k com.example.luhn
+
+# Wymuś model
+internal/scripts/ai-generate-feature -f prompts/luhn.txt -m "kimi-k2.7-code"
 ```
 
 Parametry:
@@ -239,6 +252,8 @@ Parametry:
 - `-w WORKSPACE` — workspace
 - `-p PROJECT` — podkatalog projektu
 - `-k PACKAGE` — pakiet Java
+- `-r PROVIDER_ID` — id dostawcy AI z konfiguracji cronova (domyślnie dostawca oznaczony jako default)
+- `-m MODEL` — model AI (domyślnie model z domyślnego dostawcy lub zmienna `CRONOVA_AI_MODEL`)
 - `-y PYTHON` — ścieżka do Pythona
 - `-h` — pomoc
 
