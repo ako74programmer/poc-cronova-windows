@@ -9,21 +9,21 @@
 
   const fab = document.createElement('button');
   fab.className = 'aiwiki-fab';
-  fab.title = 'AI wiki / Pomoc';
+  fab.title = 'AI wiki / ' + t('aiwiki_title');
   fab.innerHTML = '✦';
-  fab.setAttribute('aria-label', 'Otwórz chat AI wiki');
+  fab.setAttribute('aria-label', t('aiwiki_title'));
 
   const win = document.createElement('div');
   win.className = 'aiwiki-window aiwiki-hidden';
   win.innerHTML = `
     <div class="aiwiki-head">
-      <b>AI wiki — cronova</b>
-      <button id="aiwiki-close" title="Zamknij">✕</button>
+      <b>${t('aiwiki_title')}</b>
+      <button id="aiwiki-close" title="${t('aiwiki_close')}">✕</button>
     </div>
     <div class="aiwiki-msgs" id="aiwiki-msgs"></div>
     <div class="aiwiki-input">
-      <input id="aiwiki-q" type="text" placeholder="Zapytaj np. jak zrobić DAG…" autocomplete="off" />
-      <button id="aiwiki-send" class="primary">Wyślij</button>
+      <input id="aiwiki-q" type="text" placeholder="${t('aiwiki_placeholder')}" autocomplete="off" />
+      <button id="aiwiki-send" class="primary">${t('aiwiki_send')}</button>
     </div>
   `;
 
@@ -38,7 +38,7 @@
   function toggle(show) {
     open = show !== undefined ? show : !open;
     win.classList.toggle('aiwiki-hidden', !open);
-    fab.setAttribute('aria-label', open ? 'Zamknij chat AI wiki' : 'Otwórz chat AI wiki');
+    fab.setAttribute('aria-label', open ? t('aiwiki_close') : t('aiwiki_title'));
     if (open) setTimeout(() => input.focus(), 50);
   }
 
@@ -58,8 +58,21 @@
     if (!sources || !sources.length) return null;
     const wrap = document.createElement('div');
     wrap.className = 'src';
-    wrap.textContent = 'Źródła: ' + sources.map(s => s.path + (s.section ? ' / ' + s.section : '')).join('; ');
+    wrap.textContent = t('aiwiki_sources') + sources.map(s => s.path + (s.section ? ' / ' + s.section : '')).join('; ');
     return wrap;
+  }
+
+  function actionLabel(a) {
+    if (a.label) return a.label;
+    switch (a.type) {
+      case 'trigger_dag': return t('aiwiki_run_dag');
+      case 'open_dag_runs': return t('aiwiki_dag_runs');
+      case 'show_logs': return t('aiwiki_show_logs');
+      case 'copy_command': return t('aiwiki_copy_cmd');
+      case 'open_docs': return t('aiwiki_open_docs');
+      case 'open_editor': return t('aiwiki_see_dag');
+      default: return a.type;
+    }
   }
 
   function renderActions(actions) {
@@ -68,7 +81,7 @@
     wrap.className = 'actions';
     actions.forEach(a => {
       const btn = document.createElement('button');
-      btn.textContent = a.label || a.type;
+      btn.textContent = actionLabel(a);
       btn.addEventListener('click', () => runAction(a));
       wrap.appendChild(btn);
     });
@@ -86,21 +99,42 @@
         })
           .then(r => {
             if (!r.ok) throw new Error('HTTP ' + r.status);
-            window.toast && window.toast('Wyzwolono DAG ' + a.dag_id);
+            window.toast && window.toast(t('aiwiki_triggered') + a.dag_id);
             window.location.hash = '#/dags/' + encodeURIComponent(a.dag_id);
           })
-          .catch(e => window.toast && window.toast('Błąd: ' + e.message, 'error'));
+          .catch(e => window.toast && window.toast('Error: ' + e.message, 'error'));
+        break;
+      case 'open_dag_runs':
+        if (a.dag_id) window.location.hash = '#/dags/' + encodeURIComponent(a.dag_id);
+        break;
+      case 'show_logs':
+        if (a.dag_id) {
+          fetch('/api/dags/' + encodeURIComponent(a.dag_id) + '/runs')
+            .then(r => r.json())
+            .then(runs => {
+              const run = (runs || []).find(x => x.run_id) || (runs && runs.value && runs.value.find(x => x.run_id));
+              if (run && run.run_id) {
+                window.location.hash = '#/runs/' + encodeURIComponent(run.run_id);
+              } else {
+                window.toast && window.toast(t('aiwiki_no_runs') + a.dag_id);
+              }
+            })
+            .catch(e => window.toast && window.toast('Error: ' + e.message, 'error'));
+        }
         break;
       case 'open_editor':
+      case 'open_docs':
         if (a.path && a.path.startsWith('dags/')) {
           const dagId = a.path.replace('dags/', '').replace('.yaml', '');
           window.location.hash = '#/dags/' + encodeURIComponent(dagId);
-        } else {
+        } else if (a.path) {
           window.open(a.path, '_blank');
         }
         break;
       case 'copy_command':
-        navigator.clipboard.writeText(a.command || '').catch(() => {});
+        navigator.clipboard.writeText(a.command || '').then(() => {
+          window.toast && window.toast(t('aiwiki_copied'));
+        }).catch(() => {});
         break;
       default:
         break;
@@ -128,9 +162,9 @@
       const acts = renderActions(data.actions);
       if (src) extras.appendChild(src);
       if (acts) extras.appendChild(acts);
-      addMsg(data.answer || 'Brak odpowiedzi.', 'bot', extras);
+      addMsg(data.answer || t('aiwiki_fallback'), 'bot', extras);
     } catch (e) {
-      addMsg('Błąd połączenia z AI wiki: ' + e.message, 'bot');
+      addMsg(t('aiwiki_error') + e.message, 'bot');
     } finally {
       busy = false;
       sendBtn.disabled = false;
@@ -144,7 +178,17 @@
   // Welcome message.
   setTimeout(() => {
     if (!msgs.childElementCount) {
-      addMsg('Witaj! Jestem AI wiki cronova. Zapytaj mnie np. "Jak zrobić DAG?" lub "Co to jest retry?"', 'bot');
+      addMsg(t('aiwiki_welcome'), 'bot');
     }
   }, 500);
+
+  // Re-render labels when language changes.
+  document.addEventListener('cronova:langchanged', () => {
+    fab.title = 'AI wiki / ' + t('aiwiki_title');
+    fab.setAttribute('aria-label', open ? t('aiwiki_close') : t('aiwiki_title'));
+    win.querySelector('.aiwiki-head b').textContent = t('aiwiki_title');
+    win.querySelector('#aiwiki-close').title = t('aiwiki_close');
+    input.placeholder = t('aiwiki_placeholder');
+    sendBtn.textContent = t('aiwiki_send');
+  });
 })();

@@ -337,6 +337,12 @@ const DICT = {
     nv_see_log: "zobacz log",
     nv_step_extract: "Pobierz dane", nv_step_transform: "Przekształć", nv_step_load: "Załaduj wyniki",
     nv_step_fetch: "Pobierz dane", nv_step_render: "Wygeneruj i wyślij raport", nv_step_1: "Pierwszy krok",
+    aiwiki_title: "AI wiki — cronova", aiwiki_placeholder: "Zapytaj np. jak zrobić DAG…", aiwiki_send: "Wyślij", aiwiki_close: "Zamknij",
+    aiwiki_welcome: "Witaj! Jestem AI wiki cronova. Zapytaj mnie np. \"Jak zrobić DAG?\" lub \"Co to jest retry?\"",
+    aiwiki_error: "Błąd połączenia z AI wiki: ", aiwiki_copied: "Skopiowano do schowka", aiwiki_triggered: "Wyzwolono DAG ", aiwiki_no_runs: "Brak runów dla DAG ",
+    aiwiki_run_dag: "Uruchom ten DAG", aiwiki_dag_runs: "Historia runów", aiwiki_show_logs: "Pokaż logi", aiwiki_copy_cmd: "Kopiuj komendę CLI",
+    aiwiki_open_docs: "Otwórz dokumentację", aiwiki_see_dag: "Zobacz DAG", aiwiki_browse_dags: "Przeglądaj DAG-i",
+    aiwiki_sources: "Źródła: ", aiwiki_fallback: "Nie znalazłem dokładnej odpowiedzi w bazie wiedzy. Spróbuj zapytać inaczej, np. 'Jak zrobić DAG?' lub 'Co to jest retry?'.",
   },
   en: {
     workspace: "Workspace", nav_dags: "Workflows", newdag: "+ New workflow",
@@ -643,6 +649,12 @@ const DICT = {
     nv_see_log: "view log",
     nv_step_extract: "Extract data", nv_step_transform: "Transform", nv_step_load: "Load results",
     nv_step_fetch: "Fetch data", nv_step_render: "Render & send report", nv_step_1: "First step",
+    aiwiki_title: "AI wiki — cronova", aiwiki_placeholder: "Ask something like how to create a DAG…", aiwiki_send: "Send", aiwiki_close: "Close",
+    aiwiki_welcome: "Hi! I'm the cronova AI wiki. Ask me e.g. \"How do I create a DAG?\" or \"What is retry?\"",
+    aiwiki_error: "AI wiki connection error: ", aiwiki_copied: "Copied to clipboard", aiwiki_triggered: "Triggered DAG ", aiwiki_no_runs: "No runs for DAG ",
+    aiwiki_run_dag: "Run this DAG", aiwiki_dag_runs: "Run history", aiwiki_show_logs: "Show logs", aiwiki_copy_cmd: "Copy CLI command",
+    aiwiki_open_docs: "Open documentation", aiwiki_see_dag: "View DAG", aiwiki_browse_dags: "Browse DAGs",
+    aiwiki_sources: "Sources: ", aiwiki_fallback: "I couldn't find an exact answer in the knowledge base. Try rephrasing, e.g. 'How do I create a DAG?' or 'What is retry?'.",
   },
 };
 const STATE = {
@@ -1302,6 +1314,7 @@ function applyStaticI18n() {
 }
 function setLang(l) {
   lang = l; localStorage.setItem("cnv_lang", l); applyStaticI18n();
+  document.dispatchEvent(new CustomEvent('cronova:langchanged'));
   renderUserChip(); // role label + logout button are built with t(), not data-i18n
   // dag/task re-render from in-memory D (no refetch) so unsaved edits survive.
   if (view === "dags") { setNav("dags"); renderDags(); } // crumb is localized now (Workflows) — refresh it too
