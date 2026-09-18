@@ -64,10 +64,11 @@ RESP_FILE="$TMP_DIR/ai_response.json"
 cat > "$PROMPT_FILE" <<PROMPT_EOF
 You are a Java/Spring Boot code generator.
 Given the pom.xml and DemoApplication.java below, do two things:
-1. Rewrite pom.xml to add spring-boot-starter-web and spring-boot-starter-validation dependencies (keep everything else intact).
+1. Ensure pom.xml contains dependencies for Spring Boot web and validation (e.g. spring-boot-starter-webmvc and spring-boot-starter-validation). Do NOT add <version> tags for dependencies managed by the Spring Boot parent POM. Keep everything else intact.
 2. Add a simple Item CRUD: create Item.java in model package and ItemController.java in api package.
    Item fields: Long id, String name. Controller: REST endpoints GET /items, POST /items, GET /items/{id}, DELETE /items/{id}.
    Store items in a java.util.Map<Long, Item> in the controller.
+   Use jakarta.validation.constraints.NotBlank and jakarta.validation.Valid (NOT javax.validation).
 Return ONLY a JSON object with keys: pom_xml, Item_java, ItemController_java.
 Escape newlines in strings as \\n and quotes as \\".
 

@@ -24,6 +24,7 @@ cronova.env
 .m2/
 # scratch screenshots / working artifacts (never commit)
 /tmp/
+.tmp/
 node_modules/
 # mkdocs build output + docs venv
 /site/

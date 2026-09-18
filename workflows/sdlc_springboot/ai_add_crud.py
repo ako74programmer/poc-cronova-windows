@@ -43,6 +43,14 @@ with open(resp_file, "w", encoding="utf-8") as f:
 
 resp_json = json.loads(resp_body)
 content = resp_json["choices"][0]["message"]["content"]
+
+# Strip optional markdown code fences (```json ... ```)
+content = content.strip()
+if content.startswith("```"):
+    content = "\n".join(content.split("\n")[1:])
+    if content.endswith("```"):
+        content = content[:-3].strip()
+
 data = json.loads(content)
 
 base = project_dir

@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+TYPE="maven-project"
+LANG="java"
+BOOT=""
+GROUP="com.example"
+ARTIFACT="demo"
+NAME=""
+PACKAGING="jar"
+CONFIG="properties"
+JAVA="21"
+DEPS=""
+WORKSPACE=""
+PROJECT="demo"
+CLEAN=false
+
+usage() {
+  cat <<EOF
+Usage: fetch-springboot-project [OPTIONS]
+
+Download a Spring Boot project skeleton from https://start.spring.io/.
+
+Options:
+  -t TYPE        Project type: maven-project, gradle-project, gradle-project-kotlin
+                 Default: maven-project
+  -l LANG        Language: java, kotlin, groovy
+                 Default: java
+  -b BOOT        Spring Boot version, e.g. 3.3.5
+                 Default: latest stable (empty lets start.spring.io pick)
+  -g GROUP       Project group. Default: com.example
+  -a ARTIFACT    Project artifact. Default: demo
+  -n NAME        Package name. Default: GROUP.ARTIFACT
+  -p PACKAGING   Packaging: jar, war. Default: jar
+  -c CONFIG      Configuration format: properties, yaml. Default: properties
+  -j JAVA        Java version: 27, 25, 21, 17. Default: 21
+  -d DEPS        Comma-separated dependencies, e.g. lombok,web,spring-boot-starter-web
+                 Default: none
+  -w WORKSPACE   Target workspace directory. Default: workspaces/springboot-demo
+  -P PROJECT     Project subdirectory inside workspace. Default: demo
+  -C             Clean target directory before extracting.
+  -h             Show this help message.
+
+Example:
+  fetch-springboot-project -b 3.3.5 -d web,lombok
+  fetch-springboot-project -t gradle-project -l kotlin -b 3.3.5 -g com.acme -a store -d web,data-jpa -C
+EOF
+}
+
+while getopts ":t:l:b:g:a:n:p:c:j:d:w:P:Ch" opt; do
+  case $opt in
+    t) TYPE="$OPTARG" ;;
+    l) LANG="$OPTARG" ;;
+    b) BOOT="$OPTARG" ;;
+    g) GROUP="$OPTARG" ;;
+    a) ARTIFACT="$OPTARG" ;;
+    n) NAME="$OPTARG" ;;
+    p) PACKAGING="$OPTARG" ;;
+    c) CONFIG="$OPTARG" ;;
+    j) JAVA="$OPTARG" ;;
+    d) DEPS="$OPTARG" ;;
+    w) WORKSPACE="$OPTARG" ;;
+    P) PROJECT="$OPTARG" ;;
+    C) CLEAN=true ;;
+    h) usage; exit 0 ;;
+    \?) echo "Invalid option: -$OPTARG" >&2; usage >&2; exit 1 ;;
+    :) echo "Option -$OPTARG requires an argument." >&2; usage >&2; exit 1 ;;
+  esac
+done
+
+if [[ -z "$NAME" ]]; then
+  NAME="$GROUP.$ARTIFACT"
+fi
+
+if [[ -z "$WORKSPACE" ]]; then
+  WORKSPACE="$REPO_ROOT/workspaces/springboot-demo"
+fi
+
+TARGET_DIR="$WORKSPACE/$PROJECT"
+TMP_DIR="$REPO_ROOT/.tmp"
+mkdir -p "$TMP_DIR"
+
+PYTHON="${PYTHON:-/c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python}"
+if ! command -v "$PYTHON" >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+  PYTHON="python3"
+fi
+
+URL="https://start.spring.io/starter.zip"
+URL="${URL}?type=$(printf '%s' "$TYPE" | "$PYTHON" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))')"
+URL="${URL}&language=$(printf '%s' "$LANG" | "$PYTHON" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))')"
+if [[ -n "$BOOT" ]]; then
+  URL="${URL}&bootVersion=$(printf '%s' "$BOOT" | "$PYTHON" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))')"
+fi
+URL="${URL}&groupId=$(printf '%s' "$GROUP" | "$PYTHON" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))')"
+URL="${URL}&artifactId=$(printf '%s' "$ARTIFACT" | "$PYTHON" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))')"
+URL="${URL}&name=$(printf '%s' "$ARTIFACT" | "$PYTHON" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))')"
+URL="${URL}&packageName=$(printf '%s' "$NAME" | "$PYTHON" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))')"
+URL="${URL}&packaging=$(printf '%s' "$PACKAGING" | "$PYTHON" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))')"
+URL="${URL}&configFormat=$(printf '%s' "$CONFIG" | "$PYTHON" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))')"
+URL="${URL}&javaVersion=$(printf '%s' "$JAVA" | "$PYTHON" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))')"
+if [[ -n "$DEPS" ]]; then
+  URL="${URL}&dependencies=$(printf '%s' "$DEPS" | "$PYTHON" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))')"
+fi
+
+echo "Downloading Spring Boot project from start.spring.io..."
+echo "URL: $URL"
+
+ZIP_FILE="$TMP_DIR/springboot-project.zip"
+
+if command -v curl >/dev/null 2>&1; then
+  curl -L -o "$ZIP_FILE" "$URL"
+elif command -v wget >/dev/null 2>&1; then
+  wget -O "$ZIP_FILE" "$URL"
+else
+  echo "Error: curl or wget is required." >&2
+  exit 1
+fi
+
+if [[ "$CLEAN" == true ]]; then
+  echo "Cleaning target directory: $TARGET_DIR"
+  rm -rf "$TARGET_DIR"
+fi
+
+mkdir -p "$TARGET_DIR"
+echo "Extracting project to $TARGET_DIR..."
+unzip -q "$ZIP_FILE" -d "$TARGET_DIR"
+
+echo "Spring Boot project downloaded and extracted to $TARGET_DIR"

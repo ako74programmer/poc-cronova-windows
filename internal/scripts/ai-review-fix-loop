@@ -85,6 +85,9 @@ while [ "$ITER" -le "$MAX_ITER" ]; do
   cat > "$TMP_DIR/ai_review_prompt.txt" <<PROMPT_EOF
 You are a Java build-error reviewer. The Spring Boot project below failed to compile.
 Fix the code (and pom.xml if needed) so it compiles. Keep the Item CRUD functionality.
+IMPORTANT:
+- do NOT add <version> tags to dependencies that are managed by the Spring Boot parent POM. Use only <groupId> and <artifactId> for Spring Boot starters.
+- Use jakarta.validation.constraints.NotBlank and jakarta.validation.Valid (NOT javax.validation).
 Return ONLY a JSON object with keys: pom_xml, and for each Java file you change, key = relative path like "src/main/java/com/example/demo/api/ItemController.java".
 Escape newlines in strings as \\n and quotes as \\".
 
