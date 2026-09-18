@@ -73,5 +73,5 @@ Tak, ale jako **opcjonalna funkcja**. Domyślnie chat działa offline (RAG + sza
 | 1 | BM25 retrieval | ✅ done | Zaimplementowano BM25 w internal/aiwiki/bm25.go, testy przechodzą, endpoint działa. |
 | 2 | LLM integration | ✅ done | Odpowiedzi generowane przez skonfigurowanego AI providera; fallback do szablonów offline. |
 | 3 | Więcej akcji | ✅ done | Dodano 4 nowe akcje; drobna poprawka routingów do zrobienia przy okazji. |
-| 4 | Lokalizacja | ✅ done | Słowniki pl/en w base.js; aiwiki.js używa t() i reaguje na cronova:langchanged. |
-| 5 | Test E2E | 🔄 in progress | |
+| 4 | Lokalizacja | ✅ done | Słowniki pl/en w base.js; aiwiki.js używa t() i re-renderuje etykiety oraz przyciski akcji przy cronova:langchanged. |
+| 5 | Test E2E | ✅ done | PL: pytanie o DAG → odpowiedź + akcje; EN: pytanie o retry → odpowiedź po angielsku + akcje po angielsku; trigger DAG uruchamia run; copy/show logs działają.
