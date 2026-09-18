@@ -82,6 +82,9 @@
     actions.forEach(a => {
       const btn = document.createElement('button');
       btn.dataset.actionType = a.type;
+      if (a.dag_id) btn.dataset.dagId = a.dag_id;
+      if (a.path) btn.dataset.path = a.path;
+      if (a.command) btn.dataset.command = a.command;
       btn.textContent = actionLabel(a);
       btn.addEventListener('click', () => runAction(a));
       wrap.appendChild(btn);
