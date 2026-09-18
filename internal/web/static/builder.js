@@ -11,27 +11,27 @@ const CRON_PRESETS = [
   { k: "cp_day", v: "0 0 * * *" }, { k: "cp_2am", v: "0 2 * * *" }, { k: "cp_mon", v: "0 0 * * 1" },
 ];
 
-// cron cheat-sheet content (bilingual); picked by current lang at render time
+// cron cheat-sheet content (trilingual); picked by current lang at render time
 const CRON_HELP = {
   fields: {
-    zh: [["分", "0-59"], ["时", "0-23"], ["日", "1-31"], ["月", "1-12"], ["周", "0-6（0=周日）"]],
+    pl: [["min", "0-59"], ["godz", "0-23"], ["dzień", "1-31"], ["mies", "1-12"], ["dz.tyg", "0-6 (0=niedz)"]],
     en: [["min", "0-59"], ["hour", "0-23"], ["day", "1-31"], ["month", "1-12"], ["weekday", "0-6 (0=Sun)"]],
   },
   ops: {
-    zh: [["*", "任意值"], [",", "列举，如 1,15"], ["-", "范围，如 1-5"], ["/", "步进，如 */5"]],
+    pl: [["*", "dowolna"], [",", "lista, np. 1,15"], ["-", "zakres, np. 1-5"], ["/", "krok, np. */5"]],
     en: [["*", "any value"], [",", "list, e.g. 1,15"], ["-", "range, e.g. 1-5"], ["/", "step, e.g. */5"]],
   },
   examples: {
-    zh: [["* * * * *", "每分钟"], ["*/5 * * * *", "每 5 分钟"], ["0 * * * *", "每小时整点"], ["0 9 * * *", "每天 09:00"], ["30 2 * * *", "每天 02:30"], ["0 0 * * 1", "每周一 00:00"], ["0 9 * * 1-5", "工作日 09:00"], ["0 0 1 * *", "每月 1 号 00:00"]],
+    pl: [["* * * * *", "co minutę"], ["*/5 * * * *", "co 5 min"], ["0 * * * *", "co godzinę"], ["0 9 * * *", "codziennie 09:00"], ["30 2 * * *", "codziennie 02:30"], ["0 0 * * 1", "poniedziałek 00:00"], ["0 9 * * 1-5", "dni robocze 09:00"], ["0 0 1 * *", "1. dnia miesiąca 00:00"]],
     en: [["* * * * *", "every minute"], ["*/5 * * * *", "every 5 min"], ["0 * * * *", "every hour"], ["0 9 * * *", "daily 09:00"], ["30 2 * * *", "daily 02:30"], ["0 0 * * 1", "Mon 00:00"], ["0 9 * * 1-5", "weekdays 09:00"], ["0 0 1 * *", "1st of month 00:00"]],
   },
   shortcuts: {
-    zh: [["@hourly", "每小时"], ["@daily", "每天"], ["@weekly", "每周"], ["@every 30s", "每 30 秒"], ["@every 5m", "每 5 分钟"]],
+    pl: [["@hourly", "co godzinę"], ["@daily", "codziennie"], ["@weekly", "co tydzień"], ["@every 30s", "co 30s"], ["@every 5m", "co 5 min"]],
     en: [["@hourly", "hourly"], ["@daily", "daily"], ["@weekly", "weekly"], ["@every 30s", "every 30s"], ["@every 5m", "every 5 min"]],
   },
 };
 function cronHelpHtml(idp) {
-  const L = (k) => CRON_HELP[k][lang] || CRON_HELP[k].zh;
+  const L = (k) => CRON_HELP[k][lang] || CRON_HELP[k].pl;
   const rows = (arr, clickable) => arr.map(([a, b]) =>
     `<div class="ch-row"><code class="${clickable ? "ch-ex" : ""}" ${clickable ? `data-cron="${esc(a)}"` : ""}>${esc(a)}</code><span>${esc(b)}</span></div>`).join("");
   return `<div class="cron-help" id="${idp}-cronpop" hidden>

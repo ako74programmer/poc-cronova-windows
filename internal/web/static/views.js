@@ -8,7 +8,7 @@ async function loadDags() {
   renderDags();
   finishRouteRender();
 }
-// both sidebars carry a DAG count (expert "DAGs", novice "我的工作流")
+// both sidebars carry a DAG count (expert "DAGs", novice "my workflows")
 function setDagCounts(n) { const a = $("nav-dags"); if (a) a.textContent = n; const b = $("nav-flows"); if (b) b.textContent = n; }
 function renderDags() {
   if (view !== "dags" || !overviewCache) return;
@@ -112,7 +112,7 @@ async function runBulk(op) {
   loadDags();
 }
 // one health bar in place of the old stat cards: the worst failing DAG (if any)
-// plus the two global counters the cards used to carry. "去处理" jumps straight
+// plus the two global counters the cards used to carry. "Go handle" jumps straight
 // to the failing run when the activity feed still has it, else to the DAG page.
 function healthBarHtml(stats, dags) {
   const activity = overviewCache.activity || [];
@@ -308,7 +308,7 @@ async function showDag(id, tab) {
       httpMethod: h.method || "GET", httpUrl: h.url || "", httpHeaders: h.headers ? Object.entries(h.headers).map(([k, v]) => `${k}: ${v}`).join("\n") : "", httpBody: h.body || "", httpStatus: (h.expected_status || []).join(", ") }; }),
     runs: runs || [], allDags, graphPending: null, activeTaskId: null,
     // graph structural-editing session: pending (unsaved) changes accumulate in
-    // D.tasks; graphBase snapshots the last-saved model for 放弃/diff.
+    // D.tasks; graphBase snapshots the last-saved model for discard/diff.
     graphBase: null, graphDirty: 0, diffOpen: false, diffCache: null, connectMode: false,
     // default tab: a 0-task shell opens on Structure (its obvious next step is
     // adding tasks); anything else opens on Runs (the monitoring intent).
@@ -412,7 +412,7 @@ function renderDagPage() {
 }
 // ============================================================================
 // Novice DAG detail: hero + numbered step list + recent runs; everything else
-// folds behind “更多设置” / the expert mode toggle. Renders from the same D.
+// folds behind "More settings" / the expert mode toggle. Renders from the same D.
 // ============================================================================
 function renderDagPageNovice() {
   const d = D.dag;
@@ -1046,7 +1046,7 @@ function dagStructureHtml() {
   }));
   const dirty = D.graphDirty || 0;
   // sticky unsaved-changes bar: graph structural edits are a SESSION — nothing
-  // is persisted until 保存 (which runs the exact same saveDag pipeline).
+  // is persisted until save (which runs the exact same saveDag pipeline).
   const bar = dirty ? `<div class="diff-bar" id="gd-bar" role="status">
       <span class="diff-n">${t("diff_unsaved", dirty)}</span>
       <button class="icon" id="gd-toggle" aria-expanded="${!!D.diffOpen}">${t(D.diffOpen ? "diff_hide" : "diff_show")}</button>
@@ -1100,7 +1100,7 @@ function wireDagStructure() {
 // ============================================================================
 // Graph structural editing (expert Structure tab). All mutations go through
 // graphMutate(), which snapshots the last-saved model once and accumulates a
-// pending session; 保存 replays the exact saveDag pipeline, 放弃 restores.
+// pending session; save replays the exact saveDag pipeline, discard restores.
 // ============================================================================
 function graphMutate(fn) {
   if (!D.graphBase) D.graphBase = JSON.parse(JSON.stringify(D.tasks));
@@ -1980,7 +1980,7 @@ function hydrateProjectSection(tk) {
   const fill = () => {
     const cur = tk.project || "";
     sel.innerHTML = `<option value="">${t("proj_none")}</option>` +
-      (PROJECTS || []).map((p) => `<option value="${esc(p.name)}" ${p.name === cur ? "selected" : ""}>${esc(p.name)} · ${p.files}${lang === "zh" ? "个文件" : " files"}</option>`).join("");
+      (PROJECTS || []).map((p) => `<option value="${esc(p.name)}" ${p.name === cur ? "selected" : ""}>${esc(p.name)} · ${p.files} ${lang === "pl" ? (p.files === 1 ? "plik" : p.files % 10 >= 2 && p.files % 10 <= 4 && (p.files % 100 < 10 || p.files % 100 >= 20) ? "pliki" : "plików") : "files"}</option>`).join("");
     // keep a selected value even if the list hasn't loaded it yet
     if (cur && !(PROJECTS || []).some((p) => p.name === cur)) {
       sel.insertAdjacentHTML("beforeend", `<option value="${esc(cur)}" selected>${esc(cur)}</option>`);
@@ -2649,7 +2649,7 @@ function showLog(tiID, taskID) {
 // showAllLogs replaces the single-task stream with the whole run interleaved:
 // one SSE per task instance (arrival order), each line prefixed with a
 // stably-colored [task_id] so parallel branches read apart. Clicking a task's
-// 日志 button returns to the focused single-task view.
+// log button returns to the focused single-task view.
 function showAllLogs() {
   const data = runDataCache; if (!data) return;
   closeLog();

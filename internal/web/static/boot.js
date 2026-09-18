@@ -17,7 +17,7 @@ $("search").onkeydown = (e) => {
   else if (e.key === "Escape") { closeJump(); }
 };
 $("newdag").onclick = () => { nvMode() ? showWizard() : newDagModal(); };
-$("lang").onclick = () => setLang(lang === "zh" ? "en" : "zh");
+$("lang").onclick = () => setLang(lang === "pl" ? "en" : "pl");
 $("theme").onclick = () => { theme = theme === "dark" ? "light" : "dark"; localStorage.setItem("cnv_theme", theme); applyTheme(); };
 $("mode-nov").onclick = () => setMode("novice");
 $("mode-exp").onclick = () => setMode("expert");
