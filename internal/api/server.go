@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zoyluo/cronova/internal/aiwiki"
 	"github.com/zoyluo/cronova/internal/certs"
 	"github.com/zoyluo/cronova/internal/model"
 	"github.com/zoyluo/cronova/internal/scheduler/parser"
@@ -75,6 +76,8 @@ type Server struct {
 	workerCA      *certs.CA
 	workerHubAddr string
 	hub           WorkerHubControl
+	// AI wiki chat helper.
+	wiki *aiwiki.Wiki
 }
 
 const (
@@ -86,17 +89,22 @@ const (
 	maxRunPageSize      = 200
 )
 
-func New(st store.Store, eng Engine, logDir string, web fs.FS, info Info) *Server {
+func New(st store.Store, eng Engine, logDir string, web fs.FS, info Info) (*Server, error) {
 	if info.TZ == "" {
 		// The engine evaluates schedules against UTC anchors (all persisted
 		// timestamps are UTC), so UTC — not the server's wall clock — is the
 		// honest label for "what timezone do cron fields mean".
 		info.TZ = "UTC"
 	}
+	wiki, err := aiwiki.New()
+	if err != nil {
+		return nil, fmt.Errorf("aiwiki: %w", err)
+	}
 	return &Server{
 		store: st, eng: eng, logDir: logDir, web: web, info: info,
 		loginLim: newLoginLimiter(), sseSlots: make(chan struct{}, maxSSEConnections), started: time.Now(),
-	}
+		wiki: wiki,
+	}, nil
 }
 
 // SetAuth enables/configures authentication. Must be called before Handler().
@@ -205,6 +213,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/tokens/{id}", s.deleteToken)
 	mux.HandleFunc("GET /openapi.json", s.openAPISpec) // unauthenticated (non-/api/ path)
 	mux.HandleFunc("GET /docs", s.docsPage)            // unauthenticated (non-/api/ path)
+	mux.HandleFunc("POST /api/ask", s.askWiki)         // AI wiki chat endpoint
 	if s.web != nil {
 		// no-cache: embedded assets share a fixed modtime, so without this a
 		// browser can serve a stale console after the binary is upgraded.
@@ -221,6 +230,22 @@ func (s *Server) Handler() http.Handler {
 // level matched to the outcome: server errors loudly, client errors as
 // warnings, successes at debug so info-level production logs stay quiet.
 // Static assets, health probes, and /metrics scrapes are never logged.
+func (s *Server) askWiki(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Question string `json:"question"`
+	}
+	if err := decodeJSON(r, &req); err != nil {
+		httpErr(w, http.StatusBadRequest, "invalid request")
+		return
+	}
+	if strings.TrimSpace(req.Question) == "" {
+		httpErr(w, http.StatusBadRequest, "question is required")
+		return
+	}
+	answer := s.wiki.Ask(req.Question)
+	writeJSON(w, http.StatusOK, answer)
+}
+
 func (s *Server) withAccessLog(next http.Handler) http.Handler {
 	if s.accessLog == nil {
 		return next
@@ -273,7 +298,7 @@ func securityHeaders(next http.Handler) http.Handler {
 // --- helpers ---
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(v)
 }

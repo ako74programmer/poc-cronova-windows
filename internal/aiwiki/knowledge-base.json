@@ -1,0 +1,1684 @@
+{
+  "chunks": [
+    {
+      "id": "doc-readme-1",
+      "type": "doc",
+      "source": "README.md",
+      "section": "intro",
+      "text": "<div align=\"center\">",
+      "topics": []
+    },
+    {
+      "id": "doc-readme-2",
+      "type": "doc",
+      "source": "README.md",
+      "section": "cronova",
+      "text": "**A lightweight, self-hosted workflow scheduler in a single Go binary — an open-source [Apache Airflow](https://airflow.apache.org/) / Azkaban alternative you can install with one command.**\n\n[![Release](https://img.shields.io/github/v/release/zoyluoblue/cronova?sort=semver&logo=github)](https://github.com/zoyluoblue/cronova/releases/latest)\n[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)\n[![Go](https://img.shields.io/github/go-mod/go-version/zoyluoblue/cronova?logo=go)](go.mod)\n[![Platforms](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20·%20amd64%20%7C%20arm64-informational)](docs/DEPLOY.md)\n[![GitHub stars](https://img.shields.io/github/stars/zoyluoblue/cronova?logo=github&color=1f6feb)](https://github.com/zoyluoblue/cronova/stargazers)\n\n**English** · [简体中文](README.zh-CN.md)\n\n<sub>⭐ <b><a href=\"https://github.com/zoyluoblue/cronova\">Star cronova on GitHub</a></b> if it's useful — it helps other people find a lighter way to run their workflows.</sub>\n\n</div>",
+      "topics": [
+        "schedule",
+        "ai",
+        "test",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-readme-3",
+      "type": "doc",
+      "source": "README.md",
+      "section": "cronova",
+      "text": "cronova is a **workflow scheduler and job orchestrator** in the spirit of Airflow and Azkaban, built for teams who want DAG-based scheduling **without the operational weight**. It ships as **one static Go binary** with an **embedded SQLite** database — no JVM, no Python runtime, no external database, no message broker, no containers required. Install it on any Linux or macOS box with a single command, define your pipelines, and open the built-in web console.\n\n<div align=\"center\">\n  <img src=\"docs/img/task-editor.png\" alt=\"cronova web console — visual task editor with drag-and-drop template variable pills for a polyglot workflow scheduler\" width=\"900\">\n  <br><em>The console task editor: build commands with click/drag variable pills (built-in, variables, connections, params).</em>\n</div>\n\n```bash",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "template",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-readme-4",
+      "type": "doc",
+      "source": "README.md",
+      "section": "Install the scheduler + web console + native service on Linux or macOS, in one line:",
+      "text": "curl -fsSL https://raw.githubusercontent.com/zoyluoblue/cronova/main/deploy/bootstrap.sh | sudo bash\n```",
+      "topics": [
+        "schedule",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-readme-5",
+      "type": "doc",
+      "source": "README.md",
+      "section": "Why cronova?",
+      "text": "- 🟢 **Small native install, zero service dependencies.** Pure-Go, CGO-free scheduler + standalone executor with embedded SQLite (PostgreSQL optional for multi-instance setups). `curl | bash` to install, `cronova update` to upgrade, `cronova uninstall` to remove — no Airflow-style stack to babysit. Docker images and a compose stack included.\n- 🗂️ **Airflow / Azkaban-style DAGs.** Declarative YAML DAGs with dependency edges, cron / `@every` schedules, cross-DAG triggers and waits (`trigger_after`, `depends_on_dag`), sub-workflows, catchup / backfill, per-task retries & timeouts, resource pools, run priorities & serial execution policies, and trigger rules — the orchestration primitives you already know.\n- 📡 **Scale out when you need to — dial-in workers.** Remote workers join with a one-time token over mTLS and **dial in** (no inbound port, no shared filesystem, NAT-friendly); tasks route by `worker_group:`, logs stream back live, and a worker restart re-adopts its running tasks instead of re-running them. Zero workers configured = the same single binary as always.\n- 🌐 **Polyglot tasks + project upload.** Every task runs as an OS subprocess, so write tasks in **shell, Python, SQL, a JAR, or HTTP** — any language on the host. Drag-and-drop a script, a whole project folder, or a `.zip` in the console and cronova runs it in an isolated working copy.\n- 🤖 **AI-native.** A built-in **[Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server** and a remote JSON CLI let AI agents (Claude, and any MCP client) list, create, validate, trigger, and inspect DAGs through the same token-authenticated, role-gated API.\n- 🛡️ **Crash-recoverable execution.** Run tasks in a decoupled gRPC executor so restarting or upgrading the scheduler never kills running jobs — on recovery it re-attaches to in-flight tasks with no double execution.\n- 🖥️ **Batteries-included web console.** DAG dashboard, run history, task states, **live log tailing (SSE)**, manual triggers, variables & connections, an audit trail, and a visual command editor — all served in-process. REST API + OpenAPI included.",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "project",
+        "ai",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-readme-6",
+      "type": "doc",
+      "source": "README.md",
+      "section": "What is cronova?",
+      "text": "**cronova is an open-source, self-hosted workflow scheduler** (a.k.a. job scheduler / task orchestrator / DAG scheduler) written in Go. It schedules **DAGs** — directed acyclic graphs of tasks — on cron or interval triggers, runs each task as a subprocess using the host's own interpreters, and gives you a web console, a REST API, a CLI, and an MCP endpoint for AI agents. Think of it as a **cron replacement with dependencies, retries, backfill, and observability**, or a **lightweight Airflow alternative** shipped as a compact native service pair.",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-readme-7",
+      "type": "doc",
+      "source": "README.md",
+      "section": "Quick start",
+      "text": "```bash",
+      "topics": []
+    },
+    {
+      "id": "doc-readme-8",
+      "type": "doc",
+      "source": "README.md",
+      "section": "1. Build (Go 1.26.5+) — or grab a prebuilt binary from Releases",
+      "text": "go build -o cronova ./cmd/cronova",
+      "topics": [
+        "schedule"
+      ]
+    },
+    {
+      "id": "doc-readme-9",
+      "type": "doc",
+      "source": "README.md",
+      "section": "2. Start the scheduler + web console (in-process executor)",
+      "text": "./cronova serve                 # console at http://localhost:8090",
+      "topics": [
+        "schedule",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-readme-10",
+      "type": "doc",
+      "source": "README.md",
+      "section": "3. Drive it from the CLI (in another terminal)",
+      "text": "./cronova dags                  # list DAGs from ./dags\n./cronova trigger example_etl   # run a DAG now\n./cronova runs example_etl      # run history + task states\n```\n\nOpen **http://localhost:8090** for the console — DAG list, run history, task states, live logs, and one-click manual triggers.\n\nThe development default is unauthenticated but loopback-only. A non-loopback\nbind is refused unless login is enabled or the explicit\n`-allow-unauthenticated-remote` escape hatch is set. Use `cronova init` for a\nnew deployed instance; it enables authentication by default.\n\n<div align=\"center\">\n  <img src=\"docs/img/dashboard.png\" alt=\"cronova dashboard — self-hosted workflow scheduler showing DAGs, run history, success rate, and schedules\" width=\"900\">\n</div>",
+      "topics": [
+        "dag",
+        "schedule"
+      ]
+    },
+    {
+      "id": "doc-readme-11",
+      "type": "doc",
+      "source": "README.md",
+      "section": "cronova vs. Airflow vs. Azkaban vs. cron",
+      "text": "| | **cronova** | Apache Airflow | Azkaban | plain cron |\n|---|:---:|:---:|:---:|:---:|\n| Install | **one archive / `curl \\| bash`** | Python stack + DB + broker | JVM + MySQL | built-in |\n| Runtime deps | **none** (embedded SQLite) | Python, Postgres, Redis/Celery | Java, MySQL | none |\n| DAGs & dependencies | ✅ | ✅ | ✅ | ❌ |\n| Cron + interval + cross-DAG triggers | ✅ | ✅ | partial | cron only |\n| Catchup / backfill | ✅ | ✅ | ❌ | ❌ |\n| Retries, timeouts, pools | ✅ | ✅ | partial | ❌ |\n| Crash recovery (no double-run) | ✅ | ✅ | partial | ❌ |\n| Polyglot tasks (shell/Python/SQL/JAR/HTTP) | ✅ | ✅ (operators) | JVM-centric | any (no orchestration) |\n| Web console + live logs | ✅ | ✅ | ✅ | ❌ |\n| REST API + OpenAPI | ✅ | ✅ | partial | ❌ |\n| AI agent / MCP integration | ✅ **built-in** | ❌ | ❌ | ❌ |\n| Footprint | **two small native processes, tens of MB** | heavy | heavy (JVM) | tiny |\n\ncronova targets the sweet spot between a bare `crontab` and a full Airflow deployment: **real DAG orchestration with almost no operational overhead.**",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-readme-12",
+      "type": "doc",
+      "source": "README.md",
+      "section": "Define a DAG",
+      "text": "Drop a YAML file in `./dags/` (see [`dags/`](dags/) for runnable examples):\n\n```yaml\ndag_id: daily_etl\nschedule: \"0 2 * * *\"        # cron; or \"@every 30s\"; omit for manual-only\nstart_date: 2026-06-01\ncatchup: true                # backfill missed periods\nmax_active_runs: 1\ndefault_retries: 2\ntasks:\n  - id: extract\n    type: shell\n    command: \"python extract.py --date {{ logical_date }}\"\n    pool: default\n  - id: transform\n    command: \"python transform.py --date {{ logical_date }}\"\n    deps: [extract]\n  - id: load\n    command: \"psql -f load.sql\"\n    deps: [transform]\n    retries: 3\n    timeout: 1800\ntrigger_after:               # optional: run after another DAG succeeds\n  - dag_id: upstream_ingest\n```\n\n**Template variables** work in any command, URL, header, body, or query:\n`{{ logical_date }}`, `{{ logical_datetime }}`, `{{ run_id }}`, `{{ dag_id }}`, `{{ task_id }}`, `{{ try_number }}` (also injected as `CRONOVA_*` env vars), plus UI-managed `{{ var.KEY }}`, `{{ conn.ID.host }}`, and `{{ params.KEY }}`. In the console you don't type the `{{ }}` — a **visual editor renders each variable as a color-coded pill** and a grouped palette inserts them by **click or drag**.",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai",
+        "template",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-readme-13",
+      "type": "doc",
+      "source": "README.md",
+      "section": "Define a DAG",
+      "text": "### Run your own scripts and projects\n\nUpload a single script, a whole project folder, or a `.zip` in the console (task editor → **Project**), then point a shell task at it:\n\n```yaml\ntasks:\n  - id: run_main\n    type: shell\n    command: python3 main.py     # runs with cwd = a clean copy of the project\n    project: my_app\n```\n\nEach attempt gets a **fresh isolated copy** of the project as its working directory (`CRONOVA_PROJECT_DIR` points there), so re-uploads take effect next run and attempts never interfere. See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).",
+      "topics": [
+        "dag",
+        "schedule",
+        "project",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-readme-14",
+      "type": "doc",
+      "source": "README.md",
+      "section": "AI agents (MCP + remote CLI)",
+      "text": "Let an AI orchestrate cronova through the **same token-authenticated, role-gated API** — as native **MCP tools** or via the **remote JSON CLI**:\n\n```bash\ncronova tokens create my-agent -role admin     # mint a token (local, once)\ncronova mcp                                     # MCP server over stdio (Claude, etc.)\n\nexport CRONOVA_SERVER=http://localhost:8090 CRONOVA_TOKEN=cnv_pat_…\ncronova dags -o json                            # remote CLI, JSON output\ncronova api POST /api/dags/validate '{\"dag_id\":\"x\",\"tasks\":[…]}'   # dry-run validate\n```\n\n`cronova mcp` exposes ~30 catalog-derived tools (`list_dags`, `create_dag`, `validate_dag`, `trigger_dag`, `get_task_log`, `retry_task`, …); `-read-only` exposes just the reads. Guide + MCP config: **[docs/AGENTS.md](docs/AGENTS.md)**.",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-readme-15",
+      "type": "doc",
+      "source": "README.md",
+      "section": "Deploy in production",
+      "text": "cronova is a **scheduler, not a runtime**: it launches each task using the **host's own interpreters** (`sh`, `python3`, `java`, `psql`, …), Azkaban-style. Managed installs run a static scheduler plus a static standalone executor under **systemd (Linux)** or **launchd (macOS)**, with no container or bundled runtime.\n\n```bash\ncronova start | stop | restart | status   # manage the service (auto-elevates via sudo)\ncronova update                             # fetch + install the latest release, then restart\ncronova update v0.2.1                      # pin/downgrade a specific version\ncronova uninstall [--purge]                # remove service + binary (--purge also deletes data)\n```\n\nThe one-line installer runs an interactive setup wizard (port, bind scope, admin account, auth). Full guide, the service-`PATH` gotcha, and crash-recoverable executor setup: **[docs/DEPLOY.md](docs/DEPLOY.md)**.\n\n<div align=\"center\">\n  <img src=\"docs/img/graph.png\" alt=\"cronova DAG graph — cross-DAG trigger dependencies visualized in the web console\" width=\"820\">\n</div>",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "test",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-readme-16",
+      "type": "doc",
+      "source": "README.md",
+      "section": "Documentation",
+      "text": "| Guide | What's inside |\n|---|---|\n| [Getting Started](docs/GETTING_STARTED.md) | Install, first DAG, projects, template variables |\n| [Console Guide](docs/console/index.md) | Every page of the web UI — dashboard, task editor, runs & live logs, pools, tokens |\n| [DAG Reference](docs/DAG_REFERENCE.md) | Every DAG/task field, task types, triggers, pools |\n| [CLI Reference](docs/CLI.md) | Every `cronova` command and flag |\n| [AI Agents (MCP)](docs/AGENTS.md) | MCP server, remote CLI, tokens, security |\n| [Deployment](docs/DEPLOY.md) | systemd/launchd, updates, crash-recoverable executor |\n| [Architecture](docs/ARCHITECTURE.md) | Design rationale, execution model, diagrams |\n| [cronova vs Airflow](docs/COMPARISON.md) | When to choose cronova, feature-by-feature |\n| [FAQ](docs/FAQ.md) | Common questions, answered |",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "project",
+        "ai",
+        "template",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-readme-17",
+      "type": "doc",
+      "source": "README.md",
+      "section": "FAQ",
+      "text": "**Is cronova an Airflow alternative?**\nYes — for teams who want DAG scheduling (dependencies, retries, catchup, pools, a web UI, a REST API) without running a Python stack, a separate database, and a message broker. cronova is a compact native service pair with an embedded database. For very large, plugin-heavy data platforms, Airflow remains the richer ecosystem.\n\n**Does cronova need a database, JVM, or Python?**\nNo. The scheduler and web console use an **embedded SQLite** database; the managed install adds a small standalone executor so scheduler restarts do not kill tasks. Python/Java/psql are only needed on the host if *your tasks* invoke them.\n\n**What languages can tasks be written in?**\nAny. Tasks are `shell`, `python`, `sql`, `jar`, or `http`; a shell task can invoke anything on the host (Node, Go, Rust binaries, …). The framework (Go) is fully decoupled from the task language.\n\n**How is cronova different from cron?**\ncron runs isolated commands on a clock. cronova runs **DAGs**: tasks with dependencies, retries, timeouts, backfill, concurrency pools, cross-DAG triggers, a web console with logs, and an API — the things you end up hand-rolling around cron.",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-readme-18",
+      "type": "doc",
+      "source": "README.md",
+      "section": "FAQ",
+      "text": "**Can AI agents control cronova?**\nYes. It ships a built-in **MCP server** (`cronova mcp`) and a remote JSON CLI, so AI agents can manage workflows through the same authenticated, role-gated API as humans.\n\n**Which platforms are supported?**\nLinux and macOS, on both amd64 and arm64. Prebuilt binaries are on the [Releases](https://github.com/zoyluoblue/cronova/releases) page.\n\n**Is it production-ready / crash-safe?**\nManaged installs use the decoupled gRPC executor by default, so the scheduler can restart or upgrade without killing running jobs; on recovery it re-attaches to in-flight tasks with no double execution.",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-readme-19",
+      "type": "doc",
+      "source": "README.md",
+      "section": "Development",
+      "text": "```bash\ngo test -race ./...      # full test suite",
+      "topics": [
+        "test"
+      ]
+    },
+    {
+      "id": "doc-readme-20",
+      "type": "doc",
+      "source": "README.md",
+      "section": "regenerate gRPC code after editing proto/ (needs: buf + protoc-gen-go[-grpc])",
+      "text": "buf generate",
+      "topics": [
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-readme-21",
+      "type": "doc",
+      "source": "README.md",
+      "section": "UI dev: serve console assets from disk (edit + reload, no rebuild)",
+      "text": "CRONOVA_WEB_DIR=internal/web/static go run ./cmd/cronova serve\n```\n\nContributions welcome — see the [docs/](docs/) for architecture and design notes.",
+      "topics": [
+        "schedule",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-readme-22",
+      "type": "doc",
+      "source": "README.md",
+      "section": "License",
+      "text": "[MIT](LICENSE) © cronova authors.\n\n---\n\n<div align=\"center\">\n\n### ⭐ Found cronova useful?\n\nGive it a **[star on GitHub](https://github.com/zoyluoblue/cronova)** — it's the simplest way to support the project and helps others discover a lighter way to run workflows.\n\n<sub>cronova — self-hosted <b>workflow scheduler</b> · <b>Airflow alternative</b> · DAG orchestration · single Go binary · MCP-ready for AI agents.</sub>\n\n</div>",
+      "topics": [
+        "dag",
+        "schedule",
+        "project",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-getting_started-23",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "Getting Started with cronova",
+      "text": "Install cronova, start the scheduler and web console, write and trigger your first DAG, and wire your own scripts into a workflow — the hands-on path for the lightweight, self-hosted **workflow scheduler** and open-source [Apache Airflow](https://airflow.apache.org/) / Azkaban alternative.\n\nThis guide is task-oriented. For the full field-by-field DAG spec see the [DAG Reference](DAG_REFERENCE.md); for every command and flag see the [CLI Reference](CLI.md); for production install see [Deployment](DEPLOY.md). New to cronova? Start with the [README](https://github.com/zoyluoblue/cronova#readme).",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-getting_started-24",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "1. Install cronova",
+      "text": "There are three ways to get the `cronova` binary. Pick the one that fits.\n\n### Build from source\n\nBuild the scheduler, web console, and CLI into one static binary with Go 1.26.5+:\n\n```bash\ngit clone https://github.com/zoyluoblue/cronova\ncd cronova\ngo build -o cronova ./cmd/cronova\n```\n\nA plain `go build` reports its version as `dev`. The binary is CGO-free (pure-Go `modernc.org/sqlite`), so no C toolchain is required.\n\n### One-line installer (Linux / macOS)\n\nThe installer downloads the matching prebuilt release, verifies its SHA256, installs the native service (systemd on Linux, launchd on macOS), and runs an interactive setup wizard (port, bind scope, admin account, auth):\n\n```bash\ncurl -fsSL https://raw.githubusercontent.com/zoyluoblue/cronova/main/deploy/bootstrap.sh | sudo bash\n```\n\nThis is the recommended path for a real deployment. Full production guide: [Deployment](DEPLOY.md).\n\n### Prebuilt release\n\nGrab a binary for your OS/arch (Linux and macOS, amd64 and arm64) from the [Releases](https://github.com/zoyluoblue/cronova/releases) page, then make it executable:\n\n```bash\nchmod +x cronova\n./cronova version        # prints: cronova <version> <os>/<arch>\n```",
+      "topics": [
+        "schedule",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-getting_started-25",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "2. Start the scheduler and open the console",
+      "text": "`cronova serve` runs the scheduling loop **and** the web console + REST API in one process:\n\n```bash\n./cronova serve\n```\n\nThen open **http://localhost:8090** for the console — the DAG list, run history, task states, live log tailing, and one-click manual triggers.\n\nBy default `serve` uses relative working-directory paths and the in-process executor:\n\n| Setting | Flag | Env var | Default |\n|---|---|---|---|\n| Console + API address | `-http` | `CRONOVA_HTTP` | `127.0.0.1:8090` (loopback only) |\n| DAG YAML directory | `-dags` | `CRONOVA_DAGS` | `dags` |\n| SQLite database | `-db` | `CRONOVA_DB` | `data/cronova.db` |\n| Task log directory | `-logs` | `CRONOVA_LOGS` | `logs` |\n| Uploaded projects | `-projects` | `CRONOVA_PROJECTS` | `~/.cronova/projects` |\n| Attempt workspaces | `-workspaces` | `CRONOVA_WORKSPACES` | system temp directory |\n| Scheduler tick | `-tick` | `CRONOVA_TICK` | `2s` |\n| gRPC executor target | `-executor` | `CRONOVA_EXECUTOR` | *(empty = in-process)* |\n| Require login | `-auth` | `CRONOVA_AUTH` | *(off for local `serve`; `init` defaults on)* |\n| Allow unauthenticated remote bind | `-allow-unauthenticated-remote` | `CRONOVA_ALLOW_UNAUTHENTICATED_REMOTE` | `false` |",
+      "topics": [
+        "dag",
+        "schedule",
+        "project",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-getting_started-26",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "2. Start the scheduler and open the console",
+      "text": "Settings resolve in this precedence, highest first: **explicit flag → `CRONOVA_*` env → `cronova.yaml` config file → built-in default**. The config file is optional; `serve` only errors on a missing config if you pass `-config` explicitly.\n\n> The default in-process executor runs tasks inside a manual `serve` process, so a restart ends running tasks. Managed installs use the decoupled gRPC executor by default. For a manual pair, use an absolute `unix:///...` socket in a private (`0700`) directory and an explicit shared workspace path. TCP executor targets are rejected. See [Deployment](DEPLOY.md).\n\nDrive the same server from another terminal with the CLI:\n\n```bash\n./cronova dags                  # list DAGs loaded from ./dags\n./cronova trigger example_etl   # create a manual run\n./cronova runs example_etl      # run history + per-task states\n```\n\n### Enabling login\n\nAuthentication is off for a plain development `serve`, but the listener is loopback-only. Cronova refuses an unauthenticated non-loopback bind unless the explicit dangerous override is set. Enable login and seed an admin before exposing the console:",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-getting_started-27",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "2. Start the scheduler and open the console",
+      "text": "```bash\n./cronova init                 # seeds the admin hash directly in SQLite\n./cronova serve -auth\n```\n\nYou can also manage accounts with `cronova users add|list|passwd|delete`.\n`cronova init` writes `cronova.yaml` plus a credential-free `0600` environment\noverride template; it never leaves the admin password in a long-lived file.\nDetails in the [CLI Reference](CLI.md).",
+      "topics": [
+        "schedule",
+        "ai",
+        "template",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-getting_started-28",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "3. Write your first DAG and trigger it",
+      "text": "A **DAG** (directed acyclic graph) is a set of tasks with dependency edges, defined as a YAML file in the `./dags/` directory. Each task runs as an OS subprocess. Create `dags/hello.yaml`:\n\n```yaml\ndag_id: hello\nschedule: \"@every 1m\"        # cron (\"0 2 * * *\") or interval (\"@every 30s\"); omit for manual-only\nstart_date: 2026-06-01\ncatchup: false               # true = backfill missed periods from start_date\nmax_active_runs: 1\ndefault_retries: 0\ntasks:\n  - id: greet\n    type: shell\n    command: echo \"hello from cronova at $CRONOVA_LOGICAL_DATETIME\"\n  - id: report\n    type: shell\n    command: echo \"run $CRONOVA_RUN_ID finished greeting\"\n    deps: [greet]            # runs after greet succeeds\n```\n\nThe scheduler loads `*.yaml` and `*.yml` files from the DAG directory. A malformed file is logged and skipped, not fatal. See the runnable examples in [`dags/`](https://github.com/zoyluoblue/cronova/tree/main/dags) — `example_etl.yaml`, `ticker.yaml`, `upstream_ingest.yaml`, and `downstream_report.yaml`.\n\nNow run it. With `serve` running, list and trigger the DAG:",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-getting_started-29",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "3. Write your first DAG and trigger it",
+      "text": "```bash\n./cronova dags                # hello appears with SCHEDULE=@every 1m\n./cronova trigger hello       # create a manual run — serve picks it up next tick\n./cronova runs hello          # watch task states advance: greet, then report\n```\n\n`cronova trigger` only creates the run row; a running `cronova serve` executes it on the next tick (default every `2s`). You can also trigger from the console with one click, or pass trigger params as JSON:\n\n```bash\n./cronova trigger hello -params '{\"day\":\"2026-01-01\"}'\n```\n\nCommon task fields — `type` (`shell`, `python`, `sql`, `jar`, `http`), `command`, `deps`, `pool`, `retries`, `retry_delay`, `timeout`, `trigger_rule`, `project` — and DAG-level fields like `schedule`, `catchup`, `max_active_runs`, `default_retries`, `trigger_after`, and `dagrun_timeout` are documented in full in the [DAG Reference](DAG_REFERENCE.md).",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "project",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-getting_started-30",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "4. Template variables",
+      "text": "Any task `command` (and an `http` task's URL, headers, and body) can reference template variables with `{{ … }}`. The scheduler substitutes them per task instance; unknown placeholders are left untouched so ordinary shell braces are not mangled.\n\n### Built-in run variables\n\nThese are always available, and the same values are also injected as `CRONOVA_*` environment variables:\n\n| Template | Env var | Value |\n|---|---|---|\n| `{{ run_id }}` | `CRONOVA_RUN_ID` | Unique id of this run |\n| `{{ dag_id }}` | `CRONOVA_DAG_ID` | The DAG id |\n| `{{ task_id }}` | `CRONOVA_TASK_ID` | The task id |\n| `{{ try_number }}` | `CRONOVA_TRY_NUMBER` | Attempt number (increments on retry) |\n| `{{ logical_date }}` | `CRONOVA_LOGICAL_DATE` | The run's logical date, `YYYY-MM-DD` |\n| `{{ logical_datetime }}` | `CRONOVA_LOGICAL_DATETIME` | The logical date as RFC 3339 |\n\nThe **logical date** is what makes catchup meaningful: a backfilled run processes the data for the period it represents, not wall-clock \"now\". Use either form:",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "ai",
+        "template",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-getting_started-31",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "4. Template variables",
+      "text": "```yaml\ntasks:\n  - id: extract\n    type: shell\n    command: python extract.py --date {{ logical_date }}     # via template\n  - id: load\n    type: shell\n    command: echo \"loading for $CRONOVA_LOGICAL_DATE\"        # via env var\n    deps: [extract]\n```\n\n### Trigger params, variables, and connections\n\nThree more namespaces resolve lazily from state you manage in the console (or via the API):\n\n- `{{ params.KEY }}` — a per-run trigger param (from `cronova trigger -params '{...}'` or the console). Each param is also exported as `CRONOVA_PARAM_<KEY>` (uppercased).\n- `{{ var.KEY }}` — a UI-managed **variable**. Fetched from the store only when referenced.\n- `{{ conn.ID.field }}` — a field of a UI-managed **connection**. Valid fields are `host`, `port`, `login` (alias `user`), `password`, `type`, and any extra JSON field as `extra.KEY`.\n\n```yaml\ntasks:\n  - id: notify\n    type: shell\n    command: curl -u {{ conn.api.login }}:{{ conn.api.password }} {{ var.webhook_url }}?day={{ params.day }}\n```",
+      "topics": [
+        "dag",
+        "schedule",
+        "template",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-getting_started-32",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "4. Template variables",
+      "text": "> Variables and connections are **not** blanket-injected into every task's environment — they enter only through explicit `{{ var.X }}` / `{{ conn.Y.Z }}` references, so secrets don't leak into unrelated tasks' env. Only `run` variables and `params` become `CRONOVA_*` env vars.\n\nIn the console you don't type the `{{ }}` braces: the visual task editor renders each variable as a color-coded pill, and a grouped palette (built-in, variables, connections, params) inserts them by click or drag.",
+      "topics": [
+        "dag",
+        "schedule",
+        "template",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-getting_started-33",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "5. Run your own scripts and projects",
+      "text": "To run a real script or a whole codebase, upload it as a **project** and point a shell task at it. cronova stages a fresh, isolated copy of the project as each attempt's working directory.\n\nUpload from the console (task editor → **Project**). You can upload a single script, a whole folder, or a `.zip` (auto-extracted). Then reference the project by name:\n\n```yaml\ntasks:\n  - id: run_main\n    type: shell\n    command: python3 main.py     # cwd is a clean copy of the project, so this resolves\n    project: my_app\n```\n\nHow project attach works:",
+      "topics": [
+        "dag",
+        "schedule",
+        "project",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-getting_started-34",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "5. Run your own scripts and projects",
+      "text": "- The `project` field is honored for **shell** tasks only (the `python`/`sql`/`http` task types run in-process, where a working directory is meaningless).\n- Each attempt gets a **fresh isolated copy** of the uploaded project as its `cwd`. Attempts never interfere, and a re-upload takes effect on the next run.\n- The copy's path is exported as **`CRONOVA_PROJECT_DIR`**, so a script can locate its own bundled data files.\n- Project names allow letters, digits, and `. _ -`. Uploads are size-capped (per file and per project) and guarded against path traversal / zip-slip.\n- Multi-file changes are staged and swapped atomically; a rejected upload leaves the previous project tree intact.\n- The projects directory defaults to `~/.cronova/projects`; override it with `-projects` / `CRONOVA_PROJECTS`. If no projects directory is configured, uploads are disabled and a task that references a project will fail at run time — `cronova api POST /api/dags/validate` surfaces a warning for a project that isn't uploaded yet.\n\n### Common questions",
+      "topics": [
+        "dag",
+        "schedule",
+        "project",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-getting_started-35",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "5. Run your own scripts and projects",
+      "text": "**Where does `python3 main.py` run from?**\nFrom a clean per-attempt copy of the uploaded project, so a relative path like `main.py` or `./main.py` resolves. The absolute path to that copy is also in `CRONOVA_PROJECT_DIR`.\n\n**Do I have to re-upload after editing my script?**\nRe-upload the changed file (uploads are additive/upsert). Because each attempt copies the current project, the next run picks up your change — running attempts keep the copy they started with.\n\n**Which languages can a task use?**\nAny on the host. A `shell` task can invoke Python, Node, Go/Rust binaries, `psql`, a JAR — anything installed. The scheduler is fully decoupled from the task language.\n\n**Why did my project task fail immediately?**\nMost often the project isn't uploaded, or the server has no projects directory configured. Validate the DAG first; the response flags a `project` that references something missing.",
+      "topics": [
+        "dag",
+        "schedule",
+        "project",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-getting_started-36",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "6. Next steps",
+      "text": "You now have a running scheduler, a first DAG, template variables, and a project-backed task. Where to go next:\n\n- [DAG Reference](DAG_REFERENCE.md) — every DAG and task field, all task types (`shell`, `python`, `sql`, `jar`, `http`), trigger rules, cross-DAG `trigger_after`, retries, timeouts, and resource pools.\n- [CLI Reference](CLI.md) — every `cronova` command and flag: `serve`, `trigger`, `dags`, `runs`, `pools`, `users`, `init`, and the remote/agent verbs.\n- [Deployment](DEPLOY.md) — install as a systemd/launchd service, the crash-recoverable gRPC executor, updates, and the service-`PATH` gotcha.\n- [AI Agents (MCP)](AGENTS.md) — let AI agents list, create, validate, and trigger DAGs through the built-in MCP server and remote JSON CLI.\n- [Architecture](ARCHITECTURE.md) — the execution model and design rationale.\n- [FAQ](FAQ.md) — common questions, answered.",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "project",
+        "ai",
+        "template",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-37",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "DAG & Task Reference",
+      "text": "The complete YAML schema for a cronova **DAG** (directed acyclic graph of tasks) — every DAG-level and task-level field, the five task types, trigger rules, and resource pools. For a hands-on introduction see [Getting Started](GETTING_STARTED.md); for the project overview see the [README](https://github.com/zoyluoblue/cronova#readme).\n\nA DAG is a single YAML file in the `dags/` directory (default `./dags`, or the service's data dir). cronova validates and cycle-checks every DAG on load; runnable examples live in [`dags/`](https://github.com/zoyluoblue/cronova/tree/main/dags). Parsing is strict: unknown fields, unsupported task types, trailing YAML documents, invalid negative values, and out-of-range settings are rejected instead of ignored.\n\nSafety limits are enforced before a definition can enter the scheduler: 1 MiB\nper YAML document, 1,000 tasks, 10,000 dependency edges, 256 dependencies per\ntask, 128-byte identifiers, 256 KiB commands, 100 retries, and one year for any\nconfigured delay/timeout/SLA. These bounds prevent a typo or oversized upload\nfrom turning validation into unbounded memory or scheduler work.",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "project",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-38",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "DAG & Task Reference",
+      "text": "```yaml\ndag_id: daily_etl\nschedule: \"0 2 * * *\"\nstart_date: 2026-06-01\ncatchup: true\nmax_active_runs: 1\ndefault_retries: 2\ntasks:\n  - id: extract\n    type: shell\n    command: \"python extract.py --date {{ logical_date }}\"\n    pool: default\n  - id: transform\n    command: \"python transform.py --date {{ logical_date }}\"\n    deps: [extract]\n  - id: load\n    command: \"psql -f load.sql\"\n    deps: [transform]\n    retries: 3\n    timeout: 1800\ntrigger_after:\n  - dag_id: upstream_ingest\nnotify:\n  url: https://hooks.example.com/cronova\n  on: [failure]\n```",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-39",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "DAG-level fields",
+      "text": "| Field | Type | Default | Description |\n|---|---|---|---|\n| `dag_id` | string | — (required) | Unique identifier for the DAG. |\n| `schedule` | string | `\"\"` (manual) | Cron expression (`\"0 2 * * *\"`) **or** an interval (`\"@every 30s\"`). Empty = the DAG runs only on manual trigger, `trigger_after`, or `trigger_on_event`. |\n| `timezone` | string | `\"\"` (UTC) | IANA zone (e.g. `Asia/Shanghai`) the cron fields — and a date-only `start_date` — are evaluated in, DST included. |\n| `start_date` | date string | — | Earliest logical date the DAG is scheduled for; anchors catchup/backfill. |\n| `catchup` | bool | `false` | Backfill missed periods between `start_date` and now. Backfilled runs are throttled so they never flood. |\n| `max_active_runs` | int | `1` | Maximum concurrent runs of this DAG (0 is treated as 1). |\n| `max_active_tasks` | int | `0` (unlimited) | Cap on this DAG's concurrently queued/running **tasks** across all of its runs — a per-DAG budget complementing the global pools. |\n| `execution_policy` | string | `parallel` | How queued runs are admitted when another run of this DAG is active: `parallel` (up to `max_active_runs` concurrently), `serial_wait` (one at a time; later runs queue in logical-date order), `serial_discard` (one at a time; runs arriving while busy are **cancelled**, visibly), or `serial_priority` (one at a time; the queue drains highest run priority first — set priority when triggering). Serial policies force at most **one** active run regardless of `max_active_runs`. |\n| `worker_group` | string | `\"\"` (local) | Default dial-in [worker](#task-level-fields) group for every task that doesn't set its own `worker_group`. Empty = tasks run on the scheduler's configured local executor. |\n| `trigger_on_event` | list of strings | — | External event keys this DAG subscribes to: `POST /api/events {\"key\": …}` creates one event-triggered run per subscriber (idempotent per key). The event payload becomes the run's params. |\n| `default_retries` | int | `0` | Retry count applied to tasks that don't set their own `retries`. |\n| `default_retry_delay` | int (seconds) | `0` | Retry delay applied to tasks that don't set their own `retry_delay`. |\n| `sla` | int (seconds) | `0` | Run-level soft deadline, measured from run start. A breach raises an alert; it does not cancel the run. |\n| `dagrun_timeout` | int (seconds) | `0` | Run-level hard deadline, measured from run start. `0` = no limit. |\n| `tasks` | list | — (required) | The task list (see below). |\n| `trigger_after` | list of `{dag_id}` | — | Run this DAG after another DAG **succeeds** (cross-DAG dependency). Visualized in the console's DAG Graph. |\n| `notify` | `{url, on, format, group}` | — | Run-completion notification. `on` is a list of `\"failure\"` and/or `\"success\"`. `url` is an `http(s)://` webhook **or** `mailto:addr[,addr]` (delivered through the server's `smtp:` relay). |\n| `notify.format` | string | `raw` | One of `raw`, `slack`, `feishu`, `dingtalk`, `email`. `raw` posts the full JSON payload; the chat formats wrap the summary text in the platform's incoming-webhook envelope, so the message renders in Slack/Feishu/DingTalk without a relay service; `email` is the plain-text mail body used for `mailto:` targets. |\n| `notify.group` | string | — | Name of an [alert group](#notifications-webhooks-email--alert-groups) — a named fan-out of 1–16 channels managed in the console or via `POST /api/alert-groups/{name}`. When set it **wins over** `notify.url` and every channel in the group is alerted. |",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-40",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "DAG-level fields",
+      "text": "Cron schedules are evaluated in **UTC** by default; prefix the expression with `CRON_TZ=<zone>` to evaluate it in a specific timezone:\n\n```yaml\nschedule: \"CRON_TZ=Asia/Shanghai 0 2 * * *\"   # 02:00 Shanghai time, every day\n```\n\n> `paused` is **not** a YAML field. Pausing is operational state managed from the console, CLI (`cronova pause <dag_id>`), or API, and is preserved across DAG reloads.\n\n### Notifications: webhooks, email & alert groups\n\n`notify.url` accepts two kinds of targets:\n\n- an `http(s)://` **incoming-webhook** URL — the run summary is POSTed as JSON, shaped by `notify.format`;\n- `mailto:addr[,addr]` — the alert is sent as **email** through the server's SMTP relay. This requires the `smtp:` section of the server config to be filled in; without it, mail channels fail delivery (logged, never blocking the scheduler).",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-41",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "DAG-level fields",
+      "text": "Instead of pasting the same URL into every DAG, `notify.group` references a named **alert group**: a reusable bundle of 1–16 channels, each with its own URL (webhook or `mailto:`) and format. Groups are managed in the console (Variables & Connections → Alert groups) or via the API (`GET /api/alert-groups`, `POST`/`DELETE /api/alert-groups/{name}`), and one run alert fans out to every channel of the group.\n\n```yaml\nnotify:\n  group: oncall      # alert every channel of the \"oncall\" group\n  on: [failure]\n```\n\nResolution is most-specific-first: a set `notify.group` wins over `notify.url`; a group name that no longer resolves (e.g. the group was deleted) falls back to the DAG's own `notify.url`, and then to the instance-wide default notify target — a dangling reference is logged loudly but never loses the alert.",
+      "topics": [
+        "dag",
+        "ai",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-42",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "Definition snapshots",
+      "text": "Every run stores the exact canonical YAML and SHA-256 definition hash it started\nwith. Editing a DAG while a run is active therefore changes future runs only;\nthe active run keeps its original task graph and cannot be wedged by a removed\nor renamed task. An explicit retry is the exception: it intentionally adopts\nthe latest DAG definition, records that definition hash on the new attempts,\nand leaves removed task instances as historical rows rather than dispatching\nthem again.",
+      "topics": [
+        "dag",
+        "retry",
+        "ai",
+        "test"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-43",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "Task-level fields",
+      "text": "Each entry under `tasks:` describes one task.",
+      "topics": [
+        "dag"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-44",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "Task-level fields",
+      "text": "| Field | Type | Default | Description |\n|---|---|---|---|\n| `id` | string | — (required) | Task identifier, unique within the DAG. |\n| `type` | string | `shell` | One of `shell`, `python`, `sql`, `jar`, `http`, `subdag`. See [Task types](#task-types). |\n| `command` | string | — | The command (shell), code (python), or query (sql). Supports [template variables](#template-variables). Not used for `http`. |\n| `deps` | list of task ids | — | Upstream tasks that must satisfy this task's `trigger_rule` before it runs. Edges are cycle-checked. |\n| `pool` | string | `default` | The [resource pool](#resource-pools) this task consumes a slot from. |\n| `priority` | int | `0` | Higher runs first when tasks contend for the same pool. |\n| `worker_group` | string | inherits DAG `worker_group` | Routes this task to a group of dial-in remote workers (the workers' `group` label, default `\"default\"`). Empty (and no DAG-level default) = run on the scheduler's local executor. |\n| `retries` | int | inherits `default_retries` | Times to retry on failure. |\n| `retry_delay` | int (seconds) | inherits `default_retry_delay` | Delay between retries. |\n| `retry_backoff` | string | `fixed` | How the wait between retries grows: `fixed` (constant `retry_delay`) or `exponential` (waits `retry_delay·2^(n-1)` before the n-th retry). |\n| `retry_delay_max` | int (seconds) | `0` | Caps the exponential wait. `0` = no explicit cap (a built-in 24h safety ceiling still applies). |\n| `timeout` | int (seconds) | `0` | Per-attempt execution timeout; on breach the whole process group is killed. `0` = none. |\n| `sla` | int (seconds) | `0` | Task soft deadline from run start; breach alerts only. |\n| `trigger_rule` | string | `all_success` | When to run relative to upstream states. See [Trigger rules](#trigger-rules). |\n| `when` | string | — | Runtime condition template (e.g. `\"{{ params.env }}\"` or `\"{{ ti.check.proceed }}\"`), evaluated once the task is otherwise ready. A falsy render (`\"\"`, `false`, `0`, `no`, or an unresolved placeholder) marks the task **skipped**. |\n| `foreach` | list of strings | — | Fans the task out into one task per item at definition time: ids become `<id>_<index>`, `{{ item }}` / `{{ item_index }}` are substituted in `command`/`when`, and downstream `deps` on the original id cover every shard. Each shard keeps its own retries, log, and state. |\n| `conn` | string | — | Connection id for a `sql` task (selects driver + builds the DSN). |\n| `project` | string | — | Name of an uploaded project directory to stage as the working directory (shell tasks; not combinable with `worker_group`). See [Getting Started → Projects](GETTING_STARTED.md). |\n| `http` | object | — | HTTP request spec for `http` tasks (see below). |\n| `subdag` | string | — | For `type: subdag`: the DAG to run as a **sub-workflow**. The task launches a linked child run (visible in run history with trigger type `subdag` and a parent link) and mirrors its terminal state. Cancelling the parent cascades to the child; a task retry starts a fresh child run (the old one stays as history). Nesting is capped at 5 levels as a cycle backstop. |\n| `depends_on_dag` | object | — | Cross-DAG **wait**: hold this task until another DAG's matching period run has *succeeded*. Fields: `dag` (target id), `offset` (which period, in [date-expression](#date-expressions) offset grammar — `\"\"`/`same`, `- 1d`, `.month_start`…), `timeout` (seconds from run start; 0 = wait until `dagrun_timeout`), `on_timeout` (`fail` default, or `skip`). A failed target run keeps the wait alive (it may be retried); only the timeout resolves the standoff. |",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "project",
+        "ai",
+        "template",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-45",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "Task-level fields",
+      "text": "### `http` task spec\n\nSet under a task's `http:` key when `type: http`:\n\n| Field | Type | Default | Description |\n|---|---|---|---|\n| `method` | string | `GET` | HTTP method. |\n| `url` | string | — (required) | Request URL. Supports templates (e.g. `https://{{ conn.api.host }}/path`). |\n| `headers` | map | — | Header name → value; values support templates (e.g. `Authorization: Bearer {{ var.TOKEN }}`). |\n| `body` | string | — | Request body; supports templates. |\n| `expected_status` | list of int | `2xx` | Status codes considered success (e.g. `[200, 201]`). |",
+      "topics": [
+        "template",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-46",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "Task types",
+      "text": "| Type | Runs as | `command` holds | Needs on host |\n|---|---|---|---|\n| `shell` | OS subprocess (`sh -c`) | any shell command | the tools the command invokes |\n| `python` | OS subprocess (`python3`) | Python code | `python3` on the service `PATH` |\n| `sql` | in-process (native driver) | the SQL query; `conn` selects the connection | nothing extra |\n| `jar` | OS subprocess (`java`) | a `java -jar …` command | a JRE/JDK on the `PATH` |\n| `http` | in-process HTTP client | — (use the `http:` spec) | nothing extra |\n| `subdag` | scheduler-internal (child run) | — (use the `subdag:` field) | nothing extra |\n\n`sql` and `http` tasks are self-contained in the binary. `shell`, `python`, and `jar` tasks (and anything a shell task invokes) require that tool installed and on the **service** `PATH` — see [Deployment](DEPLOY.md).",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-47",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "Task types",
+      "text": "```yaml\ntasks:\n  - id: shell_task\n    type: shell\n    command: \"echo running {{ logical_date }}\"\n  - id: python_task\n    type: python\n    command: |\n      import os\n      print(os.environ['CRONOVA_LOGICAL_DATE'])\n  - id: sql_task\n    type: sql\n    conn: warehouse\n    command: \"SELECT count(*) FROM events WHERE day = '{{ params.day }}'\"\n  - id: jar_task\n    type: jar\n    command: \"java -jar app.jar --in {{ logical_date }}\"\n  - id: http_task\n    type: http\n    http:\n      method: POST\n      url: \"https://{{ conn.api.host }}/ingest\"\n      headers: { Authorization: \"Bearer {{ var.TOKEN }}\" }\n      body: '{\"date\":\"{{ logical_date }}\"}'\n      expected_status: [200, 201]\n```",
+      "topics": [
+        "dag",
+        "schedule",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-48",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "Template variables",
+      "text": "Any `command`, `url`, header, `body`, or query can reference `{{ name }}` placeholders, substituted at dispatch. Built-in run variables are also injected into the process environment as `CRONOVA_<NAME>` (uppercased):\n\n| Variable | Env var | Meaning |\n|---|---|---|\n| `{{ logical_date }}` | `CRONOVA_LOGICAL_DATE` | The run's logical date (`YYYY-MM-DD`) — the period it represents, which is what makes catchup meaningful. |\n| `{{ logical_datetime }}` | `CRONOVA_LOGICAL_DATETIME` | Logical date-time, RFC3339. |\n| `{{ run_id }}` | `CRONOVA_RUN_ID` | Unique id of this run. |\n| `{{ dag_id }}` | `CRONOVA_DAG_ID` | The DAG id. |\n| `{{ task_id }}` | `CRONOVA_TASK_ID` | This task's id. |\n| `{{ try_number }}` | `CRONOVA_TRY_NUMBER` | Attempt number (increments on retry). |\n\nWhen the DAG declares a `timezone:`, `logical_date`/`logical_datetime` render in\nthat zone (the run's own calendar day), while storage stays UTC.\n\n### Date expressions\n\n`logical_date` / `logical_datetime` accept offsets, anchors, and custom\nformats directly inside the placeholder:\n\n```\n{{ logical_date[.anchor][ ±N<unit> ]... [| format] }}\n```",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "template",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-49",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "Template variables",
+      "text": "| Piece | Values | Notes |\n|---|---|---|\n| anchor | `.month_start` `.month_end` `.week_start` `.week_end` | Binds to the base name, applies first; weeks start Monday; time resets to midnight. |\n| offset | `±N` + `d` (days) `h` (hours) `w` (weeks) `mo` (months) | Repeatable, applied left to right. `d`/`w`/`mo` are calendar arithmetic (wall clock survives DST); `h` is an absolute duration. |\n| format | `\\|` + strftime subset: `%Y %y %m %d %H %M %S %%` | Default: `YYYY-MM-DD` for `logical_date`, RFC3339 for `logical_datetime`. |\n\nExamples:\n\n```yaml\ncommand: \"python etl.py --day {{ logical_date - 1d | %Y%m%d }}\"     # yesterday as 20260807\ncommand: \"report.sh --from {{ logical_date.month_start }} --to {{ logical_date.month_end }}\"\ncommand: \"cleanup.sh --before {{ logical_date.month_start - 1d }}\"  # last day of previous month\ncommand: \"sync.sh --since {{ logical_datetime - 6h }}\"\n```\n\nAn expression that does not parse (unknown unit, bad `%` token, stray text) is\nleft in the command verbatim — typos stay visible in the task log instead of\nsilently rendering empty.",
+      "topics": [
+        "template",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-50",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "Template variables",
+      "text": "Shell tasks do not inherit the scheduler's complete process environment. Cronova\npasses a small runtime-safe set (`PATH`, locale, home/temp and certificate\nvariables) plus the task-specific `CRONOVA_*` values above. This prevents server\ncredentials such as `CRONOVA_ADMIN_PASSWORD` from reaching task code. Add a\nparent variable explicitly with `CRONOVA_TASK_ENV_ALLOWLIST=name1,name2`, or put\nthe value in the task's resolved environment instead.\n\nPlus UI-managed references, resolved server-side (secrets never enter the blanket env):\n\n- `{{ var.KEY }}` — a shared [variable](AGENTS.md).\n- `{{ conn.ID.FIELD }}` — a connection field: `host`, `port`, `login` (alias `user`), `password`, `type`, or an extra JSON field as `extra.KEY`.\n- `{{ params.KEY }}` — a manual-trigger parameter (also injected as `CRONOVA_PARAM_<KEY>`). Event-triggered runs receive the event payload as params plus `{{ params.event_key }}`.\n- `{{ ti.TASK_ID.KEY }}` — a field of an upstream task's emitted output (this run only).\n\n### Passing data between tasks",
+      "topics": [
+        "dag",
+        "schedule",
+        "template",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-51",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "Template variables",
+      "text": "A task can hand small values (row counts, generated file paths, ids) to its\ndownstream tasks by writing a **flat JSON string map** to the file named in\n`$CRONOVA_OUTPUT` (up to 64 KB):\n\n```yaml\ntasks:\n  - id: produce\n    command: 'echo \"{\\\"rows\\\":\\\"1234\\\"}\" > \"$CRONOVA_OUTPUT\"'\n  - id: consume\n    command: 'echo upstream wrote {{ ti.produce.rows }} rows'\n    deps: [produce]\n```\n\nThe output is collected when the task finishes successfully and stored per\n(run, task); trigger rules guarantee the upstream finished before a downstream\nreferencing it is dispatched. This is metadata passing, not a data channel —\nmove real datasets through external storage.\n\n### Self-skipping tasks\n\nA task that exits with code **99** is recorded as `skipped` instead of failed —\nthe shell-level way to say \"nothing to do here today\". Combine with downstream\n`trigger_rule: none_failed` (skip passes through) or the default `all_success`\n(skip blocks) to shape what happens next; `when:` (see task fields) is the\ndeclarative alternative evaluated before the task even starts.\n\nIn the console task editor these are inserted as click/drag **pills** — you don't type the `{{ }}`.",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "template",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-52",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "Trigger rules",
+      "text": "`trigger_rule` decides when a task runs given its upstream (`deps`) task states:\n\n| Rule | Runs when |\n|---|---|\n| `all_success` (default) | every upstream task succeeded |\n| `all_done` | every upstream task finished (any state) |\n| `all_failed` | every upstream task failed |\n| `one_success` | at least one upstream task succeeded |\n| `one_failed` | at least one upstream task failed |\n| `none_failed` | no upstream task failed (success or skipped) |",
+      "topics": [
+        "dag",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-53",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "Resource pools",
+      "text": "A **pool** is a named set of global concurrency slots; a task consumes one slot of its `pool` while running, and higher-`priority` tasks win contended slots. Pools are global resources configured out-of-band (not in DAG YAML):\n\n```bash\ncronova pools                    # list pools and usage\ncronova pools set reports 4      # create/resize the \"reports\" pool to 4 slots\n```\n\nEvery task defaults to the `default` pool. See the [CLI Reference](CLI.md) and [Architecture](ARCHITECTURE.md).",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool"
+      ]
+    },
+    {
+      "id": "doc-dag_reference-54",
+      "type": "doc",
+      "source": "docs/DAG_REFERENCE.md",
+      "section": "See also",
+      "text": "- [Getting Started](GETTING_STARTED.md) · [CLI Reference](CLI.md) · [AI Agents (MCP)](AGENTS.md) · [Deployment](DEPLOY.md) · [Architecture](ARCHITECTURE.md) · [FAQ](FAQ.md)",
+      "topics": [
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-agents-55",
+      "type": "doc",
+      "source": "docs/AGENTS.md",
+      "section": "Connecting an AI agent to cronova",
+      "text": "cronova exposes its operations to AI agents two ways, both over the **same\ntoken-authenticated, role-gated REST API** a browser uses — an agent never gets\na privileged side door. Its reach is exactly its token's role (`admin` = full\nCRUD + operate; `viewer` = read-only).\n\n1. **MCP server** (`cronova mcp`) — native tools for Claude Code / Claude Desktop\n   or any MCP host.\n2. **Remote CLI** (`cronova <verb> -server … -token …` or `cronova api …`) — for\n   agents that shell out and read JSON.\n\nBoth need a running `cronova serve` and an API token.\n\n---",
+      "topics": [
+        "schedule",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-agents-56",
+      "type": "doc",
+      "source": "docs/AGENTS.md",
+      "section": "1. Mint a token",
+      "text": "Run this **on the cronova server host** (it writes to the local DB — the bootstrap\npath, since you need a token to reach the API):\n\n```bash\ncronova tokens create my-agent -role admin      # or -role viewer for read-only",
+      "topics": [
+        "schedule",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-agents-57",
+      "type": "doc",
+      "source": "docs/AGENTS.md",
+      "section": "cnv_pat_XXXXXXXXXXXXXXXXXXXX     ← shown once; store it",
+      "text": "cronova tokens list\ncronova tokens delete <id>\n```\n\nGive the agent the printed token as `CRONOVA_TOKEN`.\n\n---",
+      "topics": [
+        "schedule"
+      ]
+    },
+    {
+      "id": "doc-agents-58",
+      "type": "doc",
+      "source": "docs/AGENTS.md",
+      "section": "2. MCP server (recommended for Claude)",
+      "text": "`cronova mcp` speaks the Model Context Protocol over stdio and exposes ~30 tools\n(`list_dags`, `create_dag`, `validate_dag`, `trigger_dag`, `get_run`,\n`get_task_log`, `cancel_run`, `retry_task`, `mark_run`, `set_variable`,\n`list_projects`, …) — all **derived from the same catalog as the OpenAPI spec**,\nso they can never drift from the API.\n\nRegister it with your MCP client. Claude Code (`~/.claude/mcp.json` or project\n`.mcp.json`) / Claude Desktop:\n\n```json\n{\n  \"mcpServers\": {\n    \"cronova\": {\n      \"command\": \"cronova\",\n      \"args\": [\"mcp\"],\n      \"env\": {\n        \"CRONOVA_SERVER\": \"http://localhost:8090\",\n        \"CRONOVA_TOKEN\": \"cnv_pat_XXXXXXXXXXXXXXXXXXXX\"\n      }\n    }\n  }\n}\n```\n\nFlags: `cronova mcp -server URL -token T -read-only`. **`-read-only` exposes only\nthe read (GET) tools** — a safe default for an observe-only agent (belt-and-suspenders\non top of a `viewer` token). STDOUT carries the protocol; logs go to STDERR.\n\nThe agent can then, in plain language, \"list failing runs of etl_daily\", \"show\nthe log of the failed task\", \"retry it\", or \"validate this DAG then create it\".\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "project",
+        "ai",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-agents-59",
+      "type": "doc",
+      "source": "docs/AGENTS.md",
+      "section": "3. Remote CLI (for shell-out agents / scripts)",
+      "text": "Point any command at a server with `-server`/`-token` (or `CRONOVA_SERVER` /\n`CRONOVA_TOKEN`) and ask for JSON with `-o json`:\n\n```bash\nexport CRONOVA_SERVER=http://localhost:8090 CRONOVA_TOKEN=cnv_pat_…\n\ncronova dags -o json                          # list DAGs\ncronova get etl_daily -o json                 # one DAG definition\ncronova trigger etl_daily -params '{\"day\":\"2026-01-01\"}' -o json\ncronova runs etl_daily -o json                # recent runs\ncronova run <run_id>                          # a run + task states\ncronova logs <task_instance_id>               # a task's log (text)\ncronova cancel <run_id>\ncronova retry <run_id> [task_id]\ncronova mark <run_id> [task_id] success       # operator override\ncronova pause etl_daily        (-off to resume)\ncronova overview                              # dashboard summary\n```\n\n### The `api` escape hatch\n\nEvery endpoint is reachable directly — the full surface without a per-verb\nsubcommand:",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "ai",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-agents-60",
+      "type": "doc",
+      "source": "docs/AGENTS.md",
+      "section": "3. Remote CLI (for shell-out agents / scripts)",
+      "text": "```bash\ncronova api GET  /api/dags\ncronova api POST /api/dags/validate '{\"dag_id\":\"x\",\"tasks\":[{\"id\":\"a\",\"type\":\"shell\",\"command\":\"echo hi\"}]}'\ncronova api POST /api/dags/build    '{\"dag_id\":\"x\",\"tasks\":[{\"id\":\"a\",\"type\":\"shell\",\"command\":\"echo hi\"}]}'\n```\n\nA non-2xx prints the error body and exits non-zero. The machine-readable OpenAPI\nspec is at `GET /openapi.json` (human docs at `/docs`).\n\n---",
+      "topics": [
+        "dag",
+        "schedule"
+      ]
+    },
+    {
+      "id": "doc-agents-61",
+      "type": "doc",
+      "source": "docs/AGENTS.md",
+      "section": "Authoring loop (validate before create)",
+      "text": "`validate_dag` (MCP) / `POST /api/dags/validate` runs the **same** cycle / dep /\ncron / id checks as create but **persists nothing** and returns structured\nfeedback — so an agent can iterate on a generated DAG before committing it:\n\n```bash\ncronova api POST /api/dags/validate '{\"dag_id\":\"x\",\"tasks\":[…]}'",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-agents-62",
+      "type": "doc",
+      "source": "docs/AGENTS.md",
+      "section": "{\"valid\": false, \"error\": \"dependency cycle detected: [a b a]\", \"canonical_yaml\": \"…\"}",
+      "text": "```\n\n---",
+      "topics": []
+    },
+    {
+      "id": "doc-agents-63",
+      "type": "doc",
+      "source": "docs/AGENTS.md",
+      "section": "Security notes",
+      "text": "- **Least privilege:** hand read-only agents a `viewer` token (and/or run\n  `cronova mcp -read-only`). Writes (create/delete/trigger/mark/…) require an\n  `admin` token — enforced server-side, the same gate as the console.\n- **Tokens are minted locally**, never via the API/MCP — an agent can't escalate\n  by creating itself a stronger token.\n- **HTTPS in production:** put cronova behind TLS and use an `https://` server URL;\n  the token is a bearer credential.\n- **Audit:** create/trigger/cancel/mark/… land in the audit log (`GET /api/audit`)\n  with the token's identity.\n```",
+      "topics": [
+        "schedule",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-64",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "cronova CLI Reference",
+      "text": "Every `cronova` command, subcommand, and flag — the main CLI binary runs the scheduler, manages the installed service pair, operates DAGs from the terminal, and serves AI agents over the REST API. Run `cronova <command> -h` for any command's own flags. For first steps see [Getting Started](GETTING_STARTED.md); for the DAG YAML schema see the [DAG Reference](DAG_REFERENCE.md).\n\n```\ncronova <command> [args] [flags]\n```\n\nCommands fall into four groups:\n\n| Group | Commands | Where they act |\n|---|---|---|\n| [Scheduler](#scheduler) | `serve`, `cronova-executor` | This machine (long-running processes) |\n| [Service lifecycle](#service-lifecycle) | `start`/`stop`/`restart`/`status`, `init`, `update`, `uninstall`, `version`, `healthcheck` | The host service manager (systemd / launchd) |\n| [Local operations](#local-operations) | `trigger`, `dags`, `runs`, `backfill`, `prune`, `pools`, `users` | The SQLite DB directly (`-db`) — or remote with `-server` |\n| [Remote / agent mode](#remote--agent-mode) | `api`, `get`, `run`, `logs`, `cancel`, `retry`, `mark`, `pause`, `overview`, `tokens`, `mcp` | A running server's authenticated REST API |",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-65",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Scheduler",
+      "text": "### `cronova serve`\n\nRun the scheduling loop plus the web console and REST API (default `http://localhost:8090`). With an empty `-executor`, tasks run in this process; installed services pass a private Unix socket and dispatch tasks to the standalone executor.\n\n```bash\ncronova serve -db data/cronova.db -dags dags -http 127.0.0.1:8090\n```",
+      "topics": [
+        "dag",
+        "schedule",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-66",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Scheduler",
+      "text": "| Flag | Default | Description |\n|---|---|---|\n| `-http` | `127.0.0.1:8090` | HTTP address for the console + API (empty to disable). |\n| `-db` | `data/cronova.db` | SQLite metadata database path. |\n| `-dags` | `dags` | Directory of DAG YAML definitions. |\n| `-logs` | `logs` | Directory for task log files. |\n| `-projects` | `~/.cronova/projects` | Directory for uploaded [project files](tutorial/projects.md). |\n| `-workspaces` | system temp directory | Shared directory for per-attempt project copies; managed services set an explicit state path. |\n| `-executor` | *(in-process)* | Absolute Unix-socket executor target. Empty = in-process executor; TCP targets are rejected. |\n| `-tick` | `2s` | Scheduling-loop interval. |\n| `-retention` | `2160h` (90 days) | Delete finished runs **and their logs** older than this; `0` = keep forever. See [`cronova prune`](#cronova-prune) for one-off cleanups. |\n| `-audit-retention` | `8760h` (365 days) | Delete audit records older than this; `0` = keep forever. |\n| `-max-queued-runs` | `10000` | Global queued-run admission limit across all trigger sources. |\n| `-max-active-runs` | `1000` | Global running-run limit across all DAGs. |\n| `-max-concurrent-tasks` | `64` | Global queued/running task limit across all pools. |\n| `-auth` | off | Require login for the console/API (overrides config). |\n| `-allow-unauthenticated-remote` | off | **Dangerous:** permit auth-off serving on a non-loopback address. |\n| `-config` | `cronova.yaml` | Path to a YAML config file (optional). |\n| `key_file` / `CRONOVA_KEY_FILE` | `cronova.key` | Config/env only (no flag): key file that encrypts connection passwords at rest. Auto-generated (`0600`) on first `serve` — back it up; losing it makes stored passwords unreadable. `none` disables encryption (plaintext, with a startup warning). |",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "project",
+        "ai",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-cli-67",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Scheduler",
+      "text": "Settings resolve in order: built-in defaults ← config file ← `CRONOVA_*` environment ← explicit flags. `CRONOVA_WEB_DIR` (dev only) serves the console assets from disk instead of the embedded copies.\nBehind a reverse proxy, list its peer IPs/CIDRs under `auth.trusted_proxies` or\n`CRONOVA_TRUSTED_PROXIES`; forwarding headers from every other peer are ignored.\n\n### `cronova-executor` (separate binary)\n\nThe standalone, crash-recoverable task executor. Run it first, then point the scheduler at its socket with `serve -executor` — tasks survive a scheduler restart. See [Architecture](ARCHITECTURE.md).\n\n```bash\ncronova-executor &\ncronova serve -executor \"unix:///tmp/cronova-$(id -u)/executor.sock\"\n```\n\n| Flag | Default | Description |\n|---|---|---|\n| `-sock` | `/tmp/cronova-<uid>/executor.sock` | Unix socket path. Its parent must be private (`0700`); the socket is forced to `0600`. |\n\nThe executor API has no separate credentials. Filesystem ownership is its trust\nboundary, so cronova accepts only absolute Unix sockets and refuses a public\nsocket directory or any TCP target.",
+      "topics": [
+        "dag",
+        "schedule",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-68",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Service lifecycle",
+      "text": "These wrap the host service manager — systemd on Linux, launchd on macOS — so you never type `systemctl`/`launchctl` incantations.\n\n!!! note \"Auto-sudo\"\n    Mutating commands (`start`, `stop`, `restart`, `update`, `uninstall`) auto-elevate: if you are not root, the CLI transparently re-executes itself under `sudo` (you get the password prompt). `CRONOVA_*` and standard `*_PROXY` environment variables are forwarded across the escalation. Set `CRONOVA_NO_SUDO=1` to opt out and manage privileges yourself — the command then fails with a `sudo cronova …` hint instead.\n\n### `cronova start` / `stop` / `restart`\n\nControl the installed service pair. `start` starts the executor before the scheduler; `stop` stops both. `restart` restarts only the scheduler so in-flight tasks remain owned by the running executor. Startup is reported successful only after both required daemons remain healthy.\n\n```bash\ncronova restart\n```\n\nNo flags. On a host without an installed service, use `cronova serve` directly.\n\n### `cronova status`\n\nShow scheduler and executor status. Read-only — never escalates. On Linux it queries both systemd units; on macOS, both launchd labels.\n\n```bash\ncronova status\n```",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-cli-69",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Service lifecycle",
+      "text": "### `cronova init`\n\nFirst-time setup wizard: HTTP port, bind scope (all interfaces vs. `127.0.0.1`), admin account, and auth on/off — each with an Enter-to-accept default. It writes the complete server config, seeds or rotates the admin hash directly in SQLite, and writes a credential-free `0600` environment-override template. Re-running with a blank password keeps the current credential.\n\n```bash\ncronova init          # interactive\ncronova init -yes     # accept defaults / CRONOVA_* env, no prompts\n```\n\n| Flag | Default | Description |\n|---|---|---|\n| `-config` | `cronova.yaml` | Config file to write (env `CRONOVA_CONFIG`). |\n| `-env` | `cronova.env` | Credential-free `0600` environment-override template to write (env `CRONOVA_ENV_FILE`). |\n| `-yes` | | Non-interactive: accept defaults / env without prompting. |\n\nNon-interactive installs preset values with `CRONOVA_ADMIN_USER`, `CRONOVA_ADMIN_PASSWORD`, `CRONOVA_AUTH`, `CRONOVA_HTTP`, etc. A fresh install defaults auth to **on**; an unrecognized `CRONOVA_AUTH` value never silently disables it.\n\n### `cronova update`",
+      "topics": [
+        "schedule",
+        "template",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-70",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Service lifecycle",
+      "text": "Download a prebuilt release from GitHub, require and verify its SHA256 checksum, and atomically swap both binaries. Managed service definitions are refreshed only when unchanged since installation; customized files are preserved and the new candidates are written as `*.dist`. The scheduler is restarted and checked, while an already-running executor is left alive for in-flight tasks. Missing checksum metadata aborts the update.\n\n```bash\ncronova update                               # latest release\ncronova update v0.2.0                        # pin a tag (re-install / downgrade)\ncronova update -proxy http://127.0.0.1:7890  # download through a proxy\n```\n\n| Flag / Env | Description |\n|---|---|\n| `-proxy <url>` | Proxy for the download: `http(s)://host:port` or `socks5://host:port`. |\n| `CRONOVA_UPDATE_PROXY` | Same as `-proxy`; also honors `HTTPS_PROXY` / `ALL_PROXY`. All survive the sudo escalation. |\n| `CRONOVA_BASE_URL` | Override the download origin (private mirror / testing). |",
+      "topics": [
+        "dag",
+        "schedule",
+        "test",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-71",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Service lifecycle",
+      "text": "If the restarted service does not stay up on the new binary, `update` **rolls back automatically**: the previous binaries and service definition are restored and the old version is restarted — the box is never left on a half-applied update. An unpinned `update` that is already current short-circuits with `already up to date`; a pinned version is always applied. See [Deployment → Updating](DEPLOY.md#updating).\n\n### `cronova uninstall`\n\nRemove the service and binaries. Config, database, DAGs, and logs are kept by default — re-installing brings the deployment back.\n\n```bash\ncronova uninstall            # keeps data (asks for confirmation)\ncronova uninstall --purge    # also delete config, DB, DAGs, and logs\ncronova uninstall -yes       # skip the confirmation prompt (scripts)\n```\n\n| Flag | Description |\n|---|---|\n| `--purge` | Also delete config, database, DAG, and log directories. |\n| `-yes` | Skip the confirmation prompt. |\n\n### `cronova version`\n\nPrint the build version and platform (the release asset `update` would fetch for this host).\n\n```console\n$ cronova version\ncronova v0.3.0 darwin/arm64\n```\n\n### `cronova healthcheck`",
+      "topics": [
+        "dag",
+        "schedule",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-72",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Service lifecycle",
+      "text": "Probe the server's readiness endpoint and exit non-zero if unhealthy — a curl-free liveness check for systemd, load balancers, or cron probes.\n\n```bash\ncronova healthcheck -http 127.0.0.1:8090 && echo healthy\n```\n\n| Flag | Default | Description |\n|---|---|---|\n| `-http` | `127.0.0.1:8090` | Server HTTP address (env `CRONOVA_HTTP`). |\n| `-path` | `/readyz` | Path to probe. |",
+      "topics": [
+        "schedule",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-73",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Local operations",
+      "text": "Run on the machine that holds the database; they act directly on the SQLite DB. All accept `-db` (default `data/cronova.db`), and most also take the [global `-server`/`-token`/`-o` flags](#global-flags-and-environment) — give `-server` and the same command goes over the REST API instead (`backfill` and `prune` are local-only).\n\n### `cronova trigger`\n\nCreate a manual run of a DAG, optionally with trigger params (available in tasks as [template variables](tutorial/template-variables.md)).\n\n```console\n$ cronova trigger example_etl -params '{\"day\":\"2026-01-01\"}'\ncreated run example_etl__manual_1783442227904284000 (a running `cronova serve` will execute it)\n```\n\n| Flag | Default | Description |\n|---|---|---|\n| `-params` | | Trigger params as a JSON object of string values, e.g. `'{\"day\":\"2026-01-01\"}'`. |\n| `-priority` | `0` | Run priority ±100. Higher wins dispatch-slot competition across runs and drains first from a `serial_priority` queue. |\n| `-db` / `-dags` | `data/cronova.db` / `dags` | Local DB and DAG directory. |\n\nThe run is queued in the database; a running `cronova serve` picks it up and executes it.\n\n### `cronova dags`",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "template",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-cli-74",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Local operations",
+      "text": "List registered DAGs. In local mode it loads the DAG directory from disk first, so freshly added YAML files show up even before `serve` runs.\n\n```console\n$ cronova dags\nDAG_ID             SCHEDULE   CATCHUP  PAUSED  MAX_ACTIVE\ndownstream_report  (manual)   false    true    1\nexample_etl        (manual)   false    false   1\nticker             @every 1m  false    true    1\nupstream_ingest    (manual)   false    false   1\n```\n\n| Flag | Default | Description |\n|---|---|---|\n| `-db` / `-dags` | `data/cronova.db` / `dags` | Local DB and DAG directory. |\n\n### `cronova runs`\n\nShow a DAG's recent runs with per-task states.\n\n```console\n$ cronova runs example_etl -n 3\nRUN_ID                                   LOGICAL_DATE          STATE    TRIGGER  TASKS\nexample_etl__manual_1783442227904284000  2026-07-07T16:37:07Z  success  manual   extract=success transform=success validate=success load=success\nexample_etl__manual_1783442223878514000  2026-07-07T16:37:03Z  success  manual   extract=success transform=success validate=success load=success\nexample_etl__manual_1783442199726456000  2026-07-07T16:36:39Z  success  manual   extract=success transform=success validate=success load=success\n```",
+      "topics": [
+        "dag",
+        "schedule",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-75",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Local operations",
+      "text": "| Flag | Default | Description |\n|---|---|---|\n| `-n` | `10` | Number of recent runs to show. |\n| `-db` | `data/cronova.db` | SQLite database path. |\n\nIn remote mode the table omits the `TASKS` column (the runs endpoint returns runs only); use `cronova run <run_id>` for one run's task states. The underlying `GET /api/dags/{id}/runs` endpoint also accepts `state=` (comma-separated, e.g. `state=failed,cancelled` — unknown names are rejected) and `offset=` for filtering and paging; reach them with [`cronova api`](#cronova-api).\n\n### `cronova backfill`\n\nEnqueue one queued run per schedule period in a date window — re-run history after a bug fix, or load past periods for a newly added DAG. Periods that already have a run (in **any** state) are skipped, so re-running a backfill never double-runs anything; `to` is clamped to now (future periods belong to the scheduler); a window covering more than 500 periods is rejected outright. Execution is throttled by the DAG's `max_active_runs`, exactly like catchup.\n\n```console\n$ cronova backfill daily_etl -from 2026-07-01 -to 2026-07-05\nbackfill daily_etl: created 5 run(s), skipped 0 existing (a running `cronova serve` executes them)\n```",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-76",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Local operations",
+      "text": "| Flag | Default | Description |\n|---|---|---|\n| `-from` / `-to` | *(required)* | Window start / end, `YYYY-MM-DD`, both inclusive. |\n| `-db` / `-dags` | `data/cronova.db` / `dags` | Local DB and DAG directory. |\n\nThe DAG must have a `schedule` — backfill enumerates schedule periods. Local-only; against a remote server call the API, which also accepts RFC3339 timestamps: `cronova api POST /api/dags/daily_etl/backfill '{\"from\":\"2026-07-01\",\"to\":\"2026-07-05\"}'`.\n\n### `cronova prune`\n\nDelete finished runs — DB rows plus their log directories — older than a retention window. The manual counterpart of [`serve -retention`](#cronova-serve), for one-off cleanups or deployments that run with retention disabled. Local-only; asks for confirmation unless `-yes`.\n\n```bash\ncronova prune                    # finished runs older than 90 days (asks first)\ncronova prune -older-than 720h   # custom window (30 days)\ncronova prune -yes               # no confirmation (scripts / cron)\n```",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-77",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Local operations",
+      "text": "| Flag | Default | Description |\n|---|---|---|\n| `-older-than` | `2160h` (90 days) | Delete finished runs older than this (must be positive). |\n| `-yes` | | Skip the confirmation prompt. |\n| `-db` / `-logs` | `data/cronova.db` / `logs` | Local DB and log directory. |\n\n### `cronova pools`\n\nList [resource pools](tutorial/retries-timeouts-pools.md), or create/resize one with `pools set`.\n\n```console\n$ cronova pools\nNAME     SLOTS\ndefault  16\nreports  4\n$ cronova pools set reports 8\npool \"reports\" set to 8 slots\n```\n\n| Usage | Description |\n|---|---|\n| `cronova pools` | List pools and their slot counts. |\n| `cronova pools set <name> <slots>` | Create or resize a pool (`slots` must be a positive integer). |\n\n### `cronova users`\n\nManage web console accounts. Local-only — account admin is a server-host operation.\n\n```bash\ncronova users list\ncronova users add alice -role viewer -password s3cret\ncronova users passwd alice          # prompts for the new password\ncronova users delete alice\n```",
+      "topics": [
+        "schedule",
+        "retry",
+        "pool",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-78",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Local operations",
+      "text": "| Subcommand | Flags | Description |\n|---|---|---|\n| `list` | | List accounts with role and creation time. |\n| `add <name>` | `-role admin\\|viewer` (default `viewer`), `-password` | Create an account. |\n| `passwd <name>` | `-password` | Change a password — existing sessions are revoked. |\n| `delete <name>` | | Remove an account. |\n\nWhen `-password` is omitted, the password is read from stdin (prompted). `-db` also honors `CRONOVA_DB`.",
+      "topics": [
+        "schedule"
+      ]
+    },
+    {
+      "id": "doc-cli-79",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Remote / agent mode",
+      "text": "Drive a running server over its **token-authenticated, role-gated REST API** — the same path the browser console uses. This is how scripts, CI, and AI agents operate cronova from anywhere. Full agent guide: [AI Agents (MCP)](AGENTS.md).\n\n### Global flags and environment\n\nEvery operational command accepts these; set them once as environment variables for a session.\n\n| Global flag | Env | Description |\n|---|---|---|\n| `-server <url>` | `CRONOVA_SERVER` | Server URL, e.g. `http://localhost:8090`. Empty = local DB. |\n| `-token <token>` | `CRONOVA_TOKEN` | API token (mint with [`cronova tokens create`](#cronova-tokens)). |\n| `-o table\\|json` | `CRONOVA_OUTPUT` | Output format; `json` for scripting and agents. |\n\n```bash\nexport CRONOVA_SERVER=http://localhost:8090 CRONOVA_TOKEN=cnv_pat_…\ncronova dags -o json\n```\n\n!!! tip \"Exit codes for scripts\"\n    Commands exit non-zero on API errors (the error body is printed first), so `cronova trigger etl && …` chains safely in CI.\n\n### `cronova api`\n\nRaw passthrough to any REST endpoint — the escape hatch that exposes the full API surface without a per-endpoint subcommand. JSON responses are pretty-printed.",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-cli-80",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Remote / agent mode",
+      "text": "```bash\ncronova api GET  /api/dags\ncronova api POST /api/dags/etl/trigger '{\"params\":{\"day\":\"2026-01-01\"}}'\n```\n\nUsage: `cronova api <METHOD> <path> [json-body]`.\n\n### `cronova get`\n\nShow a DAG definition (`GET /api/dags/{id}`).\n\n```bash\ncronova get example_etl\n```\n\n### `cronova run`\n\nShow one run and its task states (`GET /api/runs/{runID}`) — the remote counterpart to `runs`' per-task detail.\n\n```bash\ncronova run example_etl__manual_1783442227904284000\n```\n\n### `cronova logs`\n\nFetch a task instance's log as plain text. Get the task instance ID from `cronova run` or the run detail page in the web console.\n\n```bash\ncronova logs 42\n```\n\n### `cronova cancel`\n\nCancel an active run.\n\n```bash\ncronova cancel example_etl__manual_1783442227904284000\n```\n\n### `cronova retry`\n\nRetry a run's failed tasks, or a single task.\n\n```bash\ncronova retry example_etl__manual_1783442227904284000            # all failed tasks\ncronova retry example_etl__manual_1783442227904284000 transform  # one task\n```\n\n### `cronova mark`\n\nOperator override of a run or task state — skip a known-bad task, force a run green after a manual fix.",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "ai",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-cli-81",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Remote / agent mode",
+      "text": "```bash\ncronova mark <run_id> success                # mark the run:  success | failed\ncronova mark <run_id> <task_id> skipped      # mark one task: success | failed | skipped\n```\n\n| Target | Valid states |\n|---|---|\n| Run (`mark <run_id> <state>`) | `success`, `failed` |\n| Task (`mark <run_id> <task_id> <state>`) | `success`, `failed`, `skipped` |\n\n### `cronova pause`\n\nPause a DAG's scheduling, or resume it with `-off`. Paused DAGs skip their cron schedule but can still be triggered manually.\n\n```bash\ncronova pause ticker\ncronova pause ticker -off   # resume\n```\n\n### `cronova overview`\n\nDashboard summary — DAG counts, active runs, and pool usage in one call (`GET /api/overview`). Pair with `-o json` for monitoring scripts.\n\n```bash\ncronova overview -o json\n```\n\n### `cronova tokens`\n\nProvision and manage API tokens. **`create` is local-only by design** — it writes directly to the SQLite store, because the first token cannot come from the API it unlocks (and token admin stays a server-host operation). `list`/`delete` are local too.\n\n```console\n$ cronova tokens create ci-bot -role admin\ncreated admin token \"ci-bot\"\n\n  cnv_pat_3JLKxC…",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-82",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Remote / agent mode",
+      "text": "Store it now — it is not shown again. Use it with:\n  export CRONOVA_TOKEN=cnv_pat_3JLKxC…\n\n$ cronova tokens list\nID  NAME        ROLE    PREFIX           LAST_USED\n3   docs-demo   viewer  cnv_pat_eP6UPK…  never\n2   deploy-bot  admin   cnv_pat_FhFJ2V…  never\n1   ci-bot      admin   cnv_pat_3JLKxC…  never\n```\n\n| Subcommand | Flags | Description |\n|---|---|---|\n| `create <name>` | `-role admin\\|viewer` (default `admin`), `-db` | Mint a token. The plaintext is shown once; only a hash is stored. |\n| `list` | `-db` | List tokens with role, prefix, and last-used time. |\n| `delete <id>` | `-db` | Revoke a token by ID. |\n\n### `cronova worker`\n\nRun this host as a **dial-in remote worker**: it joins a scheduler once with a\none-time token (generating a local keypair; only the CSR travels) and then\nholds a single outbound mTLS stream for assignments, cancels, heartbeats, and\nlog streaming. No inbound port, no shared filesystem. A worker restart\nre-adopts its running tasks instead of killing them.",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-cli-83",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Remote / agent mode",
+      "text": "```console\n$ cronova worker -server http://sched.example:8090 -join-token cwj_9a1f… -name gpu-1 -labels group=gpu\njoined as wk_76417dbc51 (state in /home/etl/.cronova/worker)\ntime=… msg=\"connected to hub\" worker=wk_76417dbc51 addr=sched.example:9091 heartbeat=5s\n```\n\n| Flag | Default | Description |\n|---|---|---|\n| `-server` | `$CRONOVA_SERVER` | Scheduler console URL (join only). |\n| `-join-token` | `$CRONOVA_JOIN_TOKEN` | One-time join token (mint with `cronova workers token`). Ignored once an identity exists — restarts are idempotent. |\n| `-name` | hostname | Display name. |\n| `-labels` | `group=default` | Comma-separated `key=value` routing labels; `group` is the worker group tasks target with `worker_group:`. |\n| `-hub` | server-advertised | Override the hub `host:port` (NAT / port-forward setups). |\n| `-state-dir` | `~/.cronova/worker` | Identity, attempt state, and log spool. |\n\n### `cronova workers`\n\nManage the worker fleet through the REST API (`-server`/`-token` or `CRONOVA_SERVER`/`CRONOVA_TOKEN`).\n\n```console\n$ cronova workers token\njoin token (one-time, expires 2026-08-09T03:20:11Z):\ncwj_9a1f0c…\non the worker host: cronova worker -server <console-url> -join-token <token>",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-84",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Remote / agent mode",
+      "text": "$ cronova workers list\nWORKER         NAME             GROUP      STATE    TASKS  LAST HEARTBEAT\nwk_76417dbc51  gpu-1            gpu        online   2      2026-08-08T03:20:41Z\n```\n\n| Subcommand | Flags | Description |\n|---|---|---|\n| `token` | `-ttl` (default `24h`) | Mint a one-time join token (admin). Shown once; only a hash is stored. |\n| `list` | | List workers with group, state (`online`/`offline`/`lost`, `+drain`), load, and last heartbeat. |\n| `drain <worker_id>` | `-off` to undrain | Stop new assignments; running tasks finish. |\n| `remove <worker_id>` | | Delete the registration and close its session. A removed worker cannot reconnect. |\n\n### `cronova mcp`\n\nRun a [Model Context Protocol](https://modelcontextprotocol.io/) server over stdio, exposing cronova's operations as tools for AI clients (Claude Code, Claude Desktop, any MCP host). It talks to a running server through the REST API, so the AI's reach is exactly its token's role. Stdout carries the protocol; logs go to stderr.\n\n```bash\nCRONOVA_TOKEN=cnv_pat_… cronova mcp -read-only\n```",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-85",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Remote / agent mode",
+      "text": "| Flag | Env | Description |\n|---|---|---|\n| `-server <url>` | `CRONOVA_SERVER` | Server URL (default `http://localhost:8090`). |\n| `-token <token>` | `CRONOVA_TOKEN` | API token — warns at startup if unset. |\n| `-read-only` | | Expose only the read (GET) tools. |\n\nFull guide, MCP config snippet, and security notes: [AI Agents (MCP)](AGENTS.md).",
+      "topics": [
+        "schedule",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-86",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "Common questions",
+      "text": "**Do local commands need the server running?** No — `trigger`, `dags`, `runs`, `backfill`, `prune`, `pools`, `users`, and `tokens` act on the SQLite DB directly. Runs queued by `trigger` or `backfill` execute once `serve` is running.\n\n**How do I run the CLI from another machine?** Set `CRONOVA_SERVER` and `CRONOVA_TOKEN` (or `-server`/`-token`); every operational command then goes over the REST API. Token minting stays on the server host.\n\n**Why did `cronova start` ask for my password?** Service commands auto-elevate via `sudo` to reach systemd/launchd. Set `CRONOVA_NO_SUDO=1` to disable this and run `sudo cronova start` yourself.\n\n**What states can `mark` set?** Runs: `success` or `failed`. Tasks: `success`, `failed`, or `skipped`.",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-cli-87",
+      "type": "doc",
+      "source": "docs/CLI.md",
+      "section": "See also",
+      "text": "- [Getting Started](GETTING_STARTED.md) · [DAG Reference](DAG_REFERENCE.md) · [AI Agents (MCP)](AGENTS.md) · [Deployment](DEPLOY.md) · [FAQ](FAQ.md)",
+      "topics": [
+        "dag",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-88",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "cronova 架构设计文档",
+      "text": "> 一个类 Airflow / Azkaban 的工作流调度框架。\n> 版本：v1（单机起步，预留分布式演进）\n> 最后更新：2026-06-24\n\n---",
+      "topics": [
+        "schedule",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-89",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "目录",
+      "text": "1. [项目定位](#1-项目定位)\n2. [架构决策记录（ADR）](#2-架构决策记录adr)\n3. [总体架构](#3-总体架构)\n4. [模块结构](#4-模块结构)\n5. [核心概念](#5-核心概念)\n6. [数据模型](#6-数据模型)\n7. [调度内核](#7-调度内核)\n8. [执行层](#8-执行层)\n9. [崩溃恢复机制](#9-崩溃恢复机制)\n10. [补跑与逻辑时间（catchup）](#10-补跑与逻辑时间catchup)\n11. [资源槽池与并发控制](#11-资源槽池与并发控制)\n12. [失败传播与重试](#12-失败传播与重试)\n13. [触发流程时序](#13-触发流程时序)\n14. [YAML DAG 规范](#14-yaml-dag-规范)\n15. [executor gRPC 协议](#15-executor-grpc-协议)\n16. [API 与 Web UI](#16-api-与-web-ui)\n17. [权限模型](#17-权限模型)\n18. [实施路线（M0–M6）](#18-实施路线m0m6)\n19. [演进路径：单机 → 分布式](#19-演进路径单机--分布式)\n20. [风险与开放问题](#20-风险与开放问题)\n\n---",
+      "topics": [
+        "dag",
+        "schedule"
+      ]
+    },
+    {
+      "id": "doc-architecture-90",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "1. 项目定位",
+      "text": "cronova 是一个**工作流调度框架**，目标是做成**可用产品**（而非纯学习 demo）。它负责：\n\n- 按 **DAG（有向无环图）** 描述任务之间的依赖关系；\n- 按多种方式**触发**工作流（定时 / 手动 / 上游依赖 / 外部事件）；\n- 把每个任务作为**独立子进程**拉起，因此天然支持**多语言任务**（Python、SQL、Java、Go、Node 等）；\n- 跟踪每次运行（run）和每个任务实例（task instance）的**状态**，提供监控、日志、补跑、重试等运维能力。\n\n**一句话定位**：框架用 Go 写，但调度的任务可以是任何语言——因为任务是被当作子进程拉起的，框架语言与任务语言彻底解耦。\n\n---",
+      "topics": [
+        "dag",
+        "schedule"
+      ]
+    },
+    {
+      "id": "doc-architecture-91",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "2. 架构决策记录（ADR）",
+      "text": "| # | 决策项 | 选择 | 理由 |\n|---|---|---|---|\n| 1 | 实现语言 | **Go** | 并发模型（goroutine/channel）天然契合调度器；静态二进制部署；`os/exec` 管子进程顺手；gRPC 生态利于后续分布式 |\n| 2 | DAG 定义 | 声明式 **YAML** 为底 + **Web UI** 编辑器在上 | 底层可校验、可版本化；上层对非技术用户友好 |\n| 3 | 部署形态 | **单机起步**，预留 Master-Worker | 先把内核跑通，再水平扩展 |\n| 4 | 任务执行 | **拉子进程**，多语言任务 | 框架/任务语言解耦 |\n| 5 | 项目目标 | **做成可用产品** | 偏向健壮、可运维 |\n| 6 | 触发方式 | 定时 + 手动 + 依赖 + 事件 | 覆盖调度器核心职责 |\n| 7 | 元数据存储 | **嵌入式 SQLite**，store 接口抽象 | 单机零运维；接口隔离便于换 PG/MySQL |\n| 8 | 崩溃恢复 | **重接 + 状态重建** | 调度器重启不丢正在跑的任务 |\n| 9 | 补跑策略 | **可配置 catchup**（Airflow 风格） | 引入 logical_date，错过的周期可逐个补 |\n| 10 | 日志 | **每实例一文件** + UI tail | 单机最实用，避免撑爆 DB |\n| 11 | 并发控制 | **资源槽池 Pool** | 限流 + 优先级，防任务洪水 |\n| 12 | 执行解耦 | **独立常驻 executor 进程**，本地 gRPC 下发 | 调度器重启不杀任务；executor 即未来 worker 雏形 |\n| 13 | 失败传播 | 默认**阻断下游分支**（`upstream_failed`） | 无关并行分支继续；`trigger_rule` 留作扩展 |\n| 14 | 逻辑时间 | **注入任务**（env / `{{ logical_date }}`） | 任务按逻辑周期处理数据，补跑才有意义 |\n| 15 | 权限 | v1 **先单用户**，预留 `owner`/`project` 字段 | 先把内核做扎实，后续加 RBAC |\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "project",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-92",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "3. 总体架构",
+      "text": "四层结构：**接入层 → 调度内核 → 执行层 → 持久层**。调度内核（`cronova` 主进程）与执行器（`cronova-executor` 常驻进程）通过本地 gRPC 通信——这是「重启不丢任务」的关键解耦。\n\n```mermaid\ngraph TD\n    subgraph Interface[\"接入层\"]\n        UI[\"Web UI<br/>配置编辑 + 监控面板\"]\n        API[\"API 服务<br/>REST + WebSocket\"]\n    end\n\n    subgraph SchedulerProc[\"调度内核 — cronova 主进程\"]\n        TRIG[\"触发器<br/>cron / 手动 / 依赖 / 事件\"]\n        PARSE[\"DAG 解析<br/>YAML + 防环校验\"]\n        LOOP[\"调度循环<br/>就绪判定 + 占槽 + 下发\"]\n        STATE[\"状态机<br/>run / task 状态\"]\n        POOL[\"资源槽池<br/>并发上限 + 优先级\"]\n        REC[\"恢复模块<br/>启动时重接 + 重建\"]\n    end\n\n    subgraph ExecProc[\"执行层 — cronova-executor 常驻进程\"]\n        EXEC[\"执行器<br/>拉子进程 + 超时 kill\"]\n        LOGW[\"日志写入<br/>stdout / stderr\"]\n    end\n\n    subgraph Storage[\"持久层\"]\n        DB[(\"SQLite<br/>元数据 / 状态 / 历史\")]\n        FILES[/\"任务日志文件<br/>按实例分文件\"/]\n    end\n\n    UI --> API\n    API --> TRIG\n    API --> STATE\n    TRIG --> LOOP\n    PARSE --> LOOP\n    LOOP --> POOL\n    POOL --> STATE\n    STATE <--> DB\n    LOOP -- \"gRPC Launch\" --> EXEC\n    EXEC --> LOGW\n    LOGW --> FILES\n    EXEC -- \"状态回报\" --> STATE\n    REC --> DB\n    REC -- \"gRPC Probe 重接\" --> EXEC\n    API -- \"tail 日志\" --> FILES\n```\n\n**关键边说明**",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-93",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "3. 总体架构",
+      "text": "- `STATE <--> DB`：**所有状态变更先写库后执行**，SQLite 是唯一真相源。\n- `LOOP -- gRPC Launch --> EXEC`：调度器只下发，不直接 fork 子进程；任务的真正父进程是常驻 executor。\n- `REC -- gRPC Probe --> EXEC`：调度器重启后，对每个 `running` 实例向 executor 探测，据此重建状态。\n\n---",
+      "topics": []
+    },
+    {
+      "id": "doc-architecture-94",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "4. 模块结构",
+      "text": "Go 项目布局（约定式分层，`internal/` 隔离实现细节）：\n\n```\ncronova/\n├── cmd/\n│   ├── cronova/              # 主进程入口: scheduler + api + web (单机一体)\n│   └── cronova-executor/     # 常驻执行器进程入口 (gRPC server)\n├── internal/\n│   ├── scheduler/\n│   │   ├── trigger/          # cron / manual / dependency / event 四类触发源\n│   │   ├── parser/           # YAML 解析 + DAG 防环校验 (拓扑排序)\n│   │   ├── loop.go           # 调度循环: tick → 扫就绪 → 占槽 → 下发\n│   │   └── state/            # run / task 状态机与迁移规则\n│   ├── executor/             # 拉子进程 · 超时 kill · stdout/err → 日志文件\n│   ├── pool/                 # 资源槽池: 并发上限 + 优先级队列\n│   ├── store/                # 持久层 interface + sqlite/ 具体实现 (可换 PG/MySQL)\n│   │   ├── store.go          # Store interface\n│   │   └── sqlite/           # SQLite 实现 + 迁移脚本\n│   ├── model/                # DAG / DagRun / TaskInstance / Pool 领域模型\n│   ├── api/                  # REST + SSE handlers (日志 tail)\n│   └── recovery/             # 启动恢复: 扫 running 实例 → 重接 executor → 重建状态\n├── proto/                    # scheduler ↔ executor 的 gRPC .proto 定义\n├── web/                      # 前端: 监控面板 + YAML 编辑器\n├── dags/                     # 用户的 YAML DAG 定义目录 (可配置路径)\n└── docs/\n    └── ARCHITECTURE.md       # 本文件\n```\n\n**设计要点**",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-architecture-95",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "4. 模块结构",
+      "text": "- `store` 是接口，`sqlite` 是其唯一实现 → 未来加 `postgres` 实现即可切换，调度逻辑零改动。\n- `scheduler` 与 `executor` 各有独立 `cmd/` 入口；手动 `serve` 可使用进程内 executor，托管安装则默认以两个独立服务通过私有 Unix socket 通信。\n\n---",
+      "topics": [
+        "schedule",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-architecture-96",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "5. 核心概念",
+      "text": "| 概念 | 说明 |\n|---|---|\n| **DAG** | 一个工作流定义：一组 task + 它们之间的依赖边，必须无环 |\n| **Task** | DAG 中的一个节点，定义「跑什么命令、依赖谁、重试几次、用哪个 pool」 |\n| **DAG Run** | DAG 的一次具体运行实例，由某次触发产生，带一个 `logical_date` |\n| **Task Instance** | 某个 DAG Run 中某个 Task 的具体执行，是状态机的最小单元 |\n| **logical_date** | 逻辑时间：这次 run **代表的业务周期**，而非墙上时间。补跑的命根子 |\n| **Pool** | 资源槽池：一组并发槽位，限制同时运行的任务数 |\n| **trigger** | 触发源：定时 / 手动 / 上游依赖 / 外部事件 |\n| **executor_ref** | executor 为每个已拉起任务返回的句柄，崩溃恢复时用它重接 |\n\n### 逻辑时间（logical_date）为什么重要？\n\n假设一个「每天处理昨天数据」的 ETL，配置 `schedule: 0 2 * * *`。\n\n- 6/10 凌晨 2 点触发的 run，它的 `logical_date = 6/9`，任务应处理 **6/9 的数据**。\n- 如果调度器 6/8–6/10 宕机了 3 天，开启 catchup 后重启，应**补出 6/8、6/9、6/10 三个独立 run**，各自带不同 logical_date，分别处理对应天的数据。\n\n如果任务只知道「现在几点」而不知道 logical_date，补跑就毫无意义——所有补跑都会处理「今天」的数据。所以 logical_date 必须**注入给任务**（见 [§10](#10-补跑与逻辑时间catchup)）。\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool"
+      ]
+    },
+    {
+      "id": "doc-architecture-97",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "6. 数据模型",
+      "text": "SQLite 关系模型。核心五张表 + 两张扩展表。\n\n```mermaid\nerDiagram\n    DAGS ||--o{ DAG_RUNS : \"产生\"\n    DAG_RUNS ||--o{ TASK_INSTANCES : \"包含\"\n    POOLS ||--o{ TASK_INSTANCES : \"限流\"\n    DAGS ||--o{ DAG_DEPENDENCIES : \"上游\"\n\n    DAGS {\n        text dag_id PK\n        text schedule\n        date start_date\n        bool catchup\n        bool paused\n        int max_active_runs\n        text definition_yaml\n        text owner\n        text project\n    }\n    DAG_RUNS {\n        text run_id PK\n        text dag_id FK\n        datetime logical_date\n        text state\n        text trigger_type\n        text definition_yaml\n        text definition_hash\n        datetime started_at\n        datetime finished_at\n    }\n    TASK_INSTANCES {\n        int id PK\n        text run_id FK\n        text task_id\n        text state\n        int try_number\n        int max_retries\n        text pool FK\n        int priority\n        text definition_hash\n        text executor_ref\n        text log_path\n        datetime started_at\n        datetime finished_at\n    }\n    POOLS {\n        text name PK\n        int slots\n    }\n    DAG_DEPENDENCIES {\n        text upstream_dag FK\n        text downstream_dag\n    }\n```\n\n### DDL 草案",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "project",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-98",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "6. 数据模型",
+      "text": "```sql\n-- DAG 定义元数据\nCREATE TABLE dags (\n    dag_id          TEXT PRIMARY KEY,\n    schedule        TEXT,                 -- cron 表达式; NULL = 仅手动/事件触发\n    start_date      DATE,\n    catchup         INTEGER NOT NULL DEFAULT 0,\n    paused          INTEGER NOT NULL DEFAULT 0,\n    max_active_runs INTEGER NOT NULL DEFAULT 1,\n    definition_yaml TEXT NOT NULL,        -- 原始 YAML, 便于 UI 回显/版本化\n    owner           TEXT,                 -- v1 预留\n    project         TEXT,                 -- v1 预留\n    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP\n);\n\n-- DAG 的一次运行\nCREATE TABLE dag_runs (\n    run_id        TEXT PRIMARY KEY,       -- 例如 {dag_id}__{logical_date}\n    dag_id        TEXT NOT NULL REFERENCES dags(dag_id),\n    logical_date  DATETIME NOT NULL,\n    state         TEXT NOT NULL,          -- queued/running/success/failed\n    trigger_type  TEXT NOT NULL,          -- schedule/manual/dependency/event\n    definition_yaml TEXT NOT NULL,        -- 本次 run 的不可变 DAG 快照\n    definition_hash TEXT NOT NULL,        -- 快照 SHA-256\n    started_at    DATETIME,\n    finished_at   DATETIME,\n    UNIQUE (dag_id, logical_date)         -- ★ 补跑去重的命根子\n);",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "project",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-99",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "6. 数据模型",
+      "text": "-- 任务实例 (状态机最小单元)\nCREATE TABLE task_instances (\n    id            INTEGER PRIMARY KEY AUTOINCREMENT,\n    run_id        TEXT NOT NULL REFERENCES dag_runs(run_id),\n    task_id       TEXT NOT NULL,\n    state         TEXT NOT NULL,          -- 见 §7 状态机\n    try_number    INTEGER NOT NULL DEFAULT 0,\n    max_retries   INTEGER NOT NULL DEFAULT 0,\n    pool          TEXT NOT NULL DEFAULT 'default' REFERENCES pools(name),\n    priority      INTEGER NOT NULL DEFAULT 0,\n    definition_hash TEXT,                 -- 本次 task attempt 使用的定义版本\n    executor_ref  TEXT,                   -- executor 返回的句柄, 重接用\n    log_path      TEXT,\n    started_at    DATETIME,\n    finished_at   DATETIME,\n    UNIQUE (run_id, task_id)\n);\n\n-- 资源槽池\nCREATE TABLE pools (\n    name   TEXT PRIMARY KEY,\n    slots  INTEGER NOT NULL\n);\nINSERT INTO pools(name, slots) VALUES ('default', 16);\n\n-- 跨 DAG 依赖 (依赖触发)\nCREATE TABLE dag_dependencies (\n    upstream_dag    TEXT NOT NULL REFERENCES dags(dag_id),\n    downstream_dag  TEXT NOT NULL REFERENCES dags(dag_id),\n    PRIMARY KEY (upstream_dag, downstream_dag)\n);",
+      "topics": [
+        "dag",
+        "retry",
+        "pool"
+      ]
+    },
+    {
+      "id": "doc-architecture-100",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "6. 数据模型",
+      "text": "-- 持久调度事件（当前用于依赖触发，后续也承载外部事件）\nCREATE TABLE events (\n    id          INTEGER PRIMARY KEY AUTOINCREMENT,\n    source      TEXT NOT NULL,            -- dependency/webhook/file/mq\n    event_key   TEXT NOT NULL,            -- dependency 使用 upstream run_id\n    payload     TEXT,\n    consumed    INTEGER NOT NULL DEFAULT 0,\n    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,\n    UNIQUE (source, event_key)\n);\n\nCREATE INDEX idx_ti_state   ON task_instances(state);\nCREATE INDEX idx_ti_run     ON task_instances(run_id);\nCREATE INDEX idx_runs_state ON dag_runs(state);\n```\n\n> **并发与日志模式**：实现用纯 Go 的 `modernc.org/sqlite`（零 CGO）。它的 WAL 共享内存是进程内模拟的，**不跨 OS 进程协调**，而 cronova 的 CLI（`trigger`/`runs`）会与运行中的 `serve` 进程并发访问同一 DB——因此用 **回滚日志 DELETE 模式**（`PRAGMA journal_mode=DELETE`，真实文件锁，跨进程安全）而非 WAL，并设 `busy_timeout` 让锁竞争重试。store 层用 `MaxOpenConns(1)` 把进程内访问串行化；这也意味着 WAL 的「并发读」优势在此用不上，DELETE 不损失什么。后续若 Web UI 读并发成为瓶颈，再评估提高连接数 + 切回 WAL（需先验证 modernc 跨进程 WAL，或改用单进程内嵌 API）。\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-architecture-101",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "7. 调度内核",
+      "text": "### 7.1 触发器（4 类触发源）\n\n所有触发源最终都做同一件事：**创建一个 `dag_run`（带 logical_date）**，剩下交给调度循环。\n\n| 触发源 | 机制 | logical_date 来源 |\n|---|---|---|\n| **定时 cron** | 内部时钟按 cron 表达式计算下一个触发点 | = 该调度周期的边界 |\n| **手动** | UI / API 立即创建一个 run | = 当前时间（或用户指定） |\n| **依赖/上游** | 监听 `dag_dependencies`，上游 run 成功后触发下游 | = 上游 run 的 logical_date |\n| **事件/外部** | webhook / file sensor 写入 `events` 表，触发器消费 | = 事件时间或当前时间 |\n\n依赖触发不是进程内的一次性回调。上游的 `success` 状态和以 `run_id` 为\n幂等键的 dependency event 在同一个 SQLite 事务内提交；调度 tick 仅在所有\n符合条件的下游 run 已创建（或已存在）后消费事件。若全局 queued-run 上限已满，\n事件保持未消费并在后续 tick 重试。下游 run 进入队列后，再由统一的\n`max_active_runs` / 全局并发门控决定何时从 `queued` 进入 `running`。\n\n### 7.2 DAG 解析与校验\n\n1. 读取 `dags/` 下的 YAML（或 UI 提交的内容）；\n2. 解析成内存中的 task 列表 + 依赖边；\n3. **拓扑排序检测环**——有环则拒绝加载并报错；\n4. 校验：task id 唯一、deps 引用存在、pool 存在、cron 合法。\n\n### 7.3 调度循环\n\n调度循环是内核的心脏，按固定 tick（如每 5 秒）运行：",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool"
+      ]
+    },
+    {
+      "id": "doc-architecture-102",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "7. 调度内核",
+      "text": "```mermaid\nflowchart TD\n    A[\"tick (每 N 秒)\"] --> B{\"有到期的<br/>调度 / 补跑?\"}\n    B -- \"是\" --> C[\"创建 dag_run<br/>(分配 logical_date)\"]\n    B -- \"否\" --> D\n    C --> D[\"扫描所有<br/>active dag_run\"]\n    D --> E[\"找出 scheduled 且<br/>上游全 success 的 task\"]\n    E --> F{\"对应 Pool<br/>有空槽?\"}\n    F -- \"否\" --> A\n    F -- \"是\" --> G[\"占槽 → state=queued<br/>(先写 DB)\"]\n    G --> H[\"经 gRPC Launch<br/>下发给 executor\"]\n    H --> A\n```\n\n**关键不变量**：`state=queued` 必须在 gRPC 下发**之前**写入 DB。这样即使下发瞬间调度器崩溃，重启后也能从 DB 看到这个 queued 实例并妥善处理。\n\n### 7.4 Task 状态机\n\n任务实例的状态与迁移：\n\n```mermaid\nstateDiagram-v2\n    [*] --> scheduled\n    scheduled --> queued: 上游全 success + Pool 有空槽\n    scheduled --> upstream_failed: 上游失败 (阻断下游)\n    scheduled --> skipped: 分支未命中\n    queued --> running: executor 确认拉起\n    running --> success: 退出码 0\n    running --> up_for_retry: 失败且 try_number < max_retries\n    running --> failed: 失败且重试耗尽\n    up_for_retry --> scheduled: 过了重试间隔\n    success --> [*]\n    failed --> [*]\n    upstream_failed --> [*]\n    skipped --> [*]\n```\n\n> 实现说明：状态机实现（`internal/model/state.go`）额外允许两条边：`queued → upstream_failed`（排队等待时上游先行失败）与 `queued → failed`（executor 的 Launch RPC 失败，任务从未运行）。\n\n### 7.5 DAG Run 状态机",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-103",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "7. 调度内核",
+      "text": "```mermaid\nstateDiagram-v2\n    [*] --> queued\n    queued --> running: 首个 task 入队\n    running --> success: 所有叶子 task 成功\n    running --> failed: 存在 failed 且无可推进的 task\n    success --> [*]\n    failed --> [*]\n```\n\n> 实现说明：实现额外允许防御性边 `queued → success` 与 `queued → failed`——run 可能在任何 task 进入 running 前就解决（如所有 task 被 skip，或排队期间被中止）。正常路径仍是 `queued → running → *`。\n\n---",
+      "topics": [
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-104",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "8. 执行层",
+      "text": "执行层是一个**独立常驻进程** `cronova-executor`，通过本地 gRPC 接受调度器下发。\n\n### 职责\n\n1. **Launch**：收到任务后，用 `os/exec` 在独立进程组中拉起子进程；\n2. **超时控制**：到 `timeout` 未结束则 `kill` 整个进程组；\n3. **日志**：把子进程的 stdout/stderr 重定向到 `log_path` 指定的文件（每任务实例一个文件）；\n4. **状态回报**：子进程结束后，把退出码回报给调度器（推或拉）；\n5. **Probe**：应答调度器的重接探测（任务还在不在、退码多少）。\n\n### 为什么必须是独立进程？\n\n如果调度器直接 fork 子进程当亲儿子，调度器一重启，子进程要么被杀、要么变孤儿，无法「重接」。把执行权交给常驻 executor 后：\n\n- 调度器重启 → executor 和它管的子进程**毫发无损**，重启后重新连上即可；\n- 这个 executor 进程**就是未来分布式架构里 worker 的雏形**，前向兼容。\n\n### 多语言任务\n\n因为任务是子进程，`type` 字段决定怎么拼命令：\n\n| type | 拉起方式 |\n|---|---|\n| `shell` | `sh -c \"<command>\"` |\n| `python` | `python <script> <args>` |\n| `sql` | 通过对应 CLI/驱动（如 `psql -f`） |\n| `jar` | `java -jar <jar> <args>` |\n| `bash`/任意 | 任何可执行命令 |\n\n逻辑时间等上下文通过**环境变量**注入（`CRONOVA_LOGICAL_DATE`、`CRONOVA_RUN_ID` 等）。\n\n---",
+      "topics": [
+        "schedule",
+        "retry"
+      ]
+    },
+    {
+      "id": "doc-architecture-105",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "9. 崩溃恢复机制",
+      "text": "「重接 + 状态重建」是「可用产品」的试金石。调度器重启后的恢复流程：\n\n```mermaid\nsequenceDiagram\n    participant S as Scheduler (重启)\n    participant DB as SQLite\n    participant E as Executor (常驻)\n\n    S->>DB: 查询所有 state IN (queued, running) 的 task_instance\n    DB-->>S: 返回实例列表 + executor_ref\n\n    loop 每个 running 实例\n        S->>E: Probe(executor_ref)\n        alt 任务仍在运行\n            E-->>S: RUNNING\n            S->>DB: 保持 running, 重新挂结束监听\n        else 任务已结束\n            E-->>S: EXITED(exit_code)\n            S->>DB: 按退码推进 success / up_for_retry / failed\n        else executor 不认识 (executor 也重启过)\n            E-->>S: UNKNOWN\n            S->>DB: 置 up_for_retry (可重试) 或 failed\n        end\n    end\n\n    Note over S,DB: queued 但未下发的实例 → 重新下发\n    S->>S: 恢复完成, 进入正常调度循环\n```\n\n**幂等保障**：`task_run_id`（= run_id + task_id）作为下发的幂等键。即使重接时重复下发，executor 也能识别「这个任务我已经在跑了」而不重复拉起。\n\n---",
+      "topics": [
+        "schedule",
+        "retry",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-106",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "10. 补跑与逻辑时间（catchup）",
+      "text": "### catchup 的计算\n\nDAG 配置 `start_date` 和 `catchup: true` 时，调度器按如下方式补齐：\n\n```\n最后一个已有 run 的 logical_date  →  现在\n按 schedule 步进, 每个错过的周期边界 = 一个待补 run\n对每个待补 logical_date:\n    若 dag_runs 中 (dag_id, logical_date) 不存在 → 创建\n    (UNIQUE 约束保证不会重复创建)\n```\n\n例：`schedule: 0 2 * * *`，`start_date: 6/8`，调度器 6/8–6/10 宕机，6/11 重启：\n\n```mermaid\nflowchart LR\n    subgraph 补跑[\"catchup=true 补出 4 个独立 run\"]\n        R8[\"run: 6/8<br/>处理 6/8 数据\"]\n        R9[\"run: 6/9<br/>处理 6/9 数据\"]\n        R10[\"run: 6/10<br/>处理 6/10 数据\"]\n        R11[\"run: 6/11<br/>处理 6/11 数据\"]\n    end\n```\n\n若 `catchup: false`，则只创建 6/11 这一个 run，6/8–6/10 直接跳过。\n\n### 逻辑时间注入\n\n每个任务子进程启动时注入环境变量：\n\n```bash\nCRONOVA_LOGICAL_DATE=2026-06-09\nCRONOVA_RUN_ID=daily_etl__2026-06-09\nCRONOVA_TASK_ID=extract\nCRONOVA_TRY_NUMBER=1\n```\n\nYAML 中也支持模板占位符 `{{ logical_date }}`，解析时替换：\n\n```yaml\ncommand: \"python extract.py --date {{ logical_date }}\"",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-107",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "6/9 这个 run 实际执行: python extract.py --date 2026-06-09",
+      "text": "```\n\n> **前提：任务必须幂等**。同一个 logical_date 重跑应产生相同结果，否则补跑/重试会污染数据。\n\n---",
+      "topics": []
+    },
+    {
+      "id": "doc-architecture-108",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "11. 资源槽池与并发控制",
+      "text": "防止任务洪水压垮单机。\n\n- 每个 **Pool** 是一组并发槽位（`slots`），是**全局资源**（跨所有 DAG/run 共享计数）；\n- task 在 YAML 里声明用哪个 pool（默认 `default`，16 槽）；DAG 引用但未配置的 pool 会以默认槽数自动创建；\n- pool 槽数用 CLI 配置（pool 是全局资源，不在 DAG YAML 里）：`cronova pools set <name> <slots>`，`cronova pools` 查看；\n- 调度循环把 task 置为 `queued` 前，必须**占到一个槽**（按 `state IN (queued,running)` 全局计数）；任务进入终态时释放槽；\n- 多个就绪任务竞争槽时，按 `priority` 降序派发，满了的 pool 推迟到下个 tick。\n\n```\ndefault pool (slots=16):  [■■■■■■■■□□□□□□□□]  当前 8 个在跑, 还能再上 8 个\nheavy   pool (slots=2):   [■■]                Spark 类重任务专用, 最多并行 2 个\n```\n\n这样可以给「重任务」单独开小池子，避免它们挤占轻任务的资源。\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool"
+      ]
+    },
+    {
+      "id": "doc-architecture-109",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "12. 失败传播与重试",
+      "text": "### 重试\n\ntask 失败且 `try_number < max_retries` → 进入 `up_for_retry`，过 `retry_delay` 后回到 `scheduled` 重新调度。\n\n### 失败传播（默认策略：阻断下游分支）\n\n某 task 最终 `failed` 时，**只阻断它的下游**，无关的并行分支继续：\n\n```mermaid\nflowchart LR\n    A[\"extract<br/>success\"] --> B[\"transform<br/>FAILED\"]\n    A --> C[\"audit<br/>success ✓ 继续\"]\n    B --> D[\"load<br/>upstream_failed ✗\"]\n    C --> E[\"report<br/>success ✓ 继续\"]\n```\n\n`transform` 失败 → 只有 `load` 被标 `upstream_failed`；`audit`/`report` 这条无关分支照常完成。\n\n> **扩展点**：未来可在依赖边/任务上配置 `trigger_rule`（`all_success` / `all_done` / `one_failed` 等），实现「无论上游成败都跑」的清理任务等高级语义。v1 先固定为「上游全 success 才跑」。\n\n---",
+      "topics": [
+        "schedule",
+        "retry",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-110",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "13. 触发流程时序",
+      "text": "一次完整的「定时触发 → 执行 → 完成」时序：\n\n```mermaid\nsequenceDiagram\n    participant T as 触发器 (cron)\n    participant L as 调度循环\n    participant P as Pool\n    participant DB as SQLite\n    participant E as Executor\n    participant Proc as 任务子进程\n\n    T->>DB: 到点, 创建 dag_run (logical_date)\n    loop 每个 tick\n        L->>DB: 扫描就绪 task (上游全 success)\n        L->>P: 申请槽位\n        alt 有空槽\n            P-->>L: 占槽成功\n            L->>DB: state = queued (先写库)\n            L->>E: Launch(task_run_id, command, env)\n            E->>Proc: os/exec 拉起子进程\n            E-->>L: executor_ref\n            L->>DB: state = running, 存 executor_ref\n            Proc-->>E: 子进程结束 (exit_code)\n            E-->>L: 回报退码\n            L->>P: 释放槽位\n            L->>DB: state = success / up_for_retry / failed\n        else 无空槽\n            P-->>L: 等待下一个 tick\n        end\n    end\n```\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-111",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "14. YAML DAG 规范",
+      "text": "```yaml",
+      "topics": [
+        "dag"
+      ]
+    },
+    {
+      "id": "doc-architecture-112",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "一个 DAG = 一个 YAML 文件",
+      "text": "dag_id: daily_etl              # 全局唯一\nschedule: \"0 2 * * *\"          # cron; 留空则仅手动/事件触发\nstart_date: 2026-06-01\ncatchup: true                  # 是否补跑错过的周期\nmax_active_runs: 1             # 同一 DAG 最多并发几个 run\ndefault_retries: 2             # task 默认重试次数\ndefault_retry_delay: 300       # 默认重试间隔(秒)\n\ntasks:\n  - id: extract\n    type: shell                # shell/python/sql/jar ...\n    command: \"python extract.py --date {{ logical_date }}\"\n    pool: default              # 用哪个资源池\n    priority: 10               # 同池竞争时的优先级\n\n  - id: transform\n    type: shell\n    command: \"python transform.py --date {{ logical_date }}\"\n    deps: [extract]            # 依赖 extract 成功\n\n  - id: load\n    type: shell\n    command: \"psql -f load.sql\"\n    deps: [transform]\n    retries: 3                 # 覆盖默认重试\n    timeout: 1800              # 超时(秒), 超时则 kill",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-113",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "跨 DAG 依赖 (可选, 也可在独立配置里声明)",
+      "text": "trigger_after:\n  - dag_id: upstream_ingest    # upstream_ingest 成功后触发本 DAG\n```\n\n**可用模板变量**：`{{ logical_date }}`、`{{ run_id }}`、`{{ task_id }}`、`{{ try_number }}`。\n\n---",
+      "topics": [
+        "dag"
+      ]
+    },
+    {
+      "id": "doc-architecture-114",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "15. executor gRPC 协议",
+      "text": "调度器与执行器之间的契约（草案）：\n\n```protobuf\nsyntax = \"proto3\";\npackage cronova.executor.v1;\n\nservice Executor {\n  rpc Launch (LaunchRequest)  returns (LaunchResponse);   // 下发任务\n  rpc Probe  (ProbeRequest)   returns (ProbeResponse);    // 重接探测\n  rpc Cancel (CancelRequest)  returns (CancelResponse);   // 取消 / 超时 kill\n  rpc StreamLogs (LogRequest) returns (stream LogChunk);  // 实时日志 (可选, M5)\n}\n\nmessage LaunchRequest {\n  string task_run_id          = 1;  // = run_id + task_id, 幂等键\n  string type                 = 2;  // shell / python / sql / jar\n  string command              = 3;\n  map<string, string> env     = 4;  // 含 CRONOVA_LOGICAL_DATE 等\n  int32  timeout_sec          = 5;\n  string log_path             = 6;\n}\nmessage LaunchResponse { string executor_ref = 1; }  // 重接用句柄\n\nmessage ProbeRequest  { string executor_ref = 1; }\nenum TaskPhase { RUNNING = 0; EXITED = 1; UNKNOWN = 2; }\nmessage ProbeResponse {\n  TaskPhase phase     = 1;\n  int32     exit_code = 2;          // phase=EXITED 时有效\n}\n\nmessage CancelRequest  { string executor_ref = 1; }\nmessage CancelResponse { bool   ok           = 1; }",
+      "topics": [
+        "schedule",
+        "retry"
+      ]
+    },
+    {
+      "id": "doc-architecture-115",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "15. executor gRPC 协议",
+      "text": "message LogRequest { string executor_ref = 1; int64 from_offset = 2; }\nmessage LogChunk   { bytes  data         = 1; int64 offset      = 2; }\n```\n\n**幂等约定**：`Launch` 用 `task_run_id` 去重——重接误下发时，executor 若发现该任务已在跑，直接返回已有 `executor_ref`，不重复拉起。\n\n---",
+      "topics": []
+    },
+    {
+      "id": "doc-architecture-116",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "16. API 与 Web UI",
+      "text": "### REST API（节选）\n\n| 方法 | 路径 | 说明 |\n|---|---|---|\n| `GET` | `/api/dags` | 列出所有 DAG |\n| `POST` | `/api/dags` | 提交/更新 DAG（YAML） |\n| `POST` | `/api/dags/{id}/pause` | 暂停/恢复调度 |\n| `POST` | `/api/dags/{id}/trigger` | 手动触发一次 run |\n| `GET` | `/api/dags/{id}/runs` | 查看运行历史 |\n| `GET` | `/api/runs/{run_id}` | 查看某次 run 的 task 状态 |\n| `POST` | `/api/runs/{run_id}/tasks/{task_id}/clear` | 清除并重跑某 task |\n| `GET` | `/api/tasks/{ti_id}/log` | 拉取任务日志（支持 tail） |\n| `WS` | `/api/tasks/{ti_id}/log/stream` | 实时日志流 |\n| `POST` | `/api/events` | 外部事件入口（事件触发） |\n\n### Web UI 模块\n\n- **DAG 列表**：开关、最近运行状态、下次调度时间；\n- **DAG 详情 / 图视图**：可视化依赖图 + 每个 task 的状态着色；\n- **运行历史**：按 logical_date 列出 run，支持手动触发/补跑；\n- **任务日志**：点开 task 实时 tail 日志；\n- **YAML 编辑器**：在线编辑 + 校验（防环、字段合法性）。\n\n---",
+      "topics": [
+        "dag",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-117",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "17. 权限模型",
+      "text": "v1 **先单用户**，但数据模型预留扩展位：\n\n- `dags` 表已有 `owner` / `project` 字段；\n- API 层预留鉴权中间件挂载点；\n- 演进顺序：单用户 → 基础登录 + API token → 项目隔离 → 完整 RBAC（用户/角色/权限）。\n\n---",
+      "topics": [
+        "dag",
+        "project"
+      ]
+    },
+    {
+      "id": "doc-architecture-118",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "18. 实施路线（M0–M6）",
+      "text": "增量交付，每个里程碑都可独立验证。**先把内核做扎实（M1–M2），再加花活。**\n\n| 里程碑 | 内容 | 验收标准 |\n|---|---|---|\n| **M0** | 项目骨架 + SQLite schema + store 接口 + 领域模型 | 编译通过；能建表；store CRUD 单测过 |\n| **M1** | 调度内核 MVP：YAML 解析+防环 → 调度循环 → 状态机 → **内嵌执行**(先不解耦) + 文件日志（定时 + 手动触发） | 能跑通一个线性 DAG，状态正确流转 |\n| **M2** | **executor 解耦**（gRPC）+ **崩溃恢复重接** | 任务运行中杀掉调度器并重启，任务不丢、状态正确恢复 |\n| **M3** | 依赖触发 + Pool 并发 + 重试/超时 | 多 DAG 协同；pool 限流生效；失败按策略传播 |\n| **M4** | catchup 补跑 + logical_date 注入 | 宕机后重启能补出正确数量的历史 run，任务收到正确 logical_date |\n| **M5** | Web UI：监控面板 + 日志 tail + 手动触发 + YAML 编辑 | 浏览器里可视化操作全链路 |\n| **M6** | 事件触发（webhook / file sensor） | 外部信号能驱动 DAG 运行 |\n\n> **M2 是关键里程碑**：「杀进程重启不丢任务」是「可用产品」与「玩具」的分水岭，建议优先打磨。\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-119",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "19. 演进路径：单机 → 分布式",
+      "text": "当前架构的解耦设计已为分布式铺路：\n\n```mermaid\ngraph LR\n    subgraph V1[\"v1 单机\"]\n        S1[\"Scheduler\"] -->|\"本地 gRPC\"| E1[\"Executor\"]\n        S1 --> DB1[(\"SQLite\")]\n    end\n\n    subgraph V2[\"v2 分布式\"]\n        M[\"Scheduler (Master)\"] -->|\"gRPC\"| W1[\"Worker 1\"]\n        M -->|\"gRPC\"| W2[\"Worker 2\"]\n        M -->|\"gRPC\"| W3[\"Worker N\"]\n        M --> DB2[(\"PostgreSQL\")]\n    end\n\n    V1 -.演进.-> V2\n```\n\n迁移要点：\n\n1. **executor → worker**：本地 executor 直接变成可远程部署的 worker，gRPC 协议不变；\n2. **SQLite → PostgreSQL**：换 `store` 的实现即可，调度逻辑零改动；\n3. **调度器选主**：多调度器时需引入选主（如基于 DB 行锁或 etcd/raft）避免重复调度；\n4. **任务分发策略**：master 按 worker 负载/标签把任务路由到合适的 worker。\n\n---",
+      "topics": [
+        "schedule",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-120",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "20. 风险与开放问题",
+      "text": "| 风险 / 问题 | 说明 | 缓解 / 待决 |\n|---|---|---|\n| SQLite 写并发 | 调度循环 + API/CLI 并发写易 `SQLITE_BUSY` | DELETE 回滚日志(跨进程文件锁) + `MaxOpenConns(1)` 串行化 + `busy_timeout`；写多了再换 PG |\n| 日志文件膨胀 | 每实例一文件，长期积累占满磁盘 | 加日志保留期 + 定期清理/归档 |\n| 任务非幂等 | 补跑/重试会污染数据 | 文档强约束；提供 logical_date 鼓励幂等设计 |\n| executor 单点 | 单机只有一个 executor | v1 可接受；分布式版多 worker 解决 |\n| 时区 / DST | cron 与 logical_date 的时区处理 | 统一用 UTC 存储，展示层转本地 |\n| 长时间宕机后 catchup 风暴 | 补跑几百个 run 瞬间压垮系统 | `max_active_runs` 限流 + 可配置补跑上限 |\n| `trigger_rule` 缺失 | v1 只支持「上游全成功」 | 列为 M3 之后的扩展项 |\n\n---\n\n*本文档随设计演进持续更新。实现细节以代码为准。*",
+      "topics": [
+        "schedule",
+        "retry",
+        "pool"
+      ]
+    },
+    {
+      "id": "dag-sdlc_springboot-121",
+      "type": "dag",
+      "source": "dags/sdlc_springboot.yaml",
+      "section": "DAG sdlc_springboot",
+      "text": "dag_id: sdlc_springboot\nschedule: \"0 2 * * *\"        # nightly build; remove for manual-only\nstart_date: \"2026-09-01\"\ncatchup: false\nmax_active_runs: 1\ndefault_retries: 0\n\n# AI-SDLC pipeline:\n# 1. scaffold          -> generate Spring Boot skeleton\n# 2. compile_skeleton  -> verify skeleton compiles\n# 3. ai_add_crud       -> AI adds a simple CRUD controller + model + fixes pom.xml\n# 4. compile_loop      -> compile + AI reviewer fix loop (max 3 iterations)\n# 5. tests             -> run generated tests\n\ntasks:\n  - id: scaffold\n    type: shell\n    timeout: 120\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot/scaffold.sh\n\n  - id: compile_skeleton\n    type: shell\n    timeout: 300\n    deps:\n      - scaffold\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot/compile_skeleton.sh\n\n  - id: ai_add_crud\n    type: shell\n    timeout: 300\n    deps:\n      - compile_skeleton\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot/ai_add_crud.sh\n\n  - id: compile_loop\n    type: shell\n    timeout: 900\n    deps:\n      - ai_add_crud\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot/compile_loop.sh\n\n  - id: tests\n    type: shell\n    timeout: 300\n    deps:\n      - compile_loop\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot/tests.sh",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai",
+        "compile",
+        "test"
+      ]
+    },
+    {
+      "id": "dag-sdlc_maven_luhn-122",
+      "type": "dag",
+      "source": "dags/sdlc_maven_luhn.yaml",
+      "section": "DAG sdlc_maven_luhn",
+      "text": "dag_id: sdlc_maven_luhn\nschedule: \"0 2 * * *\"        # nightly build; remove for manual-only\nstart_date: \"2026-09-01\"\ncatchup: false\nmax_active_runs: 1\ndefault_retries: 0\n\n# AI-SDLC pipeline using Maven archetype as the scaffold source:\n# 1. scaffold          -> generate Java + Maven project from maven-archetype-quickstart\n# 2. compile_skeleton  -> verify skeleton compiles\n# 3. ai_add_feature    -> AI adds a business feature (Luhn algorithm) from prompts/luhn.txt\n# 4. compile_loop      -> compile + AI reviewer fix loop (max 3 iterations)\n# 5. tests             -> run generated tests\n\ntasks:\n  - id: scaffold\n    type: shell\n    timeout: 300\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_maven_luhn/scaffold.sh\n\n  - id: compile_skeleton\n    type: shell\n    timeout: 600\n    deps:\n      - scaffold\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_maven_luhn/compile_skeleton.sh\n\n  - id: ai_add_feature\n    type: shell\n    timeout: 300\n    deps:\n      - compile_skeleton\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_maven_luhn/ai_add_feature.sh\n\n  - id: compile_loop\n    type: shell\n    timeout: 900\n    deps:\n      - ai_add_feature\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_maven_luhn/compile_loop.sh\n\n  - id: tests\n    type: shell\n    timeout: 300\n    deps:\n      - compile_loop\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_maven_luhn/tests.sh",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "project",
+        "ai",
+        "compile",
+        "test"
+      ]
+    },
+    {
+      "id": "dag-sdlc_springboot_startio-123",
+      "type": "dag",
+      "source": "dags/sdlc_springboot_startio.yaml",
+      "section": "DAG sdlc_springboot_startio",
+      "text": "dag_id: sdlc_springboot_startio\nschedule: \"0 2 * * *\"        # nightly build; remove for manual-only\nstart_date: \"2026-09-01\"\ncatchup: false\nmax_active_runs: 1\ndefault_retries: 0\n\n# AI-SDLC pipeline using start.spring.io as the scaffold source:\n# 1. scaffold          -> download Spring Boot skeleton from start.spring.io\n# 2. compile_skeleton  -> verify skeleton compiles\n# 3. ai_add_crud       -> AI adds a simple CRUD controller + model + fixes pom.xml\n# 4. compile_loop      -> compile + AI reviewer fix loop (max 3 iterations)\n# 5. tests             -> run generated tests\n\ntasks:\n  - id: scaffold\n    type: shell\n    timeout: 300\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot_startio/scaffold.sh\n\n  - id: compile_skeleton\n    type: shell\n    timeout: 600\n    deps:\n      - scaffold\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot_startio/compile_skeleton.sh\n\n  - id: ai_add_crud\n    type: shell\n    timeout: 300\n    deps:\n      - compile_skeleton\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot_startio/ai_add_crud.sh\n\n  - id: compile_loop\n    type: shell\n    timeout: 900\n    deps:\n      - ai_add_crud\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot_startio/compile_loop.sh\n\n  - id: tests\n    type: shell\n    timeout: 300\n    deps:\n      - compile_loop\n    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_springboot_startio/tests.sh",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai",
+        "compile",
+        "test"
+      ]
+    },
+    {
+      "id": "script-scaffold-sh-124",
+      "type": "script",
+      "source": "workflows/sdlc_springboot/scaffold.sh",
+      "section": "Script scaffold.sh",
+      "text": "#!/usr/bin/env bash\nset -euo pipefail\n\nSCRIPT_DIR=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"\nREPO_ROOT=\"$(cd \"$SCRIPT_DIR/../..\" && pwd)\"\n\nexec \"$REPO_ROOT/internal/scripts/copy-template-to-workspace\" -t springboot-simple -c",
+      "topics": [
+        "ai",
+        "template"
+      ]
+    },
+    {
+      "id": "script-compile_skeleton-sh-125",
+      "type": "script",
+      "source": "workflows/sdlc_springboot/compile_skeleton.sh",
+      "section": "Script compile_skeleton.sh",
+      "text": "#!/usr/bin/env bash\nset -euo pipefail\n\nSCRIPT_DIR=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"\nREPO_ROOT=\"$(cd \"$SCRIPT_DIR/../..\" && pwd)\"\n\nexec \"$REPO_ROOT/internal/scripts/compile-project\"",
+      "topics": [
+        "project",
+        "ai",
+        "compile"
+      ]
+    },
+    {
+      "id": "script-ai_add_crud-sh-126",
+      "type": "script",
+      "source": "workflows/sdlc_springboot/ai_add_crud.sh",
+      "section": "Script ai_add_crud.sh",
+      "text": "#!/usr/bin/env bash\nset -euo pipefail\n\nSCRIPT_DIR=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"\nREPO_ROOT=\"$(cd \"$SCRIPT_DIR/../..\" && pwd)\"\n\nexec \"$REPO_ROOT/internal/scripts/ai-generate-crud\" \\\n  -m \"kimi-k2.7-code\"",
+      "topics": [
+        "ai"
+      ]
+    },
+    {
+      "id": "script-compile_loop-sh-127",
+      "type": "script",
+      "source": "workflows/sdlc_springboot/compile_loop.sh",
+      "section": "Script compile_loop.sh",
+      "text": "#!/usr/bin/env bash\nset -euo pipefail\n\nSCRIPT_DIR=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"\nREPO_ROOT=\"$(cd \"$SCRIPT_DIR/../..\" && pwd)\"\n\nexec \"$REPO_ROOT/internal/scripts/ai-review-fix-loop\" \\\n  -m \"kimi-k2.7-code\"",
+      "topics": [
+        "ai",
+        "compile"
+      ]
+    },
+    {
+      "id": "script-tests-sh-128",
+      "type": "script",
+      "source": "workflows/sdlc_springboot/tests.sh",
+      "section": "Script tests.sh",
+      "text": "#!/usr/bin/env bash\nset -euo pipefail\n\nSCRIPT_DIR=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"\nREPO_ROOT=\"$(cd \"$SCRIPT_DIR/../..\" && pwd)\"\n\nexec \"$REPO_ROOT/internal/scripts/run-tests\"",
+      "topics": [
+        "ai",
+        "test"
+      ]
+    },
+    {
+      "id": "script-copy-template-to-workspace-129",
+      "type": "script",
+      "source": "internal/scripts/copy-template-to-workspace",
+      "section": "Script copy-template-to-workspace",
+      "text": "#!/usr/bin/env bash\nset -euo pipefail\n\nSCRIPT_DIR=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"\nREPO_ROOT=\"$(cd \"$SCRIPT_DIR/../..\" && pwd)\"\n\nTEMPLATE=\"\"\nWORKSPACE=\"\"\nPROJECT=\"demo\"\nCLEAN=false\n\nusage() {\n  cat <<EOF\nUsage: copy-template-to-workspace -t TEMPLATE [-w WORKSPACE] [-p PROJECT] [-c] [-h]\n\nOptions:\n  -t TEMPLATE   Template name (required). Must match a directory under templates/.\n  -w WORKSPACE  Target workspace directory. Default: workspaces/springboot-demo\n  -p PROJECT    Project subdirectory inside workspace. Default: demo\n  -c            Clean target directory before copying.\n  -h            Show this help message.\n\nExample:\n  copy-template-to-workspace -t springboot-simple\n  copy-template-to-workspace -t springboot-simple -w workspaces/my-app -p app -c\nEOF\n}\n\nwhile getopts \":t:w:p:ch\" opt; do\n  case $opt in\n    t) TEMPLATE=\"$OPTARG\" ;;\n    w) WORKSPACE=\"$OPTARG\" ;;\n    p) PROJECT=\"$OPTARG\" ;;\n    c) CLEAN=true ;;\n    h) usage; exit 0 ;;\n    \\?) echo \"Invalid option: -$OPTARG\" >&2; usage >&2; exit 1 ;;\n    :) echo \"Option -$OPTARG requires an argument.\" >&2; usage >&2; exit 1 ;;\n  esac\ndone\n\nif [[ -z \"$TEMPLATE\" ]]; then\n  echo \"Error: -t TEMPLATE is required.\" >&2\n  usage >&2\n  exit 1\nfi\n\nTEMPLATE_DIR=\"$REPO_ROOT/templates/$TEMPLATE\"\nif [[ ! -d \"$TEMPLATE_DIR\" ]]; then\n  echo \"Error: template directory not found: $TEMPLATE_DIR\" >&2\n  exit 1\nfi\n\nif [[ -z \"$WORKSPACE\" ]]; then\n  WORKSPACE=\"$REPO_ROOT/workspaces/springboot-demo\"\nfi\n\nTARGET_DIR=\"$WORKSPACE/$PROJECT\"\n\nif [[ \"$CLEAN\" == true ]]; then\n  echo \"Cleaning target directory: $TARGET_DIR\"\n  rm -rf \"$TARGET_DIR\"\nfi\n\nmkdir -p \"$TARGET_DIR\"\necho \"Copying template '$TEMPLATE' to '$TARGET_DIR'...\"\ncp -r \"$TEMPLATE_DIR\"/. \"$TARGET_DIR/\"\n\necho \"Template copied successfully to $TARGET_DIR\"",
+      "topics": [
+        "project",
+        "ai",
+        "template"
+      ]
+    },
+    {
+      "id": "script-compile-project-130",
+      "type": "script",
+      "source": "internal/scripts/compile-project",
+      "section": "Script compile-project",
+      "text": "#!/usr/bin/env bash\nset -euo pipefail\n\nSCRIPT_DIR=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"\nREPO_ROOT=\"$(cd \"$SCRIPT_DIR/../..\" && pwd)\"\n\nWORKSPACE=\"\"\nPROJECT=\"demo\"\nMAVEN_GOAL=\"compile\"\nSKIP_TESTS=true\n\nusage() {\n  cat <<EOF\nUsage: compile-project [-w WORKSPACE] [-p PROJECT] [-g GOAL] [-t] [-h]\n\nOptions:\n  -w WORKSPACE  Target workspace directory. Default: workspaces/springboot-demo\n  -p PROJECT    Project subdirectory inside workspace. Default: demo\n  -g GOAL       Maven goal. Default: compile\n  -t            Run tests (by default tests are skipped).\n  -h            Show this help message.\n\nExample:\n  compile-project\n  compile-project -w workspaces/my-app -p app -g test\nEOF\n}\n\nwhile getopts \":w:p:g:th\" opt; do\n  case $opt in\n    w) WORKSPACE=\"$OPTARG\" ;;\n    p) PROJECT=\"$OPTARG\" ;;\n    g) MAVEN_GOAL=\"$OPTARG\" ;;\n    t) SKIP_TESTS=false ;;\n    h) usage; exit 0 ;;\n    \\?) echo \"Invalid option: -$OPTARG\" >&2; usage >&2; exit 1 ;;\n    :) echo \"Option -$OPTARG requires an argument.\" >&2; usage >&2; exit 1 ;;\n  esac\ndone\n\nif [[ -z \"$WORKSPACE\" ]]; then\n  WORKSPACE=\"$REPO_ROOT/workspaces/springboot-demo\"\nfi\n\nPROJECT_DIR=\"$WORKSPACE/$PROJECT\"\nM2_DIR=\"$REPO_ROOT/.m2/repository\"\n\nif [[ ! -d \"$PROJECT_DIR\" ]]; then\n  echo \"Error: project directory not found: $PROJECT_DIR\" >&2\n  exit 1\nfi\n\nmkdir -p \"$M2_DIR\"\ncd \"$PROJECT_DIR\"\n\nexport JAVA_HOME=/c/Program\\ Files/Java/jdk-25\nexport PATH=\"/c/apache-maven-3.9.14/bin:/mingw64/bin:/usr/bin:/bin:/c/Windows/system32:/c/Windows:$PATH\"\n\nMVN_ARGS=(-B -Dmaven.repo.local=\"$M2_DIR\")\nif [[ \"$SKIP_TESTS\" == true ]]; then\n  MVN_ARGS+=(-DskipTests)\nfi\nMVN_ARGS+=(\"$MAVEN_GOAL\")\n\necho \"Running: mvn ${MVN_ARGS[*]} in $PROJECT_DIR\"\nmvn \"${MVN_ARGS[@]}\"\n\necho \"Project compiled successfully: $PROJECT_DIR\"",
+      "topics": [
+        "project",
+        "ai",
+        "compile",
+        "test"
+      ]
+    },
+    {
+      "id": "script-run-tests-131",
+      "type": "script",
+      "source": "internal/scripts/run-tests",
+      "section": "Script run-tests",
+      "text": "#!/usr/bin/env bash\nset -euo pipefail\n\nSCRIPT_DIR=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"\nREPO_ROOT=\"$(cd \"$SCRIPT_DIR/../..\" && pwd)\"\n\nWORKSPACE=\"\"\nPROJECT=\"demo\"\n\nusage() {\n  cat <<EOF\nUsage: run-tests [-w WORKSPACE] [-p PROJECT] [-h]\n\nOptions:\n  -w WORKSPACE  Target workspace directory. Default: workspaces/springboot-demo\n  -p PROJECT    Project subdirectory inside workspace. Default: demo\n  -h            Show this help message.\n\nExample:\n  run-tests\n  run-tests -w workspaces/my-app -p app\nEOF\n}\n\nwhile getopts \":w:p:h\" opt; do\n  case $opt in\n    w) WORKSPACE=\"$OPTARG\" ;;\n    p) PROJECT=\"$OPTARG\" ;;\n    h) usage; exit 0 ;;\n    \\?) echo \"Invalid option: -$OPTARG\" >&2; usage >&2; exit 1 ;;\n    :) echo \"Option -$OPTARG requires an argument.\" >&2; usage >&2; exit 1 ;;\n  esac\ndone\n\nif [[ -z \"$WORKSPACE\" ]]; then\n  WORKSPACE=\"$REPO_ROOT/workspaces/springboot-demo\"\nfi\n\nPROJECT_DIR=\"$WORKSPACE/$PROJECT\"\nM2_DIR=\"$REPO_ROOT/.m2/repository\"\n\nif [[ ! -d \"$PROJECT_DIR\" ]]; then\n  echo \"Error: project directory not found: $PROJECT_DIR\" >&2\n  exit 1\nfi\n\nmkdir -p \"$M2_DIR\"\ncd \"$PROJECT_DIR\"\n\nexport JAVA_HOME=/c/Program\\ Files/Java/jdk-25\nexport PATH=\"/c/apache-maven-3.9.14/bin:/mingw64/bin:/usr/bin:/bin:/c/Windows/system32:/c/Windows:$PATH\"\n\necho \"Running tests in $PROJECT_DIR\"\nmvn -B -Dmaven.repo.local=\"$M2_DIR\" test\n\necho \"All tests passed in $PROJECT_DIR\"",
+      "topics": [
+        "project",
+        "ai",
+        "compile",
+        "test"
+      ]
+    },
+    {
+      "id": "script-ai-generate-crud-132",
+      "type": "script",
+      "source": "internal/scripts/ai-generate-crud",
+      "section": "Script ai-generate-crud",
+      "text": "#!/usr/bin/env bash\nset -euo pipefail\n\nSCRIPT_DIR=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"\nREPO_ROOT=\"$(cd \"$SCRIPT_DIR/../..\" && pwd)\"\n\nWORKSPACE=\"\"\nPROJECT=\"demo\"\nPACKAGE=\"com.example.demo\"\nPROVIDER_ID=\"\"\nMODEL=\"\"\nPYTHON=\"${PYTHON:-/c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python}\"\nDB_FILE=\"${CRONOVA_DB:-$REPO_ROOT/data/cronova.db}\"\n\n# Resolve the default AI model from the cronova SQLite database.\n# Falls back to CRONOVA_AI_MODEL env var, then to empty (caller must supply -m).\nresolve_default_model() {\n  if [[ -n \"${CRONOVA_AI_MODEL:-}\" ]]; then\n    echo \"$CRONOVA_AI_MODEL\"\n    return 0\n  fi\n  if [[ -f \"$DB_FILE\" ]]; then\n    local model\n    model=$(\"$PYTHON\" - \"$DB_FILE\" \"$PROVIDER_ID\" <<'PY'\nimport sqlite3, sys\ndb = sys.argv[1]\nprovider_id = sys.argv[2] if len(sys.argv) > 2 else None\ntry:\n    con = sqlite3.connect(db)\n    cur = con.cursor()\n    if provider_id:\n        row = cur.execute(\"SELECT model FROM ai_providers WHERE id=?\", (provider_id,)).fetchone()\n    else:\n        row = cur.execute(\"SELECT model FROM ai_providers WHERE is_default=1 LIMIT 1\").fetchone()\n    if row:\n        print(row[0])\nexcept Exception:\n    pass\nPY\n    )\n    if [[ -n \"$model\" ]]; then\n      echo \"$model\"\n      return 0\n    fi\n  fi\n  return 1\n}\n\nusage() {\n  cat <<EOF\nUsage: ai-generate-crud [-w WORKSPACE] [-p PROJECT] [-k PACKAGE] [-r PROVIDER_ID] [-m MODEL] [-y PYTHON] [-h]\n\nOptions:\n  -w WORKSPACE   Target workspace directory. Default: workspaces/springboot-demo\n  -p PROJECT     Project subdirectory inside workspace. Default: demo\n  -k PACKAGE     Java package. Default: com.example.demo\n  -r PROVIDER_ID AI provider id from cronova config. Default: provider marked as default\n  -m MODEL       AI model to use. Default: model from default provider (or CRONOVA_AI_MODEL env)\n  -y PYTHON      Path to Python interpreter. Default: /c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python\n  -h             Show this help message.\n\nExample:\n  ai-generate-crud\n  ai-generate-crud -w workspaces/my-app -p app -k com.example.app\n  ai-generate-crud -m \"Kimi K2.7 Code\"\nEOF\n}\n\nwhile getopts \":w:p:k:r:m:y:h\" opt; do\n  case $opt in\n    w) WORKSPACE=\"$OPTARG\" ;;\n    p) PROJECT=\"$OPTARG\" ;;\n    k) PACKAGE=\"$OPTARG\" ;;\n    r) PROVIDER_ID=\"$OPTARG\" ;;\n    m) MODEL=\"$OPTARG\" ;;\n    y) PYTHON=\"$OPTARG\" ;;\n    h) usage; exit 0 ;;\n    \\?) echo \"Invalid option: -$OPTARG\" >&2; usage >&2; exit 1 ;;\n    :) echo \"Option -$OPTARG requires an argument.\" >&2; usage >&2; exit 1 ;;\n  esac\ndone\n\nif [[ -z \"$MODEL\" ]]; then\n  MODEL=$(resolve_default_model) || true\nfi\nif [[ -z \"$MODEL\" ]]; then\n  echo \"Error: could not determine AI model. Configure a default AI provider in cronova, set CRONOVA_AI_MODEL, or pass -m MODEL.\" >&2\n  exit 1\nfi\n\nif [[ -z \"$WORKSPACE\" ]]; then\n  WORKSPACE=\"$REPO_ROOT/workspaces/springboot-demo\"\nfi\n\nPROJECT_DIR=\"$WORKSPACE/$PROJECT\"\nTMP_DIR=\"$REPO_ROOT/.tmp\"\n\nif [[ ! -d \"$PROJECT_DIR\" ]]; then\n  echo \"Error: project directory not found: $PROJECT_DIR\" >&2\n  exit 1\nfi\n\nmkdir -p \"$TMP_DIR\"\nmkdir -p \"$PROJECT_DIR/src/main/java/$(echo \"$PACKAGE\" | tr '.' '/')/api\"\nmkdir -p \"$PROJECT_DIR/src/main/java/$(echo \"$PACKAGE\" | tr '.' '/')/model\"\n\nPOM=$(cat \"$PROJECT_DIR/pom.xml\")\nAPP=$(cat \"$PROJECT_DIR/src/main/java/$(echo \"$PACKAGE\" | tr '.' '/')/DemoApplication.java\")\n\nPROMPT_FILE=\"$TMP_DIR/ai_prompt.txt\"\nREQ_FILE=\"$TMP_DIR/ai_request.json\"\nRESP_FILE=\"$TMP_DIR/ai_response.json\"\n\ncat > \"$PROMPT_FILE\" <<PROMPT_EOF\nYou are a Java/Spring Boot code generator.\nGiven the pom.xml and DemoApplication.java below, do two things:\n1. Ensure pom.xml contains dependencies for Spring Boot web and validation (e.g. spring-boot-starter-webmvc and spring-boot-starter-validation). Do NOT add <version> tags for dependencies managed by the Spring Boot parent POM. Keep everything else intact.\n2. Add a simple Item CRUD: create Item.java in model package and ItemController.java in api package.\n   Item fields: Long id, String name. Controller: REST endpoints GET /items, POST /items, GET /items/{id}, DELETE /items/{id}.\n   Store items in a java.util.Map<Long, Item> in the controller.\n   Use jakarta.validation.constraints.NotBlank and jakarta.validation.Valid (NOT javax.validation).\nReturn ONLY a JSON object with keys: pom_xml, Item_java, ItemController_java.\nEscape newlines in strings as \\\\n and quotes as \\\\\".\n\npom.xml:\n$POM\n\nDemoApplication.java:\n$APP\nPROMPT_EOF\n\necho \"Calling AI proxy to generate CRUD (model: $MODEL)...\"\n\"$PYTHON\" \"$REPO_ROOT/workflows/sdlc_springboot/ai_add_crud.py\" \"$PROJECT_DIR\" \"$(echo \"$PACKAGE\" | tr '.' '/')\" \"$PROMPT_FILE\" \"$REQ_FILE\" \"$RESP_FILE\" \"$MODEL\"\n\necho \"AI added CRUD to $PROJECT_DIR\"",
+      "topics": [
+        "schedule",
+        "project",
+        "ai"
+      ]
+    },
+    {
+      "id": "script-ai-review-fix-loop-133",
+      "type": "script",
+      "source": "internal/scripts/ai-review-fix-loop",
+      "section": "Script ai-review-fix-loop",
+      "text": "#!/usr/bin/env bash\nset -euo pipefail\n\nSCRIPT_DIR=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"\nREPO_ROOT=\"$(cd \"$SCRIPT_DIR/../..\" && pwd)\"\n\nWORKSPACE=\"\"\nPROJECT=\"demo\"\nPACKAGE=\"com.example.demo\"\nMAX_ITER=3\nPROVIDER_ID=\"\"\nMODEL=\"\"\nPYTHON=\"${PYTHON:-/c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python}\"\nDB_FILE=\"${CRONOVA_DB:-$REPO_ROOT/data/cronova.db}\"\n\n# Resolve the default AI model from the cronova SQLite database.\n# Falls back to CRONOVA_AI_MODEL env var, then to empty (caller must supply -m).\nresolve_default_model() {\n  if [[ -n \"${CRONOVA_AI_MODEL:-}\" ]]; then\n    echo \"$CRONOVA_AI_MODEL\"\n    return 0\n  fi\n  if [[ -f \"$DB_FILE\" ]]; then\n    local model\n    model=$(\"$PYTHON\" - \"$DB_FILE\" \"$PROVIDER_ID\" <<'PY'\nimport sqlite3, sys\ndb = sys.argv[1]\nprovider_id = sys.argv[2] if len(sys.argv) > 2 else None\ntry:\n    con = sqlite3.connect(db)\n    cur = con.cursor()\n    if provider_id:\n        row = cur.execute(\"SELECT model FROM ai_providers WHERE id=?\", (provider_id,)).fetchone()\n    else:\n        row = cur.execute(\"SELECT model FROM ai_providers WHERE is_default=1 LIMIT 1\").fetchone()\n    if row:\n        print(row[0])\nexcept Exception:\n    pass\nPY\n    )\n    if [[ -n \"$model\" ]]; then\n      echo \"$model\"\n      return 0\n    fi\n  fi\n  return 1\n}\n\nusage() {\n  cat <<EOF\nUsage: ai-review-fix-loop [-w WORKSPACE] [-p PROJECT] [-k PACKAGE] [-i ITERATIONS] [-r PROVIDER_ID] [-m MODEL] [-y PYTHON] [-h]\n\nOptions:\n  -w WORKSPACE    Target workspace directory. Default: workspaces/springboot-demo\n  -p PROJECT      Project subdirectory inside workspace. Default: demo\n  -k PACKAGE      Java package. Default: com.example.demo\n  -i ITERATIONS   Maximum review/fix iterations. Default: 3\n  -r PROVIDER_ID  AI provider id from cronova config. Default: provider marked as default\n  -m MODEL        AI model to use. Default: model from default provider (or CRONOVA_AI_MODEL env)\n  -y PYTHON       Path to Python interpreter. Default: /c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python\n  -h              Show this help message.\n\nExample:\n  ai-review-fix-loop\n  ai-review-fix-loop -w workspaces/my-app -p app -k com.example.app -i 5\n  ai-review-fix-loop -m \"Kimi K2.7 Code\"\nEOF\n}\n\nwhile getopts \":w:p:k:i:r:m:y:h\" opt; do\n  case $opt in\n    w) WORKSPACE=\"$OPTARG\" ;;\n    p) PROJECT=\"$OPTARG\" ;;\n    k) PACKAGE=\"$OPTARG\" ;;\n    i) MAX_ITER=\"$OPTARG\" ;;\n    r) PROVIDER_ID=\"$OPTARG\" ;;\n    m) MODEL=\"$OPTARG\" ;;\n    y) PYTHON=\"$OPTARG\" ;;\n    h) usage; exit 0 ;;\n    \\?) echo \"Invalid option: -$OPTARG\" >&2; usage >&2; exit 1 ;;\n    :) echo \"Option -$OPTARG requires an argument.\" >&2; usage >&2; exit 1 ;;\n  esac\ndone\n\nif [[ -z \"$MODEL\" ]]; then\n  MODEL=$(resolve_default_model) || true\nfi\nif [[ -z \"$MODEL\" ]]; then\n  echo \"Error: could not determine AI model. Configure a default AI provider in cronova, set CRONOVA_AI_MODEL, or pass -m MODEL.\" >&2\n  exit 1\nfi\n\nif [[ -z \"$WORKSPACE\" ]]; then\n  WORKSPACE=\"$REPO_ROOT/workspaces/springboot-demo\"\nfi\n\nPROJECT_DIR=\"$WORKSPACE/$PROJECT\"\nM2_DIR=\"$REPO_ROOT/.m2/repository\"\nTMP_DIR=\"$REPO_ROOT/.tmp\"\n\nif [[ ! -d \"$PROJECT_DIR\" ]]; then\n  echo \"Error: project directory not found: $PROJECT_DIR\" >&2\n  exit 1\nfi\n\nmkdir -p \"$M2_DIR\"\nmkdir -p \"$TMP_DIR\"\ncd \"$PROJECT_DIR\"\n\nexport JAVA_HOME=/c/Program\\ Files/Java/jdk-25\nexport PATH=\"/c/apache-maven-3.9.14/bin:/mingw64/bin:/usr/bin:/bin:/c/Windows/system32:/c/Windows:$PATH\"\n\nITER=1\nwhile [ \"$ITER\" -le \"$MAX_ITER\" ]; do\n  echo \"=== compile iteration $ITER / $MAX_ITER ===\"\n  if mvn -B -Dmaven.repo.local=\"$M2_DIR\" -DskipTests compile > \"$TMP_DIR/compile.log\" 2>&1; then\n    echo \"Compile succeeded on iteration $ITER\"\n    exit 0\n  fi\n\n  echo \"Compile failed. Sending report to AI reviewer...\"\n  tail -n 80 \"$TMP_DIR/compile.log\"\n\n  if [ \"$ITER\" -eq \"$MAX_ITER\" ]; then\n    echo \"Max iterations reached. Giving up.\"\n    cat \"$TMP_DIR/compile.log\"\n    exit 1\n  fi\n\n  SRC_FILES=$(find src/main/java -name \"*.java\" -exec echo \"--- {} ---\" \\; -exec cat {} \\;)\n  POM=$(cat pom.xml)\n  LOG=$(tail -n 80 \"$TMP_DIR/compile.log\")\n\n  cat > \"$TMP_DIR/ai_review_prompt.txt\" <<PROMPT_EOF\nYou are a Java build-error reviewer. The Spring Boot project below failed to compile.\nFix the code (and pom.xml if needed) so it compiles. Keep the Item CRUD functionality.\nIMPORTANT:\n- do NOT add <version> tags to dependencies that are managed by the Spring Boot parent POM. Use only <groupId> and <artifactId> for Spring Boot starters.\n- Use jakarta.validation.constraints.NotBlank and jakarta.validation.Valid (NOT javax.validation).\nReturn ONLY a JSON object with keys: pom_xml, and for each Java file you change, key = relative path like \"src/main/java/com/example/demo/api/ItemController.java\".\nEscape newlines in strings as \\\\n and quotes as \\\\\".\n\npom.xml:\n$POM\n\nCompile error:\n$LOG\n\nSource files:\n$SRC_FILES\nPROMPT_EOF\n\n  \"$PYTHON\" \"$REPO_ROOT/workflows/sdlc_springboot/ai_review_fix_v2.py\" \"$PROJECT_DIR\" \"$(echo \"$PACKAGE\" | tr '.' '/')\" \"$TMP_DIR/ai_review_prompt.txt\" \"$TMP_DIR/ai_review_request.json\" \"$TMP_DIR/ai_review.json\" \"$MODEL\"\n\n  ITER=$((ITER + 1))\ndone",
+      "topics": [
+        "schedule",
+        "project",
+        "ai",
+        "compile",
+        "test"
+      ]
+    }
+  ]
+}

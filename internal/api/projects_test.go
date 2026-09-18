@@ -32,7 +32,10 @@ func projectsServer(t *testing.T) (http.Handler, string) {
 		t.Fatal(err)
 	}
 	projDir := t.TempDir()
-	srv := New(st, &stubTrigger{}, t.TempDir(), nil, Info{})
+	srv, err := New(st, &stubTrigger{}, t.TempDir(), nil, Info{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	srv.SetProjectsDir(projDir)
 	return srv.Handler(), projDir
 }
@@ -373,7 +376,11 @@ func TestUploadDisabledWhenNoProjectsDir(t *testing.T) {
 	st, _ := sqlite.New(filepath.Join(t.TempDir(), "p.db"))
 	t.Cleanup(func() { _ = st.Close() })
 	_ = st.Migrate(context.Background())
-	h := New(st, &stubTrigger{}, t.TempDir(), nil, Info{}).Handler() // no SetProjectsDir
+	srv, err := New(st, &stubTrigger{}, t.TempDir(), nil, Info{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := srv.Handler() // no SetProjectsDir
 	rec := postFile(t, h, "p", "a.py", "x")
 	if rec.Code != http.StatusServiceUnavailable {
 		t.Fatalf("upload with no projects dir = %d, want 503", rec.Code)

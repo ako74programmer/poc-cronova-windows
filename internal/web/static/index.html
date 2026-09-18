@@ -71,11 +71,14 @@ try { var _m = localStorage.getItem("cnv_mode"); if (_m === "novice" || _m === "
 <div id="modal-root"></div>
 <div id="toast-root" class="toast-stack" aria-live="polite"></div>
 <div id="login-root"></div>
+<!-- AI wiki chat widget -->
+<div id="aiwiki-root"></div>
 <!-- classic scripts in load order share one global scope (no build step):
      base = state/i18n/helpers · views = pages · builder = schedule/templates/new-DAG · boot = wiring -->
 <script src="/base.js"></script>
 <script src="/views.js"></script>
 <script src="/builder.js"></script>
+<script src="/aiwiki.js"></script>
 <script src="/boot.js"></script>
 </body>
 </html>

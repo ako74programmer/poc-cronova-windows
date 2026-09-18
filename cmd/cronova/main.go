@@ -598,7 +598,10 @@ func cmdServe(args []string) error {
 	var httpSrv *http.Server
 	httpErrCh := make(chan error, 1)
 	if cfg.HTTP != "" {
-		apiSrv := api.New(st, sch, cfg.Logs, web.FS(), api.Info{Executor: executorLabel, Tick: tickDur.String(), Version: version})
+		apiSrv, err := api.New(st, sch, cfg.Logs, web.FS(), api.Info{Executor: executorLabel, Tick: tickDur.String(), Version: version})
+		if err != nil {
+			return err
+		}
 		apiSrv.SetAuth(api.AuthConfig{Enabled: cfg.Auth.Enabled, SessionTTL: cfg.sessionTTL(), SecureCookie: cfg.Auth.SecureCookie})
 		if err := apiSrv.SetTrustedProxies(cfg.Auth.TrustedProxies); err != nil {
 			return err

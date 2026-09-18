@@ -71,7 +71,11 @@ func TestReadyzReflectsDBHealth(t *testing.T) {
 	if err := st.Migrate(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	h := New(st, &stubTrigger{}, dir, nil, Info{}).Handler()
+	srv, err := New(st, &stubTrigger{}, dir, nil, Info{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := srv.Handler()
 
 	rec, body := get(t, h, "GET", "/readyz")
 	if rec.Code != 200 || body.(map[string]any)["status"] != "ready" {
@@ -95,7 +99,10 @@ func TestReadyzReflectsExecutorHealth(t *testing.T) {
 	if err := st.Migrate(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	srv := New(st, &stubTrigger{}, dir, nil, Info{})
+	srv, err := New(st, &stubTrigger{}, dir, nil, Info{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	srv.SetReadinessCheck(func(context.Context) error { return errors.New("executor unavailable") })
 	rec, body := get(t, srv.Handler(), "GET", "/readyz")
 	if rec.Code != http.StatusServiceUnavailable || body.(map[string]any)["component"] != "executor" {
@@ -171,7 +178,10 @@ func TestReadyzReflectsSchedulerStall(t *testing.T) {
 	if err := st.Migrate(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	srv := New(st, &stubTrigger{}, dir, nil, Info{})
+	srv, err := New(st, &stubTrigger{}, dir, nil, Info{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	srv.SetSchedulerTick(2 * time.Second)
 	defer metrics.Reset()
 
@@ -188,7 +198,10 @@ func TestReadyzReflectsSchedulerStall(t *testing.T) {
 		t.Fatalf("stalled readyz = %d %v, want 503 scheduler", rec.Code, body)
 	}
 	// no scheduler configured (tick 0): the check is disabled entirely
-	srv2 := New(st, &stubTrigger{}, dir, nil, Info{})
+	srv2, err := New(st, &stubTrigger{}, dir, nil, Info{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	rec, body = get(t, srv2.Handler(), "GET", "/readyz")
 	if rec.Code != http.StatusOK {
 		t.Fatalf("no-scheduler readyz = %d %v", rec.Code, body)

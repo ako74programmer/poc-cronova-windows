@@ -29,5 +29,8 @@ node_modules/
 # mkdocs build output + docs venv
 /site/
 /.venv-docs/
+/.venv/
 # local publishing/marketing playbook — CONTAINS SECRETS (dev.to API key). Never commit.
 /publish/
+# graphify knowledge-graph artifacts (generated locally, not shipped)
+/graphify-out/

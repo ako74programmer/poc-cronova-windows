@@ -30,7 +30,10 @@ func authServer(t *testing.T, role model.Role) http.Handler {
 	if err := st.CreateUser(ctx, &model.User{Username: "u", PasswordHash: hash, Role: role}); err != nil {
 		t.Fatal(err)
 	}
-	srv := New(st, &stubTrigger{}, dir, nil, Info{})
+	srv, err := New(st, &stubTrigger{}, dir, nil, Info{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	srv.SetAuth(AuthConfig{Enabled: true, SessionTTL: time.Hour})
 	return srv.Handler()
 }

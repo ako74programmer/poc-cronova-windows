@@ -118,7 +118,11 @@ func setup(t *testing.T) (http.Handler, *sqlite.Store, *stubTrigger, string) {
 		t.Fatal(err)
 	}
 	trig := &stubTrigger{st: st}
-	return New(st, trig, dir, nil, Info{Version: "v9.9.9", Executor: "in-process", Tick: "2s"}).Handler(), st, trig, logPath
+	srv, err := New(st, trig, dir, nil, Info{Version: "v9.9.9", Executor: "in-process", Tick: "2s"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return srv.Handler(), st, trig, logPath
 }
 
 func get(t *testing.T, h http.Handler, method, path string) (*httptest.ResponseRecorder, any) {

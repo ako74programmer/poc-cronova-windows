@@ -33,8 +33,13 @@ func newEngineServer(t *testing.T, eng Engine) (http.Handler, *sqlite.Store, str
 	if err := st.Migrate(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	return New(st, eng, dir, nil, Info{}).Handler(), st, dir
+	srv, err := New(st, eng, dir, nil, Info{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return srv.Handler(), st, dir
 }
+
 
 // schedStubEngine fixes NextSchedule so nextScheduleLabel's branches are testable.
 type schedStubEngine struct {
@@ -473,7 +478,10 @@ func TestStreamLogBoundsInitialReplayAndLongLines(t *testing.T) {
 
 func TestStreamLogRejectsWhenConnectionLimitReached(t *testing.T) {
 	_, st, trig, _ := setup(t)
-	srv := New(st, trig, t.TempDir(), nil, Info{})
+	srv, err := New(st, trig, t.TempDir(), nil, Info{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	srv.sseSlots = make(chan struct{}, 1)
 	srv.sseSlots <- struct{}{}
 	h := srv.Handler()
@@ -619,7 +627,10 @@ func TestNextScheduleLabel(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := New(nil, &schedStubEngine{next: tc.next, ok: tc.ok}, "", nil, Info{})
+			s, err := New(nil, &schedStubEngine{next: tc.next, ok: tc.ok}, "", nil, Info{})
+			if err != nil {
+				t.Fatal(err)
+			}
 			got := s.nextScheduleLabel(context.Background(), &model.DAG{DagID: "d", Paused: tc.paused})
 			if tc.wantRe != "" {
 				if !regexp.MustCompile(tc.wantRe).MatchString(got) {

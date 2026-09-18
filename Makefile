@@ -7,8 +7,12 @@ VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo d
 LDFLAGS    := -s -w -X main.version=$(VERSION)
 
 .PHONY: build
-build: ## build ./cronova for the host OS/arch
+build: ai-wiki ## build ./cronova for the host OS/arch (refreshes embedded knowledge base)
 	go build -trimpath -ldflags "$(LDFLAGS)" -o cronova $(PKG)
+
+.PHONY: ai-wiki
+ai-wiki: ## regenerate internal/aiwiki/knowledge-base.json from docs, DAGs and scripts
+	python3 internal/ai-wiki/build_knowledge_base.py
 
 .PHONY: build-executor
 build-executor: ## build ./cronova-executor for the host OS/arch
@@ -68,6 +72,10 @@ docs-build: $(DOCS_VENV)/bin/mkdocs ## build the docs site -> ./site (strict; sa
 .PHONY: clean
 clean:
 	rm -rf dist cronova cronova-executor site $(DOCS_VENV)
+
+.PHONY: clean-aiwiki
+clean-aiwiki: ## remove generated AI wiki knowledge base
+	rm -f internal/aiwiki/knowledge-base.json
 
 .PHONY: help
 help:
