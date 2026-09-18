@@ -522,7 +522,7 @@ YAML 中也支持模板占位符 `{{ logical_date }}`，解析时替换：
 
 ```yaml
 command: "python extract.py --date {{ logical_date }}"
-# 6/9 这个 run 实际执行: python extract.py --date 2026-06-09
+# dla logical_date = 2026-06-09 powstanie: python extract.py --date 2026-06-09
 ```
 
 > **前提：任务必须幂等**。同一个 logical_date 重跑应产生相同结果，否则补跑/重试会污染数据。

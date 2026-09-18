@@ -81,12 +81,13 @@ func (w *Wiki) Ask(ctx context.Context, question, lang string) Answer {
 	// Ensure the LLM client is up to date before answering.
 	w.refreshLLM(ctx)
 
-	hits := w.index.search(question, 5)
+	translated := translateQueryPLToEN(question)
+	hits := w.index.search(translated, 5)
 
 	// If no strong match, let the LLM answer from its general knowledge and
 	// clearly label it as such. Avoid pretending a random low-score chunk
 	// answers the question.
-	if len(hits) == 0 || !isRelevant(question, hits) {
+	if len(hits) == 0 || !isRelevant(translated, hits) {
 		if w.llm != nil {
 			if generated, err := w.llm.GenerateAnswer(ctx, question, nil); err == nil && generated != "" {
 				return Answer{Answer: "Nie znalazłem odpowiedzi w bazie wiedzy cronova, ale wiem, że " + generated}
@@ -146,10 +147,15 @@ func isRelevant(question string, hits []scoredChunk) bool {
 		return false
 	}
 	top := hits[0]
-	if top.score < 2.5 {
+	if top.score < 1.5 {
 		return false
 	}
 	q := strings.ToLower(question)
+	// If the question contains only generic words and no cronova-specific
+	// terms, treat it as off-topic regardless of BM25 score.
+	if !hasCronovaTerm(q) {
+		return false
+	}
 	// If the user asks about a programming language or generic technology,
 	// only accept chunks that actually explain it in the cronova context.
 	genericTech := []string{"java", "python", "javascript", "go", "rust", "c++", "html", "css"}
@@ -158,11 +164,6 @@ func isRelevant(question string, hits []scoredChunk) bool {
 			text := strings.ToLower(top.chunk.Text + " " + top.chunk.Section)
 			return strings.Contains(text, term)
 		}
-	}
-	// If the question contains only generic words and no cronova-specific
-	// terms, treat it as off-topic regardless of BM25 score.
-	if !hasCronovaTerm(q) {
-		return false
 	}
 	return true
 }
