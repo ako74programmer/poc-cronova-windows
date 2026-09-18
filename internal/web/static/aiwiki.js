@@ -208,17 +208,45 @@
         const html = (typeof marked !== 'undefined' ? marked.parse(md) : esc(md).replace(/\n/g, '<br>'));
         const title = path.split('/').pop().replace(/\.pl\.md$/, '.md');
         const root = $('modal-root');
+        const docLang = typeof lang !== 'undefined' ? lang : 'en';
         root.innerHTML = `<div class="overlay" id="doc-ovl"><div class="modal wide doc-viewer" role="dialog" aria-modal="true" aria-label="${esc(title)}">
-          <h2>${esc(title)} <button id="doc-close" class="icon" title="${esc(t('aiwiki_close'))}">✕</button></h2>
-          <div class="body markdown-body">${html}</div>
+          <h2>${esc(title)}
+            <span class="doc-tools">
+              <button id="doc-speak" class="icon" title="${esc(t('aiwiki_speak'))}">🔊</button>
+              <button id="doc-close" class="icon" title="${esc(t('aiwiki_close'))}">✕</button>
+            </span>
+          </h2>
+          <div class="body markdown-body" id="doc-body">${html}</div>
         </div></div>`;
-        const close = () => { document.removeEventListener('keydown', onKey); root.innerHTML = ''; };
+        const close = () => {
+          window.speechSynthesis && window.speechSynthesis.cancel();
+          document.removeEventListener('keydown', onKey);
+          root.innerHTML = '';
+        };
         const onKey = (e) => { if (e.key === 'Escape') close(); };
         document.addEventListener('keydown', onKey);
         $('doc-close').onclick = close;
         $('doc-ovl').onclick = (e) => { if (e.target.id === 'doc-ovl') close(); };
+        $('doc-speak').onclick = () => speakDoc(docLang);
       })
       .catch(e => window.toast && window.toast('Error: ' + e.message, 'error'));
+  }
+
+  // Read the current doc aloud using the browser's Web Speech API.
+  function speakDoc(docLang) {
+    if (!window.speechSynthesis) {
+      window.toast && window.toast(t('aiwiki_speak_unsupported'), 'warn');
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const body = $('doc-body');
+    if (!body) return;
+    const text = body.innerText || body.textContent || '';
+    if (!text.trim()) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = docLang === 'pl' ? 'pl-PL' : 'en-US';
+    u.rate = 1;
+    window.speechSynthesis.speak(u);
   }
 
   // Re-render labels when language changes.
