@@ -1,0 +1,21 @@
+{
+  "servers": {
+    "cronova": {
+      "type": "stdio",
+      "command": "cronova",
+      "args": ["mcp"],
+      "env": {
+        "CRONOVA_SERVER": "http://127.0.0.1:8090",
+        "CRONOVA_TOKEN": "${input:cronova_token}"
+      },
+      "inputs": [
+        {
+          "id": "cronova_token",
+          "type": "promptString",
+          "description": "cronova API token (create with: cronova tokens create <name> -role admin)",
+          "password": true
+        }
+      ]
+    }
+  }
+}
