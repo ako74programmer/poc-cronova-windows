@@ -29,4 +29,4 @@ New to cronova? Read the [project overview](../README.md) first, then [Getting S
 
 ---
 
-<sub>cronova — self-hosted <b>workflow scheduler</b> · <b>Airflow alternative</b> · DAG orchestration · single Go binary · MCP-ready for AI agents. See the <a href="../README.md">README</a> · <a href="../README.zh-CN.md">简体中文</a>.</sub>
+<sub>cronova — self-hosted <b>workflow scheduler</b> · <b>Airflow alternative</b> · DAG orchestration · single Go binary · MCP-ready for AI agents. See the <a href="../README.md">README</a> · <a href="../README.pl.md">Polski</a>.</sub>
