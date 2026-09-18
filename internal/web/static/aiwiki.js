@@ -81,6 +81,7 @@
     wrap.className = 'actions';
     actions.forEach(a => {
       const btn = document.createElement('button');
+      btn.dataset.actionType = a.type;
       btn.textContent = actionLabel(a);
       btn.addEventListener('click', () => runAction(a));
       wrap.appendChild(btn);
@@ -190,5 +191,22 @@
     win.querySelector('#aiwiki-close').title = t('aiwiki_close');
     input.placeholder = t('aiwiki_placeholder');
     sendBtn.textContent = t('aiwiki_send');
+    // Re-render action buttons in existing messages.
+    document.querySelectorAll('.aiwiki-msg.bot .actions button').forEach(btn => {
+      const type = btn.dataset.actionType;
+      if (!type) return;
+      const label = (() => {
+        switch (type) {
+          case 'trigger_dag': return t('aiwiki_run_dag');
+          case 'open_dag_runs': return t('aiwiki_dag_runs');
+          case 'show_logs': return t('aiwiki_show_logs');
+          case 'copy_command': return t('aiwiki_copy_cmd');
+          case 'open_docs': return t('aiwiki_open_docs');
+          case 'open_editor': return t('aiwiki_see_dag');
+          default: return type;
+        }
+      })();
+      btn.textContent = label;
+    });
   });
 })();
