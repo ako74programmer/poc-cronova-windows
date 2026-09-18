@@ -94,11 +94,11 @@ Principles:
   scroll — the density was the original complaint.
 - **Click-to-edit settings (immediate save, no resident forms):** every setting
   renders as a one-line summary row (`.set-row`); clicking it swaps in the
-  editor in place, edits save immediately (same debounced pipeline), and "完成"
+  editor in place, edits save immediately (same debounced pipeline), and "Done"
   collapses back to the summary (full page re-render so the hero facts stay in
   sync). Only one row edits at a time. Destructive actions live in a separate
   danger zone at the bottom of Settings — never in the hero.
-- **Variables / connections / params (secret honesty):** the "变量 & 连接" page
+- **Variables / connections / params (secret honesty):** the "Variables & connections" page
   manages shared config that tasks reference in commands via the template engine
   — `{{ var.KEY }}`, `{{ conn.ID.field }}` (host/port/login/password/type/extra.X),
   and `{{ params.KEY }}` (free-form key-values supplied at manual trigger,

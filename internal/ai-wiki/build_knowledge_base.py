@@ -18,6 +18,7 @@ DOC_SOURCES = [
     "docs/DAG_REFERENCE.md",
     "docs/AGENTS.md",
     "docs/CLI.md",
+    "docs/ARCHITECTURE.md",
 ]
 
 DAG_SOURCES = [

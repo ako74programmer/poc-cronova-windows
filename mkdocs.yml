@@ -168,6 +168,7 @@ nav:
       - DAG & Task Reference: DAG_REFERENCE.md
       - CLI Reference: CLI.md
   - About:
+      - Architecture: ARCHITECTURE.md
       - Design Notes: DESIGN.md
       - Comparison: COMPARISON.md
       - FAQ: FAQ.md

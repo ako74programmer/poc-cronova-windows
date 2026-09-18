@@ -1126,7 +1126,515 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot-88",
+      "id": "doc-architecture-88",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "cronova Architecture",
+      "text": "> A workflow scheduler inspired by Airflow / Azkaban.\n> Version: v1 (single-node first, distributed evolution prepared)\n> Last updated: 2026-09-18\n\n---",
+      "topics": [
+        "schedule",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-89",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "Table of contents",
+      "text": "1. [Project positioning](#1-project-positioning)\n2. [Architecture decision records](#2-architecture-decision-records)\n3. [High-level architecture](#3-high-level-architecture)\n4. [Module layout](#4-module-layout)\n5. [Core concepts](#5-core-concepts)\n6. [Data model](#6-data-model)\n7. [Scheduler kernel](#7-scheduler-kernel)\n8. [Execution layer](#8-execution-layer)\n9. [Crash recovery](#9-crash-recovery)\n10. [Catchup and logical time](#10-catchup-and-logical-time)\n11. [Resource pools and concurrency control](#11-resource-pools-and-concurrency-control)\n12. [Failure propagation and retries](#12-failure-propagation-and-retries)\n13. [Trigger flow timeline](#13-trigger-flow-timeline)\n14. [YAML DAG specification](#14-yaml-dag-specification)\n15. [Executor gRPC protocol](#15-executor-grpc-protocol)\n16. [Remote workers](#16-remote-workers)\n17. [API and Web UI](#17-api-and-web-ui)\n18. [Security model](#18-security-model)\n19. [Delivery roadmap](#19-delivery-roadmap)\n20. [Evolution: single-node → distributed](#20-evolution-single-node--distributed)\n21. [Risks and open questions](#21-risks-and-open-questions)\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "project",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-90",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "1. Project positioning",
+      "text": "cronova is a **workflow scheduler** built to be a usable product, not a toy demo. It:\n\n- Describes task dependencies as a **DAG** (Directed Acyclic Graph);\n- Triggers workflows by **schedule / manual / upstream dependency / external event**;\n- Runs every task as an **independent OS subprocess**, so tasks can be written in any language (Python, SQL, Java, Go, Node, etc.);\n- Tracks every **run** and **task instance** state and offers monitoring, logs, backfill, retry and alerting.\n\n**One-sentence summary**: the scheduler is written in Go, but the tasks it runs can be any language, because each task is launched as a child process.\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "project"
+      ]
+    },
+    {
+      "id": "doc-architecture-91",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "2. Architecture decision records",
+      "text": "| # | Decision | Choice | Rationale |\n|---|---|---|---|\n| 1 | Implementation language | **Go** | Goroutines/channels fit a scheduler; static binary; `os/exec` for subprocesses; gRPC ecosystem for future distribution |\n| 2 | DAG definition | Declarative **YAML** + **Web UI** editor | Verifiable, versionable base; friendly UI on top |\n| 3 | Deployment shape | **Single-node first**, Master-Worker prepared | Get the kernel right, then scale horizontally |\n| 4 | Task execution | **Subprocess**, multi-language | Framework and task languages are decoupled |\n| 5 | Product goal | **Production-grade** | Robustness and operability over feature count |\n| 6 | Trigger sources | Schedule + manual + dependency + event | Covers the core scheduler responsibilities |\n| 7 | Metadata store | **Embedded SQLite**, `store.Store` interface | Zero ops for single-node; interface isolates future PG/MySQL swap |\n| 8 | Crash recovery | **Re-attach + state rebuild** | Scheduler restart must not lose running tasks |\n| 9 | Catchup | Configurable **catchup** (Airflow-style) | `logical_date` lets missed periods be replayed one by one |\n| 10 | Logs | **One file per task instance** + UI tail | Practical for single-node; avoids bloating the DB |\n| 11 | Concurrency control | **Resource pool** | Rate limiting + priority against task floods |\n| 12 | Execution decoupling | **Standalone executor process**, local gRPC | Scheduler restart does not kill tasks; executor is the future worker seed |\n| 13 | Failure propagation | Default **block downstream branch** (`upstream_failed`) | Unrelated parallel branches continue; `trigger_rule` available for advanced cases |\n| 14 | Logical time | **Injected into tasks** (env / `{{ logical_date }}`) | Tasks process data for the logical period, making catchup meaningful |\n| 15 | Auth | v1 **opt-in auth**, `owner`/`project` reserved | Solid kernel first, full RBAC later |",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "project",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-architecture-92",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "2. Architecture decision records",
+      "text": "---",
+      "topics": []
+    },
+    {
+      "id": "doc-architecture-93",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "3. High-level architecture",
+      "text": "Four layers: **Interface → Scheduler kernel → Execution layer → Persistence**. The scheduler (`cronova` main process) talks to executors through local gRPC — this decoupling is what makes \"restart without losing tasks\" possible.\n\n```mermaid\ngraph TD\n    subgraph Interface[\"Interface layer\"]\n        UI[\"Web UI<br/>editor + dashboard\"]\n        API[\"API service<br/>REST + SSE\"]\n    end\n\n    subgraph SchedulerProc[\"Scheduler kernel — cronova main process\"]\n        TRIG[\"Trigger<br/>cron / manual / dependency / event\"]\n        PARSE[\"DAG parser<br/>YAML + cycle detection\"]\n        LOOP[\"Scheduler loop<br/>ready check + slot claim + dispatch\"]\n        STATE[\"State machine<br/>run / task states\"]\n        POOL[\"Resource pool<br/>concurrency limit + priority\"]\n        REC[\"Recovery<br/>re-attach on startup\"]\n    end\n\n    subgraph ExecProc[\"Execution layer\"]\n        EXEC[\"Local executor<br/>subprocess + timeout kill\"]\n        WORKER[\"Remote worker<br/>mTLS + bidirectional gRPC\"]\n        LOGW[\"Log writer<br/>stdout/stderr\"]\n    end\n\n    subgraph Storage[\"Persistence\"]\n        DB[(\"SQLite<br/>metadata / state / history\")]\n        FILES[/\"Task log files<br/>one per instance\"/]\n    end",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-94",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "3. High-level architecture",
+      "text": "UI --> API\n    API --> TRIG\n    API --> STATE\n    TRIG --> LOOP\n    PARSE --> LOOP\n    LOOP --> POOL\n    POOL --> STATE\n    STATE <--> DB\n    LOOP -- \"gRPC Launch\" --> EXEC\n    LOOP -- \"WorkerHub Assign\" --> WORKER\n    EXEC --> LOGW\n    WORKER --> LOGW\n    LOGW --> FILES\n    EXEC -- \"status report\" --> STATE\n    WORKER -- \"TaskEvent\" --> STATE\n    REC --> DB\n    REC -- \"gRPC Probe\" --> EXEC\n    REC -- \"Probe\" --> WORKER\n    API -- \"tail logs\" --> FILES\n```\n\n**Key edges**\n\n- `STATE <--> DB`: every state change is persisted first, then acted upon. SQLite is the source of truth.\n- `LOOP -- gRPC Launch --> EXEC`: the scheduler only dispatches; the actual parent process of a task is the standalone executor.\n- `REC -- gRPC Probe --> EXEC`: after restart the scheduler probes every `running` instance to rebuild state.\n- `WORKER`: remote workers dial into the scheduler, receive assignments and stream logs back. This is the distributed evolution path.\n\n---",
+      "topics": [
+        "schedule",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-95",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "4. Module layout",
+      "text": "```\ncronova/\n├── cmd/\n│   ├── cronova/              # main process: scheduler + api + web\n│   └── cronova-executor/     # standalone executor process (gRPC server)\n├── internal/\n│   ├── scheduler/\n│   │   ├── parser/           # YAML parsing + DAG cycle detection\n│   │   ├── scheduler.go      # trigger, loop, state machine, recovery\n│   │   └── *_test.go         # extensive scenario tests\n│   ├── executor/             # subprocess runner, gRPC client/server, state reporter\n│   ├── worker/               # remote worker client (dials WorkerHub)\n│   ├── workerhub/            # scheduler-side worker hub (mTLS, assignments, log streaming)\n│   ├── store/\n│   │   ├── store.go          # Store interface\n│   │   └── sqlite/           # SQLite implementation + schema.sql\n│   ├── model/                # DAG / DagRun / TaskInstance / Pool domain models + state machine\n│   ├── api/                  # REST + SSE handlers\n│   ├── auth/                 # login, sessions, API tokens\n│   ├── secrets/              # AES-256-GCM for connection passwords\n│   ├── certs/                # internal CA for worker mTLS\n│   ├── datetmpl/             # {{ logical_date }} and other template resolution\n│   ├── projectfs/            # uploaded project staging\n│   ├── operator/             # hold/release, mark, retry operators\n│   ├── metrics/              # Prometheus metrics\n│   ├── mcp/                  # MCP server integration\n│   └── aiwiki/               # AI wiki RAG chat\n├── proto/\n│   └── cronova/\n│       ├── executor/v1/executor.proto   # local executor gRPC\n│       └── worker/v1/worker.proto       # remote worker gRPC\n├── web/                      # embedded static UI\n├── dags/                     # user YAML DAG directory (configurable)\n└── docs/\n    └── ARCHITECTURE.md       # this file\n```",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "project",
+        "ai",
+        "template",
+        "test",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-architecture-96",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "4. Module layout",
+      "text": "**Design notes**\n\n- `store` is an interface; `sqlite` is the only implementation today. Adding a `postgres` implementation later requires no scheduler changes.\n- `scheduler` and `executor` have separate `cmd/` entry points. `cronova serve` can run an in-process executor for local use; production installs use the standalone executor or remote workers.\n- The worker protocol reuses the same `Runner` as the standalone executor, so a worker restart also does not kill its tasks.\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-architecture-97",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "5. Core concepts",
+      "text": "| Concept | Description |\n|---|---|\n| **DAG** | A workflow definition: a set of tasks + dependency edges, must be acyclic |\n| **Task** | A node in a DAG: command, dependencies, retries, pool, priority |\n| **DAG Run** | A concrete execution of a DAG, produced by a trigger, carrying a `logical_date` |\n| **Task Instance** | A concrete execution of a task within a run; the smallest state-machine unit |\n| **logical_date** | The **business period** this run represents, not wall time. Essential for catchup |\n| **Pool** | A global slot pool limiting concurrent tasks |\n| **Trigger** | Source of a run: schedule / manual / dependency / event / subdag / backfill |\n| **executor_ref** | Handle returned by the executor for a launched task, used for Probe/Cancel |\n| **Worker group** | Label-based routing group for remote workers |\n\n### Why `logical_date` matters\n\nConsider a daily ETL that processes \"yesterday's\" data, scheduled at `0 2 * * *`.\n\n- The run triggered at 2 AM on 6/10 has `logical_date = 6/9` and must process **6/9 data**.\n- If the scheduler is down from 6/8 to 6/10, catchup creates **three separate runs** for 6/8, 6/9 and 6/10, each with its own `logical_date`.",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-98",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "5. Core concepts",
+      "text": "If the task only knows \"now\", all catchup runs would process today's data. Therefore `logical_date` is injected into the task environment (see [§10](#10-catchup-and-logical-time)).\n\n---",
+      "topics": [
+        "schedule"
+      ]
+    },
+    {
+      "id": "doc-architecture-99",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "6. Data model",
+      "text": "SQLite relational model. Core tables plus extensions for auth, workers, variables, connections, alert groups and AI providers.\n\n```mermaid\nerDiagram\n    DAGS ||--o{ DAG_RUNS : produces\n    DAG_RUNS ||--o{ TASK_INSTANCES : contains\n    POOLS ||--o{ TASK_INSTANCES : limits\n    DAGS ||--o{ DAG_DEPENDENCIES : upstream",
+      "topics": [
+        "dag",
+        "pool",
+        "ai",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-architecture-100",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "6. Data model",
+      "text": "DAGS {\n        text dag_id PK\n        text schedule\n        text timezone\n        datetime start_date\n        bool catchup\n        bool paused\n        int max_active_runs\n        text definition_yaml\n        text owner\n        text project\n        datetime deleted_at\n    }\n    DAG_RUNS {\n        text run_id PK\n        text dag_id FK\n        datetime logical_date\n        text state\n        text trigger_type\n        text params\n        text definition_yaml\n        text definition_hash\n        int priority\n        text parent_run_id\n        int held\n        datetime started_at\n        datetime finished_at\n    }\n    TASK_INSTANCES {\n        int id PK\n        text run_id FK\n        text task_id\n        text state\n        int try_number\n        int max_retries\n        text pool FK\n        int priority\n        text definition_hash\n        text executor_ref\n        text log_path\n        datetime started_at\n        datetime finished_at\n    }\n    POOLS {\n        text name PK\n        int slots\n    }\n    DAG_DEPENDENCIES {\n        text upstream_dag FK\n        text downstream_dag FK\n    }\n```\n\n### Additional tables",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "project",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-architecture-101",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "6. Data model",
+      "text": "- `events` — durable scheduler events (dependency triggers, external events)\n- `audit_log` — operator action trail\n- `api_tokens` — machine access tokens (SHA-256 hashed)\n- `ai_providers` — OpenAI-compatible LLM configuration\n- `users`, `sessions` — console/API accounts and DB-backed sessions\n- `variables`, `connections` — shared config and credentials (encrypted at rest when `key_file` is set)\n- `alert_groups` — named notification fan-out lists\n- `workers`, `worker_join_tokens` — remote worker registry and one-time join tokens\n- `scheduler_lease` — single-row lease preventing two schedulers from dispatching against the same DB\n- `dag_hooks` — per-DAG inbound webhook secrets\n\n### Concurrency and journal mode",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "ai",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-architecture-102",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "6. Data model",
+      "text": "The implementation uses pure-Go `modernc.org/sqlite`. Its WAL shared memory is per-process, so WAL does **not** coordinate across OS processes. The CLI (`cronova trigger`, `cronova runs`, etc.) accesses the same DB as a running `cronova serve`. Therefore the store uses **DELETE rollback journal** (real OS file locks, multi-process safe) with `busy_timeout` and `MaxOpenConns(1)` to serialize access within a process. WAL's concurrent-read advantage is unused here, so DELETE mode loses nothing for v1.\n\n---",
+      "topics": [
+        "schedule",
+        "retry",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-architecture-103",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "7. Scheduler kernel",
+      "text": "### 7.1 Triggers (four sources)\n\nEvery trigger source ultimately creates one `dag_run` (with a `logical_date`) and lets the scheduler loop take over.\n\n| Source | Mechanism | `logical_date` source |\n|---|---|---|\n| **Cron schedule** | Internal clock computes next fire time | The boundary of that scheduling period |\n| **Manual** | UI / API creates a run immediately | Current time (or user-specified) |\n| **Dependency / upstream** | Listen on `dag_dependencies`; upstream success triggers downstream | Upstream run's `logical_date` |\n| **Event / external** | Webhook or file sensor writes to `events`; trigger consumes | Event time or current time |\n\nDependency events are committed in the same SQLite transaction as the upstream `success` state, using the upstream `run_id` as an idempotency key. The scheduler tick only consumes the event after all eligible downstream runs have been created (or already exist). If the global queued-run limit is full, the event stays unconsumed and retries on the next tick.\n\n### 7.2 DAG parsing and validation",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry"
+      ]
+    },
+    {
+      "id": "doc-architecture-104",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "7. Scheduler kernel",
+      "text": "1. Read YAML from `dags/` or UI submission;\n2. Parse into in-memory task list + dependency edges;\n3. **Topological sort detects cycles** — cyclic DAGs are rejected;\n4. Validate: unique task ids, existing deps, existing pool, valid cron, valid trigger rule.\n\n### 7.3 Scheduler loop\n\nThe loop ticks at a fixed interval (default 2 s):\n\n```mermaid\nflowchart TD\n    A[\"tick\"] --> B{\"Due schedule<br/>or catchup?\"}\n    B -- yes --> C[\"Create dag_run<br/>(assign logical_date)\"]\n    B -- no --> D\n    C --> D[\"Scan all active dag_runs\"]\n    D --> E[\"Find scheduled tasks whose<br/>upstream deps satisfy the trigger rule\"]\n    E --> F{\"Pool has<br/>a free slot?\"}\n    F -- no --> A\n    F -- yes --> G[\"Claim slot → state=queued<br/>(write DB first)\"]\n    G --> H[\"gRPC Launch / Worker Assign\"]\n    H --> A\n```\n\n**Key invariant**: `state=queued` is persisted **before** the gRPC dispatch. If the scheduler crashes during dispatch, recovery sees the queued instance and handles it safely.\n\n### 7.4 Task state machine",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-105",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "7. Scheduler kernel",
+      "text": "```mermaid\nstateDiagram-v2\n    [*] --> scheduled\n    scheduled --> queued: deps satisfied + pool slot\n    scheduled --> upstream_failed: upstream failed\n    scheduled --> skipped: branch not taken\n    queued --> running: executor confirms launch\n    queued --> upstream_failed: upstream failed while queued\n    queued --> failed: Launch RPC failed\n    running --> success: exit code 0\n    running --> up_for_retry: failure, retries remain\n    running --> failed: failure, no retries left\n    running --> cancelled: user cancel\n    running --> timed_out: dagrun_timeout\n    up_for_retry --> scheduled: after retry delay\n    success --> [*]\n    failed --> [*]\n    upstream_failed --> [*]\n    skipped --> [*]\n    cancelled --> [*]\n    timed_out --> [*]\n```\n\nTerminal states can be reactivated to `scheduled` by a manual retry (clear/mark).\n\n### 7.5 DAG Run state machine",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-106",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "7. Scheduler kernel",
+      "text": "```mermaid\nstateDiagram-v2\n    [*] --> queued\n    queued --> running: first task queued\n    running --> success: all leaf tasks success\n    running --> failed: failed task and no progress possible\n    running --> cancelled: user cancel\n    running --> timed_out: dagrun_timeout exceeded\n    success --> [*]\n    failed --> [*]\n    cancelled --> [*]\n    timed_out --> [*]\n```\n\nDefensive edges `queued → success/failed` are allowed for runs that resolve before any task runs (all skipped, or aborted while queued).\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-107",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "8. Execution layer",
+      "text": "The execution layer can be:\n\n1. **Standalone local executor** — `cronova-executor` process, gRPC `Executor` service.\n2. **In-process executor** — `cronova serve` without `-executor` flag; tasks die on scheduler restart.\n3. **Remote worker** — `cronova worker` binary that dials the scheduler's `WorkerHub`.\n\n### Standalone executor responsibilities\n\n1. **Launch**: receive a task, run it with `os/exec` in its own process group;\n2. **Timeout**: kill the whole process group when `timeout_seconds` elapses;\n3. **Logs**: redirect child stdout/stderr to `log_path` (one file per task instance);\n4. **Status report**: after the child exits, report exit code to the scheduler;\n5. **Probe**: answer scheduler re-attach probes.\n\n### Why a separate process?\n\nIf the scheduler forked tasks directly, a scheduler restart would either kill its children or leave them orphaned. A long-lived executor survives scheduler restarts and can be re-attached. This same executor is the seed of the future distributed worker.\n\n### Multi-language tasks\n\nBecause tasks are subprocesses, the `type` field only affects how the command is assembled:",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-architecture-108",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "8. Execution layer",
+      "text": "| type | Launch |\n|---|---|\n| `shell` | `sh -c \"<command>\"` |\n| `python` | `python <script> <args>` |\n| `sql` | via CLI/driver (e.g. `psql -f`) |\n| `jar` | `java -jar <jar> <args>` |\n| `http` | HTTP request executed by the runner |\n| arbitrary | any executable command |\n\nContext such as `logical_date` is injected through environment variables (`CRONOVA_LOGICAL_DATE`, `CRONOVA_RUN_ID`, `CRONOVA_TASK_ID`, `CRONOVA_TRY_NUMBER`, etc.).\n\n---",
+      "topics": [
+        "schedule",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-architecture-109",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "9. Crash recovery",
+      "text": "\"Re-attach + state rebuild\" separates a usable product from a toy. After a scheduler restart:\n\n```mermaid\nsequenceDiagram\n    participant S as Scheduler (restarted)\n    participant DB as SQLite\n    participant E as Executor\n\n    S->>DB: SELECT task_instances WHERE state IN (queued, running)\n    DB-->>S: list + executor_ref\n\n    loop each running instance\n        S->>E: Probe(executor_ref)\n        alt still running\n            E-->>S: PHASE_RUNNING\n            S->>DB: keep running, reattach completion listener\n        else already exited\n            E-->>S: PHASE_EXITED(exit_code)\n            S->>DB: advance to success / up_for_retry / failed\n        else executor has no record\n            E-->>S: PHASE_UNKNOWN\n            S->>DB: up_for_retry or failed\n        end\n    end\n\n    Note over S,DB: queued-but-not-dispatched instances are redispatched\n    S->>S: resume normal scheduler loop\n```\n\n**Idempotency**: the task ref (`run_id/task_id/try`) is the idempotency key. Re-dispatching an already running task returns the existing handle instead of starting a second process.\n\n---",
+      "topics": [
+        "schedule",
+        "retry",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-110",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "10. Catchup and logical time",
+      "text": "### Catchup calculation\n\nWhen a DAG has `start_date` and `catchup: true`, the scheduler fills missed periods:\n\n```\nlast existing run logical_date → now\nstep by schedule boundary\nfor each missed logical_date:\n    if (dag_id, logical_date) not in dag_runs → create\n    (UNIQUE constraint prevents duplicates)\n```\n\nExample: `schedule: 0 2 * * *`, `start_date: 2026-06-08`, scheduler down 6/8–6/10, restart on 6/11:\n\n```mermaid\nflowchart LR\n    subgraph catchup[\"catchup=true creates 4 independent runs\"]\n        R8[\"run: 6/8<br/>process 6/8 data\"]\n        R9[\"run: 6/9<br/>process 6/9 data\"]\n        R10[\"run: 6/10<br/>process 6/10 data\"]\n        R11[\"run: 6/11<br/>process 6/11 data\"]\n    end\n```\n\nWith `catchup: false` only the 6/11 run is created.\n\n### Logical time injection\n\nEvery task subprocess receives:\n\n```bash\nCRONOVA_LOGICAL_DATE=2026-06-09\nCRONOVA_RUN_ID=daily_etl__2026-06-09\nCRONOVA_TASK_ID=extract\nCRONOVA_TRY_NUMBER=1\n```\n\nYAML templates are also resolved:\n\n```yaml\ncommand: \"python extract.py --date {{ logical_date }}\"",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai",
+        "template"
+      ]
+    },
+    {
+      "id": "doc-architecture-111",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "becomes: python extract.py --date 2026-06-09",
+      "text": "```\n\n**Tasks must be idempotent**: re-running the same `logical_date` must produce the same result, otherwise catchup and retry corrupt data.\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry"
+      ]
+    },
+    {
+      "id": "doc-architecture-112",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "11. Resource pools and concurrency control",
+      "text": "Pools prevent task floods.\n\n- Each **Pool** is a global slot counter (`slots`), shared across all DAGs and runs;\n- A task declares its pool in YAML (default `default`, seeded with 16 slots);\n- A pool referenced by a DAG but not configured is auto-created with a default slot count;\n- Pool slot counts are configured globally via CLI/API: `cronova pools set <name> <slots>`;\n- Before a task moves to `queued`, the scheduler must claim a slot (count of task instances with `state IN (queued,running)` in that pool);\n- Slots are released when the task reaches a terminal state;\n- When multiple tasks compete for a slot, higher `priority` wins; full pools wait for the next tick.\n\n```\ndefault pool (slots=16):  [████████░░░░░░░░]  8 running, 8 free\nheavy   pool (slots=2):   [██]                 heavy tasks, max 2 parallel\n```\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-113",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "12. Failure propagation and retries",
+      "text": "### Retries\n\nIf a task fails and `try_number < max_retries`, it enters `up_for_retry`. After `retry_delay` (with optional exponential backoff) it returns to `scheduled`.\n\n### Failure propagation (default: block downstream branch)\n\nWhen a task finally fails, only its downstream branch is blocked:\n\n```mermaid\nflowchart LR\n    A[\"extract<br/>success\"] --> B[\"transform<br/>FAILED\"]\n    A --> C[\"audit<br/>success ✓ continues\"]\n    B --> D[\"load<br/>upstream_failed\"]\n    C --> E[\"report<br/>success ✓ continues\"]\n```\n\n`transform` fails → only `load` becomes `upstream_failed`; the unrelated `audit`/`report` branch continues.\n\n### Trigger rules\n\nTasks can override the default with `trigger_rule`:\n\n| rule | meaning |\n|---|---|\n| `all_success` | all deps succeeded (default) |\n| `all_done` | all deps finished |\n| `one_success` | at least one dep succeeded |\n| `one_failed` | at least one dep failed |\n| `all_failed` | all deps failed |\n| `none_failed` | all deps finished and none failed |\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-114",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "13. Trigger flow timeline",
+      "text": "A complete schedule-trigger → execute → finish flow:\n\n```mermaid\nsequenceDiagram\n    participant T as Trigger (cron)\n    participant L as Scheduler loop\n    participant P as Pool\n    participant DB as SQLite\n    participant E as Executor\n    participant Proc as Task subprocess\n\n    T->>DB: create dag_run (logical_date)\n    loop each tick\n        L->>DB: scan ready tasks\n        L->>P: claim slot\n        alt slot available\n            P-->>L: claimed\n            L->>DB: state = queued\n            L->>E: Launch(task_ref, command, env)\n            E->>Proc: os/exec\n            E-->>L: ref\n            L->>DB: state = running, store ref\n            Proc-->>E: exit_code\n            E-->>L: report exit\n            L->>P: release slot\n            L->>DB: state = success / up_for_retry / failed\n        else no slot\n            P-->>L: wait next tick\n        end\n    end\n```\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-115",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "14. YAML DAG specification",
+      "text": "```yaml",
+      "topics": [
+        "dag"
+      ]
+    },
+    {
+      "id": "doc-architecture-116",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "One DAG = one YAML file",
+      "text": "dag_id: daily_etl              # globally unique\nschedule: \"0 2 * * *\"          # cron; omit for manual/event only\nstart_date: 2026-06-01\ncatchup: true                  # backfill missed periods\nmax_active_runs: 1             # max concurrent runs of this DAG\ndefault_retries: 2             # default per-task retries\ndefault_retry_delay: 300       # default retry interval (seconds)\ndagrun_timeout: 3600           # whole-run timeout (seconds)\n\nnotify_on: [failure, success]\nnotify_group: oncall           # references alert_groups table\n\ntasks:\n  - id: extract\n    type: shell\n    command: \"python extract.py --date {{ logical_date }}\"\n    pool: default\n    priority: 10\n\n  - id: transform\n    type: shell\n    command: \"python transform.py --date {{ logical_date }}\"\n    deps: [extract]\n\n  - id: load\n    type: shell\n    command: \"psql -f load.sql\"\n    deps: [transform]\n    retries: 3\n    timeout: 1800\n    retry_backoff: exponential\n\n  - id: cleanup\n    type: shell\n    command: \"python cleanup.py\"\n    deps: [transform]\n    trigger_rule: all_done       # run regardless of load outcome",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-117",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "Cross-DAG dependency (optional)",
+      "text": "trigger_after:\n  - dag_id: upstream_ingest\n```\n\n**Available template variables**: `{{ logical_date }}`, `{{ run_id }}`, `{{ task_id }}`, `{{ try_number }}`, `{{ params.KEY }}`, `{{ var.KEY }}`, `{{ conn.ID.host }}`, `{{ ti.TASK.key }}`.\n\n---",
+      "topics": [
+        "dag",
+        "ai",
+        "template",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-architecture-118",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "15. Executor gRPC protocol",
+      "text": "Local executor contract: `proto/cronova/executor/v1/executor.proto`.\n\n```protobuf\nsyntax = \"proto3\";\npackage cronova.executor.v1;\n\nservice Executor {\n  rpc Launch(LaunchRequest) returns (LaunchResponse);\n  rpc Probe(ProbeRequest) returns (ProbeResponse);\n  rpc Cancel(CancelRequest) returns (CancelResponse);\n}\n\nmessage LaunchRequest {\n  string task_run_id = 1;          // run_id/task_id/try; idempotency key\n  string type = 2;                 // shell/python/sql/jar/http\n  string command = 3;\n  map<string, string> env = 4;\n  int64 timeout_seconds = 5;       // 0 = no timeout\n  string log_path = 6;\n  string dir = 7;                  // working directory\n  repeated string redact = 8;      // secret values to mask from logs\n}\n\nmessage LaunchResponse { string ref = 1; }\n\nmessage ProbeRequest { string ref = 1; }\n\nenum Phase {\n  PHASE_UNSPECIFIED = 0;\n  PHASE_RUNNING = 1;\n  PHASE_EXITED = 2;\n  PHASE_UNKNOWN = 3;\n}\n\nmessage ProbeResponse {\n  Phase phase = 1;\n  int32 exit_code = 2;             // valid when phase = PHASE_EXITED; 124 = timeout kill\n}\n\nmessage CancelRequest { string ref = 1; }\nmessage CancelResponse { bool ok = 1; }\n```",
+      "topics": [
+        "schedule",
+        "retry"
+      ]
+    },
+    {
+      "id": "doc-architecture-119",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "15. Executor gRPC protocol",
+      "text": "**Idempotency**: `Launch` deduplicates on `task_run_id`. If the task is already running, the existing `ref` is returned.\n\n---",
+      "topics": []
+    },
+    {
+      "id": "doc-architecture-120",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "16. Remote workers",
+      "text": "Remote workers are the distributed evolution of the local executor.\n\n- A worker dials into the scheduler's `WorkerHub` over a single long-lived bidirectional gRPC stream;\n- Workers authenticate with mTLS certificates issued through a one-time join token (`POST /api/workers/join`);\n- The scheduler assigns tasks, sends cancels/probes, and receives task events and log chunks over the same stream;\n- Workers need no inbound port and traverse NAT;\n- Logs are spooled locally on the worker and streamed back, so the scheduler does not need a shared filesystem.\n\nProtocol: `proto/cronova/worker/v1/worker.proto`.\n\nKey messages:\n\n| message | purpose |\n|---|---|\n| `Hello` | worker identifies itself and reports currently running refs |\n| `Assign` | scheduler gives the worker a task to run |\n| `Cancel` / `Probe` | scheduler asks to kill or re-report a task |\n| `TaskEvent` | worker reports lifecycle transitions |\n| `LogChunk` | worker streams stdout/stderr bytes |\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "pool"
+      ]
+    },
+    {
+      "id": "doc-architecture-121",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "17. API and Web UI",
+      "text": "### REST API (selection)",
+      "topics": []
+    },
+    {
+      "id": "doc-architecture-122",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "17. API and Web UI",
+      "text": "| Method | Path | Description |\n|---|---|---|\n| `GET` | `/api/info` | server info |\n| `GET` | `/api/dags` | list DAGs |\n| `POST` | `/api/dags` | create/update DAG |\n| `POST` | `/api/dags/validate` | validate YAML |\n| `GET` | `/api/dags/{id}` | get DAG |\n| `POST` | `/api/dags/{id}/trigger` | manual trigger |\n| `POST` | `/api/dags/{id}/backfill` | backfill runs |\n| `POST` | `/api/dags/{id}/pause` | pause/resume schedule |\n| `GET` | `/api/dags/{id}/runs` | run history |\n| `GET` | `/api/runs/{runID}` | run details |\n| `POST` | `/api/runs/{runID}/cancel` | cancel run |\n| `POST` | `/api/runs/{runID}/retry` | retry run |\n| `POST` | `/api/runs/{runID}/tasks/{taskID}/retry` | retry task |\n| `POST` | `/api/runs/{runID}/tasks/{taskID}/mark` | mark task state |\n| `GET` | `/api/tasks/{tiID}/log` | task log |\n| `GET` | `/api/tasks/{tiID}/log/stream` | SSE log stream |\n| `GET/POST/DELETE` | `/api/pools/{name}` | pool management |\n| `GET/POST/DELETE` | `/api/variables/{key}` | variables |\n| `GET/POST/DELETE` | `/api/connections/{id}` | connections |\n| `GET/POST/DELETE` | `/api/alert-groups/{name}` | alert groups |\n| `GET/POST/DELETE` | `/api/ai-providers/{id}` | AI providers |\n| `GET/POST/DELETE` | `/api/projects/{name}` | uploaded projects |\n| `GET/POST` | `/api/workers`, `/api/worker-tokens` | worker management |\n| `POST` | `/api/events` | external event |\n| `POST` | `/api/hooks/{dag}/{secret}` | webhook trigger |\n| `POST` | `/api/ask` | AI wiki chat |\n| `GET` | `/metrics` | Prometheus metrics |\n| `GET` | `/openapi.json` | OpenAPI spec |",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "project",
+        "ai",
+        "install",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-architecture-123",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "17. API and Web UI",
+      "text": "### Web UI modules\n\n- DAG list with pause toggle, last run status, next schedule;\n- DAG detail / graph view with colored task states;\n- Run history by `logical_date` with manual trigger/backfill;\n- Task log viewer with live tail;\n- YAML editor with online validation (cycle detection, field checks);\n- AI wiki chat panel.\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-124",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "18. Security model",
+      "text": "Authentication is **opt-in** (`auth.enabled` or `-auth=true`). When disabled, the console is safe only on loopback.\n\nWhen enabled:\n\n- Console users log in with username/password; passwords are PBKDF2-HMAC-SHA256 hashed;\n- DB-backed sessions survive restart and can be revoked on logout;\n- API tokens use `Authorization: Bearer <token>`; only the SHA-256 hash is stored;\n- Roles: `admin` (full) and `viewer` (read-only);\n- Connection passwords are encrypted at rest with AES-256-GCM when `key_file` is configured;\n- Worker communication uses mTLS with an internal CA.\n\nFuture evolution: project isolation → full RBAC (users/roles/permissions).\n\n---",
+      "topics": [
+        "project",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-architecture-125",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "19. Delivery roadmap",
+      "text": "| Milestone | Content | Acceptance |\n|---|---|---|\n| **M0** | Skeleton + SQLite schema + store interface + models | Compiles; tables created; store CRUD tests pass |\n| **M1** | Scheduler MVP: YAML parse + cycle detection + loop + state machine + in-process executor + file logs + cron/manual trigger | Linear DAG runs end-to-end with correct states |\n| **M2** | Executor decoupling (gRPC) + crash recovery re-attach | Kill scheduler mid-run, restart, task survives and state is correct |\n| **M3** | Dependency triggers + pools + retries/timeouts + trigger rules | Multi-DAG coordination; pool limits enforced; failures propagate correctly |\n| **M4** | Catchup + logical_date injection | After downtime, correct number of historical runs created; tasks receive correct logical_date |\n| **M5** | Web UI: dashboard + log tail + manual trigger/backfill + YAML editor | Full workflow operable in browser |\n| **M6** | External events (webhooks) + alert groups + remote workers | External signals drive DAGs; notifications fan out |\n\nMost of M1–M6 is implemented. Remaining gaps are mainly polish and advanced event sensors.\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai",
+        "compile",
+        "test"
+      ]
+    },
+    {
+      "id": "doc-architecture-126",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "20. Evolution: single-node → distributed",
+      "text": "The current decoupling already paves the way:\n\n```mermaid\ngraph LR\n    subgraph V1[\"v1 single-node\"]\n        S1[\"Scheduler\"] -->|\"local gRPC\"| E1[\"Executor\"]\n        S1 --> DB1[(\"SQLite\")]\n    end\n\n    subgraph V2[\"v2 distributed\"]\n        M[\"Scheduler (Master)\"] -->|\"gRPC\"| W1[\"Worker 1\"]\n        M -->|\"gRPC\"| W2[\"Worker 2\"]\n        M -->|\"gRPC\"| W3[\"Worker N\"]\n        M --> DB2[(\"PostgreSQL\")]\n    end\n\n    V1 -.evolution.-> V2\n```\n\nMigration steps:\n\n1. **Executor → worker**: the local executor becomes a deployable remote worker; gRPC concepts stay the same;\n2. **SQLite → PostgreSQL**: swap the `store` implementation; scheduler logic unchanged;\n3. **Scheduler leader election**: with multiple schedulers, introduce leader election (DB row lock, etcd or raft) to avoid double dispatch;\n4. **Task routing**: master routes tasks to workers by load and labels.\n\n---",
+      "topics": [
+        "dag",
+        "schedule",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-127",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "21. Risks and open questions",
+      "text": "| Risk / question | Description | Mitigation / open |\n|---|---|---|\n| SQLite write concurrency | Scheduler loop + API/CLI write concurrently | DELETE journal + `MaxOpenConns(1)` + `busy_timeout`; move to PG if writes become a bottleneck |\n| Log file growth | One file per task instance accumulates over time | Add retention policy and periodic cleanup/archive |\n| Non-idempotent tasks | Catchup/retry corrupts data | Document strongly; provide `logical_date` to encourage idempotent design |\n| Executor single point | Single-node has one executor | Acceptable for v1; distributed workers solve it |\n| Time zones / DST | Cron and logical_date timezone handling | Store UTC, convert in UI |\n| Catchup storm | Hundreds of runs created after long downtime | `max_active_runs` + configurable catchup limit |\n| Advanced sensors | File sensors, message-queue triggers | Webhooks and events cover many cases; file sensors future work |\n\n---\n\n*This document is updated as the design evolves. Implementation details always win over documentation.*",
+      "topics": [
+        "dag",
+        "schedule",
+        "retry",
+        "pool",
+        "ai"
+      ]
+    },
+    {
+      "id": "dag-sdlc_springboot-128",
       "type": "dag",
       "source": "dags/sdlc_springboot.yaml",
       "section": "DAG sdlc_springboot",
@@ -1142,7 +1650,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_maven_luhn-89",
+      "id": "dag-sdlc_maven_luhn-129",
       "type": "dag",
       "source": "dags/sdlc_maven_luhn.yaml",
       "section": "DAG sdlc_maven_luhn",
@@ -1159,7 +1667,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_startio-90",
+      "id": "dag-sdlc_springboot_startio-130",
       "type": "dag",
       "source": "dags/sdlc_springboot_startio.yaml",
       "section": "DAG sdlc_springboot_startio",
@@ -1175,7 +1683,7 @@
       ]
     },
     {
-      "id": "script-scaffold-sh-91",
+      "id": "script-scaffold-sh-131",
       "type": "script",
       "source": "workflows/sdlc_springboot/scaffold.sh",
       "section": "Script scaffold.sh",
@@ -1186,7 +1694,7 @@
       ]
     },
     {
-      "id": "script-compile_skeleton-sh-92",
+      "id": "script-compile_skeleton-sh-132",
       "type": "script",
       "source": "workflows/sdlc_springboot/compile_skeleton.sh",
       "section": "Script compile_skeleton.sh",
@@ -1198,7 +1706,7 @@
       ]
     },
     {
-      "id": "script-ai_add_crud-sh-93",
+      "id": "script-ai_add_crud-sh-133",
       "type": "script",
       "source": "workflows/sdlc_springboot/ai_add_crud.sh",
       "section": "Script ai_add_crud.sh",
@@ -1208,7 +1716,7 @@
       ]
     },
     {
-      "id": "script-compile_loop-sh-94",
+      "id": "script-compile_loop-sh-134",
       "type": "script",
       "source": "workflows/sdlc_springboot/compile_loop.sh",
       "section": "Script compile_loop.sh",
@@ -1219,7 +1727,7 @@
       ]
     },
     {
-      "id": "script-tests-sh-95",
+      "id": "script-tests-sh-135",
       "type": "script",
       "source": "workflows/sdlc_springboot/tests.sh",
       "section": "Script tests.sh",
@@ -1230,7 +1738,7 @@
       ]
     },
     {
-      "id": "script-copy-template-to-workspace-96",
+      "id": "script-copy-template-to-workspace-136",
       "type": "script",
       "source": "internal/scripts/copy-template-to-workspace",
       "section": "Script copy-template-to-workspace",
@@ -1242,7 +1750,7 @@
       ]
     },
     {
-      "id": "script-compile-project-97",
+      "id": "script-compile-project-137",
       "type": "script",
       "source": "internal/scripts/compile-project",
       "section": "Script compile-project",
@@ -1255,7 +1763,7 @@
       ]
     },
     {
-      "id": "script-run-tests-98",
+      "id": "script-run-tests-138",
       "type": "script",
       "source": "internal/scripts/run-tests",
       "section": "Script run-tests",
@@ -1268,7 +1776,7 @@
       ]
     },
     {
-      "id": "script-ai-generate-crud-99",
+      "id": "script-ai-generate-crud-139",
       "type": "script",
       "source": "internal/scripts/ai-generate-crud",
       "section": "Script ai-generate-crud",
@@ -1280,7 +1788,7 @@
       ]
     },
     {
-      "id": "script-ai-review-fix-loop-100",
+      "id": "script-ai-review-fix-loop-140",
       "type": "script",
       "source": "internal/scripts/ai-review-fix-loop",
       "section": "Script ai-review-fix-loop",

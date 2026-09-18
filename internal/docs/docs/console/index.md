@@ -41,13 +41,13 @@ Pinned at the bottom of the sidebar are two live status rows: **executor** (the 
 | **Jump / filter DAGs…** box | Global search. On the dashboard it filters the DAG table live; on *every* page it is an autocomplete that jumps straight to any DAG. |
 | Tick indicator | The scheduler tick interval plus the server timezone label. Hover it for the rule: schedules evaluate in UTC, while timestamps on the page render in your local timezone. |
 | ☀ / ☾ | Toggles between dark and light themes (dark is the default; your choice is remembered). |
-| **EN / 中** | Switches the whole UI between English and Chinese instantly, without losing in-progress edits. |
+| **EN / PL** | Switches the whole UI between English and Polish instantly, without losing in-progress edits. |
 | **+ New DAG** | Opens the new-DAG modal — start from a blank workflow or a starter template. Hidden for viewer accounts. |
 
 To jump to a DAG from anywhere: focus the search box, type a fragment of the DAG id, then use ++arrow-down++ / ++arrow-up++ to pick from the top matches and ++enter++ to open it. ++escape++ closes the menu.
 
 !!! tip "Shareable language deep links"
-    Append `?lang=en` or `?lang=zh` to any console URL to force the language — handy when sharing a link with a teammate who reads the other language. The query param wins over the saved preference.
+    Append `?lang=en` or `?lang=pl` to any console URL to force the language — handy when sharing a link with a teammate who reads the other language. The query param wins over the saved preference.
 
 ## Signing in
 
