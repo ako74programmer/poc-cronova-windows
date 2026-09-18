@@ -96,7 +96,7 @@ func New(st store.Store, eng Engine, logDir string, web fs.FS, info Info) (*Serv
 		// honest label for "what timezone do cron fields mean".
 		info.TZ = "UTC"
 	}
-	wiki, err := aiwiki.New()
+	wiki, err := aiwiki.New(st)
 	if err != nil {
 		return nil, fmt.Errorf("aiwiki: %w", err)
 	}
@@ -242,7 +242,7 @@ func (s *Server) askWiki(w http.ResponseWriter, r *http.Request) {
 		httpErr(w, http.StatusBadRequest, "question is required")
 		return
 	}
-	answer := s.wiki.Ask(req.Question)
+	answer := s.wiki.Ask(r.Context(), req.Question)
 	writeJSON(w, http.StatusOK, answer)
 }
 

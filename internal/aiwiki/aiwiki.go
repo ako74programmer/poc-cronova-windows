@@ -4,9 +4,13 @@
 package aiwiki
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
 	"strings"
+
+	"github.com/zoyluo/cronova/internal/model"
+	"github.com/zoyluo/cronova/internal/store"
 )
 
 //go:embed knowledge-base.json
@@ -52,45 +56,30 @@ type Action struct {
 
 // Wiki loads the embedded knowledge base.
 type Wiki struct {
-	kb KnowledgeBase
+	kb     KnowledgeBase
+	index  *bm25Index
+	store  store.Store
+	llm    *LLMClient
 }
 
-// New loads the embedded knowledge base.
-func New() (*Wiki, error) {
+// New loads the embedded knowledge base and builds the BM25 index.
+// If a store is provided, Wiki will look up a configured AI provider for LLM answers.
+func New(st store.Store) (*Wiki, error) {
 	var kb KnowledgeBase
 	if err := json.Unmarshal(knowledgeBaseJSON, &kb); err != nil {
 		return nil, err
 	}
-	return &Wiki{kb: kb}, nil
+	return &Wiki{kb: kb, index: newBM25Index(kb.Chunks), store: st}, nil
 }
 
-// Ask answers a user question using keyword retrieval and a canned template.
-// It does not call an external LLM; the answer is assembled from the top
-// matching chunks so the feature works offline and with zero config.
-func (w *Wiki) Ask(question string) Answer {
-	q := strings.ToLower(question)
-	terms := tokenize(q)
+// Ask answers a user question using BM25 retrieval and, if an AI provider is
+// configured, an LLM-generated answer. Falls back to canned templates when no
+// provider is available so the feature works offline and with zero config.
+func (w *Wiki) Ask(ctx context.Context, question string) Answer {
+	// Ensure the LLM client is up to date before answering.
+	w.refreshLLM(ctx)
 
-	type scored struct {
-		Chunk
-		score int
-	}
-	var hits []scored
-	for _, c := range w.kb.Chunks {
-		score := scoreChunk(c, terms)
-		if score > 0 {
-			hits = append(hits, scored{Chunk: c, score: score})
-		}
-	}
-
-	// Sort by score descending.
-	for i := 0; i < len(hits); i++ {
-		for j := i + 1; j < len(hits); j++ {
-			if hits[j].score > hits[i].score {
-				hits[i], hits[j] = hits[j], hits[i]
-			}
-		}
-	}
+	hits := w.index.search(question, 5)
 
 	if len(hits) == 0 {
 		return Answer{
@@ -101,25 +90,36 @@ func (w *Wiki) Ask(question string) Answer {
 		}
 	}
 
-	top := hits[0]
-	answer := buildAnswer(question, top.Chunk)
+	var answer string
+	if w.llm != nil {
+		chunks := make([]Chunk, 0, len(hits))
+		for _, h := range hits {
+			chunks = append(chunks, h.chunk)
+		}
+		if generated, err := w.llm.GenerateAnswer(ctx, question, chunks); err == nil && generated != "" {
+			answer = generated
+		}
+	}
+	if answer == "" {
+		answer = buildAnswer(question, hits[0].chunk)
+	}
 
 	sources := []Source{}
 	seen := map[string]bool{}
 	for _, h := range hits {
-		key := h.Type + "|" + h.Source + "|" + h.Section
+		key := h.chunk.Type + "|" + h.chunk.Source + "|" + h.chunk.Section
 		if seen[key] || len(sources) >= 3 {
 			continue
 		}
 		seen[key] = true
 		sources = append(sources, Source{
-			Type:    h.Type,
-			Path:    h.Source,
-			Section: h.Section,
+			Type:    h.chunk.Type,
+			Path:    h.chunk.Source,
+			Section: h.chunk.Section,
 		})
 	}
 
-	actions := suggestActions(top.Chunk)
+	actions := suggestActions(hits[0].chunk)
 
 	return Answer{
 		Answer:  answer,
@@ -128,41 +128,27 @@ func (w *Wiki) Ask(question string) Answer {
 	}
 }
 
-func tokenize(s string) []string {
-	// Very small stop-word list for Polish/English mixed queries.
-	stop := map[string]bool{
-		"jak": true, "co": true, "to": true, "jest": true, "w": true, "z": true,
-		"a": true, "the": true, "is": true, "what": true, "how": true, "do": true,
+// refreshLLM looks up the default AI provider from the store and creates an LLM client.
+func (w *Wiki) refreshLLM(ctx context.Context) {
+	if w.store == nil {
+		return
 	}
-	var out []string
-	for _, w := range strings.Fields(strings.TrimSpace(s)) {
-		w = strings.Trim(w, "?.,!;:")
-		if w == "" || stop[w] {
-			continue
-		}
-		out = append(out, w)
+	providers, err := w.store.ListAIProviders(ctx)
+	if err != nil || len(providers) == 0 {
+		w.llm = nil
+		return
 	}
-	return out
-}
-
-func scoreChunk(c Chunk, terms []string) int {
-	text := strings.ToLower(c.Text)
-	section := strings.ToLower(c.Section)
-	score := 0
-	for _, t := range terms {
-		if strings.Contains(section, t) {
-			score += 3
-		}
-		if strings.Contains(text, t) {
-			score += 1
-		}
-		for _, topic := range c.Topics {
-			if topic == t {
-				score += 2
-			}
+	var p *model.AIProvider
+	for _, prov := range providers {
+		if prov.Default {
+			p = prov
+			break
 		}
 	}
-	return score
+	if p == nil {
+		p = providers[0]
+	}
+	w.llm = NewLLMClient(p)
 }
 
 func buildAnswer(question string, c Chunk) string {
@@ -191,10 +177,14 @@ func suggestActions(c Chunk) []Action {
 		dagID := strings.TrimSuffix(strings.TrimPrefix(src, "dags/"), ".yaml")
 		actions = append(actions,
 			Action{Type: "trigger_dag", Label: "Uruchom ten DAG", DagID: dagID},
-			Action{Type: "open_editor", Label: "Zobacz DAG", Path: c.Source},
+			Action{Type: "open_dag_runs", Label: "Historia runów", DagID: dagID},
+			Action{Type: "show_logs", Label: "Pokaż logi", DagID: dagID},
+			Action{Type: "copy_command", Label: "Kopiuj komendę CLI", Command: "cronova trigger " + dagID},
 		)
 	case strings.HasPrefix(src, "docs/") || src == "readme.md":
-		actions = append(actions, Action{Type: "open_editor", Label: "Otwórz dokumentację", Path: c.Source})
+		actions = append(actions,
+			Action{Type: "open_docs", Label: "Otwórz dokumentację", Path: c.Source},
+		)
 	}
 	return actions
 }
