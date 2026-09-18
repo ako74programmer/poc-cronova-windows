@@ -45,8 +45,37 @@
     if (!sources || !sources.length) return null;
     const wrap = document.createElement('div');
     wrap.className = 'src';
-    wrap.textContent = t('aiwiki_sources') + sources.map(s => s.path + (s.section ? ' / ' + s.section : '')).join('; ');
+    const label = document.createElement('span');
+    label.textContent = t('aiwiki_sources');
+    wrap.appendChild(label);
+    sources.forEach(s => {
+      const a = document.createElement('a');
+      a.className = 'src-link';
+      a.href = '#';
+      a.textContent = s.path + (s.section ? ' / ' + s.section : '');
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        openSource(s);
+      });
+      wrap.appendChild(a);
+    });
     return wrap;
+  }
+
+  function openSource(s) {
+    const src = (s.path || '').toLowerCase();
+    if (src.startsWith('dags/')) {
+      const dagId = src.replace('dags/', '').replace('.yaml', '');
+      window.location.hash = '#/dags/' + encodeURIComponent(dagId);
+    } else if (src.startsWith('docs/')) {
+      let path = s.path.replace('docs/', '');
+      if (typeof lang !== 'undefined' && lang === 'pl') {
+        path = path.replace(/\.md$/, '.pl.md');
+      }
+      openDocViewer('/doc/' + path);
+    } else if (src === 'readme.md') {
+      openDocViewer('/doc/README.md');
+    }
   }
 
   function actionLabel(a) {
