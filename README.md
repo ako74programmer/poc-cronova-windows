@@ -57,6 +57,18 @@ go build -o cronova ./cmd/cronova
 ./cronova runs example_etl      # run history + task states
 ```
 
+On Windows use the included `app.cmd` helper:
+
+```powershell
+# Development: clean temp DB, auth disabled
+.\app.cmd start-dev
+
+# Production: persistent data/cronova.db, reads cronova.yaml
+.\app.cmd start
+
+.\app.cmd stop
+```
+
 Open **http://localhost:8090** for the console — DAG list, run history, task states, live logs, and one-click manual triggers.
 
 The development default is unauthenticated but loopback-only. A non-loopback

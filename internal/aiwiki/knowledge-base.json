@@ -112,7 +112,7 @@
       "type": "doc",
       "source": "README.md",
       "section": "3. Drive it from the CLI (in another terminal)",
-      "text": "./cronova dags                  # list DAGs from ./dags\n./cronova trigger example_etl   # run a DAG now\n./cronova runs example_etl      # run history + task states\n```\n\nOpen **http://localhost:8090** for the console — DAG list, run history, task states, live logs, and one-click manual triggers.\n\nThe development default is unauthenticated but loopback-only. A non-loopback\nbind is refused unless login is enabled or the explicit\n`-allow-unauthenticated-remote` escape hatch is set. Use `cronova init` for a\nnew deployed instance; it enables authentication by default.\n\n<div align=\"center\">\n  <img src=\"docs/img/dashboard.png\" alt=\"cronova dashboard — self-hosted workflow scheduler showing DAGs, run history, success rate, and schedules\" width=\"900\">\n</div>",
+      "text": "./cronova dags                  # list DAGs from ./dags\n./cronova trigger example_etl   # run a DAG now\n./cronova runs example_etl      # run history + task states\n```\n\nOn Windows use the included `app.cmd` helper:\n\n```powershell",
       "topics": [
         "dag",
         "schedule"
@@ -120,6 +120,25 @@
     },
     {
       "id": "doc-readme-11",
+      "type": "doc",
+      "source": "README.md",
+      "section": "Development: clean temp DB, auth disabled",
+      "text": ".\\app.cmd start-dev",
+      "topics": []
+    },
+    {
+      "id": "doc-readme-12",
+      "type": "doc",
+      "source": "README.md",
+      "section": "Production: persistent data/cronova.db, reads cronova.yaml",
+      "text": ".\\app.cmd start\n\n.\\app.cmd stop\n```\n\nOpen **http://localhost:8090** for the console — DAG list, run history, task states, live logs, and one-click manual triggers.\n\nThe development default is unauthenticated but loopback-only. A non-loopback\nbind is refused unless login is enabled or the explicit\n`-allow-unauthenticated-remote` escape hatch is set. Use `cronova init` for a\nnew deployed instance; it enables authentication by default.\n\n<div align=\"center\">\n  <img src=\"docs/img/dashboard.png\" alt=\"cronova dashboard — self-hosted workflow scheduler showing DAGs, run history, success rate, and schedules\" width=\"900\">\n</div>",
+      "topics": [
+        "dag",
+        "schedule"
+      ]
+    },
+    {
+      "id": "doc-readme-13",
       "type": "doc",
       "source": "README.md",
       "section": "cronova vs. Airflow vs. Azkaban vs. cron",
@@ -134,7 +153,7 @@
       ]
     },
     {
-      "id": "doc-readme-12",
+      "id": "doc-readme-14",
       "type": "doc",
       "source": "README.md",
       "section": "Define a DAG",
@@ -150,7 +169,7 @@
       ]
     },
     {
-      "id": "doc-readme-13",
+      "id": "doc-readme-15",
       "type": "doc",
       "source": "README.md",
       "section": "Define a DAG",
@@ -163,7 +182,7 @@
       ]
     },
     {
-      "id": "doc-readme-14",
+      "id": "doc-readme-16",
       "type": "doc",
       "source": "README.md",
       "section": "AI agents (MCP + remote CLI)",
@@ -177,7 +196,7 @@
       ]
     },
     {
-      "id": "doc-readme-15",
+      "id": "doc-readme-17",
       "type": "doc",
       "source": "README.md",
       "section": "Deploy in production",
@@ -191,7 +210,7 @@
       ]
     },
     {
-      "id": "doc-readme-16",
+      "id": "doc-readme-18",
       "type": "doc",
       "source": "README.md",
       "section": "Documentation",
@@ -208,7 +227,7 @@
       ]
     },
     {
-      "id": "doc-readme-17",
+      "id": "doc-readme-19",
       "type": "doc",
       "source": "README.md",
       "section": "FAQ",
@@ -223,7 +242,7 @@
       ]
     },
     {
-      "id": "doc-readme-18",
+      "id": "doc-readme-20",
       "type": "doc",
       "source": "README.md",
       "section": "FAQ",
@@ -236,7 +255,7 @@
       ]
     },
     {
-      "id": "doc-readme-19",
+      "id": "doc-readme-21",
       "type": "doc",
       "source": "README.md",
       "section": "Development",
@@ -246,7 +265,7 @@
       ]
     },
     {
-      "id": "doc-readme-20",
+      "id": "doc-readme-22",
       "type": "doc",
       "source": "README.md",
       "section": "regenerate gRPC code after editing proto/ (needs: buf + protoc-gen-go[-grpc])",
@@ -256,7 +275,7 @@
       ]
     },
     {
-      "id": "doc-readme-21",
+      "id": "doc-readme-23",
       "type": "doc",
       "source": "README.md",
       "section": "UI dev: serve console assets from disk (edit + reload, no rebuild)",
@@ -267,7 +286,7 @@
       ]
     },
     {
-      "id": "doc-readme-22",
+      "id": "doc-readme-24",
       "type": "doc",
       "source": "README.md",
       "section": "License",
@@ -280,7 +299,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-23",
+      "id": "doc-getting_started-25",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "Getting Started with cronova",
@@ -293,7 +312,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-24",
+      "id": "doc-getting_started-26",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "1. Install cronova",
@@ -305,7 +324,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-25",
+      "id": "doc-getting_started-27",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "2. Start the scheduler and open the console",
@@ -319,7 +338,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-26",
+      "id": "doc-getting_started-28",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "2. Start the scheduler and open the console",
@@ -332,11 +351,11 @@
       ]
     },
     {
-      "id": "doc-getting_started-27",
+      "id": "doc-getting_started-29",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "2. Start the scheduler and open the console",
-      "text": "```bash\n./cronova init                 # seeds the admin hash directly in SQLite\n./cronova serve -auth\n```\n\nYou can also manage accounts with `cronova users add|list|passwd|delete`.\n`cronova init` writes `cronova.yaml` plus a credential-free `0600` environment\noverride template; it never leaves the admin password in a long-lived file.\nDetails in the [CLI Reference](CLI.md).",
+      "text": "```bash\n./cronova init                 # seeds the admin hash directly in SQLite\n./cronova serve -auth\n```\n\nYou can also manage accounts with `cronova users add|list|passwd|delete`.\n`cronova init` writes `cronova.yaml` plus a credential-free `0600` environment\noverride template; it never leaves the admin password in a long-lived file.\nDetails in the [CLI Reference](CLI.md).\n\n### Quick start with `app.cmd` (Windows)\n\nOn Windows the repository includes `app.cmd`, a small helper that builds the\nbinary if needed, kills any leftover `cronova.exe` process, and starts the\nserver in the background. It has two modes:",
       "topics": [
         "schedule",
         "ai",
@@ -345,7 +364,47 @@
       ]
     },
     {
-      "id": "doc-getting_started-28",
+      "id": "doc-getting_started-30",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "2. Start the scheduler and open the console",
+      "text": "| Command | Mode | Database | Auth | Use for |\n|---|---|---|---|---|\n| `app.cmd start` | production | `data/cronova.db` | from `cronova.yaml` | normal work |\n| `app.cmd start-dev` | development | `.tmp/dev-cronova.db` (reset on start) | disabled | testing changes |\n| `app.cmd restart` | production | `data/cronova.db` | from `cronova.yaml` | stop + start |\n| `app.cmd restart-dev` | development | `.tmp/dev-cronova.db` (reset on start) | disabled | stop + start dev |\n| `app.cmd stop` | — | — | — | kill all cronova processes |\n| `app.cmd status` | — | — | — | list running cronova processes |\n\n```powershell",
+      "topics": [
+        "schedule",
+        "test"
+      ]
+    },
+    {
+      "id": "doc-getting_started-31",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "Development: clean slate, no auth, console at http://127.0.0.1:8090",
+      "text": ".\\app.cmd start-dev",
+      "topics": []
+    },
+    {
+      "id": "doc-getting_started-32",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "Production: persistent DB, auth from cronova.yaml",
+      "text": ".\\app.cmd start",
+      "topics": [
+        "schedule"
+      ]
+    },
+    {
+      "id": "doc-getting_started-33",
+      "type": "doc",
+      "source": "docs/GETTING_STARTED.md",
+      "section": "Stop any running server",
+      "text": ".\\app.cmd stop\n```\n\nThe dev mode is useful when you are iterating on code: it wipes the temporary\ndatabase on every start so you always begin fresh. The production mode keeps\n`data/cronova.db` and reads `cronova.yaml` for settings such as `auth.enabled`.",
+      "topics": [
+        "schedule",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-getting_started-34",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "3. Write your first DAG and trigger it",
@@ -360,7 +419,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-29",
+      "id": "doc-getting_started-35",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "3. Write your first DAG and trigger it",
@@ -376,7 +435,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-30",
+      "id": "doc-getting_started-36",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "4. Template variables",
@@ -391,7 +450,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-31",
+      "id": "doc-getting_started-37",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "4. Template variables",
@@ -404,7 +463,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-32",
+      "id": "doc-getting_started-38",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "4. Template variables",
@@ -417,7 +476,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-33",
+      "id": "doc-getting_started-39",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "5. Run your own scripts and projects",
@@ -430,7 +489,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-34",
+      "id": "doc-getting_started-40",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "5. Run your own scripts and projects",
@@ -443,7 +502,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-35",
+      "id": "doc-getting_started-41",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "5. Run your own scripts and projects",
@@ -457,7 +516,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-36",
+      "id": "doc-getting_started-42",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "6. Next steps",
@@ -475,7 +534,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-37",
+      "id": "doc-dag_reference-43",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "DAG & Task Reference",
@@ -490,7 +549,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-38",
+      "id": "doc-dag_reference-44",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "DAG & Task Reference",
@@ -504,7 +563,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-39",
+      "id": "doc-dag_reference-45",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "DAG-level fields",
@@ -520,7 +579,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-40",
+      "id": "doc-dag_reference-46",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "DAG-level fields",
@@ -533,7 +592,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-41",
+      "id": "doc-dag_reference-47",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "DAG-level fields",
@@ -545,7 +604,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-42",
+      "id": "doc-dag_reference-48",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Definition snapshots",
@@ -558,7 +617,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-43",
+      "id": "doc-dag_reference-49",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Task-level fields",
@@ -568,7 +627,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-44",
+      "id": "doc-dag_reference-50",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Task-level fields",
@@ -585,7 +644,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-45",
+      "id": "doc-dag_reference-51",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Task-level fields",
@@ -596,7 +655,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-46",
+      "id": "doc-dag_reference-52",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Task types",
@@ -610,7 +669,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-47",
+      "id": "doc-dag_reference-53",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Task types",
@@ -622,7 +681,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-48",
+      "id": "doc-dag_reference-54",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Template variables",
@@ -636,7 +695,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-49",
+      "id": "doc-dag_reference-55",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Template variables",
@@ -647,7 +706,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-50",
+      "id": "doc-dag_reference-56",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Template variables",
@@ -661,7 +720,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-51",
+      "id": "doc-dag_reference-57",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Template variables",
@@ -675,7 +734,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-52",
+      "id": "doc-dag_reference-58",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Trigger rules",
@@ -686,7 +745,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-53",
+      "id": "doc-dag_reference-59",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Resource pools",
@@ -698,7 +757,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-54",
+      "id": "doc-dag_reference-60",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "See also",
@@ -708,7 +767,7 @@
       ]
     },
     {
-      "id": "doc-agents-55",
+      "id": "doc-agents-61",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "Connecting an AI agent to cronova",
@@ -720,7 +779,7 @@
       ]
     },
     {
-      "id": "doc-agents-56",
+      "id": "doc-agents-62",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "1. Mint a token",
@@ -731,7 +790,7 @@
       ]
     },
     {
-      "id": "doc-agents-57",
+      "id": "doc-agents-63",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "cnv_pat_XXXXXXXXXXXXXXXXXXXX     ← shown once; store it",
@@ -741,7 +800,7 @@
       ]
     },
     {
-      "id": "doc-agents-58",
+      "id": "doc-agents-64",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "2. MCP server (recommended for Claude)",
@@ -757,7 +816,7 @@
       ]
     },
     {
-      "id": "doc-agents-59",
+      "id": "doc-agents-65",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "3. Remote CLI (for shell-out agents / scripts)",
@@ -772,7 +831,7 @@
       ]
     },
     {
-      "id": "doc-agents-60",
+      "id": "doc-agents-66",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "3. Remote CLI (for shell-out agents / scripts)",
@@ -783,7 +842,7 @@
       ]
     },
     {
-      "id": "doc-agents-61",
+      "id": "doc-agents-67",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "Authoring loop (validate before create)",
@@ -795,7 +854,7 @@
       ]
     },
     {
-      "id": "doc-agents-62",
+      "id": "doc-agents-68",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "{\"valid\": false, \"error\": \"dependency cycle detected: [a b a]\", \"canonical_yaml\": \"…\"}",
@@ -803,7 +862,7 @@
       "topics": []
     },
     {
-      "id": "doc-agents-63",
+      "id": "doc-agents-69",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "Security notes",
@@ -815,7 +874,7 @@
       ]
     },
     {
-      "id": "doc-cli-64",
+      "id": "doc-cli-70",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "cronova CLI Reference",
@@ -830,7 +889,7 @@
       ]
     },
     {
-      "id": "doc-cli-65",
+      "id": "doc-cli-71",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Scheduler",
@@ -842,7 +901,7 @@
       ]
     },
     {
-      "id": "doc-cli-66",
+      "id": "doc-cli-72",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Scheduler",
@@ -858,7 +917,7 @@
       ]
     },
     {
-      "id": "doc-cli-67",
+      "id": "doc-cli-73",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Scheduler",
@@ -870,7 +929,7 @@
       ]
     },
     {
-      "id": "doc-cli-68",
+      "id": "doc-cli-74",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Service lifecycle",
@@ -884,7 +943,7 @@
       ]
     },
     {
-      "id": "doc-cli-69",
+      "id": "doc-cli-75",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Service lifecycle",
@@ -896,7 +955,7 @@
       ]
     },
     {
-      "id": "doc-cli-70",
+      "id": "doc-cli-76",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Service lifecycle",
@@ -909,7 +968,7 @@
       ]
     },
     {
-      "id": "doc-cli-71",
+      "id": "doc-cli-77",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Service lifecycle",
@@ -921,7 +980,7 @@
       ]
     },
     {
-      "id": "doc-cli-72",
+      "id": "doc-cli-78",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Service lifecycle",
@@ -932,7 +991,7 @@
       ]
     },
     {
-      "id": "doc-cli-73",
+      "id": "doc-cli-79",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Local operations",
@@ -947,7 +1006,7 @@
       ]
     },
     {
-      "id": "doc-cli-74",
+      "id": "doc-cli-80",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Local operations",
@@ -959,7 +1018,7 @@
       ]
     },
     {
-      "id": "doc-cli-75",
+      "id": "doc-cli-81",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Local operations",
@@ -973,7 +1032,7 @@
       ]
     },
     {
-      "id": "doc-cli-76",
+      "id": "doc-cli-82",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Local operations",
@@ -986,7 +1045,7 @@
       ]
     },
     {
-      "id": "doc-cli-77",
+      "id": "doc-cli-83",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Local operations",
@@ -999,7 +1058,7 @@
       ]
     },
     {
-      "id": "doc-cli-78",
+      "id": "doc-cli-84",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Local operations",
@@ -1009,7 +1068,7 @@
       ]
     },
     {
-      "id": "doc-cli-79",
+      "id": "doc-cli-85",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1023,7 +1082,7 @@
       ]
     },
     {
-      "id": "doc-cli-80",
+      "id": "doc-cli-86",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1037,7 +1096,7 @@
       ]
     },
     {
-      "id": "doc-cli-81",
+      "id": "doc-cli-87",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1051,7 +1110,7 @@
       ]
     },
     {
-      "id": "doc-cli-82",
+      "id": "doc-cli-88",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1063,7 +1122,7 @@
       ]
     },
     {
-      "id": "doc-cli-83",
+      "id": "doc-cli-89",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1076,7 +1135,7 @@
       ]
     },
     {
-      "id": "doc-cli-84",
+      "id": "doc-cli-90",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1089,7 +1148,7 @@
       ]
     },
     {
-      "id": "doc-cli-85",
+      "id": "doc-cli-91",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1101,7 +1160,7 @@
       ]
     },
     {
-      "id": "doc-cli-86",
+      "id": "doc-cli-92",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Common questions",
@@ -1115,7 +1174,7 @@
       ]
     },
     {
-      "id": "doc-cli-87",
+      "id": "doc-cli-93",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "See also",
@@ -1126,7 +1185,7 @@
       ]
     },
     {
-      "id": "doc-architecture-88",
+      "id": "doc-architecture-94",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "cronova Architecture",
@@ -1137,7 +1196,7 @@
       ]
     },
     {
-      "id": "doc-architecture-89",
+      "id": "doc-architecture-95",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "Table of contents",
@@ -1152,7 +1211,7 @@
       ]
     },
     {
-      "id": "doc-architecture-90",
+      "id": "doc-architecture-96",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "1. Project positioning",
@@ -1165,7 +1224,7 @@
       ]
     },
     {
-      "id": "doc-architecture-91",
+      "id": "doc-architecture-97",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "2. Architecture decision records",
@@ -1180,7 +1239,7 @@
       ]
     },
     {
-      "id": "doc-architecture-92",
+      "id": "doc-architecture-98",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "2. Architecture decision records",
@@ -1188,7 +1247,7 @@
       "topics": []
     },
     {
-      "id": "doc-architecture-93",
+      "id": "doc-architecture-99",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "3. High-level architecture",
@@ -1202,7 +1261,7 @@
       ]
     },
     {
-      "id": "doc-architecture-94",
+      "id": "doc-architecture-100",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "3. High-level architecture",
@@ -1214,7 +1273,7 @@
       ]
     },
     {
-      "id": "doc-architecture-95",
+      "id": "doc-architecture-101",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "4. Module layout",
@@ -1233,7 +1292,7 @@
       ]
     },
     {
-      "id": "doc-architecture-96",
+      "id": "doc-architecture-102",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "4. Module layout",
@@ -1245,7 +1304,7 @@
       ]
     },
     {
-      "id": "doc-architecture-97",
+      "id": "doc-architecture-103",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "5. Core concepts",
@@ -1259,7 +1318,7 @@
       ]
     },
     {
-      "id": "doc-architecture-98",
+      "id": "doc-architecture-104",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "5. Core concepts",
@@ -1269,7 +1328,7 @@
       ]
     },
     {
-      "id": "doc-architecture-99",
+      "id": "doc-architecture-105",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "6. Data model",
@@ -1282,7 +1341,7 @@
       ]
     },
     {
-      "id": "doc-architecture-100",
+      "id": "doc-architecture-106",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "6. Data model",
@@ -1297,7 +1356,7 @@
       ]
     },
     {
-      "id": "doc-architecture-101",
+      "id": "doc-architecture-107",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "6. Data model",
@@ -1311,7 +1370,7 @@
       ]
     },
     {
-      "id": "doc-architecture-102",
+      "id": "doc-architecture-108",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "6. Data model",
@@ -1323,7 +1382,7 @@
       ]
     },
     {
-      "id": "doc-architecture-103",
+      "id": "doc-architecture-109",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "7. Scheduler kernel",
@@ -1335,7 +1394,7 @@
       ]
     },
     {
-      "id": "doc-architecture-104",
+      "id": "doc-architecture-110",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "7. Scheduler kernel",
@@ -1348,7 +1407,7 @@
       ]
     },
     {
-      "id": "doc-architecture-105",
+      "id": "doc-architecture-111",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "7. Scheduler kernel",
@@ -1362,7 +1421,7 @@
       ]
     },
     {
-      "id": "doc-architecture-106",
+      "id": "doc-architecture-112",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "7. Scheduler kernel",
@@ -1375,7 +1434,7 @@
       ]
     },
     {
-      "id": "doc-architecture-107",
+      "id": "doc-architecture-113",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "8. Execution layer",
@@ -1388,7 +1447,7 @@
       ]
     },
     {
-      "id": "doc-architecture-108",
+      "id": "doc-architecture-114",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "8. Execution layer",
@@ -1399,7 +1458,7 @@
       ]
     },
     {
-      "id": "doc-architecture-109",
+      "id": "doc-architecture-115",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "9. Crash recovery",
@@ -1411,7 +1470,7 @@
       ]
     },
     {
-      "id": "doc-architecture-110",
+      "id": "doc-architecture-116",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "10. Catchup and logical time",
@@ -1424,7 +1483,7 @@
       ]
     },
     {
-      "id": "doc-architecture-111",
+      "id": "doc-architecture-117",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "becomes: python extract.py --date 2026-06-09",
@@ -1436,7 +1495,7 @@
       ]
     },
     {
-      "id": "doc-architecture-112",
+      "id": "doc-architecture-118",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "11. Resource pools and concurrency control",
@@ -1449,7 +1508,7 @@
       ]
     },
     {
-      "id": "doc-architecture-113",
+      "id": "doc-architecture-119",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "12. Failure propagation and retries",
@@ -1462,7 +1521,7 @@
       ]
     },
     {
-      "id": "doc-architecture-114",
+      "id": "doc-architecture-120",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "13. Trigger flow timeline",
@@ -1476,7 +1535,7 @@
       ]
     },
     {
-      "id": "doc-architecture-115",
+      "id": "doc-architecture-121",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "14. YAML DAG specification",
@@ -1486,7 +1545,7 @@
       ]
     },
     {
-      "id": "doc-architecture-116",
+      "id": "doc-architecture-122",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "One DAG = one YAML file",
@@ -1500,7 +1559,7 @@
       ]
     },
     {
-      "id": "doc-architecture-117",
+      "id": "doc-architecture-123",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "Cross-DAG dependency (optional)",
@@ -1513,7 +1572,7 @@
       ]
     },
     {
-      "id": "doc-architecture-118",
+      "id": "doc-architecture-124",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "15. Executor gRPC protocol",
@@ -1524,7 +1583,7 @@
       ]
     },
     {
-      "id": "doc-architecture-119",
+      "id": "doc-architecture-125",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "15. Executor gRPC protocol",
@@ -1532,7 +1591,7 @@
       "topics": []
     },
     {
-      "id": "doc-architecture-120",
+      "id": "doc-architecture-126",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "16. Remote workers",
@@ -1544,7 +1603,7 @@
       ]
     },
     {
-      "id": "doc-architecture-121",
+      "id": "doc-architecture-127",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "17. API and Web UI",
@@ -1552,7 +1611,7 @@
       "topics": []
     },
     {
-      "id": "doc-architecture-122",
+      "id": "doc-architecture-128",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "17. API and Web UI",
@@ -1569,7 +1628,7 @@
       ]
     },
     {
-      "id": "doc-architecture-123",
+      "id": "doc-architecture-129",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "17. API and Web UI",
@@ -1581,7 +1640,7 @@
       ]
     },
     {
-      "id": "doc-architecture-124",
+      "id": "doc-architecture-130",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "18. Security model",
@@ -1592,7 +1651,7 @@
       ]
     },
     {
-      "id": "doc-architecture-125",
+      "id": "doc-architecture-131",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "19. Delivery roadmap",
@@ -1608,7 +1667,7 @@
       ]
     },
     {
-      "id": "doc-architecture-126",
+      "id": "doc-architecture-132",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "20. Evolution: single-node → distributed",
@@ -1620,7 +1679,7 @@
       ]
     },
     {
-      "id": "doc-architecture-127",
+      "id": "doc-architecture-133",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "21. Risks and open questions",
@@ -1634,7 +1693,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot-128",
+      "id": "dag-sdlc_springboot-134",
       "type": "dag",
       "source": "dags/sdlc_springboot.yaml",
       "section": "DAG sdlc_springboot",
@@ -1650,7 +1709,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_maven_luhn-129",
+      "id": "dag-sdlc_maven_luhn-135",
       "type": "dag",
       "source": "dags/sdlc_maven_luhn.yaml",
       "section": "DAG sdlc_maven_luhn",
@@ -1667,7 +1726,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_startio-130",
+      "id": "dag-sdlc_springboot_startio-136",
       "type": "dag",
       "source": "dags/sdlc_springboot_startio.yaml",
       "section": "DAG sdlc_springboot_startio",
@@ -1683,7 +1742,7 @@
       ]
     },
     {
-      "id": "script-scaffold-sh-131",
+      "id": "script-scaffold-sh-137",
       "type": "script",
       "source": "workflows/sdlc_springboot/scaffold.sh",
       "section": "Script scaffold.sh",
@@ -1694,7 +1753,7 @@
       ]
     },
     {
-      "id": "script-compile_skeleton-sh-132",
+      "id": "script-compile_skeleton-sh-138",
       "type": "script",
       "source": "workflows/sdlc_springboot/compile_skeleton.sh",
       "section": "Script compile_skeleton.sh",
@@ -1706,7 +1765,7 @@
       ]
     },
     {
-      "id": "script-ai_add_crud-sh-133",
+      "id": "script-ai_add_crud-sh-139",
       "type": "script",
       "source": "workflows/sdlc_springboot/ai_add_crud.sh",
       "section": "Script ai_add_crud.sh",
@@ -1716,7 +1775,7 @@
       ]
     },
     {
-      "id": "script-compile_loop-sh-134",
+      "id": "script-compile_loop-sh-140",
       "type": "script",
       "source": "workflows/sdlc_springboot/compile_loop.sh",
       "section": "Script compile_loop.sh",
@@ -1727,7 +1786,7 @@
       ]
     },
     {
-      "id": "script-tests-sh-135",
+      "id": "script-tests-sh-141",
       "type": "script",
       "source": "workflows/sdlc_springboot/tests.sh",
       "section": "Script tests.sh",
@@ -1738,7 +1797,7 @@
       ]
     },
     {
-      "id": "script-copy-template-to-workspace-136",
+      "id": "script-copy-template-to-workspace-142",
       "type": "script",
       "source": "internal/scripts/copy-template-to-workspace",
       "section": "Script copy-template-to-workspace",
@@ -1750,7 +1809,7 @@
       ]
     },
     {
-      "id": "script-compile-project-137",
+      "id": "script-compile-project-143",
       "type": "script",
       "source": "internal/scripts/compile-project",
       "section": "Script compile-project",
@@ -1763,7 +1822,7 @@
       ]
     },
     {
-      "id": "script-run-tests-138",
+      "id": "script-run-tests-144",
       "type": "script",
       "source": "internal/scripts/run-tests",
       "section": "Script run-tests",
@@ -1776,7 +1835,7 @@
       ]
     },
     {
-      "id": "script-ai-generate-crud-139",
+      "id": "script-ai-generate-crud-145",
       "type": "script",
       "source": "internal/scripts/ai-generate-crud",
       "section": "Script ai-generate-crud",
@@ -1788,7 +1847,7 @@
       ]
     },
     {
-      "id": "script-ai-review-fix-loop-140",
+      "id": "script-ai-review-fix-loop-146",
       "type": "script",
       "source": "internal/scripts/ai-review-fix-loop",
       "section": "Script ai-review-fix-loop",

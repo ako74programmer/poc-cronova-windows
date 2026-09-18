@@ -90,6 +90,36 @@ You can also manage accounts with `cronova users add|list|passwd|delete`.
 override template; it never leaves the admin password in a long-lived file.
 Details in the [CLI Reference](CLI.md).
 
+### Quick start with `app.cmd` (Windows)
+
+On Windows the repository includes `app.cmd`, a small helper that builds the
+binary if needed, kills any leftover `cronova.exe` process, and starts the
+server in the background. It has two modes:
+
+| Command | Mode | Database | Auth | Use for |
+|---|---|---|---|---|
+| `app.cmd start` | production | `data/cronova.db` | from `cronova.yaml` | normal work |
+| `app.cmd start-dev` | development | `.tmp/dev-cronova.db` (reset on start) | disabled | testing changes |
+| `app.cmd restart` | production | `data/cronova.db` | from `cronova.yaml` | stop + start |
+| `app.cmd restart-dev` | development | `.tmp/dev-cronova.db` (reset on start) | disabled | stop + start dev |
+| `app.cmd stop` | — | — | — | kill all cronova processes |
+| `app.cmd status` | — | — | — | list running cronova processes |
+
+```powershell
+# Development: clean slate, no auth, console at http://127.0.0.1:8090
+.\app.cmd start-dev
+
+# Production: persistent DB, auth from cronova.yaml
+.\app.cmd start
+
+# Stop any running server
+.\app.cmd stop
+```
+
+The dev mode is useful when you are iterating on code: it wipes the temporary
+database on every start so you always begin fresh. The production mode keeps
+`data/cronova.db` and reads `cronova.yaml` for settings such as `auth.enabled`.
+
 ## 3. Write your first DAG and trigger it
 
 A **DAG** (directed acyclic graph) is a set of tasks with dependency edges, defined as a YAML file in the `./dags/` directory. Each task runs as an OS subprocess. Create `dags/hello.yaml`:
