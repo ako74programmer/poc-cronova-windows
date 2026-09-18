@@ -37,13 +37,23 @@ func (c *LLMClient) GenerateAnswer(ctx context.Context, question string, chunks 
 		contextText += fmt.Sprintf("---\nSource: %s\nSection: %s\n%s\n", ch.Source, ch.Section, ch.Text)
 	}
 
-	systemPrompt := `You are a helpful assistant for the cronova workflow scheduler.
+	var systemPrompt string
+	var userPrompt string
+	if contextText == "" {
+		systemPrompt = `You are a helpful assistant inside the cronova workflow scheduler console.
+The user's question is not covered by the cronova documentation, so answer from your general knowledge.
+Keep the answer concise (2-4 sentences).
+Answer in the same language as the user's question.`
+		userPrompt = fmt.Sprintf("Question: %s\n\nAnswer:", question)
+	} else {
+		systemPrompt = `You are a helpful assistant for the cronova workflow scheduler.
 Answer the user's question based ONLY on the provided context.
 Keep the answer concise (2-4 sentences).
 If the context does not contain the answer, say "I don't have that information."
 Answer in the same language as the user's question.
 When the context mentions YAML fields, explain how to use them in a DAG definition.`
-	userPrompt := fmt.Sprintf("Context:\n%s\n\nQuestion: %s\n\nAnswer:", contextText, question)
+		userPrompt = fmt.Sprintf("Context:\n%s\n\nQuestion: %s\n\nAnswer:", contextText, question)
+	}
 
 	reqBody := map[string]any{
 		"model": c.provider.Model,

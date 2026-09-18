@@ -119,11 +119,6 @@ func (idx *bm25Index) scoreDoc(d bm25Doc, qTokens []string) float64 {
 	if strings.Contains(src, "dag_reference") || strings.Contains(src, "getting_started") {
 		score *= 1.3
 	}
-	// Boost chunks that mention YAML field definitions.
-	text := strings.ToLower(d.chunk.Text + " " + d.chunk.Section)
-	if strings.Contains(text, "retries:") || strings.Contains(text, "retry_delay") || strings.Contains(text, "timeout:") {
-		score *= 1.2
-	}
 
 	return score
 }
@@ -139,6 +134,8 @@ func tokenizeBM25(s string) []string {
 		"jak": true, "co": true, "to": true, "jest": true, "w": true, "z": true,
 		"a": true, "the": true, "is": true, "what": true, "how": true, "do": true,
 		"i": true, "or": true, "and": true, "for": true, "in": true, "on": true,
+		"czy": true, "wiesz": true, "ty": true, "wiem": true, "know": true, "you": true,
+		"czym": true, "kim": true, "który": true, "ktora": true, "ktore": true,
 	}
 	var out []string
 	for _, w := range strings.Fields(strings.TrimSpace(s)) {

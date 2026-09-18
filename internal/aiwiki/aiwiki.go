@@ -83,9 +83,17 @@ func (w *Wiki) Ask(ctx context.Context, question, lang string) Answer {
 
 	hits := w.index.search(question, 5)
 
-	if len(hits) == 0 {
+	// If no strong match, let the LLM answer from its general knowledge and
+	// clearly label it as such. Avoid pretending a random low-score chunk
+	// answers the question.
+	if len(hits) == 0 || !isRelevant(question, hits) {
+		if w.llm != nil {
+			if generated, err := w.llm.GenerateAnswer(ctx, question, nil); err == nil && generated != "" {
+				return Answer{Answer: "Nie znalazłem odpowiedzi w bazie wiedzy cronova, ale wiem, że " + generated}
+			}
+		}
 		return Answer{
-			Answer: "Nie znalazłem dokładnej odpowiedzi w bazie wiedzy. Spróbuj zapytać inaczej, np. 'Jak zrobić DAG?' lub 'Co to jest retry?'.",
+			Answer: "Nie znalazłem odpowiedzi w bazie wiedzy cronova. Zapytaj o coś związanego z cronova, np. 'Jak zrobić DAG?' lub 'Co to jest retry?'.",
 			Actions: []Action{
 				{Type: "open_editor", Label: "Przeglądaj DAG-i", Path: "dags/"},
 			},
@@ -128,6 +136,49 @@ func (w *Wiki) Ask(ctx context.Context, question, lang string) Answer {
 		Sources: sources,
 		Actions: actions,
 	}
+}
+
+// isRelevant decides whether the top BM25 hit is strong enough to base an
+// answer on. Very generic terms (java, python, sql) match many chunks by
+// accident, so we require either a decent score or a direct topic match.
+func isRelevant(question string, hits []scoredChunk) bool {
+	if len(hits) == 0 {
+		return false
+	}
+	top := hits[0]
+	if top.score < 2.5 {
+		return false
+	}
+	q := strings.ToLower(question)
+	// If the user asks about a programming language or generic technology,
+	// only accept chunks that actually explain it in the cronova context.
+	genericTech := []string{"java", "python", "javascript", "go", "rust", "c++", "html", "css"}
+	for _, term := range genericTech {
+		if strings.Contains(q, term) {
+			text := strings.ToLower(top.chunk.Text + " " + top.chunk.Section)
+			return strings.Contains(text, term)
+		}
+	}
+	// If the question contains only generic words and no cronova-specific
+	// terms, treat it as off-topic regardless of BM25 score.
+	if !hasCronovaTerm(q) {
+		return false
+	}
+	return true
+}
+
+// hasCronovaTerm checks whether the question contains any term that clearly
+// anchors it to the cronova domain.
+func hasCronovaTerm(q string) bool {
+	terms := []string{"cronova", "dag", "task", "retry", "schedule", "timeout",
+		"pool", "log", "run", "trigger", "worker", "executor", "mcp", "ai-sdlc",
+		"workspace", "project", "shell", "command", "yaml", "config", "install"}
+	for _, t := range terms {
+		if strings.Contains(q, t) {
+			return true
+		}
+	}
+	return false
 }
 
 // refreshLLM looks up the default AI provider from the store and creates an LLM client.
