@@ -183,6 +183,75 @@ Parametry:
 
 ---
 
+### `generate-maven-archetype`
+
+Generuje szkielet Java + Maven przez `mvn archetype:generate`.
+
+```bash
+# Domyślnie: maven-archetype-quickstart, com.example, artifact demo, Java 21
+internal/scripts/generate-maven-archetype
+
+# Własny archetyp i parametry
+internal/scripts/generate-maven-archetype \
+  -a maven-archetype-archetype \
+  -v 1.5 \
+  -g com.acme \
+  -r luhn \
+  -k com.acme.luhn \
+  -j 21 \
+  -w workspaces/sdlc_maven_luhn \
+  -p app \
+  -C
+```
+
+Parametry:
+- `-a ARCHETYPE` — artifactId archetypu (domyślnie `maven-archetype-quickstart`)
+- `-v VERSION` — wersja archetypu (opcjonalnie)
+- `-g GROUP` — groupId projektu (domyślnie `com.example`)
+- `-r ARTIFACT` — artifactId projektu (domyślnie `demo`)
+- `-k PACKAGE` — pakiet Java (domyślnie `com.example.demo`)
+- `-j JAVA` — wersja Javy (domyślnie `21`)
+- `-w WORKSPACE` — workspace docelowy
+- `-p PROJECT` — podkatalog projektu w workspace
+- `-C` — wyczyść docelowy katalog przed generowaniem
+- `-h` — pomoc
+
+---
+
+### `ai-generate-feature`
+
+Generuje dowolną funkcję biznesową na podstawie pliku promptu. Jest to generyczna wersja `ai-generate-crud`.
+
+```bash
+# Użyj promptu z prompts/luhn.txt
+internal/scripts/ai-generate-feature -f prompts/luhn.txt
+
+# Inny projekt i pakiet
+internal/scripts/ai-generate-feature \
+  -f prompts/my-feature.txt \
+  -w workspaces/sdlc_maven_luhn \
+  -p app \
+  -k com.example.luhn
+```
+
+Parametry:
+- `-f PROMPT_FILE` — ścieżka do pliku promptu (wymagane)
+- `-w WORKSPACE` — workspace
+- `-p PROJECT` — podkatalog projektu
+- `-k PACKAGE` — pakiet Java
+- `-y PYTHON` — ścieżka do Pythona
+- `-h` — pomoc
+
+Plik promptu powinien zawierać instrukcje dla modelu AI, w tym:
+- opis generowanej funkcji,
+- wymagane klasy i testy,
+- zasady dotyczące zależności (np. brak hardkodowanych wersji dla zarządzanych zależności),
+- unikanie problematycznych konstrukcji (np. regex z niedozwolonymi escape'ami w zwykłym Java).
+
+Przykład promptu: [prompts/luhn.txt](prompts/luhn.txt).
+
+---
+
 ## Wrappery w workflow
 
 Skrypty w `workflows/sdlc_springboot/` są cienkimi wrapperami:
@@ -266,6 +335,88 @@ tasks:
 Gotowy przykład działający w tym repo znajdziesz w:
 - `workflows/sdlc_springboot_startio/`
 - `dags/sdlc_springboot_startio.yaml`
+
+---
+
+## Przykład: workflow z Maven archetype + AI feature
+
+Utwórz `workflows/my_maven_app/scaffold.sh`:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+exec "$REPO_ROOT/internal/scripts/generate-maven-archetype" \
+  -a maven-archetype-quickstart \
+  -g com.example \
+  -r luhn \
+  -k com.example.luhn \
+  -j 21 \
+  -w "$REPO_ROOT/workspaces/my_maven_app" \
+  -p app \
+  -C
+```
+
+Pozostałe wrappery (`compile_skeleton.sh`, `ai_add_feature.sh`, `compile_loop.sh`, `tests.sh`) wyglądają tak samo jak w przykładzie powyżej — tylko zmieniają workspace na `workspaces/my_maven_app` i projekt na `app`, a `ai_add_feature.sh` wskazuje plik promptu, np.:
+
+```bash
+exec "$REPO_ROOT/internal/scripts/ai-generate-feature" \
+  -f "$REPO_ROOT/prompts/luhn.txt" \
+  -w "$REPO_ROOT/workspaces/my_maven_app" \
+  -p app \
+  -k com.example.luhn
+```
+
+Definicja DAG-a `dags/my_maven_app.yaml`:
+
+```yaml
+dag_id: my_maven_app
+schedule: "0 2 * * *"
+start_date: "2026-09-01"
+catchup: false
+max_active_runs: 1
+
+tasks:
+  - id: scaffold
+    type: shell
+    timeout: 300
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_maven_app/scaffold.sh
+
+  - id: compile_skeleton
+    type: shell
+    timeout: 600
+    deps:
+      - scaffold
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_maven_app/compile_skeleton.sh
+
+  - id: ai_add_feature
+    type: shell
+    timeout: 300
+    deps:
+      - compile_skeleton
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_maven_app/ai_add_feature.sh
+
+  - id: compile_loop
+    type: shell
+    timeout: 900
+    deps:
+      - ai_add_feature
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_maven_app/compile_loop.sh
+
+  - id: tests
+    type: shell
+    timeout: 300
+    deps:
+      - compile_loop
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_maven_app/tests.sh
+```
+
+Gotowy przykład działający w tym repo znajdziesz w:
+- `workflows/sdlc_maven_luhn/`
+- `dags/sdlc_maven_luhn.yaml`
+- `prompts/luhn.txt`
 
 ---
 

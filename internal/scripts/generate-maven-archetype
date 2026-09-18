@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+ARCHETYPE="maven-archetype-quickstart"
+ARCHETYPE_VERSION=""
+GROUP="com.example"
+ARTIFACT="demo"
+PACKAGE=""
+JAVA="21"
+WORKSPACE=""
+PROJECT="demo"
+CLEAN=false
+
+usage() {
+  cat <<EOF
+Usage: generate-maven-archetype [OPTIONS]
+
+Generate a Java + Maven project skeleton using mvn archetype:generate.
+
+Options:
+  -a ARCHETYPE        Archetype artifactId. Default: maven-archetype-quickstart
+  -v VERSION          Archetype version. Default: latest stable from Maven
+  -g GROUP            Project groupId. Default: com.example
+  -r ARTIFACT         Project artifactId. Default: demo
+  -k PACKAGE          Package name. Default: GROUP
+  -j JAVA             Java version: 21, 17, 11, 8. Default: 21
+  -w WORKSPACE        Target workspace directory. Default: workspaces/maven-demo
+  -p PROJECT          Project subdirectory inside workspace. Default: demo
+  -C                  Clean target directory before generating.
+  -h                  Show this help message.
+
+Example:
+  generate-maven-archetype -g com.example -r luhn -k com.example.luhn -j 21
+  generate-maven-archetype -w workspaces/sdlc_maven_luhn -p app -C
+EOF
+}
+
+while getopts ":a:v:g:r:k:j:w:p:Ch" opt; do
+  case $opt in
+    a) ARCHETYPE="$OPTARG" ;;
+    v) ARCHETYPE_VERSION="$OPTARG" ;;
+    g) GROUP="$OPTARG" ;;
+    r) ARTIFACT="$OPTARG" ;;
+    k) PACKAGE="$OPTARG" ;;
+    j) JAVA="$OPTARG" ;;
+    w) WORKSPACE="$OPTARG" ;;
+    p) PROJECT="$OPTARG" ;;
+    C) CLEAN=true ;;
+    h) usage; exit 0 ;;
+    \?) echo "Invalid option: -$OPTARG" >&2; usage >&2; exit 1 ;;
+    :) echo "Option -$OPTARG requires an argument." >&2; usage >&2; exit 1 ;;
+  esac
+done
+
+if [[ -z "$PACKAGE" ]]; then
+  PACKAGE="$GROUP"
+fi
+
+if [[ -z "$WORKSPACE" ]]; then
+  WORKSPACE="$REPO_ROOT/workspaces/maven-demo"
+fi
+
+TARGET_DIR="$WORKSPACE/$PROJECT"
+ABS_TARGET_DIR="$(cd "$WORKSPACE" && pwd)/$PROJECT"
+ABS_WORKSPACE="$(cd "$WORKSPACE" && pwd)"
+TMP_OUT="$ABS_WORKSPACE/.archetype-out-$$"
+
+if [[ "$CLEAN" == true ]]; then
+  echo "Cleaning target directory: $ABS_TARGET_DIR"
+  rm -rf "$ABS_TARGET_DIR"
+fi
+
+rm -rf "$TMP_OUT"
+mkdir -p "$TMP_OUT"
+
+export JAVA_HOME=/c/Program\ Files/Java/jdk-25
+export PATH="/c/apache-maven-3.9.14/bin:/mingw64/bin:/usr/bin:/bin:/c/Windows/system32:/c/Windows:$PATH"
+
+ARCTYPE_ARGS=(-DarchetypeArtifactId="$ARCHETYPE")
+if [[ -n "$ARCHETYPE_VERSION" ]]; then
+  ARCTYPE_ARGS+=(-DarchetypeVersion="$ARCHETYPE_VERSION")
+fi
+
+echo "Generating Maven archetype $ARCHETYPE..."
+mvn -B archetype:generate \
+  -DgroupId="$GROUP" \
+  -DartifactId="$ARTIFACT" \
+  -Dpackage="$PACKAGE" \
+  -Dversion="1.0-SNAPSHOT" \
+  "${ARCTYPE_ARGS[@]}" \
+  -DinteractiveMode=false \
+  -DoutputDirectory="$TMP_OUT"
+
+# archetype:generate creates $outputDirectory/$artifactId
+GENERATED_DIR="$TMP_OUT/$ARTIFACT"
+if [[ ! -d "$GENERATED_DIR" ]]; then
+  echo "Error: archetype did not generate expected directory: $GENERATED_DIR" >&2
+  rm -rf "$TMP_OUT"
+  exit 1
+fi
+
+rm -rf "$ABS_TARGET_DIR"
+mv "$GENERATED_DIR" "$ABS_TARGET_DIR"
+rm -rf "$TMP_OUT"
+
+echo "Maven archetype generated successfully in $ABS_TARGET_DIR"
+
+# Update Java version in pom.xml
+sed -i "s/<maven.compiler.source>[^<]*<\/maven.compiler.source>/<maven.compiler.source>$JAVA<\/maven.compiler.source>/g" "$TARGET_DIR/pom.xml" || true
+sed -i "s/<maven.compiler.target>[^<]*<\/maven.compiler.target>/<maven.compiler.target>$JAVA<\/maven.compiler.target>/g" "$TARGET_DIR/pom.xml" || true
+sed -i "s/<maven.compiler.release>[^<]*<\/maven.compiler.release>/<maven.compiler.release>$JAVA<\/maven.compiler.release>/g" "$TARGET_DIR/pom.xml" || true
+
+# If none of the above existed, inject properties block
+if ! grep -q "<maven.compiler" "$TARGET_DIR/pom.xml"; then
+  sed -i "s/<\/project>/<properties><maven.compiler.source>$JAVA<\/maven.compiler.source><maven.compiler.target>$JAVA<\/maven.compiler.target><\/properties><\/project>/g" "$TARGET_DIR/pom.xml" || true
+fi
+
+echo "Maven archetype generated successfully in $TARGET_DIR"

@@ -1,0 +1,47 @@
+dag_id: sdlc_maven_luhn
+schedule: "0 2 * * *"        # nightly build; remove for manual-only
+start_date: "2026-09-01"
+catchup: false
+max_active_runs: 1
+default_retries: 0
+
+# AI-SDLC pipeline using Maven archetype as the scaffold source:
+# 1. scaffold          -> generate Java + Maven project from maven-archetype-quickstart
+# 2. compile_skeleton  -> verify skeleton compiles
+# 3. ai_add_feature    -> AI adds a business feature (Luhn algorithm) from prompts/luhn.txt
+# 4. compile_loop      -> compile + AI reviewer fix loop (max 3 iterations)
+# 5. tests             -> run generated tests
+
+tasks:
+  - id: scaffold
+    type: shell
+    timeout: 300
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_maven_luhn/scaffold.sh
+
+  - id: compile_skeleton
+    type: shell
+    timeout: 600
+    deps:
+      - scaffold
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_maven_luhn/compile_skeleton.sh
+
+  - id: ai_add_feature
+    type: shell
+    timeout: 300
+    deps:
+      - compile_skeleton
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_maven_luhn/ai_add_feature.sh
+
+  - id: compile_loop
+    type: shell
+    timeout: 900
+    deps:
+      - ai_add_feature
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_maven_luhn/compile_loop.sh
+
+  - id: tests
+    type: shell
+    timeout: 300
+    deps:
+      - compile_loop
+    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/sdlc_maven_luhn/tests.sh

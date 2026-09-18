@@ -1,0 +1,10 @@
+Add a Luhn algorithm validator to the project.
+
+Requirements:
+1. Create a class Luhn in the main package with a static method isValid(String number) that returns boolean.
+2. The method should validate whether the given string is a valid number according to the Luhn algorithm.
+3. The input may contain spaces; they should be ignored (use replace(" ", "") or similar, NOT regex with backslashes).
+4. Inputs with non-digit characters (except spaces) or length <= 1 should return false (check each character with Character.isDigit).
+5. Create a test class LuhnTest with unit tests covering valid numbers, invalid numbers, edge cases (empty string, single digit, spaces).
+6. Keep the existing App.java and AppTest.java intact.
+7. Do NOT use regex patterns like \d or \s because they cause Java escape-character errors.
