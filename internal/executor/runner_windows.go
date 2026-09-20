@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strconv"
+	"path/filepath"
 	"syscall"
 )
 
@@ -20,18 +20,37 @@ func sysProcAttrForGroup() *syscall.SysProcAttr {
 	}
 }
 
-func shellCommand(script string) *exec.Cmd {
-	// Prefer Git Bash on Windows so Unix-style DAG commands (set -e, here-docs,
-	// curl, mvn, java, python3) work out of the box. WSL's bash is in PATH before
-	// Git's, but it cannot exec on this filesystem, so look for Git Bash explicitly first.
-	gitBash := `C:\Program Files\Git\bin\bash.exe`
-	if _, err := os.Stat(gitBash); err == nil {
-		return exec.Command(gitBash, "-c", script)
+func shellCommand(script string) (*exec.Cmd, error) {
+	// Git Bash is the only supported shell for shell tasks. The explicit setting
+	// wins, then PATH, then the two conventional Git for Windows locations.
+	var candidates []string
+	if configured := os.Getenv("CRONOVA_BASH_PATH"); configured != "" {
+		candidates = append(candidates, configured)
 	}
-	if bash, err := exec.LookPath("bash"); err == nil && bash != "" {
-		return exec.Command(bash, "-c", script)
+	if bash, err := exec.LookPath("bash.exe"); err == nil {
+		candidates = append(candidates, bash)
 	}
-	return exec.Command("cmd.exe", "/C", script)
+	programFiles := os.Getenv("ProgramFiles")
+	if programFiles == "" {
+		programFiles = `C:\Program Files`
+	}
+	for _, root := range []string{programFiles, os.Getenv("ProgramW6432")} {
+		if root != "" {
+			candidates = append(candidates, filepath.Join(root, "Git", "usr", "bin", "bash.exe"))
+			candidates = append(candidates, filepath.Join(root, "Git", "bin", "bash.exe"))
+		}
+	}
+	seen := map[string]bool{}
+	for _, candidate := range candidates {
+		if candidate == "" || seen[candidate] {
+			continue
+		}
+		seen[candidate] = true
+		if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
+			return exec.Command(candidate, "-lc", script), nil
+		}
+	}
+	return nil, fmt.Errorf("Git for Windows Bash was not found; install Git for Windows or set CRONOVA_BASH_PATH to bash.exe")
 }
 
 func wrapCommandForState(command string, stateEnabled bool, exitFilePath string) string {
@@ -46,7 +65,7 @@ func killGroup(cmd *exec.Cmd) {
 	if cmd.Process == nil {
 		return
 	}
-	_ = exec.Command("taskkill", "/T", "/F", "/PID", strconv.Itoa(cmd.Process.Pid)).Run()
+	_ = exec.Command("taskkill", "/T", "/F", "/PID", fmt.Sprint(cmd.Process.Pid)).Run()
 }
 
 func killGroupByPgid(pgid int) {
@@ -54,6 +73,5 @@ func killGroupByPgid(pgid int) {
 		return
 	}
 	// pgid is just the process id on Windows; taskkill /T kills the tree.
-	_ = exec.Command("taskkill", "/T", "/F", "/PID", strconv.Itoa(pgid)).Run()
+	_ = exec.Command("taskkill", "/T", "/F", "/PID", fmt.Sprint(pgid)).Run()
 }
-

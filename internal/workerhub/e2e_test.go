@@ -118,9 +118,20 @@ func startCluster(t *testing.T, workerID, group string, hubOpts Options) *testCl
 	// stop the hub's liveness sweep.
 	workerCtx, workerCancel := context.WithCancel(context.Background())
 	hubCtx, hubCancel := context.WithCancel(context.Background())
-	go func() { _ = agent.Run(workerCtx) }()
+	workerDone := make(chan struct{})
+	go func() {
+		defer close(workerDone)
+		_ = agent.Run(workerCtx)
+	}()
 	go hub.Run(hubCtx)
-	t.Cleanup(workerCancel)
+	t.Cleanup(func() {
+		workerCancel()
+		select {
+		case <-workerDone:
+		case <-time.After(5 * time.Second):
+			t.Error("worker agent did not stop before TempDir cleanup")
+		}
+	})
 	t.Cleanup(hubCancel)
 
 	c := &testCluster{hub: hub, st: st, agent: agent, cancel: workerCancel, dir: dir}

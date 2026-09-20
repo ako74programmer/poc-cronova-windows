@@ -1,3 +1,6 @@
+//go:build !windows
+// +build !windows
+
 package main
 
 import (
@@ -357,4 +360,10 @@ func systemdConfirmActive() error {
 		time.Sleep(500 * time.Millisecond)
 	}
 	return fmt.Errorf("systemd unit %s is not active after restart (inspect: systemctl status %s ; journalctl -u %s)", systemdUnit, systemdUnit, systemdUnit)
+}
+
+// uninstallWindows is referenced by the shared command parser; the real
+// implementation is compiled only on Windows.
+func uninstallWindows(bool) error {
+	return fmt.Errorf("Windows uninstall is unavailable on %s", runtime.GOOS)
 }

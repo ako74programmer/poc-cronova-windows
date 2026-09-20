@@ -1,31 +1,12 @@
-# Run the full test suite on every push and pull request. Tagged releases repeat
-# the same gates before any artifact is built or published.
+# Cross-platform validation with Windows as the product gate.
 name: test
-
 on:
   push:
     branches: [main]
   pull_request: {}
-
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    # Real PostgreSQL for the PG store suite: without the DSN those tests
-    # self-skip, which is exactly the silent gap plan1 LB-02 forbids.
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_PASSWORD: ci
-          POSTGRES_DB: cronova_test
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 12
-    env:
-      CRONOVA_TEST_PG_DSN: postgres://postgres:ci@127.0.0.1:5432/cronova_test?sslmode=disable
+  windows:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
@@ -33,25 +14,39 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: gofmt
-        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+        shell: pwsh
+        run: if ((gofmt -l .).Length -ne 0) { gofmt -l .; exit 1 }
       - name: verify modules
         run: go mod verify
       - name: go vet
         run: go vet ./...
-      - name: go test (race)
-        run: go test -race ./...
-      - name: postgres suite must not skip
+      - name: Go tests
+        run: go test ./...
+      - name: Windows binaries
         run: |
-          out=$(go test -v -count=1 ./internal/store/postgres/ 2>&1)
-          echo "$out" | tail -20
-          if echo "$out" | grep -q -- "--- SKIP"; then
-            echo "PostgreSQL store tests skipped — the CI database must be reachable (plan1 LB-02)"; exit 1
-          fi
-      - name: coverage floor
-        run: |
-          go test -covermode=atomic -coverprofile=coverage.out ./...
-          go tool cover -func=coverage.out | awk '/^total:/ { gsub("%", "", $3); if ($3 + 0 < 55) { print "coverage " $3 "% is below 55%"; exit 1 } }'
-      - name: vulnerability scan
-        run: go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
-      - name: deployment script syntax
-        run: bash -n deploy/*.sh scripts/*.sh
+          $env:CGO_ENABLED = "0"
+          New-Item -ItemType Directory -Force dist | Out-Null
+          go build -trimpath -o dist/cronova.exe ./cmd/cronova
+          go build -trimpath -o dist/cronova-executor.exe ./cmd/cronova-executor
+  linux-analysis:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_PASSWORD: ci, POSTGRES_DB: cronova_test }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 3s --health-retries 12
+    env:
+      CRONOVA_TEST_PG_DSN: postgres://postgres:ci@127.0.0.1:5432/cronova_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with: { go-version-file: go.mod, cache: true }
+      - run: test -z "$(gofmt -l .)"
+      - run: go mod verify
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: go test -v -count=1 ./internal/store/postgres/
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...

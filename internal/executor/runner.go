@@ -102,7 +102,13 @@ func (r *Runner) Launch(spec Spec) (string, error) {
 	// before the task finishes, letting a restarted executor report the real
 	// outcome instead of failing the task on principle.
 	script := wrapCommandForState(spec.Command, r.stateDir != "", exitFile(r.stateDir, ref))
-	cmd := shellCommand(script)
+	cmd, err := shellCommand(script)
+	if err != nil {
+		fmt.Fprintf(sink, "=== launch error: %v ===\n", err)
+		_ = sink.Close()
+		r.forget(ref)
+		return "", err
+	}
 	cmd.Stdout = sink
 	cmd.Stderr = sink
 	cmd.Env = buildEnv(spec.Env)
@@ -529,5 +535,3 @@ func exitCode(err error) int {
 	}
 	return -1
 }
-
-

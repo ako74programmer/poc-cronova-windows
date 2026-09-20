@@ -53,8 +53,10 @@ func cmdUninstall(args []string) error {
 		return uninstallDarwin(purge)
 	case "linux":
 		return uninstallLinux(purge)
+	case "windows":
+		return uninstallWindows(purge)
 	default:
-		return fmt.Errorf("uninstall is only supported on macOS/Linux (this is %s)", runtime.GOOS)
+		return fmt.Errorf("uninstall is only supported on Windows (this is %s)", runtime.GOOS)
 	}
 }
 

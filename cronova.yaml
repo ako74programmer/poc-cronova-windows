@@ -8,6 +8,7 @@ projects: ""
 workspaces: ""
 tick: 2s
 executor: ""
+bash_path: ""
 http: 127.0.0.1:8090
 reload: ""
 allow_unauthenticated_remote: false

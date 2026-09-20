@@ -359,6 +359,11 @@ func cmdServe(args []string) error {
 		return err
 	}
 	applyEnv(&cfg)
+	if cfg.BashPath != "" {
+		if err := os.Setenv("CRONOVA_BASH_PATH", cfg.BashPath); err != nil {
+			return fmt.Errorf("set Git Bash path: %w", err)
+		}
+	}
 	overlaySetFlags(&cfg, fs, map[string]any{
 		"db": dbPath, "dags": dagDir, "logs": logDir, "projects": projectsDir, "workspaces": workspacesDir, "tick": tick, "reload": reload,
 		"executor": executorAddr, "http": httpAddr, "auth": authFlag, "retention": retention, "audit-retention": auditRetention,

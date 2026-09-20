@@ -4,6 +4,7 @@
 package executor
 
 import (
+	"fmt"
 	"os/exec"
 	"syscall"
 )
@@ -12,8 +13,8 @@ func sysProcAttrForGroup() *syscall.SysProcAttr {
 	return &syscall.SysProcAttr{Setpgid: true}
 }
 
-func shellCommand(script string) *exec.Cmd {
-	return exec.Command("sh", "-c", script)
+func shellCommand(script string) (*exec.Cmd, error) {
+	return exec.Command("sh", "-c", script), nil
 }
 
 func wrapCommandForState(command string, stateEnabled bool, exitFilePath string) string {

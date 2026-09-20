@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -28,10 +29,10 @@ type GRPCClient struct {
 
 var _ Executor = (*GRPCClient)(nil)
 
-// Dial connects to an executor: an absolute unix:///path socket (same host —
-// filesystem ownership is the trust boundary), or tcp://host:port under
-// MANDATORY mutual TLS (both sides verify certificates; there is no plaintext
-// TCP mode). The mTLS material comes from CRONOVA_EXEC_TLS_CERT / _KEY / _CA
+// Dial connects to an executor: an absolute unix:///path socket on non-Windows,
+// loopback tcp://host:port for the Windows local executor, or tcp://host:port
+// under mandatory mutual TLS for non-loopback targets. The mTLS material comes
+// from CRONOVA_EXEC_TLS_CERT / _KEY / _CA
 // (PEM file paths) so the target string stays a plain address.
 //
 // A remote executor runs tasks on ITS host: task logs are written there, and
@@ -47,11 +48,19 @@ func Dial(target string) (*GRPCClient, error) {
 	case u.Scheme == "unix" && filepath.IsAbs(u.Path) && u.Host == "" && u.RawQuery == "" && u.Fragment == "":
 		creds = grpc.WithTransportCredentials(insecure.NewCredentials())
 	case u.Scheme == "tcp" && u.Host != "":
-		tc, err := clientMTLS()
-		if err != nil {
-			return nil, fmt.Errorf("executor tcp target requires mutual TLS: %w", err)
+		host, _, splitErr := net.SplitHostPort(u.Host)
+		if splitErr != nil {
+			return nil, fmt.Errorf("invalid executor tcp target %q: %w", target, splitErr)
 		}
-		creds = grpc.WithTransportCredentials(tc)
+		if ip := net.ParseIP(host); ip != nil && ip.IsLoopback() && os.Getenv("CRONOVA_EXEC_TLS_CERT") == "" {
+			creds = grpc.WithTransportCredentials(insecure.NewCredentials())
+		} else {
+			tc, err := clientMTLS()
+			if err != nil {
+				return nil, fmt.Errorf("executor tcp target requires mutual TLS: %w", err)
+			}
+			creds = grpc.WithTransportCredentials(tc)
+		}
 		target = u.Host // grpc dials host:port with the default resolver
 	default:
 		return nil, fmt.Errorf("executor target must be unix:///abs/path or tcp://host:port, got %q", target)
