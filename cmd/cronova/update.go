@@ -23,8 +23,8 @@ import (
 	"time"
 )
 
-// releaseRepo is where prebuilt release tarballs live (matches deploy/bootstrap.sh).
-const releaseRepo = "zoyluoblue/cronova"
+// releaseRepo is where the independent Windows project publishes its releases.
+const releaseRepo = "ako74programmer/poc-cronova-windows"
 
 const (
 	// maxBinary caps any single extracted executable.
