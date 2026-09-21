@@ -43,6 +43,12 @@ func cmdService(action string) error {
 		if err := sc("stop", serviceName); err != nil {
 			return err
 		}
+		if err := sc("stop", serviceExecutorName); err != nil {
+			return err
+		}
+		if err := sc("start", serviceExecutorName); err != nil {
+			return err
+		}
 		return sc("start", serviceName)
 	case "status":
 		return sc("query", serviceName)
@@ -70,6 +76,12 @@ func serviceInstalled() bool {
 
 func restartService() error {
 	if err := sc("stop", serviceName); err != nil {
+		return err
+	}
+	if err := sc("stop", serviceExecutorName); err != nil {
+		return err
+	}
+	if err := sc("start", serviceExecutorName); err != nil {
 		return err
 	}
 	return sc("start", serviceName)

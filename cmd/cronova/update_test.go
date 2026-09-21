@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
@@ -44,8 +45,39 @@ func makeTarGz(t *testing.T, files map[string][]byte) []byte {
 	return buf.Bytes()
 }
 
+func makeZip(t *testing.T, files map[string][]byte) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	for name, data := range files {
+		w, err := zw.Create(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := w.Write(data); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
+}
+
+func makeReleaseArchive(t *testing.T, files map[string][]byte) []byte {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		return makeZip(t, files)
+	}
+	return makeTarGz(t, files)
+}
+
 func TestReleaseAsset(t *testing.T) {
-	want := fmt.Sprintf("cronova_%s_%s.tar.gz", runtime.GOOS, runtime.GOARCH)
+	ext := ".tar.gz"
+	if runtime.GOOS == "windows" {
+		ext = ".zip"
+	}
+	want := fmt.Sprintf("cronova_%s_%s%s", runtime.GOOS, runtime.GOARCH, ext)
 	if got := releaseAsset(); got != want {
 		t.Fatalf("releaseAsset() = %q, want %q", got, want)
 	}
@@ -137,7 +169,10 @@ func TestConfirmFrom(t *testing.T) {
 // proxy: a local forward-proxy counts every request, and fetchRelease's traffic
 // to the mirror must pass through it.
 func TestFetchReleaseThroughProxy(t *testing.T) {
-	tb := makeTarGz(t, map[string][]byte{"cronova": []byte("hi"), "VERSION": []byte("v1")})
+	tb := makeReleaseArchive(t, map[string][]byte{"cronova.exe": []byte("hi"), "VERSION": []byte("v1")})
+	if runtime.GOOS != "windows" {
+		tb = makeTarGz(t, map[string][]byte{"cronova": []byte("hi"), "VERSION": []byte("v1")})
+	}
 	sum := fmt.Sprintf("%x", sha256.Sum256(tb))
 	asset := releaseAsset()
 
@@ -221,7 +256,7 @@ func TestSumFor(t *testing.T) {
 	if got, ok := sumFor(sums, "cronova_darwin_arm64.tar.gz"); !ok || got != "def456" {
 		t.Errorf("binary-mode(*) form: got %q ok=%v", got, ok)
 	}
-	if _, ok := sumFor(sums, "cronova_windows_amd64.tar.gz"); ok {
+	if _, ok := sumFor(sums, "cronova_windows_amd64.zip"); ok {
 		t.Error("expected miss for an unlisted asset")
 	}
 }
@@ -248,8 +283,30 @@ func TestExtractReleaseBinaries(t *testing.T) {
 	}
 }
 
+func TestExtractReleaseZipBinaries(t *testing.T) {
+	data := makeZip(t, map[string][]byte{
+		"cronova.exe":          []byte("WINDOWS-A"),
+		"cronova-executor.exe": []byte("WINDOWS-B"),
+		"VERSION":              []byte("v10.0.0\n"),
+		"cronova.yaml":         []byte("ignored"),
+	})
+	bins, ver, err := extractReleaseZipBinaries(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(bins["cronova"]) != "WINDOWS-A" || string(bins["cronova-executor"]) != "WINDOWS-B" {
+		t.Fatalf("wrong Windows binaries: %q / %q", bins["cronova"], bins["cronova-executor"])
+	}
+	if ver != "v10.0.0" {
+		t.Fatalf("version = %q, want v10.0.0", ver)
+	}
+}
+
 func TestFetchRelease(t *testing.T) {
-	tb := makeTarGz(t, map[string][]byte{"cronova": []byte("hello"), "VERSION": []byte("v1.2.3")})
+	tb := makeReleaseArchive(t, map[string][]byte{"cronova.exe": []byte("hello"), "VERSION": []byte("v1.2.3")})
+	if runtime.GOOS != "windows" {
+		tb = makeTarGz(t, map[string][]byte{"cronova": []byte("hello"), "VERSION": []byte("v1.2.3")})
+	}
 	sum := fmt.Sprintf("%x", sha256.Sum256(tb))
 	asset := releaseAsset()
 

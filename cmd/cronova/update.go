@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
@@ -163,9 +164,11 @@ func cmdUpdate(args []string) error {
 	return nil
 }
 
-// releaseAsset is the tarball name for this host, e.g. cronova_darwin_arm64.tar.gz.
-// GOOS/GOARCH already use the linux/darwin + amd64/arm64 spellings the packager emits.
+// releaseAsset is the platform archive name emitted by the release packagers.
 func releaseAsset() string {
+	if runtime.GOOS == "windows" {
+		return fmt.Sprintf("cronova_%s_%s.zip", runtime.GOOS, runtime.GOARCH)
+	}
 	return fmt.Sprintf("cronova_%s_%s.tar.gz", runtime.GOOS, runtime.GOARCH)
 }
 
@@ -283,22 +286,26 @@ func fetchRelease(base, asset, proxy string) (bins map[string][]byte, version st
 		return nil, "", fmt.Errorf("invalid SHA-256 digest for %s in SHA256SUMS", asset)
 	}
 
-	tarball, err := httpGet(base+"/"+asset, proxy, maxReleaseArchiveBytes)
+	archiveData, err := httpGet(base+"/"+asset, proxy, maxReleaseArchiveBytes)
 	if err != nil {
 		return nil, "", fmt.Errorf("download %s: %w — see https://github.com/%s/releases", asset, err, releaseRepo)
 	}
-	got := fmt.Sprintf("%x", sha256.Sum256(tarball))
+	got := fmt.Sprintf("%x", sha256.Sum256(archiveData))
 	if !strings.EqualFold(got, want) {
 		return nil, "", fmt.Errorf("checksum mismatch for %s:\n  got  %s\n  want %s", asset, got, want)
 	}
 	fmt.Println("cronova: checksum OK")
 
-	bins, version, err = extractReleaseBinaries(bytes.NewReader(tarball))
+	if strings.HasSuffix(strings.ToLower(asset), ".zip") {
+		bins, version, err = extractReleaseZipBinaries(archiveData)
+	} else {
+		bins, version, err = extractReleaseBinaries(bytes.NewReader(archiveData))
+	}
 	if err != nil {
 		return nil, "", err
 	}
 	if _, ok := bins["cronova"]; !ok {
-		return nil, "", errors.New("release tarball does not contain a cronova binary")
+		return nil, "", errors.New("release archive does not contain a cronova binary")
 	}
 	return bins, version, nil
 }
@@ -394,6 +401,58 @@ func extractReleaseBinaries(r io.Reader) (map[string][]byte, string, error) {
 			if err == nil {
 				version = strings.TrimSpace(string(b))
 			}
+		}
+	}
+	return out, version, nil
+}
+
+// extractReleaseZipBinaries reads the Windows ZIP release and returns the
+// executable payloads keyed without the .exe suffix plus VERSION. Only the
+// files required by the updater are extracted; other ZIP entries are ignored.
+func extractReleaseZipBinaries(data []byte) (map[string][]byte, string, error) {
+	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		return nil, "", fmt.Errorf("read release zip: %w", err)
+	}
+	out := make(map[string][]byte, 2)
+	version := ""
+	for _, f := range zr.File {
+		name := strings.ToLower(path.Base(f.Name))
+		if f.FileInfo().IsDir() {
+			continue
+		}
+		if name != "cronova.exe" && name != "cronova-executor.exe" && name != "version" {
+			continue
+		}
+		if f.UncompressedSize64 > maxBinary && name != "version" {
+			return nil, "", fmt.Errorf("release file %s is too large: %d bytes", name, f.UncompressedSize64)
+		}
+		limit := int64(maxBinary)
+		if name == "version" {
+			limit = 1 << 10
+		}
+		rc, err := f.Open()
+		if err != nil {
+			return nil, "", fmt.Errorf("open release file %s: %w", name, err)
+		}
+		b, readErr := io.ReadAll(io.LimitReader(rc, limit+1))
+		closeErr := rc.Close()
+		if readErr != nil {
+			return nil, "", fmt.Errorf("extract %s: %w", name, readErr)
+		}
+		if closeErr != nil {
+			return nil, "", fmt.Errorf("close release file %s: %w", name, closeErr)
+		}
+		if int64(len(b)) > limit {
+			return nil, "", fmt.Errorf("release file %s exceeds %d bytes", name, limit)
+		}
+		switch name {
+		case "cronova.exe":
+			out["cronova"] = b
+		case "cronova-executor.exe":
+			out["cronova-executor"] = b
+		case "version":
+			version = strings.TrimSpace(string(b))
 		}
 	}
 	return out, version, nil
