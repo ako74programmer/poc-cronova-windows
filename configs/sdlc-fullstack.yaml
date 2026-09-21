@@ -1,0 +1,35 @@
+schema_version: 1
+
+stack:
+  id: item-platform
+  angular_config: configs/sdlc-angular.yaml
+  springboot_config: configs/sdlc-springboot.yaml
+  openapi_file: contracts/openapi.yaml
+
+artifacts:
+  frontend_manifest: artifacts/angular/frontend-manifest.json
+  frontend_dist: artifacts/angular/dist/browser
+  backend_manifest: artifacts/springboot/backend-manifest.json
+  backend_jar: artifacts/springboot/package/item-service.jar
+
+services:
+  backend:
+    host: 127.0.0.1
+    port: 18080
+    url: http://127.0.0.1:18080
+    health_url: http://127.0.0.1:18080/actuator/health
+  frontend:
+    host: 127.0.0.1
+    port: 4300
+    url: http://127.0.0.1:4300
+
+playwright:
+  directory: e2e/playwright
+  browser: chromium
+  base_url: http://127.0.0.1:4300
+  api_url: http://127.0.0.1:18080/api
+  workers: 1
+  retries: 1
+  trace: retain-on-failure
+  screenshot: only-on-failure
+  video: retain-on-failure

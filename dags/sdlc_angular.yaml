@@ -1,0 +1,48 @@
+dag_id: sdlc_angular
+schedule: ""
+start_date: "2026-09-01"
+catchup: false
+max_active_runs: 1
+default_retries: 1
+
+tasks:
+  - id: validate_config
+    type: shell
+    timeout: 120
+    command: bash scripts/sdlc/angular/validate.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular
+
+  - id: scaffold
+    type: shell
+    timeout: 600
+    deps: [validate_config]
+    command: bash scripts/sdlc/angular/scaffold.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular
+
+  - id: install_dependencies
+    type: shell
+    timeout: 900
+    deps: [scaffold]
+    command: bash scripts/sdlc/angular/install.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular
+
+  - id: lint
+    type: shell
+    timeout: 600
+    deps: [install_dependencies]
+    command: bash scripts/sdlc/angular/lint.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular
+
+  - id: unit_tests
+    type: shell
+    timeout: 900
+    deps: [lint]
+    command: bash scripts/sdlc/angular/test.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular
+
+  - id: build
+    type: shell
+    timeout: 900
+    deps: [unit_tests]
+    command: bash scripts/sdlc/angular/build.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular
+
+  - id: smoke_test
+    type: shell
+    timeout: 300
+    deps: [build]
+    command: bash scripts/sdlc/angular/smoke.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular

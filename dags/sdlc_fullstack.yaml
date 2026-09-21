@@ -1,0 +1,75 @@
+dag_id: sdlc_fullstack
+schedule: ""
+start_date: "2026-09-01"
+catchup: false
+max_active_runs: 1
+default_retries: 1
+
+tasks:
+  - id: validate_stack
+    type: shell
+    timeout: 180
+    command: bash scripts/sdlc/integration/validate.sh --config configs/sdlc-fullstack.yaml
+
+  - id: validate_frontend_artifact
+    type: shell
+    timeout: 180
+    deps: [validate_stack]
+    command: bash scripts/sdlc/angular/smoke.sh --config configs/sdlc-angular.yaml
+
+  - id: validate_backend_artifact
+    type: shell
+    timeout: 180
+    deps: [validate_stack]
+    command: bash scripts/sdlc/springboot/validate.sh --config configs/sdlc-springboot.yaml
+
+  - id: start_backend
+    type: shell
+    timeout: 120
+    deps: [validate_frontend_artifact, validate_backend_artifact]
+    command: bash scripts/sdlc/integration/start-backend.sh --config configs/sdlc-fullstack.yaml
+
+  - id: start_frontend
+    type: shell
+    timeout: 120
+    deps: [validate_frontend_artifact, validate_backend_artifact]
+    command: bash scripts/sdlc/integration/start-frontend.sh --config configs/sdlc-fullstack.yaml
+
+  - id: wait_services
+    type: shell
+    timeout: 180
+    deps: [start_backend, start_frontend]
+    command: bash scripts/sdlc/integration/wait-services.sh --config configs/sdlc-fullstack.yaml
+
+  - id: playwright_install
+    type: shell
+    timeout: 900
+    deps: [wait_services]
+    command: bash scripts/sdlc/playwright/install.sh --config configs/sdlc-fullstack.yaml
+
+  - id: playwright_e2e
+    type: shell
+    timeout: 1800
+    deps: [playwright_install]
+    command: bash scripts/sdlc/playwright/run.sh --config configs/sdlc-fullstack.yaml
+
+  - id: collect_logs
+    type: shell
+    timeout: 180
+    deps: [playwright_e2e]
+    trigger_rule: all_done
+    command: bash scripts/sdlc/integration/collect-logs.sh --config configs/sdlc-fullstack.yaml
+
+  - id: stop_services
+    type: shell
+    timeout: 180
+    deps: [start_backend, start_frontend, playwright_e2e]
+    trigger_rule: all_done
+    command: bash scripts/sdlc/integration/stop-services.sh --config configs/sdlc-fullstack.yaml
+
+  - id: archive_results
+    type: shell
+    timeout: 300
+    deps: [stop_services]
+    trigger_rule: all_done
+    command: bash scripts/sdlc/common/archive.sh --config configs/sdlc-fullstack.yaml

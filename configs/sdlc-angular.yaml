@@ -1,0 +1,45 @@
+schema_version: 1
+
+project:
+  id: item-portal
+  kind: angular
+  directory: frontend
+  artifact_directory: dist/item-portal/browser
+
+runtime:
+  node_version: "22"
+  angular_cli_version: "20"
+  package_manager: npm
+  install_command: npm ci
+
+angular:
+  app_name: item-portal
+  build_configuration: production
+  output_path: dist/item-portal/browser
+  api_client_mode: openapi-generated
+
+api:
+  openapi_file: contracts/openapi.yaml
+  base_url: http://127.0.0.1:18080/api
+
+quality:
+  lint: true
+  unit_tests: true
+  production_build: true
+
+server:
+  host: 127.0.0.1
+  port: 4300
+  startup_timeout_seconds: 60
+  shutdown_timeout_seconds: 30
+
+artifacts:
+  directory: artifacts/angular
+  manifest: frontend-manifest.json
+
+ai:
+  enabled: false
+  max_iterations: 3
+  max_changed_files: 30
+  provider_id: default
+  model: ""
