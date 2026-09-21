@@ -22,9 +22,13 @@ Kod zawierał Unix socket jako domyślny kanał executora, `/tmp` jako domyślny
 | CI | `test.yml` ma główną bramkę `windows-latest`; `release.yml` buduje i publikuje wyłącznie ZIP Windows amd64. | Walidacja struktury workflow i lokalny build. |
 | Testy Unix-only | Testy oparte bezpośrednio na `net.Listen("unix", ...)` są wyłączone na Windows tagiem `!windows`; nie są przedstawiane jako testy Windows. | Audyt źródeł i kompilacja Windows. |
 
+## Uzupełnienia po audycie
+
+Porównanie gałęzi z niezależną implementacją Windows wykazało dwa braki w ścieżce produkcyjnej. Aktualizator pobiera teraz windowsowe archiwum `cronova_windows_amd64.zip`, rozpakowuje binaria `.exe` i korzysta z release’ów tego repozytorium, a nie z repozytorium źródłowego. Komenda `restart` oraz mechanizm aktualizacji restartują teraz zarówno usługę `Cronova`, jak i `CronovaExecutor`. Dodano testy ekstrakcji ZIP oraz testy updatera dla obu formatów archiwum.
+
 ## Wyniki lokalnej weryfikacji
 
-Wykonano następujące polecenia przy użyciu Go 1.27.1:
+Wykonano następujące polecenia przy użyciu Go 1.26.5:
 
 ```text
 go test ./...                         PASS
