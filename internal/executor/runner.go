@@ -136,6 +136,14 @@ func (r *Runner) Launch(spec Spec) (string, error) {
 		r.forget(ref)
 		return "", fmt.Errorf("start: %w", err)
 	}
+	if err := attachProcessGroup(cmd); err != nil {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+		fmt.Fprintf(sink, "=== launch error: %v ===\n", err)
+		_ = sink.Close()
+		r.forget(ref)
+		return "", fmt.Errorf("attach process group: %w", err)
+	}
 
 	r.mu.Lock()
 	t.cmd = cmd
@@ -152,6 +160,7 @@ func (r *Runner) Launch(spec Spec) (string, error) {
 
 func (r *Runner) wait(ref string, cmd *exec.Cmd, sink logSink, timeout time.Duration) {
 	defer sink.Close()
+	defer releaseProcessGroup(cmd)
 
 	done := make(chan error, 1)
 	go func() { done <- cmd.Wait() }()
@@ -266,6 +275,13 @@ func (r *Runner) Shutdown() {
 	// to in-flight work. Without persistence the historic kill-on-shutdown
 	// stands (orphans could not be re-attached and would break idempotency).
 	if r.stateDir != "" {
+		r.mu.Lock()
+		for _, t := range r.tasks {
+			if !t.finished && t.cmd != nil {
+				preserveProcessGroup(t.cmd)
+			}
+		}
+		r.mu.Unlock()
 		return
 	}
 	r.mu.Lock()

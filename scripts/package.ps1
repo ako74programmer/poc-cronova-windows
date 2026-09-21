@@ -13,6 +13,7 @@ try {
   New-Item -ItemType Directory -Force -Path (Join-Path $Stage "deploy"), (Join-Path $Stage "dags"), (Join-Path $Stage "docs") | Out-Null
   Copy-Item (Join-Path $Root "deploy/install.ps1") (Join-Path $Stage "deploy")
   Copy-Item (Join-Path $Root "deploy/uninstall.ps1") (Join-Path $Stage "deploy")
+  Copy-Item (Join-Path $Root "deploy/update.ps1") (Join-Path $Stage "deploy")
   Copy-Item (Join-Path $Root "cronova.yaml") (Join-Path $Stage "cronova.yaml")
   Copy-Item (Join-Path $Root "dags/*.yaml") (Join-Path $Stage "dags")
   Copy-Item (Join-Path $Root "docs/DEPLOY.md") (Join-Path $Stage "docs")

@@ -13,6 +13,12 @@ func sysProcAttrForGroup() *syscall.SysProcAttr {
 	return &syscall.SysProcAttr{Setpgid: true}
 }
 
+func attachProcessGroup(_ *exec.Cmd) error { return nil }
+
+func releaseProcessGroup(_ *exec.Cmd) {}
+
+func preserveProcessGroup(_ *exec.Cmd) {}
+
 func shellCommand(script string) (*exec.Cmd, error) {
 	return exec.Command("sh", "-c", script), nil
 }
