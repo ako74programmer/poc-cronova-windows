@@ -1,5 +1,7 @@
 # cronova FAQ — Najczęściej zadawane pytania
 
+> **Windows-only:** To repozytorium jest przeznaczone dla Windows amd64. Używaj `deploy\install.ps1`, Windows Services, Git for Windows Bash oraz `deploy\update.ps1`. Starsze przykłady wdrożeń Unix w historycznych sekcjach nie dotyczą tego repozytorium; nadrzędną instrukcją jest [Wdrożenie](DEPLOY.md).
+
 Odpowiedzi na najczęstsze pytania o cronova, lekki, samodzielnie hostowany **harmonogram workflow** i otwartoźródłową alternatywę dla Airflow / Azkabana — czym jest, jak się instaluje, gdzie przechowuje dane i jak uruchomić go w produkcji.
 
 Ta strona rozszerza krótkie FAQ z [README](https://github.com/zoyluoblue/cronova#readme). Przewodniki krok po kroku znajdziesz w [Pierwsze kroki](GETTING_STARTED.pl.md), [Dokumentacji DAG-ów](DAG_REFERENCE.pl.md), [Dokumentacji CLI](CLI.md), [Agentach AI (MCP)](AGENTS.md), [Wdrożeniu](DEPLOY.md) i [Architekturze](ARCHITECTURE.md).
@@ -43,7 +45,7 @@ go build -o cronova ./cmd/cronova
 ./cronova serve                 # konsola pod http://localhost:8090
 ```
 
-Prebuilt binarki są na stronie [Releases](https://github.com/zoyluoblue/cronova/releases). Pełny przewodnik wdrożeniowy: [Wdrożenie](DEPLOY.md).
+Prebuilt binarki są na stronie [Releases](https://github.com/ako74programmer/poc-cronova-windows/releases). Pełny przewodnik wdrożeniowy: [Wdrożenie](DEPLOY.md).
 
 ## Jakiego portu używa konsola?
 

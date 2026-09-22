@@ -1,6 +1,6 @@
 # cronova Documentation
 
-Guides and reference for **cronova** — a lightweight, self-hosted **workflow scheduler** in a single Go binary, and an open-source [Apache Airflow](https://airflow.apache.org/) / Azkaban alternative. Start here to install cronova, define DAGs, run polyglot tasks, deploy to production, and let AI agents drive it over MCP.
+Guides and reference for **cronova** — a lightweight, self-hosted **Windows workflow scheduler** with a separate executor and Git for Windows Bash. Start here to install cronova, define DAGs, run polyglot tasks, deploy to production, and let AI agents drive it over MCP.
 
 New to cronova? Read the [project overview](../README.md) first, then [Getting Started](GETTING_STARTED.md).
 
@@ -8,7 +8,7 @@ New to cronova? Read the [project overview](../README.md) first, then [Getting S
 
 - **[Getting Started](GETTING_STARTED.md)** — install, run `cronova serve`, write your first DAG, template variables, and uploading your own scripts/projects.
 - **[Console Guide](console/index.md)** — every page of the web UI: dashboard, DAG editor, visual task editor, runs & live logs, pools, variables, audit, API tokens.
-- **[Deployment](DEPLOY.md)** — one-command install, systemd/launchd services, `cronova update`, and the crash-recoverable gRPC executor.
+- **[Deployment](DEPLOY.md)** — Windows ZIP installation, Windows Services, Git Bash, Job Objects, upgrades and backup.
 
 ## Reference
 
