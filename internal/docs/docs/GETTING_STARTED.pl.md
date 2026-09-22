@@ -1,42 +1,40 @@
 # Pierwsze kroki z cronova
 
-Zainstaluj cronova, uruchom harmonogram i konsolę webową, napisz i wyzwól swój pierwszy DAG, a następnie podłącz własne skrypty do workflow — praktyczna ścieżka dla lekkiego, samodzielnie hostowanego **harmonogramu workflow** oraz otwartoźródłowej alternatywy dla [Apache Airflow](https://airflow.apache.org/) i Azkabana.
+Zainstaluj cronova na Windows, uruchom harmonogram i konsolę webową, napisz i wyzwól swój pierwszy DAG, a następnie podłącz własne skrypty do workflow. To repozytorium jest przeznaczone dla Windows amd64 i używa Git for Windows Bash dla zadań `shell`.
 
 Ten przewodnik jest zorientowany na zadania. Pełną specyfikację pól DAG-a znajdziesz w [Dokumentacji DAG-ów](DAG_REFERENCE.pl.md); wszystkie komendy i flagi w [Dokumentacji CLI](CLI.md); instrukcję produkcyjnej instalacji w [Wdrożeniu](DEPLOY.md). Nowy w cronova? Zacznij od [README](https://github.com/zoyluoblue/cronova#readme).
 
 ## 1. Zainstaluj cronova
 
-Są trzy sposoby na uzyskanie binarki `cronova`. Wybierz ten, który pasuje.
+Zalecaną ścieżką produkcyjną jest ZIP dla Windows. Najpierw zainstaluj Git for Windows, a następnie otwórz podniesiony PowerShell w rozpakowanym katalogu.
+
+### Instalacja ZIP
+
+```powershell
+.\deploy\install.ps1
+```
+
+Dla niestandardowej instalacji Git użyj `-BashPath 'D:\Tools\Git\bin\bash.exe'`. Instalator tworzy `C:\ProgramData\Cronova`, instaluje scheduler i executor w `C:\Program Files\Cronova` oraz rejestruje obie usługi Windows. Zobacz [Wdrożenie](DEPLOY.md) po szczegóły aktualizacji i odzyskiwania.
 
 ### Budowanie ze źródeł
 
 Zbuduj harmonogram, konsolę webową i CLI w jednej statycznej binarce z Go 1.26.5+:
 
-```bash
-git clone https://github.com/zoyluoblue/cronova
+```powershell
+git clone https://github.com/zoyluo/cronova
 cd cronova
-go build -o cronova ./cmd/cronova
+go build -o cronova.exe ./cmd/cronova
+go build -o cronova-executor.exe ./cmd/cronova-executor
 ```
 
 Zwykłe `go build` zgłasza wersję jako `dev`. Binarka jest wolna od CGO (czysto-Go `modernc.org/sqlite`), więc nie jest wymagany łańcuch narzędzi C.
 
-### Instalator jednoliniowy (Linux / macOS)
-
-Instalator pobiera pasujące wydanie prebuilt, weryfikuje jego SHA256, instaluje natywną usługę (systemd na Linux, launchd na macOS) i uruchamia interaktywny kreator konfiguracji (port, zakres bind, konto admin, auth):
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/zoyluoblue/cronova/main/deploy/bootstrap.sh | sudo bash
-```
-
-To zalecana ścieżka dla prawdziwego wdrożenia. Pełny przewodnik produkcyjny: [Wdrożenie](DEPLOY.md).
-
 ### Wydanie prebuilt
 
-Pobierz binarkę dla swojego OS/arch (Linux i macOS, amd64 i arm64) ze strony [Releases](https://github.com/zoyluoblue/cronova/releases), a następnie nadaj jej prawo wykonywania:
+Pobierz `cronova_windows_amd64.zip` ze strony [Releases](https://github.com/ako74programmer/poc-cronova-windows/releases) i uruchom `deploy\install.ps1` z rozpakowanego katalogu:
 
-```bash
-chmod +x cronova
-./cronova version        # wypisuje: cronova <version> <os>/<arch>
+```powershell
+.\cronova.exe version        # wypisuje: cronova <version> windows/amd64
 ```
 
 ## 2. Uruchom harmonogram i otwórz konsolę

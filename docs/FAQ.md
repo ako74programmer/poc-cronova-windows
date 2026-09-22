@@ -1,5 +1,7 @@
 # cronova FAQ — Frequently Asked Questions
 
+> **Windows-only:** This repository targets Windows amd64. Use `deploy\install.ps1`, Windows Services, Git for Windows Bash and `deploy\update.ps1`. Any older Unix deployment examples in historical sections are not supported here; the authoritative instructions are in [Deployment](DEPLOY.md).
+
 Answers to the most common questions about cronova, the lightweight, self-hosted **workflow scheduler** and open-source Airflow / Azkaban alternative — what it is, how it installs, where it stores data, and how to run it in production.
 
 This page expands on the short FAQ in the [README](https://github.com/zoyluoblue/cronova#readme). For task-by-task guides see [Getting Started](GETTING_STARTED.md), [DAG Reference](DAG_REFERENCE.md), [CLI Reference](CLI.md), [AI Agents (MCP)](AGENTS.md), [Deployment](DEPLOY.md), and [Architecture](ARCHITECTURE.md).
@@ -30,20 +32,21 @@ Yes. cronova ships a built-in **Model Context Protocol (MCP) server** (`cronova 
 
 ## Which platforms are supported, and how do I install cronova?
 
-cronova runs on **Linux and macOS**, on both **amd64 and arm64**. The fastest path is the one-line installer, which downloads the matching prebuilt release, verifies its SHA256, installs the native service (systemd on Linux, launchd on macOS), and runs an interactive setup wizard:
+This repository supports **Windows 10/11 and Windows Server on amd64**. Install Git for Windows, extract `cronova_windows_amd64.zip`, and run the elevated PowerShell installer:
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/zoyluoblue/cronova/main/deploy/bootstrap.sh | sudo bash
+```powershell
+.\deploy\install.ps1
 ```
 
-Prefer to build from source? With Go 1.26.5+:
+The installer registers `CronovaExecutor` and `Cronova` as Windows Services. Prefer to build from source? With Go 1.26.5+:
 
-```bash
-go build -o cronova ./cmd/cronova
-./cronova serve                 # console at http://localhost:8090
+```powershell
+go build -o cronova.exe ./cmd/cronova
+go build -o cronova-executor.exe ./cmd/cronova-executor
+.\cronova.exe serve                 # console at http://localhost:8090
 ```
 
-Prebuilt binaries are on the [Releases](https://github.com/zoyluoblue/cronova/releases) page. Full deployment guide: [Deployment](DEPLOY.md).
+Prebuilt binaries are on the [Releases](https://github.com/ako74programmer/poc-cronova-windows/releases) page. Full deployment guide: [Deployment](DEPLOY.md).
 
 ## What port does the console use?
 
@@ -51,19 +54,17 @@ The web console and REST API default to **`127.0.0.1:8090`** (loopback only). Op
 
 ## How do I upgrade cronova?
 
-Run `cronova update`. It downloads the latest prebuilt release for your OS/arch from GitHub, verifies it against `SHA256SUMS`, atomically swaps both binaries, preserves customized service definitions, and restarts the scheduler without bouncing an executor that owns in-flight tasks:
+Run the PowerShell update script from an elevated session. It replaces both binaries through temporary files, preserves `ProgramData`, and restarts the services:
 
-```bash
-cronova update                               # latest release, then restart
-cronova update v0.2.1                         # pin or downgrade to a specific tag
-cronova update -proxy http://127.0.0.1:7890   # download through a proxy
+```powershell
+.\deploy\update.ps1
 ```
 
-An unpinned update that is already current is a no-op. A pinned version always applies, so re-install and downgrade both work. `update` needs root and **auto-elevates via `sudo`** — set `CRONOVA_NO_SUDO=1` to manage privileges yourself. It does **not** touch your config, database, or DAGs. Behind a restricted network, `-proxy` also honors `CRONOVA_UPDATE_PROXY`, `HTTPS_PROXY`, and `ALL_PROXY`. See [Deployment → Updating](DEPLOY.md#updating).
+The script does not download releases or alter configuration, database, DAGs, projects, workspaces or logs. See [Deployment](DEPLOY.md#upgrade-and-uninstall).
 
 ## Is the update safe if it fails halfway?
 
-Yes. `update` backs up the old binaries and managed service definitions before swapping, then restarts and **confirms the scheduler actually stays running** (not just that it loaded). If the restart fails, it automatically rolls back and brings the previous version back up. Missing/incomplete `SHA256SUMS`, a checksum mismatch, an oversized payload, or a downgrade-to-cleartext redirect is fatal. A customized unit/plist is never silently overwritten; the new candidate is written as `*.dist`.
+`update.ps1` writes each new executable to a temporary file before replacing the installed binary. It stops both services first and starts them again after the replacement. Native rollback and service-recovery behavior must be validated on Windows.
 
 ## Is cronova crash-safe / production-ready?
 
@@ -71,20 +72,17 @@ cronova is designed for reliable operation. Managed installs use the decoupled *
 
 ## Where does cronova store its data?
 
-State lives in an **embedded SQLite database** plus on-disk DAG YAML, task logs, and uploaded projects. For a `cronova serve` run from a working directory the defaults are relative: `data/cronova.db` (DB), `dags/` (DAGs), and `logs/` (task logs). Uploaded projects default to `~/.cronova/projects`. When installed as a native service the paths are absolute:
+State lives in an **embedded SQLite database** plus on-disk DAG YAML, task logs, and uploaded projects. The Windows service installer uses this layout:
 
-| Purpose | Linux (systemd) | macOS (launchd) |
-|---|---|---|
-| SQLite DB | `/var/lib/cronova/cronova.db` | `/usr/local/var/cronova/cronova.db` |
-| DAG YAML | `/var/lib/cronova/dags/` | `/usr/local/var/cronova/dags/` |
-| task logs | `/var/log/cronova/` | `/usr/local/var/log/cronova/` |
-| config | `/etc/cronova/cronova.yaml` | `/usr/local/etc/cronova/cronova.yaml` |
-| uploaded projects | `/var/lib/cronova/projects/` | `/usr/local/var/cronova/projects/` |
-| attempt workspaces | `/var/lib/cronova/workspaces/` | `/usr/local/var/cronova/workspaces/` |
+| Purpose | Windows service path |
+|---|---|
+| SQLite DB, config, DAGs | `C:\ProgramData\Cronova\` |
+| task logs | `C:\ProgramData\Cronova\logs\` |
+| uploaded projects | `C:\ProgramData\Cronova\projects\` |
+| attempt workspaces | `C:\ProgramData\Cronova\workspaces\` |
+| executor state | `C:\ProgramData\Cronova\executor-state\` |
 
-Override these with the matching `-db` / `-dags` / `-logs` / `-projects` /
-`-workspaces` flags, `CRONOVA_*` environment variables, or `cronova.yaml`.
-Full layout table: [Deployment → Platform layout](DEPLOY.md#platform-layout).
+Override these with the matching `-db` / `-dags` / `-logs` / `-projects` / `-workspaces` flags, `CRONOVA_*` environment variables, or `cronova.yaml`.
 
 ## How long does cronova keep run history?
 
@@ -112,19 +110,18 @@ Bind cronova to localhost and terminate TLS at your proxy (nginx, Caddy, Traefik
 
 ## Do I need Docker or Kubernetes?
 
-No. cronova is a subprocess scheduler that runs tasks with the **host's own interpreters**, so it deploys as two small static binaries under systemd (Linux) or launchd (macOS) — no container image to build, no runtime to bundle. Containerizing a polyglot scheduler would force you to bake every task runtime into the image; native services avoid that. If you still containerize the scheduler, keep the standalone executor on the host and point the scheduler at it over the private Unix socket. See [Deployment → Why not Docker?](DEPLOY.md).
+No. cronova is a subprocess scheduler that runs tasks with the **host's own interpreters**, so it deploys as two small Windows binaries registered as Windows Services — no container image to build and no runtime to bundle. Shell tasks require Git for Windows Bash. See [Deployment](DEPLOY.md).
 
 ## How do I uninstall cronova?
 
-Run `cronova uninstall`. It stops and removes the native service and the binary but **keeps your data** (config, DB, DAGs, logs), so a plain uninstall is reversible by re-installing. Add `--purge` to also delete the data:
+Run the PowerShell uninstall script. It stops and removes the Windows Services and binaries but **keeps your data** by default. Add `-Purge` to also delete the data:
 
-```bash
-cronova uninstall            # remove service + binary, KEEP data
-cronova uninstall --purge    # also delete config, DB, DAGs, logs
-cronova uninstall -yes       # skip the confirmation prompt (for scripts)
+```powershell
+.\deploy\uninstall.ps1         # remove services and binaries, keep data
+.\deploy\uninstall.ps1 -Purge  # also delete ProgramData
 ```
 
-Like other mutating commands, `uninstall` needs root and auto-elevates via `sudo`. See [Deployment → Uninstalling](DEPLOY.md#uninstalling).
+Run it from an elevated PowerShell. See [Deployment](DEPLOY.md#upgrade-and-uninstall).
 
 ## What license is cronova released under?
 
@@ -137,6 +134,6 @@ cronova is released under the **[MIT License](https://github.com/zoyluoblue/cron
 - [DAG Reference](DAG_REFERENCE.md) — every DAG/task field, task types, triggers, pools
 - [CLI Reference](CLI.md) — every `cronova` command and flag
 - [AI Agents (MCP)](AGENTS.md) — MCP server, remote CLI, tokens, security
-- [Deployment](DEPLOY.md) — systemd/launchd, updates, crash-recoverable executor
+- [Deployment](DEPLOY.md) — Windows Services, Git Bash, Job Objects, updates and backup
 - [Architecture](ARCHITECTURE.md) — design rationale, execution model, diagrams
 - [cronova vs Airflow](COMPARISON.md) — when to choose cronova, feature-by-feature

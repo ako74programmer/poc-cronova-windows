@@ -1,42 +1,40 @@
 # Getting Started with cronova
 
-Install cronova, start the scheduler and web console, write and trigger your first DAG, and wire your own scripts into a workflow — the hands-on path for the lightweight, self-hosted **workflow scheduler** and open-source [Apache Airflow](https://airflow.apache.org/) / Azkaban alternative.
+Install cronova on Windows, start the scheduler and web console, write and trigger your first DAG, and wire your own scripts into a workflow. This repository targets Windows amd64 and uses Git for Windows Bash for `shell` tasks.
 
 This guide is task-oriented. For the full field-by-field DAG spec see the [DAG Reference](DAG_REFERENCE.md); for every command and flag see the [CLI Reference](CLI.md); for production install see [Deployment](DEPLOY.md). New to cronova? Start with the [README](https://github.com/zoyluoblue/cronova#readme).
 
 ## 1. Install cronova
 
-There are three ways to get the `cronova` binary. Pick the one that fits.
+The recommended production path is the Windows release ZIP. Install Git for Windows first, then open an elevated PowerShell in the extracted directory.
+
+### Install the release ZIP
+
+```powershell
+.\deploy\install.ps1
+```
+
+For a non-standard Git installation, pass `-BashPath 'D:\Tools\Git\bin\bash.exe'`. The installer creates `C:\ProgramData\Cronova`, installs the scheduler and executor under `C:\Program Files\Cronova`, and registers both as Windows Services. See [Deployment](DEPLOY.md) for upgrades and recovery.
 
 ### Build from source
 
 Build the scheduler, web console, and CLI into one static binary with Go 1.26.5+:
 
-```bash
-git clone https://github.com/zoyluoblue/cronova
+```powershell
+git clone https://github.com/zoyluo/cronova
 cd cronova
-go build -o cronova ./cmd/cronova
+go build -o cronova.exe ./cmd/cronova
+go build -o cronova-executor.exe ./cmd/cronova-executor
 ```
 
 A plain `go build` reports its version as `dev`. The binary is CGO-free (pure-Go `modernc.org/sqlite`), so no C toolchain is required.
 
-### One-line installer (Linux / macOS)
-
-The installer downloads the matching prebuilt release, verifies its SHA256, installs the native service (systemd on Linux, launchd on macOS), and runs an interactive setup wizard (port, bind scope, admin account, auth):
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/zoyluoblue/cronova/main/deploy/bootstrap.sh | sudo bash
-```
-
-This is the recommended path for a real deployment. Full production guide: [Deployment](DEPLOY.md).
-
 ### Prebuilt release
 
-Grab a binary for your OS/arch (Linux and macOS, amd64 and arm64) from the [Releases](https://github.com/zoyluoblue/cronova/releases) page, then make it executable:
+Download `cronova_windows_amd64.zip` from the [Releases](https://github.com/ako74programmer/poc-cronova-windows/releases) page and run `deploy\install.ps1` from the extracted directory:
 
-```bash
-chmod +x cronova
-./cronova version        # prints: cronova <version> <os>/<arch>
+```powershell
+.\cronova.exe version        # prints: cronova <version> windows/amd64
 ```
 
 ## 2. Start the scheduler and open the console
@@ -66,7 +64,7 @@ By default `serve` uses relative working-directory paths and the in-process exec
 
 Settings resolve in this precedence, highest first: **explicit flag → `CRONOVA_*` env → `cronova.yaml` config file → built-in default**. The config file is optional; `serve` only errors on a missing config if you pass `-config` explicitly.
 
-> The default in-process executor runs tasks inside a manual `serve` process, so a restart ends running tasks. Managed installs use the decoupled gRPC executor by default. For a manual pair, use an absolute `unix:///...` socket in a private (`0700`) directory and an explicit shared workspace path. TCP executor targets are rejected. See [Deployment](DEPLOY.md).
+> The default in-process executor runs tasks inside a manual `serve` process, so a restart ends running tasks. Managed Windows installs use the decoupled gRPC executor by default over loopback TCP (`tcp://127.0.0.1:19090`). See [Deployment](DEPLOY.md).
 
 Drive the same server from another terminal with the CLI:
 
@@ -251,7 +249,7 @@ You now have a running scheduler, a first DAG, template variables, and a project
 
 - [DAG Reference](DAG_REFERENCE.md) — every DAG and task field, all task types (`shell`, `python`, `sql`, `jar`, `http`), trigger rules, cross-DAG `trigger_after`, retries, timeouts, and resource pools.
 - [CLI Reference](CLI.md) — every `cronova` command and flag: `serve`, `trigger`, `dags`, `runs`, `pools`, `users`, `init`, and the remote/agent verbs.
-- [Deployment](DEPLOY.md) — install as a systemd/launchd service, the crash-recoverable gRPC executor, updates, and the service-`PATH` gotcha.
+- [Deployment](DEPLOY.md) — Windows ZIP installation, Windows Services, Git Bash, Job Objects, updates and backup.
 - [AI Agents (MCP)](AGENTS.md) — let AI agents list, create, validate, and trigger DAGs through the built-in MCP server and remote JSON CLI.
 - [Architecture](ARCHITECTURE.md) — the execution model and design rationale.
 - [FAQ](FAQ.md) — common questions, answered.

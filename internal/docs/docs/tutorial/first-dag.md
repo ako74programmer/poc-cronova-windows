@@ -45,7 +45,7 @@ The list of tasks — also required. Each entry gets an `id` that must be unique
     type: shell
 ```
 
-The task type. `shell` runs `command` as an OS subprocess via `sh -c`, so anything you can type in a terminal works here. There are four more types — `python`, `sql`, `jar`, and `http` — covered later in the tutorial.
+The task type. On Windows, `shell` runs `command` as an OS subprocess through Git for Windows `bash.exe -lc`, so use Bash syntax and ensure Git for Windows is installed. There are four more types — `python`, `sql`, `jar`, and `http` — covered later in the tutorial.
 
 !!! tip
 

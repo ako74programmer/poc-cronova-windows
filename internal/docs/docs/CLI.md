@@ -1,6 +1,6 @@
 # cronova CLI Reference
 
-Every `cronova` command, subcommand, and flag — the main CLI binary runs the scheduler, manages the installed service pair, operates DAGs from the terminal, and serves AI agents over the REST API. Run `cronova <command> -h` for any command's own flags. For first steps see [Getting Started](GETTING_STARTED.md); for the DAG YAML schema see the [DAG Reference](DAG_REFERENCE.md).
+Every `cronova` command, subcommand, and flag — the main CLI binary runs the Windows scheduler, manages the installed service pair, operates DAGs from the terminal, and serves AI agents over the REST API. Run `cronova <command> -h` for any command's own flags. For first steps see [Getting Started](GETTING_STARTED.md); for the DAG YAML schema see the [DAG Reference](DAG_REFERENCE.md).
 
 ```
 cronova <command> [args] [flags]
@@ -11,7 +11,7 @@ Commands fall into four groups:
 | Group | Commands | Where they act |
 |---|---|---|
 | [Scheduler](#scheduler) | `serve`, `cronova-executor` | This machine (long-running processes) |
-| [Service lifecycle](#service-lifecycle) | `start`/`stop`/`restart`/`status`, `init`, `update`, `uninstall`, `version`, `healthcheck` | The host service manager (systemd / launchd) |
+| [Service lifecycle](#service-lifecycle) | `start`/`stop`/`restart`/`status`, `init`, `update`, `uninstall`, `version`, `healthcheck` | Windows Service Control Manager |
 | [Local operations](#local-operations) | `trigger`, `dags`, `runs`, `backfill`, `prune`, `pools`, `users` | The SQLite DB directly (`-db`) — or remote with `-server` |
 | [Remote / agent mode](#remote--agent-mode) | `api`, `get`, `run`, `logs`, `cancel`, `retry`, `mark`, `pause`, `overview`, `tokens`, `mcp` | A running server's authenticated REST API |
 
@@ -19,7 +19,7 @@ Commands fall into four groups:
 
 ### `cronova serve`
 
-Run the scheduling loop plus the web console and REST API (default `http://localhost:8090`). With an empty `-executor`, tasks run in this process; installed services pass a private Unix socket and dispatch tasks to the standalone executor.
+Run the scheduling loop plus the web console and REST API (default `http://localhost:8090`). With an empty `-executor`, tasks run in this process; installed Windows services pass a loopback TCP endpoint and dispatch tasks to the standalone executor.
 
 ```bash
 cronova serve -db data/cronova.db -dags dags -http 127.0.0.1:8090
@@ -33,7 +33,7 @@ cronova serve -db data/cronova.db -dags dags -http 127.0.0.1:8090
 | `-logs` | `logs` | Directory for task log files. |
 | `-projects` | `~/.cronova/projects` | Directory for uploaded [project files](tutorial/projects.md). |
 | `-workspaces` | system temp directory | Shared directory for per-attempt project copies; managed services set an explicit state path. |
-| `-executor` | *(in-process)* | Absolute Unix-socket executor target. Empty = in-process executor; TCP targets are rejected. |
+| `-executor` | *(in-process)* | Executor target. Empty = in-process; Windows services use loopback `tcp://127.0.0.1:19090`; remote TCP requires mTLS. |
 | `-tick` | `2s` | Scheduling-loop interval. |
 | `-retention` | `2160h` (90 days) | Delete finished runs **and their logs** older than this; `0` = keep forever. See [`cronova prune`](#cronova-prune) for one-off cleanups. |
 | `-audit-retention` | `8760h` (365 days) | Delete audit records older than this; `0` = keep forever. |
@@ -53,25 +53,23 @@ Behind a reverse proxy, list its peer IPs/CIDRs under `auth.trusted_proxies` or
 
 The standalone, crash-recoverable task executor. Run it first, then point the scheduler at its socket with `serve -executor` — tasks survive a scheduler restart. See [Architecture](ARCHITECTURE.md).
 
-```bash
-cronova-executor &
-cronova serve -executor "unix:///tmp/cronova-$(id -u)/executor.sock"
+```powershell
+Start-Process .\cronova-executor.exe -ArgumentList '-sock','127.0.0.1:19090'
+.\cronova.exe serve -executor tcp://127.0.0.1:19090
 ```
 
 | Flag | Default | Description |
 |---|---|---|
-| `-sock` | `/tmp/cronova-<uid>/executor.sock` | Unix socket path. Its parent must be private (`0700`); the socket is forced to `0600`. |
+| `-sock` | `tcp://127.0.0.1:19090` on Windows | Windows local endpoint. Bind only to loopback; remote TCP requires mTLS. |
 
-The executor API has no separate credentials. Filesystem ownership is its trust
-boundary, so cronova accepts only absolute Unix sockets and refuses a public
-socket directory or any TCP target.
+The local executor endpoint is intentionally loopback-only. Remote TCP endpoints require mutual TLS; do not bind a local executor to a public interface.
 
 ## Service lifecycle
 
-These wrap the host service manager — systemd on Linux, launchd on macOS — so you never type `systemctl`/`launchctl` incantations.
+These wrap Windows Service Control Manager, so you normally do not need to call `sc.exe` directly.
 
 !!! note "Auto-sudo"
-    Mutating commands (`start`, `stop`, `restart`, `update`, `uninstall`) auto-elevate: if you are not root, the CLI transparently re-executes itself under `sudo` (you get the password prompt). `CRONOVA_*` and standard `*_PROXY` environment variables are forwarded across the escalation. Set `CRONOVA_NO_SUDO=1` to opt out and manage privileges yourself — the command then fails with a `sudo cronova …` hint instead.
+    Mutating commands require an elevated PowerShell/Windows service permission. For lifecycle scripts use `deploy\install.ps1`, `deploy\update.ps1` and `deploy\uninstall.ps1` from an elevated PowerShell.
 
 ### `cronova start` / `stop` / `restart`
 
@@ -85,7 +83,7 @@ No flags. On a host without an installed service, use `cronova serve` directly.
 
 ### `cronova status`
 
-Show scheduler and executor status. Read-only — never escalates. On Linux it queries both systemd units; on macOS, both launchd labels.
+Show scheduler and executor status through Windows Service Control Manager. The command is read-only.
 
 ```bash
 cronova status
@@ -147,12 +145,12 @@ Print the build version and platform (the release asset `update` would fetch for
 
 ```console
 $ cronova version
-cronova v0.3.0 darwin/arm64
+cronova v0.3.0 windows/amd64
 ```
 
 ### `cronova healthcheck`
 
-Probe the server's readiness endpoint and exit non-zero if unhealthy — a curl-free liveness check for systemd, load balancers, or cron probes.
+Probe the server's readiness endpoint and exit non-zero if unhealthy — useful for Windows Services, load balancers, or scheduled checks.
 
 ```bash
 cronova healthcheck -http 127.0.0.1:8090 && echo healthy
@@ -488,7 +486,7 @@ Full guide, MCP config snippet, and security notes: [AI Agents (MCP)](AGENTS.md)
 
 **How do I run the CLI from another machine?** Set `CRONOVA_SERVER` and `CRONOVA_TOKEN` (or `-server`/`-token`); every operational command then goes over the REST API. Token minting stays on the server host.
 
-**Why did `cronova start` ask for my password?** Service commands auto-elevate via `sudo` to reach systemd/launchd. Set `CRONOVA_NO_SUDO=1` to disable this and run `sudo cronova start` yourself.
+**Why did `cronova start` require elevation?** Windows Service Control Manager operations require an elevated PowerShell or service-management permission. Use `deploy\install.ps1`, `deploy\update.ps1` and `deploy\uninstall.ps1` from an elevated PowerShell.
 
 **What states can `mark` set?** Runs: `success` or `failed`. Tasks: `success`, `failed`, or `skipped`.
 

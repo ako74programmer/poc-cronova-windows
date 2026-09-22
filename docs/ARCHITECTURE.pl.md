@@ -398,7 +398,7 @@ Ponieważ zadania to procesy potomne, pole `type` wpływa tylko na sposób zło�
 
 | type | Uruchomienie |
 |---|---|
-| `shell` | `sh -c "<command>"` |
+| `shell` | Git for Windows `bash.exe -lc "<command>"` |
 | `python` | `python <script> <args>` |
 | `sql` | przez CLI/sterownik (np. `psql -f`) |
 | `jar` | `java -jar <jar> <args>` |
