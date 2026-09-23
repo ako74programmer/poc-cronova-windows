@@ -137,6 +137,6 @@ $APP
 PROMPT_EOF
 
 echo "Calling AI provider (model: $MODEL, url: $AI_BASE_URL)..."
-"$PYTHON" "$REPO_ROOT/workflows/sdlc_springboot/ai_add_crud.py" "$PROJECT_DIR" "$(echo "$PACKAGE" | tr '.' '/')" "$PROMPT_FILE" "$REQ_FILE" "$RESP_FILE" "$MODEL" "$AI_BASE_URL" "$AI_TOKEN"
+"$PYTHON" "$REPO_ROOT/internal/scripts/ai/add_crud.py" "$PROJECT_DIR" "$(echo "$PACKAGE" | tr '.' '/')" "$PROMPT_FILE" "$REQ_FILE" "$RESP_FILE" "$MODEL" "$AI_BASE_URL" "$AI_TOKEN"
 
 echo "AI added CRUD to $PROJECT_DIR"

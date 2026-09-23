@@ -267,287 +267,31 @@ Przykład promptu: [prompts/luhn.txt](prompts/luhn.txt).
 
 ---
 
-## Wrappery w workflow
 
-Skrypty w `workflows/sdlc_springboot/` są cienkimi wrapperami:
+## Kompozycja DAG-ów z klocków
 
-| Workflow | Wywołanie |
+DAG jest deklaratywnym opisem przepływu, a `internal/scripts/` jest biblioteką reużywalnych klocków. Definicje w `dags/` wywołują klocki bezpośrednio i przekazują im parametry workspace, projektu, pakietu oraz promptu. Nie tworzymy dedykowanych wrapperów w `workflows/<nazwa_dag>/`.
+
+Różne przepływy powstają przez inną kompozycję tych samych klocków:
+
+| Cel przepływu | Klocki |
 |---|---|
-| `scaffold.sh` | `copy-template-to-workspace -t springboot-simple -c` |
-| `compile_skeleton.sh` | `compile-project` |
-| `ai_add_crud.sh` | `ai-generate-crud` |
-| `compile_loop.sh` | `ai-review-fix-loop` |
-| `tests.sh` | `run-tests` |
+| Spring Boot z szablonu | `copy-template-to-workspace` → `compile-project` → `ai-generate-crud` → `ai-review-fix-loop` → `run-tests` |
+| Spring Boot ze Spring Initializr | `fetch-springboot-project` → `compile-project` → `ai-generate-crud` → `ai-review-fix-loop` → `run-tests` |
+| Maven + funkcja biznesowa | `generate-maven-archetype` → `compile-project` → `ai-generate-feature` → `ai-review-fix-loop` → `run-tests` |
 
-Dzięki temu definicja DAG-a (`dags/sdlc_springboot.yaml`) nie musi znać szczegółów implementacji.
-
----
-
-## Przykład: workflow z `start.spring.io`
-
-Utwórz `workflows/my_startio_app/scaffold.sh`:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-
-exec "$REPO_ROOT/internal/scripts/fetch-springboot-project" \
-  -b 4.0.8 \
-  -d web,lombok \
-  -w "$REPO_ROOT/workspaces/my_startio_app" \
-  -P app \
-  -C
-```
-
-Pozostałe wrappery (`compile_skeleton.sh`, `ai_add_crud.sh`, `compile_loop.sh`, `tests.sh`) wyglądają tak samo jak w przykładzie powyżej — tylko zmieniają workspace na `workspaces/my_startio_app` i projekt na `app`.
-
-Definicja DAG-a `dags/my_startio_app.yaml`:
+Przykład zadania w DAG-u:
 
 ```yaml
-dag_id: my_startio_app
-schedule: "0 2 * * *"
-start_date: "2026-09-01"
-catchup: false
-max_active_runs: 1
-
-tasks:
-  - id: scaffold
-    type: shell
-    timeout: 300
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_startio_app/scaffold.sh
-
-  - id: compile_skeleton
-    type: shell
-    timeout: 600
-    deps:
-      - scaffold
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_startio_app/compile_skeleton.sh
-
-  - id: ai_add_crud
-    type: shell
-    timeout: 300
-    deps:
-      - compile_skeleton
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_startio_app/ai_add_crud.sh
-
-  - id: compile_loop
-    type: shell
-    timeout: 900
-    deps:
-      - ai_add_crud
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_startio_app/compile_loop.sh
-
-  - id: tests
-    type: shell
-    timeout: 300
-    deps:
-      - compile_loop
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_startio_app/tests.sh
+- id: ai_add_crud
+  type: shell
+  timeout: 300
+  deps: [compile_skeleton]
+  command: bash internal/scripts/ai-generate-crud -w workspaces/my-app -p app -k com.example.app -r default -y python
 ```
 
-Gotowy przykład działający w tym repo znajdziesz w:
-- `workflows/sdlc_springboot_startio/`
-- `dags/sdlc_springboot_startio.yaml`
+Klocki AI korzystają z pomocniczych implementacji w `internal/scripts/ai/`. Ten katalog jest częścią biblioteki narzędzi i nie jest związany z żadnym konkretnym DAG-iem.
 
----
+### Dodawanie nowego przepływu
 
-## Przykład: workflow z Maven archetype + AI feature
-
-Utwórz `workflows/my_maven_app/scaffold.sh`:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-
-exec "$REPO_ROOT/internal/scripts/generate-maven-archetype" \
-  -a maven-archetype-quickstart \
-  -g com.example \
-  -r luhn \
-  -k com.example.luhn \
-  -j 21 \
-  -w "$REPO_ROOT/workspaces/my_maven_app" \
-  -p app \
-  -C
-```
-
-Pozostałe wrappery (`compile_skeleton.sh`, `ai_add_feature.sh`, `compile_loop.sh`, `tests.sh`) wyglądają tak samo jak w przykładzie powyżej — tylko zmieniają workspace na `workspaces/my_maven_app` i projekt na `app`, a `ai_add_feature.sh` wskazuje plik promptu, np.:
-
-```bash
-exec "$REPO_ROOT/internal/scripts/ai-generate-feature" \
-  -f "$REPO_ROOT/prompts/luhn.txt" \
-  -w "$REPO_ROOT/workspaces/my_maven_app" \
-  -p app \
-  -k com.example.luhn
-```
-
-Definicja DAG-a `dags/my_maven_app.yaml`:
-
-```yaml
-dag_id: my_maven_app
-schedule: "0 2 * * *"
-start_date: "2026-09-01"
-catchup: false
-max_active_runs: 1
-
-tasks:
-  - id: scaffold
-    type: shell
-    timeout: 300
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_maven_app/scaffold.sh
-
-  - id: compile_skeleton
-    type: shell
-    timeout: 600
-    deps:
-      - scaffold
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_maven_app/compile_skeleton.sh
-
-  - id: ai_add_feature
-    type: shell
-    timeout: 300
-    deps:
-      - compile_skeleton
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_maven_app/ai_add_feature.sh
-
-  - id: compile_loop
-    type: shell
-    timeout: 900
-    deps:
-      - ai_add_feature
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_maven_app/compile_loop.sh
-
-  - id: tests
-    type: shell
-    timeout: 300
-    deps:
-      - compile_loop
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_maven_app/tests.sh
-```
-
-Gotowy przykład działający w tym repo znajdziesz w:
-- `workflows/sdlc_maven_luhn/`
-- `dags/sdlc_maven_luhn.yaml`
-- `prompts/luhn.txt`
-
----
-
-## Przykład: tworzenie nowego workflow
-
-Załóżmy, że chcesz stworzyć workflow `my_springboot_app`, który:
-1. Kopiuje szkielet `springboot-simple`.
-2. Kompiluje szkielet.
-3. Generuje CRUD.
-4. Uruchamia testy.
-
-### Krok 1: Utwórz workspace i wrappery
-
-```bash
-mkdir -p workspaces/my_springboot_app/app
-mkdir -p workflows/my_springboot_app
-```
-
-Utwórz `workflows/my_springboot_app/scaffold.sh`:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-exec "$REPO_ROOT/internal/scripts/copy-template-to-workspace" \
-  -t springboot-simple \
-  -w "$REPO_ROOT/workspaces/my_springboot_app" \
-  -p app \
-  -c
-```
-
-Utwórz `workflows/my_springboot_app/compile.sh`:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-exec "$REPO_ROOT/internal/scripts/compile-project" \
-  -w "$REPO_ROOT/workspaces/my_springboot_app" \
-  -p app
-```
-
-Utwórz `workflows/my_springboot_app/ai_add_crud.sh`:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-exec "$REPO_ROOT/internal/scripts/ai-generate-crud" \
-  -w "$REPO_ROOT/workspaces/my_springboot_app" \
-  -p app \
-  -k com.example.app
-```
-
-Utwórz `workflows/my_springboot_app/tests.sh`:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-exec "$REPO_ROOT/internal/scripts/run-tests" \
-  -w "$REPO_ROOT/workspaces/my_springboot_app" \
-  -p app
-```
-
-### Krok 2: Utwórz definicję DAG-a
-
-Utwórz `dags/my_springboot_app.yaml`:
-
-```yaml
-dag_id: my_springboot_app
-schedule: "0 2 * * *"
-start_date: "2026-09-01"
-catchup: false
-max_active_runs: 1
-
-tasks:
-  - id: scaffold
-    type: shell
-    timeout: 120
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_springboot_app/scaffold.sh
-
-  - id: compile
-    type: shell
-    timeout: 300
-    deps:
-      - scaffold
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_springboot_app/compile.sh
-
-  - id: ai_add_crud
-    type: shell
-    timeout: 300
-    deps:
-      - compile
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_springboot_app/ai_add_crud.sh
-
-  - id: tests
-    type: shell
-    timeout: 300
-    deps:
-      - ai_add_crud
-    command: bash /c/Users/Andrzej/Downloads/sdlc/cronova/workflows/my_springboot_app/tests.sh
-```
-
-### Krok 3: Zweryfikuj i uruchom
-
-```bash
-# Sprawdź, czy Cronova widzi nowy DAG
-.\cronova.exe dags
-
-# Wyzwól ręcznie
-.\cronova.exe trigger my_springboot_app
-```
-
-Nowy workflow używa tych samych reużywalnych skryptów — różni się tylko parametrami wywołania.
+Nowy przepływ powinien wymagać wyłącznie nowego pliku YAML w `dags/`. Nie należy dodawać skryptów do `dags/` ani tworzyć katalogu `workflows/<nazwa_dag>/`. Jeżeli istniejące klocki nie mają potrzebnego parametru, należy rozszerzyć klocek uniwersalnie, tak aby był użyteczny również dla innych przepływów.

@@ -5,43 +5,34 @@ catchup: false
 max_active_runs: 1
 default_retries: 0
 
-# AI-SDLC pipeline:
-# 1. scaffold          -> generate Spring Boot skeleton
-# 2. compile_skeleton  -> verify skeleton compiles
-# 3. ai_add_crud       -> AI adds a simple CRUD controller + model + fixes pom.xml
-# 4. compile_loop      -> compile + AI reviewer fix loop (max 3 iterations)
-# 5. tests             -> run generated tests
-
+# Composable AI-SDLC pipeline. The DAG uses reusable internal/scripts directly:
+# scaffold -> compile -> add CRUD -> review/fix loop -> tests.
 tasks:
   - id: scaffold
     type: shell
     timeout: 120
-    command: bash workflows/sdlc_springboot/scaffold.sh
+    command: bash internal/scripts/copy-template-to-workspace -t springboot-simple -w workspaces/springboot -p app -c
 
   - id: compile_skeleton
     type: shell
     timeout: 300
-    deps:
-      - scaffold
-    command: bash workflows/sdlc_springboot/compile_skeleton.sh
+    deps: [scaffold]
+    command: bash internal/scripts/compile-project -w workspaces/springboot -p app
 
   - id: ai_add_crud
     type: shell
     timeout: 300
-    deps:
-      - compile_skeleton
-    command: bash workflows/sdlc_springboot/ai_add_crud.sh
+    deps: [compile_skeleton]
+    command: bash internal/scripts/ai-generate-crud -w workspaces/springboot -p app -k com.example.demo -r default -y python
 
   - id: compile_loop
     type: shell
     timeout: 900
-    deps:
-      - ai_add_crud
-    command: bash workflows/sdlc_springboot/compile_loop.sh
+    deps: [ai_add_crud]
+    command: bash internal/scripts/ai-review-fix-loop -w workspaces/springboot -p app -k com.example.demo -r default -y python
 
   - id: tests
     type: shell
     timeout: 300
-    deps:
-      - compile_loop
-    command: bash workflows/sdlc_springboot/tests.sh
+    deps: [compile_loop]
+    command: bash internal/scripts/run-tests -w workspaces/springboot -p app

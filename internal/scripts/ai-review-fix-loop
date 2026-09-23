@@ -158,7 +158,7 @@ Source files:
 $SRC_FILES
 PROMPT_EOF
 
-  "$PYTHON" "$REPO_ROOT/workflows/sdlc_springboot/ai_review_fix_v2.py" "$PROJECT_DIR" "$(echo "$PACKAGE" | tr '.' '/')" "$TMP_DIR/ai_review_prompt.txt" "$TMP_DIR/ai_review_request.json" "$TMP_DIR/ai_review.json" "$MODEL" "$AI_BASE_URL" "$AI_TOKEN"
+  "$PYTHON" "$REPO_ROOT/internal/scripts/ai/review_fix_v2.py" "$PROJECT_DIR" "$(echo "$PACKAGE" | tr '.' '/')" "$TMP_DIR/ai_review_prompt.txt" "$TMP_DIR/ai_review_request.json" "$TMP_DIR/ai_review.json" "$MODEL" "$AI_BASE_URL" "$AI_TOKEN"
 
   ITER=$((ITER + 1))
 done

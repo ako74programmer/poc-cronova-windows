@@ -5,43 +5,34 @@ catchup: false
 max_active_runs: 1
 default_retries: 0
 
-# AI-SDLC pipeline using start.spring.io as the scaffold source:
-# 1. scaffold          -> download Spring Boot skeleton from start.spring.io
-# 2. compile_skeleton  -> verify skeleton compiles
-# 3. ai_add_crud       -> AI adds a simple CRUD controller + model + fixes pom.xml
-# 4. compile_loop      -> compile + AI reviewer fix loop (max 3 iterations)
-# 5. tests             -> run generated tests
-
+# Composable Spring Initializr pipeline:
+# scaffold -> compile -> add CRUD -> review/fix loop -> tests.
 tasks:
   - id: scaffold
     type: shell
     timeout: 300
-    command: bash workflows/sdlc_springboot_startio/scaffold.sh
+    command: bash internal/scripts/fetch-springboot-project -t maven-project -l java -b 4.0.8 -g com.example -a demo -n com.example.demo -p jar -c properties -j 21 -d web -w workspaces/springboot-startio -P app -C
 
   - id: compile_skeleton
     type: shell
     timeout: 600
-    deps:
-      - scaffold
-    command: bash workflows/sdlc_springboot_startio/compile_skeleton.sh
+    deps: [scaffold]
+    command: bash internal/scripts/compile-project -w workspaces/springboot-startio -p app
 
   - id: ai_add_crud
     type: shell
     timeout: 300
-    deps:
-      - compile_skeleton
-    command: bash workflows/sdlc_springboot_startio/ai_add_crud.sh
+    deps: [compile_skeleton]
+    command: bash internal/scripts/ai-generate-crud -w workspaces/springboot-startio -p app -k com.example.demo -r default -y python
 
   - id: compile_loop
     type: shell
     timeout: 900
-    deps:
-      - ai_add_crud
-    command: bash workflows/sdlc_springboot_startio/compile_loop.sh
+    deps: [ai_add_crud]
+    command: bash internal/scripts/ai-review-fix-loop -w workspaces/springboot-startio -p app -k com.example.demo -r default -y python
 
   - id: tests
     type: shell
     timeout: 300
-    deps:
-      - compile_loop
-    command: bash workflows/sdlc_springboot_startio/tests.sh
+    deps: [compile_loop]
+    command: bash internal/scripts/run-tests -w workspaces/springboot-startio -p app
