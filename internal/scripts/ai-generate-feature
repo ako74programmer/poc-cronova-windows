@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$SCRIPT_DIR/common_toolchain.sh"
 
 WORKSPACE=""
 PROJECT="demo"
@@ -10,7 +11,7 @@ PACKAGE="com.example"
 PROMPT_FILE=""
 PROVIDER_ID=""
 MODEL=""
-PYTHON="${PYTHON:-/c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python}"
+PYTHON="${PYTHON:-${CRONOVA_PYTHON:-}}"
 DB_FILE="${CRONOVA_DB:-$REPO_ROOT/data/cronova.db}"
 
 # Resolve AI provider configuration from the cronova SQLite database.
@@ -62,7 +63,7 @@ Options:
   -k PACKAGE      Java package. Default: com.example
   -r PROVIDER_ID  AI provider id from cronova config. Default: provider marked as default
   -m MODEL        AI model to use. Default: model from default provider (or CRONOVA_AI_MODEL env)
-  -y PYTHON       Path to Python interpreter. Default: /c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python
+  -y PYTHON       Path or command for Python. Default: autodetected or CRONOVA_PYTHON
   -h              Show this help message.
 
 Example:
@@ -85,6 +86,8 @@ while getopts ":f:w:p:k:r:m:y:h" opt; do
     :) echo "Option -$OPTARG requires an argument." >&2; usage >&2; exit 1 ;;
   esac
 done
+
+PYTHON="${PYTHON:-$(find_python)}"
 
 AI_BASE_URL="${CRONOVA_AI_BASE_URL:-}"
 AI_TOKEN="${CRONOVA_AI_TOKEN:-}"

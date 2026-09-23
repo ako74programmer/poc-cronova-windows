@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$SCRIPT_DIR/common_toolchain.sh"
 
 TYPE="maven-project"
 LANG="java"
@@ -83,10 +84,7 @@ TARGET_DIR="$WORKSPACE/$PROJECT"
 TMP_DIR="$REPO_ROOT/.tmp"
 mkdir -p "$TMP_DIR"
 
-PYTHON="${PYTHON:-/c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python}"
-if ! command -v "$PYTHON" >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
-  PYTHON="python3"
-fi
+PYTHON="${PYTHON:-$(find_python)}"
 
 URL="https://start.spring.io/starter.zip"
 URL="${URL}?type=$(printf '%s' "$TYPE" | "$PYTHON" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))')"

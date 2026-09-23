@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build a RAG knowledge base for the cronova AI wiki chat.
 
-Reads selected docs, DAGs, workflows and reusable scripts, splits them into
+Reads selected docs, DAGs and reusable scripts, splits them into
 chunks, and writes internal/ai-wiki/knowledge-base.json.
 """
 
@@ -27,20 +27,17 @@ DAG_SOURCES = [
     "dags/sdlc_springboot_startio.yaml",
 ]
 
-WORKFLOW_SOURCES = [
-    "workflows/sdlc_springboot/scaffold.sh",
-    "workflows/sdlc_springboot/compile_skeleton.sh",
-    "workflows/sdlc_springboot/ai_add_crud.sh",
-    "workflows/sdlc_springboot/compile_loop.sh",
-    "workflows/sdlc_springboot/tests.sh",
-]
-
 SCRIPT_SOURCES = [
     "internal/scripts/copy-template-to-workspace",
+    "internal/scripts/fetch-springboot-project",
+    "internal/scripts/generate-maven-archetype",
     "internal/scripts/compile-project",
     "internal/scripts/run-tests",
     "internal/scripts/ai-generate-crud",
+    "internal/scripts/ai-generate-feature",
     "internal/scripts/ai-review-fix-loop",
+    "internal/scripts/common_toolchain.sh",
+    "internal/scripts/README.md",
 ]
 
 
@@ -144,7 +141,7 @@ def build():
                 "topics": infer_topics(c["heading"] + " " + c["body"]),
             })
 
-    for rel in WORKFLOW_SOURCES + SCRIPT_SOURCES:
+    for rel in SCRIPT_SOURCES:
         path = REPO_ROOT / rel
         if not path.exists():
             print(f"skip missing script: {rel}")

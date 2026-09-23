@@ -6,9 +6,11 @@ Każdy skrypt jest niezależny i można go wywołać ręcznie lub z innego workf
 ## Wymagania
 
 - Git Bash lub inne środowisko bash (np. WSL, MSYS2)
-- Java JDK (skrypty ustawiają `JAVA_HOME=/c/Program Files/Java/jdk-25`)
-- Apache Maven 3.9.14 w `/c/apache-maven-3.9.14`
-- Python 3.13 (dla skryptów AI, domyślnie `/c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python`)
+- Java JDK dostępny w `PATH` lub przez `JAVA_HOME`/`CRONOVA_JAVA_HOME`
+- Apache Maven dostępny w `PATH` lub przez `MAVEN_HOME`/`CRONOVA_MAVEN_HOME`
+- Python dostępny jako `python3`, `python` lub przez `CRONOVA_PYTHON`
+
+Klocki nie zakładają konkretnego użytkownika, katalogu instalacyjnego ani systemu plików. Helper `internal/scripts/common_toolchain.sh` wykrywa narzędzia i zwraca czytelny błąd, jeśli wymagane narzędzie nie jest dostępne.
 
 ## Konwencja parametrów
 
@@ -291,6 +293,8 @@ Przykład zadania w DAG-u:
 ```
 
 Klocki AI korzystają z pomocniczych implementacji w `internal/scripts/ai/`. Ten katalog jest częścią biblioteki narzędzi i nie jest związany z żadnym konkretnym DAG-iem.
+
+Jeżeli autodetekcja nie wystarcza, środowisko może jawnie ustawić `CRONOVA_PYTHON`, `CRONOVA_JAVA_HOME` albo `CRONOVA_MAVEN_HOME`. Są to opcjonalne parametry środowiska, a nie ścieżki zapisane w DAG-ach.
 
 ### Dodawanie nowego przepływu
 

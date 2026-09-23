@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$SCRIPT_DIR/common_toolchain.sh"
 
 WORKSPACE=""
 PROJECT="demo"
@@ -47,8 +48,7 @@ fi
 mkdir -p "$M2_DIR"
 cd "$PROJECT_DIR"
 
-export JAVA_HOME=/c/Program\ Files/Java/jdk-25
-export PATH="/c/apache-maven-3.9.14/bin:/mingw64/bin:/usr/bin:/bin:/c/Windows/system32:/c/Windows:$PATH"
+setup_java_maven
 
 echo "Running tests in $PROJECT_DIR"
 mvn -B -Dmaven.repo.local="$M2_DIR" test
