@@ -15,7 +15,7 @@ tasks:
     type: shell
     timeout: 180
     deps: [validate_stack]
-    command: bash scripts/sdlc/angular/smoke.sh --config configs/sdlc-angular.yaml
+    command: bash scripts/sdlc/angular/smoke.sh --config configs/sdlc-angular.yaml --artifacts artifacts/angular
 
   - id: validate_backend_artifact
     type: shell
