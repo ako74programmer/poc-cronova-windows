@@ -39,8 +39,19 @@ parse_common_args() {
 require_command() {
   command -v "$1" >/dev/null 2>&1 || {
     echo "Error: required command not found: $1" >&2
+    echo "DEBUG PATH: $PATH" >&2
+    echo "DEBUG which $1: $(command -v "$1" 2>&1 || true)" >&2
     return 20
   }
+}
+
+setup_toolchain() {
+  local helper="$REPO_ROOT/internal/scripts/common_toolchain.sh"
+  if [[ -f "$helper" ]]; then
+    # shellcheck source=/dev/null
+    source "$helper"
+    setup_java_maven || return $?
+  fi
 }
 
 log_runtime() {
@@ -50,8 +61,10 @@ log_runtime() {
     command -v node || true
     command -v npm || true
     command -v python || true
-    command -v java || true
   } > "$ARTIFACTS/metadata/runtime.txt"
+  if command -v log_toolchain_runtime >/dev/null 2>&1; then
+    log_toolchain_runtime "$ARTIFACTS/metadata/runtime.txt"
+  fi
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

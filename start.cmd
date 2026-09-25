@@ -26,4 +26,10 @@ if not exist "dags" mkdir dags
 echo [start.cmd] Starting cronova serve...
 echo [start.cmd] Console will be available at http://127.0.0.1:8090
 
+set "CRONOVA_JAVA_HOME=C:\Program Files\Java\jdk-25"
+set "CRONOVA_MAVEN_HOME=C:\apache-maven-3.9.14"
+set "JAVA_HOME=%CRONOVA_JAVA_HOME%"
+set "MAVEN_HOME=%CRONOVA_MAVEN_HOME%"
+set "PATH=%JAVA_HOME%\bin;%MAVEN_HOME%\bin;%PATH%"
+
 "%BINARY%" serve -config "%CONFIG%"

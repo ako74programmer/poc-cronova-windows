@@ -1,0 +1,13 @@
+PATH=/c/Program Files/Java/jdk-25/bin:/mingw64/bin:/usr/bin:/c/Users/Andrzej/bin:/c/Users/Andrzej/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand:/c/Users/Andrzej/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli:/c/Program Files/Common Files/Oracle/Java/javapath:/c/Windows/system32:/c/Windows:/c/Windows/System32/Wbem:/c/Windows/System32/WindowsPowerShell/v1.0:/c/Windows/System32/OpenSSH:/cmd:/c/Program Files/Docker/Docker/resources/bin:%MAVEN_HOME%/bin:/c/Program Files/nodejs:/c/Program Files/Go/bin:/c/Users/Andrzej/AppData/Local/Programs/Python/Python313/Scripts:/c/Users/Andrzej/AppData/Local/Programs/Python/Python313:/c/Users/Andrzej/AppData/Local/Programs/Python/Python311/Scripts:/c/Users/Andrzej/AppData/Local/Programs/Python/Python311:/c/Users/Andrzej/AppData/Local/Microsoft/WindowsApps:/c/Users/Andrzej/ffmpeg-master-latest-win64-gpl-shared/bin:/c/Users/Andrzej/AppData/Local/Pandoc:/c/Users/Andrzej/AppData/Local/Programs/Antigravity/bin:/c/Users/Andrzej/AppData/Local/Microsoft/WinGet/Packages/Cloudflare.cloudflared_Microsoft.Winget.Source_8wekyb3d8bbwe:/c/apache-maven-3.9.14/bin:/c/Users/Andrzej/AppData/Local/Programs/Antigravity IDE/bin:/c/Users/Andrzej/AppData/Local/Programs/Microsoft VS Code/bin:/c/Users/Andrzej/AppData/Local/Microsoft/WinGet/Packages/astral-sh.uv_Microsoft.Winget.Source_8wekyb3d8bbwe:/c/Users/Andrzej/AppData/Local/Microsoft/WinGet/Packages/Typst.Typst_Microsoft.Winget.Source_8wekyb3d8bbwe/typst-x86_64-pc-windows-msvc:/c/Users/Andrzej/AppData/Roaming/npm:/c/Users/Andrzej/go/bin:/c/Users/Andrzej/.vscode/extensions/ms-python.debugpy-2026.6.0-win32-x64/bundled/scripts/noConfigScripts:/c/Users/Andrzej/.vscode/extensions/vscjava.vscode-java-debug-0.59.0/bundled/scripts/noConfigScripts
+JAVA_HOME=/c/Program Files/Java/jdk-25
+CRONOVA_JAVA_HOME=<unset>
+MAVEN_HOME=/c/apache-maven-3.9.14
+CRONOVA_MAVEN_HOME=<unset>
+java=/c/Program Files/Java/jdk-25/bin/java
+java version "25" 2025-09-16 LTS
+Java(TM) SE Runtime Environment (build 25+37-LTS-3491)
+Java HotSpot(TM) 64-Bit Server VM (build 25+37-LTS-3491, mixed mode, sharing)
+mvn=/c/apache-maven-3.9.14/bin/mvn
+Apache Maven 3.9.14 (996c630dbc656c76214ce58821dcc58be960875b)
+Maven home: C:\apache-maven-3.9.14
+Java version: 25, vendor: Oracle Corporation, runtime: C:\Program Files\Java\jdk-25

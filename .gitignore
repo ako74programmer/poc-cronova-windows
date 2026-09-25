@@ -22,6 +22,8 @@ cronova.env
 /workspaces/
 # local Maven cache (never commit)
 .m2/
+# Maven build output inside templates (never commit)
+templates/**/target/
 # scratch screenshots / working artifacts (never commit)
 /tmp/
 .tmp/

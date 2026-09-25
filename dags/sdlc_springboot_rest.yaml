@@ -21,22 +21,22 @@ tasks:
     type: shell
     timeout: 600
     deps: [validate_openapi]
-    command: bash scripts/sdlc/springboot/scaffold.sh --config configs/sdlc-springboot.yaml --workspace .workspaces/springboot --artifacts artifacts/springboot
+    command: bash scripts/sdlc/springboot/scaffold.sh --config configs/sdlc-springboot.yaml --workspace /c/Users/Andrzej/Downloads/sdlc/cronova/.workspaces/springboot --artifacts /c/Users/Andrzej/Downloads/sdlc/cronova/artifacts/springboot
 
   - id: compile
     type: shell
     timeout: 900
     deps: [scaffold]
-    command: bash scripts/sdlc/springboot/compile.sh --config configs/sdlc-springboot.yaml --workspace .workspaces/springboot --artifacts artifacts/springboot
+    command: bash scripts/sdlc/springboot/compile.sh --config configs/sdlc-springboot.yaml --workspace /c/Users/Andrzej/Downloads/sdlc/cronova/.workspaces/springboot --artifacts /c/Users/Andrzej/Downloads/sdlc/cronova/artifacts/springboot
 
   - id: unit_tests
     type: shell
     timeout: 900
     deps: [compile]
-    command: bash scripts/sdlc/springboot/unit-test.sh --config configs/sdlc-springboot.yaml --workspace .workspaces/springboot --artifacts artifacts/springboot
+    command: bash scripts/sdlc/springboot/unit-test.sh --config configs/sdlc-springboot.yaml --workspace /c/Users/Andrzej/Downloads/sdlc/cronova/.workspaces/springboot --artifacts /c/Users/Andrzej/Downloads/sdlc/cronova/artifacts/springboot
 
   - id: package
     type: shell
     timeout: 600
     deps: [unit_tests]
-    command: bash scripts/sdlc/springboot/package.sh --config configs/sdlc-springboot.yaml --workspace .workspaces/springboot --artifacts artifacts/springboot
+    command: bash scripts/sdlc/springboot/package.sh --config configs/sdlc-springboot.yaml --workspace /c/Users/Andrzej/Downloads/sdlc/cronova/.workspaces/springboot --artifacts /c/Users/Andrzej/Downloads/sdlc/cronova/artifacts/springboot

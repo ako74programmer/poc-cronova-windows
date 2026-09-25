@@ -1,0 +1,9 @@
+repo_root=/c/Users/Andrzej/Downloads/sdlc/cronova
+workspace=/c/Users/Andrzej/Downloads/sdlc/cronova
+artifacts=/c/Users/Andrzej/Downloads/sdlc/cronova/artifacts
+config=configs/sdlc-springboot.yaml
+/usr/bin/bash
+/c/Program Files/nodejs/node
+/c/Program Files/nodejs/npm
+/c/Users/Andrzej/AppData/Local/Programs/Python/Python313/python
+/c/Program Files/Common Files/Oracle/Java/javapath/java

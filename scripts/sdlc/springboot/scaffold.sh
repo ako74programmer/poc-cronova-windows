@@ -4,6 +4,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../common/bootstrap.sh"
 source "$SCRIPT_DIR/../common/config-value.sh"
 parse_common_args "$@"
+setup_toolchain
 require_command curl
 require_command unzip
 if [[ -f "$WORKSPACE/pom.xml" ]]; then
