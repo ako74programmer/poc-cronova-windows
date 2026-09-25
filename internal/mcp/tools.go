@@ -146,7 +146,7 @@ func schemaFor(ep api.Endpoint) map[string]any {
 			if _, exists := props[k]; exists {
 				continue
 			}
-			props[k] = map[string]any{"type": jsonType(v), "description": "request body field"}
+			props[k] = schemaForValue(v, "request body field")
 		}
 	} else if ep.HasBody {
 		props["body"] = map[string]any{"type": "object", "description": "request body"}
@@ -154,6 +154,36 @@ func schemaFor(ep api.Endpoint) map[string]any {
 	schema := map[string]any{"type": "object", "properties": props}
 	if len(required) > 0 {
 		schema["required"] = required
+	}
+	return schema
+}
+
+func schemaForValue(v any, desc string) map[string]any {
+	schema := map[string]any{"description": desc}
+	switch val := v.(type) {
+	case bool:
+		schema["type"] = "boolean"
+	case float64, float32, int, int64:
+		schema["type"] = "number"
+	case []any:
+		schema["type"] = "array"
+		if len(val) > 0 {
+			schema["items"] = schemaForValue(val[0], "array item")
+		} else {
+			schema["items"] = map[string]any{"type": "string", "description": "array item"}
+		}
+	case []string:
+		schema["type"] = "array"
+		schema["items"] = map[string]any{"type": "string", "description": "array item"}
+	case map[string]any:
+		schema["type"] = "object"
+		itemProps := map[string]any{}
+		for kk, vv := range val {
+			itemProps[kk] = schemaForValue(vv, "object field")
+		}
+		schema["properties"] = itemProps
+	default:
+		schema["type"] = "string"
 	}
 	return schema
 }

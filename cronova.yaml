@@ -8,7 +8,7 @@ projects: ""
 workspaces: ""
 tick: 2s
 executor: ""
-bash_path: ""
+bash_path: "C:\\Program Files\\Git\\bin\\bash.exe"
 http: 127.0.0.1:8090
 reload: ""
 allow_unauthenticated_remote: false
