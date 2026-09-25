@@ -5,6 +5,13 @@ Requirements:
 2. The method should validate whether the given string is a valid number according to the Luhn algorithm.
 3. The input may contain spaces; they should be ignored (use replace(" ", "") or similar, NOT regex with backslashes).
 4. Inputs with non-digit characters (except spaces) or length <= 1 should return false (check each character with Character.isDigit).
-5. Create a test class LuhnTest with unit tests covering valid numbers, invalid numbers, edge cases (empty string, single digit, spaces).
-6. Keep the existing App.java and AppTest.java intact.
-7. Do NOT use regex patterns like \d or \s because they cause Java escape-character errors.
+5. Create a test class LuhnTest with unit tests covering valid numbers, invalid numbers, edge cases (empty string, single digit, spaces, non-digit character).
+6. For edge-case tests use ONLY inputs whose expected result is deterministic and easy to verify:
+   - empty string -> false
+   - single digit "1" -> false
+   - string with only spaces "  " -> false
+   - string with a non-digit character "1234a" -> false
+   - valid number with spaces "  4539 1488 0343 6467  " -> true
+   Do NOT add tests that rely on guessing whether a long arbitrary number passes the Luhn checksum.
+7. Keep the existing App.java and AppTest.java intact.
+8. Do NOT use regex patterns like \d or \s because they cause Java escape-character errors.

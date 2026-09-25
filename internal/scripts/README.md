@@ -12,6 +12,27 @@ Każdy skrypt jest niezależny i można go wywołać ręcznie lub z innego workf
 
 Klocki nie zakładają konkretnego użytkownika, katalogu instalacyjnego ani systemu plików. Helper `internal/scripts/common_toolchain.sh` wykrywa narzędzia i zwraca czytelny błąd, jeśli wymagane narzędzie nie jest dostępne.
 
+## Konfiguracja toolchain
+
+Skrypty SDLC w `scripts/sdlc/` oraz reusable skrypty w `internal/scripts/` używają
+wspólnego helpera `internal/scripts/common_toolchain.sh`. Można nadpisać lokalizację
+JDK i Mavena przez zmienne środowiskowe (Windows lub Unix path):
+
+```bash
+export CRONOVA_JAVA_HOME="C:\Program Files\Java\jdk-25"
+export CRONOVA_MAVEN_HOME="C:\apache-maven-3.9.14"
+```
+
+lub w Git Bash:
+
+```bash
+export CRONOVA_JAVA_HOME="/c/Program Files/Java/jdk-25"
+export CRONOVA_MAVEN_HOME="/c/apache-maven-3.9.14"
+```
+
+Helper normalizuje ścieżki Windows przez `cygpath`, ustawia `JAVA_HOME`/`MAVEN_HOME`
+i dodaje `$JAVA_HOME/bin` oraz `$MAVEN_HOME/bin` do `PATH` przed wywołaniem `java`/`mvn`.
+
 ## Konwencja parametrów
 
 | Parametr | Znaczenie | Domyślna wartość |

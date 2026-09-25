@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -528,6 +529,12 @@ func buildEnv(extra map[string]string) []string {
 	}
 	for k, v := range extra {
 		values[k] = v
+	}
+	// On Windows, Git Bash login shells reset PATH to a minimal Unix default
+	// unless MSYS2_PATH_TYPE=inherit is set. Force it so tasks can find
+	// Windows tools (java, mvn, node, etc.) inherited from cronova's env.
+	if runtime.GOOS == "windows" {
+		values["MSYS2_PATH_TYPE"] = "inherit"
 	}
 	keys := make([]string, 0, len(values))
 	for k := range values {

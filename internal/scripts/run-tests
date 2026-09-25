@@ -3,7 +3,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-source "$SCRIPT_DIR/common_toolchain.sh"
 
 WORKSPACE=""
 PROJECT="demo"
@@ -48,7 +47,10 @@ fi
 mkdir -p "$M2_DIR"
 cd "$PROJECT_DIR"
 
-setup_java_maven
+# shellcheck source=/dev/null
+source "$REPO_ROOT/internal/scripts/common_toolchain.sh"
+setup_java_maven || exit $?
+log_toolchain_runtime "$PROJECT_DIR/toolchain-runtime.txt"
 
 echo "Running tests in $PROJECT_DIR"
 mvn -B -Dmaven.repo.local="$M2_DIR" test

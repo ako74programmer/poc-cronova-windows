@@ -3,6 +3,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../common/bootstrap.sh"
 parse_common_args "$@"
+setup_toolchain
 require_command java
 if grep -Eiq '(/c/Users/|/home/|/tmp/|/var/|systemd|launchd)' "$CONFIG"; then
   echo "Error: configuration contains a non-portable Unix/private path" >&2
@@ -12,4 +13,5 @@ grep -q '^project:' "$CONFIG" || { echo "Error: Spring Boot config lacks project
 grep -q 'kind: springboot' "$CONFIG" || { echo "Error: config kind must be springboot" >&2; exit 10; }
 java -version 2> "$ARTIFACTS/metadata/java-version.txt"
 cat "$ARTIFACTS/metadata/java-version.txt"
+log_toolchain_runtime "$ARTIFACTS/metadata/toolchain-runtime.txt"
 echo "Spring Boot configuration is valid: $CONFIG"

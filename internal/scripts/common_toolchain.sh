@@ -1,41 +1,87 @@
 #!/usr/bin/env bash
-# Shared, portable toolchain discovery for reusable internal/scripts blocks.
 set -euo pipefail
 
-find_python() {
-  if [[ -n "${CRONOVA_PYTHON:-}" ]] && command -v "$CRONOVA_PYTHON" >/dev/null 2>&1; then
-    command -v "$CRONOVA_PYTHON"
+# Shared Java/Maven toolchain setup for cronova SDLC scripts.
+# Sources this file to ensure JAVA_HOME and Maven are on PATH before
+# running builds. Handles both Windows (C:\...) and Unix (/c/...) paths
+# when running under Git Bash / MSYS.
+
+# Convert a path to Unix form when running under Git Bash/MSYS/Cygwin.
+__ct_normalize_path() {
+  local path="$1"
+  if [[ -z "$path" ]]; then
     return 0
   fi
-  for candidate in python3 python; do
-    if command -v "$candidate" >/dev/null 2>&1; then
-      command -v "$candidate"
-      return 0
-    fi
-  done
-  if command -v py.exe >/dev/null 2>&1; then
-    command -v py.exe
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -u "$path" 2>/dev/null || printf '%s\n' "$path"
+  else
+    printf '%s\n' "$path"
+  fi
+}
+
+# Prepend a directory to PATH if it exists and is not already present.
+__ct_prepend_path() {
+  local dir="$1"
+  if [[ -z "$dir" || ! -d "$dir" ]]; then
     return 0
   fi
-  echo "Error: Python was not found. Install Python or set CRONOVA_PYTHON." >&2
-  return 20
+  case ":${PATH}:" in
+    *:"$dir":*) ;;
+    *) export PATH="$dir${PATH:+:$PATH}" ;;
+  esac
 }
 
 setup_java_maven() {
-  if [[ -n "${CRONOVA_JAVA_HOME:-}" ]]; then
-    export JAVA_HOME="$CRONOVA_JAVA_HOME"
+  local java_home="${CRONOVA_JAVA_HOME:-${JAVA_HOME:-}}"
+  local maven_home="${CRONOVA_MAVEN_HOME:-${MAVEN_HOME:-}}"
+
+  if [[ -n "$java_home" ]]; then
+    java_home="$(__ct_normalize_path "$java_home")"
+    export JAVA_HOME="$java_home"
+    __ct_prepend_path "$JAVA_HOME/bin"
   fi
-  if [[ -n "${MAVEN_HOME:-}" && -d "$MAVEN_HOME/bin" ]]; then
-    export PATH="$MAVEN_HOME/bin:$PATH"
-  elif [[ -n "${CRONOVA_MAVEN_HOME:-}" && -d "$CRONOVA_MAVEN_HOME/bin" ]]; then
-    export PATH="$CRONOVA_MAVEN_HOME/bin:$PATH"
+
+  if [[ -n "$maven_home" ]]; then
+    maven_home="$(__ct_normalize_path "$maven_home")"
+    export MAVEN_HOME="$maven_home"
+    __ct_prepend_path "$MAVEN_HOME/bin"
   fi
-  command -v java >/dev/null 2>&1 || {
-    echo "Error: Java was not found. Install a JDK or set JAVA_HOME/CRONOVA_JAVA_HOME." >&2
+
+  if ! command -v java >/dev/null 2>&1; then
+    echo "Error: java not found in PATH" >&2
+    echo "DEBUG PATH=$PATH" >&2
+    echo "DEBUG JAVA_HOME=${JAVA_HOME:-<unset>}" >&2
+    echo "DEBUG CRONOVA_JAVA_HOME=${CRONOVA_JAVA_HOME:-<unset>}" >&2
     return 20
-  }
-  command -v mvn >/dev/null 2>&1 || {
-    echo "Error: Maven was not found. Install Maven or set MAVEN_HOME/CRONOVA_MAVEN_HOME." >&2
+  fi
+
+  if ! command -v mvn >/dev/null 2>&1; then
+    echo "Error: mvn not found in PATH" >&2
+    echo "DEBUG PATH=$PATH" >&2
+    echo "DEBUG MAVEN_HOME=${MAVEN_HOME:-<unset>}" >&2
+    echo "DEBUG CRONOVA_MAVEN_HOME=${CRONOVA_MAVEN_HOME:-<unset>}" >&2
     return 20
-  }
+  fi
+
+  return 0
 }
+
+log_toolchain_runtime() {
+  local out="${1:-/dev/stdout}"
+  {
+    printf 'PATH=%s\n' "$PATH"
+    printf 'JAVA_HOME=%s\n' "${JAVA_HOME:-<unset>}"
+    printf 'CRONOVA_JAVA_HOME=%s\n' "${CRONOVA_JAVA_HOME:-<unset>}"
+    printf 'MAVEN_HOME=%s\n' "${MAVEN_HOME:-<unset>}"
+    printf 'CRONOVA_MAVEN_HOME=%s\n' "${CRONOVA_MAVEN_HOME:-<unset>}"
+    printf 'java=%s\n' "$(command -v java 2>/dev/null || true)"
+    java -version 2>&1 || true
+    printf 'mvn=%s\n' "$(command -v mvn 2>/dev/null || true)"
+    mvn -version 2>&1 | head -n 3 || true
+  } > "$out"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  setup_java_maven
+  log_toolchain_runtime
+fi

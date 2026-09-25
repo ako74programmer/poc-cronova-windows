@@ -26,4 +26,15 @@ if not exist "dags" mkdir dags
 echo [start.cmd] Starting cronova serve...
 echo [start.cmd] Console will be available at http://127.0.0.1:8090
 
+REM Respect JAVA_HOME/MAVEN_HOME supplied by the operator or system.
+if not defined CRONOVA_JAVA_HOME if defined JAVA_HOME set "CRONOVA_JAVA_HOME=%JAVA_HOME%"
+if not defined JAVA_HOME if defined CRONOVA_JAVA_HOME set "JAVA_HOME=%CRONOVA_JAVA_HOME%"
+if not defined CRONOVA_MAVEN_HOME if defined MAVEN_HOME set "CRONOVA_MAVEN_HOME=%MAVEN_HOME%"
+if not defined MAVEN_HOME if defined CRONOVA_MAVEN_HOME set "MAVEN_HOME=%CRONOVA_MAVEN_HOME%"
+if defined JAVA_HOME set "PATH=%JAVA_HOME%\bin;%PATH%"
+if defined MAVEN_HOME set "PATH=%MAVEN_HOME%\bin;%PATH%"
+
+echo [start.cmd] JAVA_HOME=%JAVA_HOME%
+echo [start.cmd] MAVEN_HOME=%MAVEN_HOME%
+
 "%BINARY%" serve -config "%CONFIG%"

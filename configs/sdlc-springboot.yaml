@@ -8,8 +8,8 @@ project:
   artifact_name: item-service.jar
 
 runtime:
-  java_version: "21"
-  spring_boot_version: "3.5.5"
+  java_version: "25"
+  spring_boot_version: "4.0.0"
   build_tool: maven-wrapper
   maven_wrapper: ./mvnw.cmd
 
