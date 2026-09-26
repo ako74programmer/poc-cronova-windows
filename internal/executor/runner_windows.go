@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"unsafe"
@@ -99,10 +100,36 @@ func shellCommand(script string) (*exec.Cmd, error) {
 		if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
 			// Do not use a login shell: Git Bash login startup files can replace
 			// PATH with a minimal MSYS value and hide Windows tools such as Python.
-			return exec.Command(candidate, "-c", script), nil
+			// DAGs historically invoke their scripts as `bash path/to/script`.
+			// With MSYS2_PATH_TYPE=inherit, a Windows bash.exe earlier in the
+			// inherited PATH (notably WSL's bash.exe) can shadow Git Bash's own
+			// bash when that nested command is resolved. Pin the leading command
+			// to Git Bash's stable MSYS path while keeping the configured outer
+			// executable as the process we launch.
+			return exec.Command(candidate, "-c", pinGitBashCommand(script)), nil
 		}
 	}
 	return nil, fmt.Errorf("Git for Windows Bash was not found; install Git for Windows or set CRONOVA_BASH_PATH to bash.exe")
+}
+
+func pinGitBashCommand(script string) string {
+	for offset := 0; offset < len(script); {
+		lineEnd := strings.IndexByte(script[offset:], '\n')
+		if lineEnd < 0 {
+			lineEnd = len(script) - offset
+		}
+		line := script[offset : offset+lineEnd]
+		trimmed := strings.TrimLeft(line, " \t\r")
+		if strings.HasPrefix(trimmed, "bash ") || strings.HasPrefix(trimmed, "bash\t") {
+			leading := line[:len(line)-len(trimmed)]
+			return script[:offset] + leading + "/usr/bin/bash" + trimmed[len("bash"):] + script[offset+lineEnd:]
+		}
+		if lineEnd == len(script)-offset {
+			break
+		}
+		offset += lineEnd + 1
+	}
+	return script
 }
 
 func wrapCommandForState(command string, stateEnabled bool, exitFilePath string) string {
