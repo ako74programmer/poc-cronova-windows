@@ -20,6 +20,7 @@ cronova.env
 /logs/
 # local workspace / runtime working directory (never commit)
 /workspaces/
+.workspaces/
 # local Maven cache (never commit)
 .m2/
 # Maven build output inside templates (never commit)
