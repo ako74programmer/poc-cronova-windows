@@ -295,6 +295,8 @@ Przykład promptu: [prompts/luhn.txt](prompts/luhn.txt).
 
 DAG jest deklaratywnym opisem przepływu, a `internal/scripts/` jest biblioteką reużywalnych klocków. Definicje w `dags/` wywołują klocki bezpośrednio i przekazują im parametry workspace, projektu, pakietu oraz promptu. Nie tworzymy dedykowanych wrapperów w `workflows/<nazwa_dag>/`.
 
+Szczegółowy opis konkretnego przepływu Spring Initializr, w tym analiza zależności, helperów, ryzyk i reużywalności, znajduje się w [`docs/SDLC_SPRINGBOOT_STARTIO.md`](../../docs/SDLC_SPRINGBOOT_STARTIO.md).
+
 Różne przepływy powstają przez inną kompozycję tych samych klocków:
 
 | Cel przepływu | Klocki |
