@@ -38,6 +38,8 @@ Przed buildem sprawdź w PowerShell, czy działa już `cronova.exe` z tego repo.
 
 ## 2. Weryfikacja Go na Windows
 
+Użyj **Go `1.26.5`**, zgodnie z dyrektywą `go` w `go.mod` i Windows jobem CI, który instaluje toolchain przez `go-version-file: go.mod`. Najpierw sprawdź `where go` i `go version`; jeśli aktywne jest `1.27.0` (jak w poprzedniej próbie) albo inna wersja, zatrzymaj się i przełącz `PATH` na Go `1.26.5` przed dalszą weryfikacją. Nie traktuj różnic formatera między wersjami jako podstawy do zmiany źródeł.
+
 Z katalogu głównego repo uruchom polecenia zgodne z Windows jobem CI:
 
 ```bat
@@ -51,7 +53,7 @@ go build -trimpath -o cronova.exe ./cmd/cronova
 go build -trimpath -o cronova-executor.exe ./cmd/cronova-executor
 ```
 
-`gofmt -l .` powinno nie wypisać plików. Zapisz exit code każdego polecenia. Jeśli Go test/build nie przejdzie, przerwij — nie przechodź do pełnego DAG-a i nie zmieniaj kodu.
+`gofmt -l .` powinno nie wypisać plików przy właściwym Go `1.26.5`. Zapisz exit code każdego polecenia. Jeśli Go test/build nie przejdzie, przerwij — nie przechodź do pełnego DAG-a i nie zmieniaj kodu. **Nie uruchamiaj `gofmt -w`** (ani pojedynczo, ani dla całego repo); agent ma wyłącznie weryfikować.
 
 ## 3. Sprawdzenie środowiska Windows
 
