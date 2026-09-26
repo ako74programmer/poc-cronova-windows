@@ -53,7 +53,7 @@ go build -trimpath -o cronova.exe ./cmd/cronova
 go build -trimpath -o cronova-executor.exe ./cmd/cronova-executor
 ```
 
-`gofmt -l .` niczego nie zmienia; jeśli wypisze pliki, zapisz listę i wersję Go jako wynik kontroli formatowania. Nie zatrzymuj z tego powodu testów `go mod verify`, `go vet`, `go test` ani buildów. Jeśli któreś z tych poleceń zawiedzie, przerwij przed pełnym DAG-em i przekaż błąd. **Nie uruchamiaj `gofmt -w`** (ani pojedynczo, ani dla całego repo); agent ma wyłącznie weryfikować. Jeśli Go `1.26.5` jest już dostępne, możesz dodatkowo uruchomić `gofmt -l .` tą wersją dla porównania z CI — nie instaluj ani nie przełączaj toolchainu tylko z powodu listy formatera.
+`gofmt -l .` niczego nie zmienia; jeśli wypisze pliki, zapisz listę i wersję Go jako wynik kontroli formatowania. Zapisz wynik każdego polecenia. Niepowodzenie `go test ./...` odnotuj wraz z błędami, ale **nie zatrzymuj na nim testu DAG-a** — przejdź do obu buildów. Jeśli build binariów się powiedzie, kontynuuj do uruchomienia Cronova i pełnego DAG-a; przerwij dopiero, jeśli build lub uruchomienie samego Cronova uniemożliwia test. **Nie uruchamiaj `gofmt -w`** (ani pojedynczo, ani dla całego repo); agent ma wyłącznie weryfikować. Jeśli Go `1.26.5` jest już dostępne, możesz dodatkowo uruchomić `gofmt -l .` tą wersją dla porównania z CI — nie instaluj ani nie przełączaj toolchainu tylko z powodu listy formatera.
 
 ## 3. Sprawdzenie środowiska Windows
 
