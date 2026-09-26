@@ -9,7 +9,13 @@ require_command mvn
 [[ -f "$WORKSPACE/mvnw.cmd" ]] || { echo "Error: mvnw.cmd not found in $WORKSPACE" >&2; exit 30; }
 cd "$WORKSPACE"
 ./mvnw.cmd -B package -DskipTests 2>&1 | tee "$ARTIFACTS/logs/springboot-package.log"
-JAR="$(find target -maxdepth 1 -type f -name '*.jar' ! -name '*-plain.jar' | head -n 1)"
+JAR=""
+for candidate in target/*.jar; do
+  [[ -f "$candidate" ]] || continue
+  [[ "$candidate" == *-plain.jar ]] && continue
+  JAR="$candidate"
+  break
+done
 [[ -n "$JAR" ]] || { echo "Error: executable Spring Boot JAR not found" >&2; exit 60; }
 mkdir -p "$ARTIFACTS/package"
 cp "$JAR" "$ARTIFACTS/package/item-service.jar"
