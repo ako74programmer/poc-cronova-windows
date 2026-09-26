@@ -38,7 +38,7 @@ Przed buildem sprawdź w PowerShell, czy działa już `cronova.exe` z tego repo.
 
 ## 2. Weryfikacja Go na Windows
 
-Użyj **Go `1.26.5`**, zgodnie z dyrektywą `go` w `go.mod` i Windows jobem CI, który instaluje toolchain przez `go-version-file: go.mod`. Najpierw sprawdź `where go` i `go version`; jeśli aktywne jest `1.27.0` (jak w poprzedniej próbie) albo inna wersja, zatrzymaj się i przełącz `PATH` na Go `1.26.5` przed dalszą weryfikacją. Nie traktuj różnic formatera między wersjami jako podstawy do zmiany źródeł.
+W repo `go.mod` deklaruje `go 1.26.5`, a Windows CI wybiera tę wersję przez `go-version-file: go.mod` — to wersja bazowa używana do reprodukcji CI, **nie oznacza, że Go 1.27.0 jest nieobsługiwane**. Najpierw zapisz `where go` i `go version`. Możesz kontynuować testy z aktywnym Go `1.27.0`; przełączenie na `1.26.5` jest potrzebne tylko wtedy, gdy chcesz dokładnie odtworzyć CI i masz tę wersję zainstalowaną.
 
 Z katalogu głównego repo uruchom polecenia zgodne z Windows jobem CI:
 
@@ -53,7 +53,7 @@ go build -trimpath -o cronova.exe ./cmd/cronova
 go build -trimpath -o cronova-executor.exe ./cmd/cronova-executor
 ```
 
-`gofmt -l .` powinno nie wypisać plików przy właściwym Go `1.26.5`. Zapisz exit code każdego polecenia. Jeśli Go test/build nie przejdzie, przerwij — nie przechodź do pełnego DAG-a i nie zmieniaj kodu. **Nie uruchamiaj `gofmt -w`** (ani pojedynczo, ani dla całego repo); agent ma wyłącznie weryfikować.
+`gofmt -l .` niczego nie zmienia; jeśli wypisze pliki, zapisz listę i wersję Go jako wynik kontroli formatowania. Nie zatrzymuj z tego powodu testów `go mod verify`, `go vet`, `go test` ani buildów. Jeśli któreś z tych poleceń zawiedzie, przerwij przed pełnym DAG-em i przekaż błąd. **Nie uruchamiaj `gofmt -w`** (ani pojedynczo, ani dla całego repo); agent ma wyłącznie weryfikować. Jeśli Go `1.26.5` jest już dostępne, możesz dodatkowo uruchomić `gofmt -l .` tą wersją dla porównania z CI — nie instaluj ani nie przełączaj toolchainu tylko z powodu listy formatera.
 
 ## 3. Sprawdzenie środowiska Windows
 
