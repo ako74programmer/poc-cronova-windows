@@ -15,6 +15,9 @@ Potwierdzić, że Cronova uruchomiony przez `start.cmd`:
 3. przekazuje do tasków Java, Maven, Python i Node bez ustawiania ręcznej allowlisty;
 4. nie wybiera WSL ani przypadkowego `bash.exe` z `PATH`.
 
+Executor Windows używa wskazanego Git Bash bez trybu login (`bash -c`, nie `bash -lc`).
+Dzięki temu pliki startowe Git Bash nie zastępują `PATH` minimalną ścieżką MSYS.
+
 ## Przygotowanie
 
 W repozytorium wykonaj:
@@ -169,4 +172,4 @@ REPO_CHANGES=none
 COMMITS_MADE=none
 ```
 
-Nie zmieniaj `runner.go`, `start.cmd` ani DAG-ów podczas testu. Jeśli test nie przejdzie, zatrzymaj się i przekaż log oraz powyższy raport.
+Nie zmieniaj `runner_windows.go`, `runner.go`, `start.cmd` ani DAG-ów podczas testu. Jeśli test nie przejdzie, zatrzymaj się i przekaż log oraz powyższy raport.

@@ -80,9 +80,6 @@ func shellCommand(script string) (*exec.Cmd, error) {
 	if configured := os.Getenv("CRONOVA_BASH_PATH"); configured != "" {
 		candidates = append(candidates, configured)
 	}
-	if bash, err := exec.LookPath("bash.exe"); err == nil {
-		candidates = append(candidates, bash)
-	}
 	programFiles := os.Getenv("ProgramFiles")
 	if programFiles == "" {
 		programFiles = `C:\Program Files`
@@ -100,7 +97,9 @@ func shellCommand(script string) (*exec.Cmd, error) {
 		}
 		seen[candidate] = true
 		if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
-			return exec.Command(candidate, "-lc", script), nil
+			// Do not use a login shell: Git Bash login startup files can replace
+			// PATH with a minimal MSYS value and hide Windows tools such as Python.
+			return exec.Command(candidate, "-c", script), nil
 		}
 	}
 	return nil, fmt.Errorf("Git for Windows Bash was not found; install Git for Windows or set CRONOVA_BASH_PATH to bash.exe")
