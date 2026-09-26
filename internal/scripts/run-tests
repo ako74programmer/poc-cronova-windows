@@ -44,6 +44,7 @@ if [[ ! -d "$PROJECT_DIR" ]]; then
   exit 1
 fi
 
+PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
 mkdir -p "$M2_DIR"
 cd "$PROJECT_DIR"
 
