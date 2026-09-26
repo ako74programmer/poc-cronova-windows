@@ -39,7 +39,18 @@ __ct_add_executable_dir() {
   __ct_prepend_path "$(dirname "$executable")"
 }
 
+setup_windows_path() {
+  local windows_path="${CRONOVA_WINDOWS_PATH:-}"
+  [[ -n "$windows_path" ]] || return 0
+  if command -v cygpath >/dev/null 2>&1; then
+    windows_path="$(cygpath -pu "$windows_path" 2>/dev/null || true)"
+  fi
+  [[ -n "$windows_path" ]] || return 0
+  export PATH="$windows_path${PATH:+:$PATH}"
+}
+
 setup_runtime_tools() {
+  setup_windows_path
   __ct_add_executable_dir "${CRONOVA_PYTHON:-}"
   __ct_add_executable_dir "${CRONOVA_NODE:-}"
   __ct_add_executable_dir "${CRONOVA_NPM:-}"

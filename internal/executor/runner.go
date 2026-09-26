@@ -521,7 +521,7 @@ func buildEnv(extra map[string]string) []string {
 		for _, name := range []string{
 			"JAVA_HOME", "MAVEN_HOME", "PYTHONHOME", "PYTHONPATH", "NODE_PATH", "NVM_HOME",
 			"CRONOVA_JAVA_HOME", "CRONOVA_MAVEN_HOME", "CRONOVA_BASH_PATH",
-			"CRONOVA_PYTHON", "CRONOVA_NODE", "CRONOVA_NPM", "MSYS2_PATH_TYPE",
+			"CRONOVA_PYTHON", "CRONOVA_NODE", "CRONOVA_NPM", "CRONOVA_WINDOWS_PATH", "MSYS2_PATH_TYPE",
 		} {
 			allowed[name] = true
 		}

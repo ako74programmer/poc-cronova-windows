@@ -17,6 +17,8 @@ Potwierdzić, że Cronova uruchomiony przez `start.cmd`:
 
 Executor Windows używa wskazanego Git Bash bez trybu login (`bash -c`, nie `bash -lc`).
 Dzięki temu pliki startowe Git Bash nie zastępują `PATH` minimalną ścieżką MSYS.
+`start.cmd` zachowuje również oryginalny Windows `PATH` w `CRONOVA_WINDOWS_PATH`,
+żeby wrapper Maven mógł znaleźć `powershell.exe` i inne systemowe narzędzia.
 
 ## Przygotowanie
 
@@ -155,6 +157,7 @@ node_version=
 bash=
 
 CRONOVA_TASK_ENV_ALLOWLIST=<unset or value>
+TASK_CRONOVA_WINDOWS_PATH=
 TASK_RUNTIME_PATH=
 TASK_JAVA_HOME=
 TASK_MAVEN_HOME=

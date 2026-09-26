@@ -44,6 +44,7 @@ if not defined CRONOVA_NODE for /f "delims=" %%P in ('where node 2^>nul') do if 
 if not defined CRONOVA_NPM for /f "delims=" %%P in ('where npm 2^>nul') do if not defined CRONOVA_NPM set "CRONOVA_NPM=%%P"
 if defined JAVA_HOME set "PATH=%JAVA_HOME%\bin;%PATH%"
 if defined MAVEN_HOME set "PATH=%MAVEN_HOME%\bin;%PATH%"
+set "CRONOVA_WINDOWS_PATH=%PATH%"
 
 echo [start.cmd] JAVA_HOME=%JAVA_HOME%
 echo [start.cmd] MAVEN_HOME=%MAVEN_HOME%
