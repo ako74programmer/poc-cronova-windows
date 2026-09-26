@@ -80,7 +80,7 @@ while getopts ":w:p:k:r:m:y:h" opt; do
     :) echo "Option -$OPTARG requires an argument." >&2; usage >&2; exit 1 ;;
   esac
 done
-PYTHON="${PYTHON:-$(find_python)}"
+PYTHON="$(find_python "$PYTHON")"
 
 AI_BASE_URL="${CRONOVA_AI_BASE_URL:-}"
 AI_TOKEN="${CRONOVA_AI_TOKEN:-}"

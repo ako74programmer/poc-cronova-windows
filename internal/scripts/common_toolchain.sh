@@ -39,6 +39,48 @@ __ct_add_executable_dir() {
   __ct_prepend_path "$(dirname "$executable")"
 }
 
+# Resolve an explicit Python command/path or autodetect python3/python.
+# Windows paths supplied through CRONOVA_PYTHON are normalized for Git Bash.
+find_python() {
+  local requested="${1:-}"
+  local configured="${CRONOVA_PYTHON:-}"
+  local found=""
+
+  # DAGs may pass -y python as a generic selector. Prefer the concrete
+  # operator-configured executable in that case (for example a Windows path).
+  if [[ -z "$requested" || "$requested" == "python" || "$requested" == "python3" ]]; then
+    requested="$configured"
+  fi
+
+  if [[ -n "$requested" ]]; then
+    case "$requested" in
+      *\\*|[A-Za-z]:*) requested="$(__ct_normalize_path "$requested")" ;;
+    esac
+    found="$(command -v "$requested" 2>/dev/null || true)"
+    if [[ -n "$found" ]]; then
+      printf '%s\n' "$found"
+      return 0
+    fi
+    if [[ -x "$requested" ]]; then
+      printf '%s\n' "$requested"
+      return 0
+    fi
+    echo "Error: configured Python is not executable: $requested" >&2
+    return 1
+  fi
+
+  for requested in python3 python; do
+    found="$(command -v "$requested" 2>/dev/null || true)"
+    if [[ -n "$found" ]]; then
+      printf '%s\n' "$found"
+      return 0
+    fi
+  done
+
+  echo "Error: Python not found; install Python or set CRONOVA_PYTHON to its executable path." >&2
+  return 1
+}
+
 setup_windows_path() {
   local windows_path="${CRONOVA_WINDOWS_PATH:-}"
   [[ -n "$windows_path" ]] || return 0

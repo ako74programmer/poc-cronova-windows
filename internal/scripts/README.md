@@ -82,6 +82,7 @@ Parametry:
 - `-d DEPS` — zależności rozdzielone przecinkami, np. `web,lombok`
 - `-w WORKSPACE` — workspace docelowy
 - `-P PROJECT` — podkatalog projektu w workspace
+- `-y PYTHON` — interpreter Python (domyślnie `CRONOVA_PYTHON`, potem autodetekcja `python3`/`python`)
 - `-C` — wyczyść docelowy katalog przed rozpakowaniem
 - `-h` — pomoc
 
@@ -296,6 +297,7 @@ Przykład promptu: [prompts/luhn.txt](prompts/luhn.txt).
 DAG jest deklaratywnym opisem przepływu, a `internal/scripts/` jest biblioteką reużywalnych klocków. Definicje w `dags/` wywołują klocki bezpośrednio i przekazują im parametry workspace, projektu, pakietu oraz promptu. Nie tworzymy dedykowanych wrapperów w `workflows/<nazwa_dag>/`.
 
 Szczegółowy opis konkretnego przepływu Spring Initializr, w tym analiza zależności, helperów, ryzyk i reużywalności, znajduje się w [`docs/SDLC_SPRINGBOOT_STARTIO.md`](../../docs/SDLC_SPRINGBOOT_STARTIO.md).
+Instrukcja weryfikacji Go i pełnego uruchomienia tego DAG-a na Windows: [`docs/WINDOWS_SPRINGBOOT_STARTIO_TEST_2026-09-26.md`](../../docs/WINDOWS_SPRINGBOOT_STARTIO_TEST_2026-09-26.md).
 
 Różne przepływy powstają przez inną kompozycję tych samych klocków:
 

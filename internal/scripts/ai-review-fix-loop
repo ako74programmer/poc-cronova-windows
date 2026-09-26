@@ -84,7 +84,7 @@ while getopts ":w:p:k:i:r:m:y:h" opt; do
   esac
 done
 
-PYTHON="${PYTHON:-$(find_python)}"
+PYTHON="$(find_python "$PYTHON")"
 
 AI_BASE_URL="${CRONOVA_AI_BASE_URL:-}"
 AI_TOKEN="${CRONOVA_AI_TOKEN:-}"

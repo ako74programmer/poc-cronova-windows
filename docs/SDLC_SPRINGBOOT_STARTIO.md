@@ -4,6 +4,8 @@
 
 Ten dokument opisuje definicję [`dags/sdlc_springboot_startio.yaml`](../dags/sdlc_springboot_startio.yaml) oraz skrypty, które są przez nią wywoływane. Jest to analiza kodu na branchu `feature/windows-cmd-runtime-sdlc-2026-09-26`; **nie jest to raport wykonania DAG-a na Windows**.
 
+Po poprawkę resolvera i instrukcję weryfikacji na Windows zob. [`WINDOWS_SPRINGBOOT_STARTIO_TEST_2026-09-26.md`](WINDOWS_SPRINGBOOT_STARTIO_TEST_2026-09-26.md).
+
 Ten DAG korzysta z biblioteki skryptów `internal/scripts/`. Nie korzysta z pliku `configs/sdlc-springboot.yaml` ani z nowszych wrapperów w `scripts/sdlc/springboot/` (te są używane przez `sdlc_springboot_rest`). Nazwa `startio` odnosi się tu do Spring Initializr (`start.spring.io`), z którego pobierany jest szkielet projektu.
 
 ## Cel i ustawienia wykonania
@@ -47,7 +49,7 @@ bash internal/scripts/fetch-springboot-project \
 
 **Co ma robić skrypt:** `internal/scripts/fetch-springboot-project` składa URL do `https://start.spring.io/starter.zip`, pobiera ZIP przez `curl` (lub `wget` jako fallback), a następnie rozpakowuje projekt do `workspaces/springboot-startio/app`. `-C` usuwa wcześniej istniejący katalog docelowy przed rozpakowaniem. Ustawienia generatora: Maven, Java, Spring Boot `4.0.8`, Java `21`, `jar`, konfiguracja `properties`, zależność `web`, grupa `com.example`, artefakt `demo`, pakiet `com.example.demo`.
 
-**Ważna niezgodność wykryta w kodzie:** skrypt ustawia `PYTHON="${PYTHON:-$(find_python)}"`, ale w `internal/scripts/common_toolchain.sh` nie ma definicji `find_python`, a DAG nie przekazuje `-y` ani nie ustawia `PYTHON`. Skrypt ignoruje też `CRONOVA_PYTHON`, mimo że pozostałe skrypty AI obsługują tę zmienną. Przy typowym środowisku startowanym według `docs/WINDOWS_CMD_RUNTIME_TEST_2026-09-26.md` oznacza to, że `scaffold` najpewniej zakończy się błędem `find_python: command not found` zanim wykona żądanie HTTP. Sam fakt, że Python jest w `PATH` lub ustawiono `CRONOVA_PYTHON`, nie naprawia tego wywołania. To blocker do usunięcia przed pozytywnym testem end-to-end.
+**Poprawka wprowadzona w tym branchu:** skrypt używa teraz `find_python` z `internal/scripts/common_toolchain.sh`, obsługuje `-y PYTHON`, preferuje jawne `CRONOVA_PYTHON` nad ogólnym wyborem `python`/`python3` przekazanym przez DAG i normalizuje ścieżkę Windows dla Git Bash. Przy braku interpretera albo błędnej jawnej ścieżce resolver kończy się czytelnym błędem przed pobieraniem. Zachowanie na Windows jest **do potwierdzenia przez test runtime**.
 
 ### 2. `compile_skeleton` — kompilacja czystego projektu
 
@@ -113,11 +115,11 @@ Kilka skryptów zapisuje do stałych nazw plików w `.tmp/` (`springboot-project
 
 **Jednak klocki nie są jeszcze w pełni niezależne ani gotowe do przenoszenia bez warunków.** Wykryte ograniczenia:
 
-1. **Blocker `find_python`:** krok `scaffold` odwołuje się do nieistniejącej funkcji i nie respektuje `CRONOVA_PYTHON`; trzeba go poprawić (np. użyć wspólnego, działającego autodetektera albo jawnie przekazać obsługiwany interpreter) przed testem DAG-a.
+1. **Resolver Pythona został ujednolicony w tym branchu, ale Windows runtime nie jest jeszcze potwierdzony:** `fetch-springboot-project`, `ai-generate-crud`, `ai-review-fix-loop` i `ai-generate-feature` używają wspólnego helpera dla `-y`, `CRONOVA_PYTHON` i autodetekcji. Ten poprawiony kod wymaga testu na docelowym Git Bash/Windows.
 2. **Zależność od repozytorium i uruchomienia z jego katalogu:** komendy DAG-a są względne (`internal/scripts/...`, `workspaces/...`), więc wymagają właściwego katalogu roboczego Cronova. Skrypty zakładają też dostęp do `curl`/`wget`, `unzip`, `python`, Maven, Java i sieci.
 3. **Współdzielone nazwy plików tymczasowych:** stałe pliki w `.tmp/` mogą kolidować między jednocześnie działającymi DAG-ami.
 4. **Dwa modele toolchain:** skrypty `compile-project`, `ai-review-fix-loop` i `run-tests` konfigurują Java/Maven helperem; `fetch-springboot-project` i skrypty AI mają inną ścieżkę konfiguracji Pythona. Przekazanie `-y python` do kroków AI nie naprawia kroku `scaffold`.
 5. **Różne rodziny SDLC w repo:** `sdlc_springboot_startio` korzysta z `internal/scripts/`; `sdlc_springboot_rest` korzysta z osobnej rodziny wrapperów `scripts/sdlc/springboot/` oraz wersjonowanej konfiguracji YAML. Nie należy traktować ich jako tego samego kontraktu tylko dlatego, że oba budują Spring Boot.
 6. **Wytwory są modyfikowalne/destrukcyjne:** `-C` w pierwszym kroku usuwa projekt docelowy przy każdym uruchomieniu. To jest zamierzone dla powtarzalnego scaffoldu, ale warto pamiętać, że lokalne zmiany w `workspaces/springboot-startio/app` nie są zachowywane.
 
-Wniosek: **architektura przepływu jest kompozycyjna, ale bieżąca implementacja nie przechodzi jeszcze statycznej kontroli gotowości do testu end-to-end na Windows z powodu kroku `find_python`.** Po poprawce można testować klocki sekwencyjnie oraz ścieżkę pełnego DAG-a. Ten dokument nie wprowadza tej poprawki ani nie deklaruje, że test Windows został wykonany.
+Wniosek: **architektura przepływu jest kompozycyjna, a blocker `find_python` został naprawiony jako współdzielony klocek; teraz potrzebna jest weryfikacja Go na Windows i uruchomienie pełnego DAG-a na wskazanym commicie.** Ten dokument nie deklaruje, że test Windows został wykonany.

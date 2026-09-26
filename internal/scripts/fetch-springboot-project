@@ -18,6 +18,7 @@ DEPS=""
 WORKSPACE=""
 PROJECT="demo"
 CLEAN=false
+PYTHON="${PYTHON:-${CRONOVA_PYTHON:-}}"
 
 usage() {
   cat <<EOF
@@ -42,6 +43,7 @@ Options:
                  Default: none
   -w WORKSPACE   Target workspace directory. Default: workspaces/springboot-demo
   -P PROJECT     Project subdirectory inside workspace. Default: demo
+  -y PYTHON      Path or command for Python. Default: CRONOVA_PYTHON or autodetected
   -C             Clean target directory before extracting.
   -h             Show this help message.
 
@@ -51,7 +53,7 @@ Example:
 EOF
 }
 
-while getopts ":t:l:b:g:a:n:p:c:j:d:w:P:Ch" opt; do
+while getopts ":t:l:b:g:a:n:p:c:j:d:w:P:y:Ch" opt; do
   case $opt in
     t) TYPE="$OPTARG" ;;
     l) LANG="$OPTARG" ;;
@@ -65,6 +67,7 @@ while getopts ":t:l:b:g:a:n:p:c:j:d:w:P:Ch" opt; do
     d) DEPS="$OPTARG" ;;
     w) WORKSPACE="$OPTARG" ;;
     P) PROJECT="$OPTARG" ;;
+    y) PYTHON="$OPTARG" ;;
     C) CLEAN=true ;;
     h) usage; exit 0 ;;
     \?) echo "Invalid option: -$OPTARG" >&2; usage >&2; exit 1 ;;
@@ -84,7 +87,7 @@ TARGET_DIR="$WORKSPACE/$PROJECT"
 TMP_DIR="$REPO_ROOT/.tmp"
 mkdir -p "$TMP_DIR"
 
-PYTHON="${PYTHON:-$(find_python)}"
+PYTHON="$(find_python "$PYTHON")"
 
 URL="https://start.spring.io/starter.zip"
 URL="${URL}?type=$(printf '%s' "$TYPE" | "$PYTHON" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))')"
@@ -104,6 +107,7 @@ if [[ -n "$DEPS" ]]; then
 fi
 
 echo "Downloading Spring Boot project from start.spring.io..."
+echo "Using Python: $PYTHON"
 echo "URL: $URL"
 
 ZIP_FILE="$TMP_DIR/springboot-project.zip"
