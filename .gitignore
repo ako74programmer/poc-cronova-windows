@@ -21,6 +21,8 @@ cronova.env
 # local workspace / runtime working directory (never commit)
 /workspaces/
 .workspaces/
+# DAG-generated build artifacts (JARs, logs, reports — never commit)
+/artifacts/
 # local Maven cache (never commit)
 .m2/
 # Maven build output inside templates (never commit)
