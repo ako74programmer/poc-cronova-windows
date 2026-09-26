@@ -41,6 +41,9 @@ set "MAVEN_HOME=C:\ścieżka\do\apache-maven"
 set "CRONOVA_JAVA_HOME=%JAVA_HOME%"
 set "CRONOVA_MAVEN_HOME=%MAVEN_HOME%"
 set "CRONOVA_BASH_PATH=C:\Program Files\Git\bin\bash.exe"
+set "CRONOVA_PYTHON=C:\ścieżka\do\python.exe"
+set "CRONOVA_NODE=C:\ścieżka\do\node.exe"
+set "CRONOVA_NPM=C:\ścieżka\do\npm.cmd"
 set "PATH=%JAVA_HOME%\bin;%MAVEN_HOME%\bin;%PATH%"
 start.cmd
 ```
@@ -120,6 +123,10 @@ MSYS2_PATH_TYPE
 ```
 
 `PATH` jest również przekazywany. Sekrety, w tym `CRONOVA_ADMIN_PASSWORD`, nadal nie mogą być przekazane automatycznie.
+
+`start.cmd` wykrywa Python/Node/npm przez `where`, ale na maszynach z aliasem
+WindowsApps należy ustawić `CRONOVA_PYTHON`, `CRONOVA_NODE` i `CRONOVA_NPM`
+na rzeczywiste pliki wykonywalne.
 
 ## Raport
 

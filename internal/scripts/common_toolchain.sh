@@ -31,9 +31,25 @@ __ct_prepend_path() {
   esac
 }
 
+__ct_add_executable_dir() {
+  local executable="$1"
+  [[ -n "$executable" ]] || return 0
+  executable="$(__ct_normalize_path "$executable")"
+  [[ -f "$executable" ]] || return 0
+  __ct_prepend_path "$(dirname "$executable")"
+}
+
+setup_runtime_tools() {
+  __ct_add_executable_dir "${CRONOVA_PYTHON:-}"
+  __ct_add_executable_dir "${CRONOVA_NODE:-}"
+  __ct_add_executable_dir "${CRONOVA_NPM:-}"
+}
+
 setup_java_maven() {
   local java_home="${CRONOVA_JAVA_HOME:-${JAVA_HOME:-}}"
   local maven_home="${CRONOVA_MAVEN_HOME:-${MAVEN_HOME:-}}"
+
+  setup_runtime_tools
 
   if [[ -n "$java_home" ]]; then
     java_home="$(__ct_normalize_path "$java_home")"

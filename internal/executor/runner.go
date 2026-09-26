@@ -520,7 +520,8 @@ func buildEnv(extra map[string]string) []string {
 		// operator to maintain CRONOVA_TASK_ENV_ALLOWLIST manually.
 		for _, name := range []string{
 			"JAVA_HOME", "MAVEN_HOME", "PYTHONHOME", "PYTHONPATH", "NODE_PATH", "NVM_HOME",
-			"CRONOVA_JAVA_HOME", "CRONOVA_MAVEN_HOME", "CRONOVA_BASH_PATH", "MSYS2_PATH_TYPE",
+			"CRONOVA_JAVA_HOME", "CRONOVA_MAVEN_HOME", "CRONOVA_BASH_PATH",
+			"CRONOVA_PYTHON", "CRONOVA_NODE", "CRONOVA_NPM", "MSYS2_PATH_TYPE",
 		} {
 			allowed[name] = true
 		}

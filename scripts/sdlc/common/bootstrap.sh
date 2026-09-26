@@ -48,6 +48,7 @@ parse_common_args() {
   [[ -f "$CONFIG" ]] || { echo "Error: config not found: $CONFIG" >&2; return 2; }
   mkdir -p "$ARTIFACTS/logs" "$ARTIFACTS/reports" "$ARTIFACTS/metadata"
   export REPO_ROOT CONFIG WORKSPACE ARTIFACTS
+  setup_runtime_paths
 }
 
 require_command() {
@@ -65,6 +66,15 @@ setup_toolchain() {
     # shellcheck source=/dev/null
     source "$helper"
     setup_java_maven || return $?
+  fi
+}
+
+setup_runtime_paths() {
+  local helper="$REPO_ROOT/internal/scripts/common_toolchain.sh"
+  if [[ -f "$helper" ]]; then
+    # shellcheck source=/dev/null
+    source "$helper"
+    setup_runtime_tools
   fi
 }
 
