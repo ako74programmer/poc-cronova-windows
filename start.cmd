@@ -8,6 +8,14 @@ cd /d "%~dp0"
 
 set BINARY=cronova.exe
 set CONFIG=cronova.yaml
+if not defined CRONOVA_BASH_PATH set "CRONOVA_BASH_PATH=%ProgramFiles%\Git\bin\bash.exe"
+
+if not exist "%CRONOVA_BASH_PATH%" if exist "%ProgramFiles%\Git\usr\bin\bash.exe" set "CRONOVA_BASH_PATH=%ProgramFiles%\Git\usr\bin\bash.exe"
+if not exist "%CRONOVA_BASH_PATH%" (
+    echo [start.cmd] ERROR: Git for Windows bash.exe not found.
+    echo [start.cmd] Set CRONOVA_BASH_PATH to the full path of Git Bash.
+    exit /b 1
+)
 
 if not exist "%BINARY%" (
     echo [start.cmd] ERROR: %BINARY% not found in project root.
@@ -36,5 +44,6 @@ if defined MAVEN_HOME set "PATH=%MAVEN_HOME%\bin;%PATH%"
 
 echo [start.cmd] JAVA_HOME=%JAVA_HOME%
 echo [start.cmd] MAVEN_HOME=%MAVEN_HOME%
+echo [start.cmd] CRONOVA_BASH_PATH=%CRONOVA_BASH_PATH%
 
 "%BINARY%" serve -config "%CONFIG%"

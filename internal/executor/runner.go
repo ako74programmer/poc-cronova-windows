@@ -514,6 +514,17 @@ func buildEnv(extra map[string]string) []string {
 		"COLORTERM": true, "NO_COLOR": true, "SSL_CERT_FILE": true,
 		"SSL_CERT_DIR": true, "GIT_SSL_CAINFO": true,
 	}
+	if runtime.GOOS == "windows" {
+		// These are runtime toolchain settings, not credentials. They must survive
+		// the scheduler -> executor -> Git Bash boundary without requiring an
+		// operator to maintain CRONOVA_TASK_ENV_ALLOWLIST manually.
+		for _, name := range []string{
+			"JAVA_HOME", "MAVEN_HOME", "PYTHONHOME", "PYTHONPATH", "NODE_PATH", "NVM_HOME",
+			"CRONOVA_JAVA_HOME", "CRONOVA_MAVEN_HOME", "CRONOVA_BASH_PATH", "MSYS2_PATH_TYPE",
+		} {
+			allowed[name] = true
+		}
+	}
 	for _, name := range strings.FieldsFunc(os.Getenv("CRONOVA_TASK_ENV_ALLOWLIST"), func(r rune) bool {
 		return r == ',' || r == ' ' || r == '\t' || r == '\n'
 	}) {

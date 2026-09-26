@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -393,5 +394,38 @@ func TestTaskEnvironmentFiltersSchedulerSecrets(t *testing.T) {
 	}
 	if !strings.Contains(log, "admin=unset safe=allowed injected=run-123") {
 		t.Fatalf("filtered environment mismatch:\n%s", log)
+	}
+}
+
+func TestWindowsToolchainEnvironmentIsInheritedWithoutAllowlist(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("Windows-specific environment policy")
+	}
+	t.Setenv("CRONOVA_TASK_ENV_ALLOWLIST", "")
+	t.Setenv("JAVA_HOME", `C:\Java\jdk-25`)
+	t.Setenv("MAVEN_HOME", `C:\Maven`)
+	t.Setenv("PYTHONHOME", `C:\Python`)
+	t.Setenv("CRONOVA_JAVA_HOME", `C:\Java\jdk-25`)
+	t.Setenv("CRONOVA_MAVEN_HOME", `C:\Maven`)
+	t.Setenv("CRONOVA_BASH_PATH", `C:\Program Files\Git\bin\bash.exe`)
+
+	values := map[string]string{}
+	for _, item := range buildEnv(nil) {
+		name, value, ok := strings.Cut(item, "=")
+		if ok {
+			values[name] = value
+		}
+	}
+	for name := range map[string]bool{
+		"JAVA_HOME":          true,
+		"MAVEN_HOME":         true,
+		"PYTHONHOME":         true,
+		"CRONOVA_JAVA_HOME":  true,
+		"CRONOVA_MAVEN_HOME": true,
+		"CRONOVA_BASH_PATH":  true,
+	} {
+		if values[name] == "" {
+			t.Errorf("Windows toolchain variable %s was not inherited", name)
+		}
 	}
 }
