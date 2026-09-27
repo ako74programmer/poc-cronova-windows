@@ -5,18 +5,30 @@ source "$SCRIPT_DIR/../common/bootstrap.sh"
 source "$SCRIPT_DIR/../common/config-value.sh"
 parse_common_args "$@"
 require_command npx
-if [[ -f "$WORKSPACE/package.json" ]]; then
-	  echo "Angular project already exists: $WORKSPACE"
-	  if [[ ! -f "$WORKSPACE/package-lock.json" ]]; then
-	    echo "Generating missing package-lock.json: $WORKSPACE"
-	    (cd "$WORKSPACE" && npm install --package-lock-only --ignore-scripts)
-	  fi
-	  exit 0
-fi
+require_command node
 APP_NAME="$(config_value "$CONFIG" angular app_name || true)"
 CLI_VERSION="$(config_value "$CONFIG" runtime angular_cli_version || true)"
 APP_NAME="${APP_NAME:-item-portal}"
 CLI_VERSION="${CLI_VERSION:-latest}"
+setup_lint() {
+	if node -e 'const p=require(process.argv[1]); process.exit(p.scripts && p.scripts.lint ? 0 : 1)' "$WORKSPACE/package.json" 2>/dev/null; then
+		return 0
+	fi
+	echo "Adding angular-eslint to Angular workspace: $WORKSPACE"
+	(
+		cd "$WORKSPACE"
+		npx --yes "@angular/cli@$CLI_VERSION" add angular-eslint --skip-confirmation
+	)
+}
+if [[ -f "$WORKSPACE/package.json" ]]; then
+	echo "Angular project already exists: $WORKSPACE"
+	setup_lint
+	if [[ ! -f "$WORKSPACE/package-lock.json" ]]; then
+		echo "Generating missing package-lock.json: $WORKSPACE"
+		(cd "$WORKSPACE" && npm install --package-lock-only --ignore-scripts)
+	fi
+	exit 0
+fi
 mkdir -p "$WORKSPACE"
 CLI_DIRECTORY="$WORKSPACE"
 if [[ "$WORKSPACE" == "$REPO_ROOT/"* ]]; then
@@ -33,6 +45,8 @@ npx --yes "@angular/cli@$CLI_VERSION" new "$APP_NAME" \
   --skip-git \
   --package-manager=npm \
   --skip-install
+
+setup_lint
 
 # --skip-install also skips package-lock generation in Angular CLI. The next
 # reusable DAG block deliberately runs `npm ci`, so create the lockfile here
