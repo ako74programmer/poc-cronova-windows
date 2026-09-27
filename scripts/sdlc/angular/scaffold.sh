@@ -17,7 +17,7 @@ setup_lint() {
 	echo "Adding angular-eslint to Angular workspace: $WORKSPACE"
 	(
 		cd "$WORKSPACE"
-		npx --yes "@angular/cli@$CLI_VERSION" add angular-eslint --skip-confirmation
+		npx --yes "@angular/cli@$CLI_VERSION" add "@angular-eslint/schematics@$CLI_VERSION" --skip-confirmation
 	)
 }
 if [[ -f "$WORKSPACE/package.json" ]]; then
