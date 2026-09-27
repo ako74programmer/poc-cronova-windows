@@ -20,9 +20,17 @@ setup_lint() {
 		npx --yes "@angular/cli@$CLI_VERSION" add "@angular-eslint/schematics@$CLI_VERSION" --skip-confirmation
 	)
 }
+setup_test_browser() {
+	if node -e 'const p=require(process.argv[1]); const d={...(p.devDependencies||{}), ...(p.dependencies||{})}; process.exit(d.puppeteer ? 0 : 1)' "$WORKSPACE/package.json" 2>/dev/null; then
+		return 0
+	fi
+	echo "Adding Puppeteer Chromium for Angular unit tests: $WORKSPACE"
+	(cd "$WORKSPACE" && npm install --save-dev --package-lock-only puppeteer@24)
+}
 if [[ -f "$WORKSPACE/package.json" ]]; then
 	echo "Angular project already exists: $WORKSPACE"
 	setup_lint
+	setup_test_browser
 	if [[ ! -f "$WORKSPACE/package-lock.json" ]]; then
 		echo "Generating missing package-lock.json: $WORKSPACE"
 		(cd "$WORKSPACE" && npm install --package-lock-only --ignore-scripts)
@@ -47,6 +55,7 @@ npx --yes "@angular/cli@$CLI_VERSION" new "$APP_NAME" \
   --skip-install
 
 setup_lint
+setup_test_browser
 
 # --skip-install also skips package-lock generation in Angular CLI. The next
 # reusable DAG block deliberately runs `npm ci`, so create the lockfile here
