@@ -82,13 +82,16 @@ find_python() {
 }
 
 setup_windows_path() {
-  local windows_path="${CRONOVA_WINDOWS_PATH:-}"
-  [[ -n "$windows_path" ]] || return 0
-  if command -v cygpath >/dev/null 2>&1; then
-    windows_path="$(cygpath -pu "$windows_path" 2>/dev/null || true)"
-  fi
-  [[ -n "$windows_path" ]] || return 0
-  export PATH="$windows_path${PATH:+:$PATH}"
+	local windows_path="${CRONOVA_WINDOWS_PATH:-}"
+	[[ -n "$windows_path" ]] || return 0
+	if command -v cygpath >/dev/null 2>&1; then
+		windows_path="$(cygpath -pu "$windows_path" 2>/dev/null || true)"
+	fi
+	[[ -n "$windows_path" ]] || return 0
+	# Keep the active Git Bash directories ahead of the inherited Windows PATH.
+	# Prepending CRONOVA_WINDOWS_PATH here lets Windows' WSL bash.exe shadow
+	# Git Bash when DAG commands use the portable `bash script.sh` form.
+	export PATH="${PATH:+$PATH:}$windows_path"
 }
 
 setup_runtime_tools() {
