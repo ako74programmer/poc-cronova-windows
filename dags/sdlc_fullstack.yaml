@@ -11,28 +11,92 @@ tasks:
     timeout: 180
     command: bash scripts/sdlc/integration/validate.sh --config configs/sdlc-fullstack.yaml
 
-  - id: validate_frontend_artifact
+  - id: validate_frontend_config
     type: shell
     timeout: 180
-    deps: [validate_stack]
-    command: bash scripts/sdlc/angular/smoke.sh --config configs/sdlc-angular.yaml --artifacts artifacts/angular
+    command: bash scripts/sdlc/angular/validate.sh --config configs/sdlc-angular.yaml
 
-  - id: validate_backend_artifact
+  - id: validate_backend_config
     type: shell
     timeout: 180
-    deps: [validate_stack]
     command: bash scripts/sdlc/springboot/validate.sh --config configs/sdlc-springboot.yaml
+
+  - id: scaffold_frontend
+    type: shell
+    timeout: 900
+    deps: [validate_stack, validate_frontend_config]
+    command: bash scripts/sdlc/angular/scaffold.sh --config configs/sdlc-angular.yaml
+
+  - id: scaffold_backend
+    type: shell
+    timeout: 600
+    deps: [validate_stack, validate_backend_config]
+    command: bash scripts/sdlc/springboot/scaffold.sh --config configs/sdlc-springboot.yaml
+
+  - id: install_frontend_dependencies
+    type: shell
+    timeout: 1200
+    deps: [scaffold_frontend]
+    command: bash scripts/sdlc/angular/install.sh --config configs/sdlc-angular.yaml
+
+  - id: lint_frontend
+    type: shell
+    timeout: 600
+    deps: [install_frontend_dependencies]
+    command: bash scripts/sdlc/angular/lint.sh --config configs/sdlc-angular.yaml
+
+  - id: test_frontend
+    type: shell
+    timeout: 900
+    deps: [lint_frontend]
+    command: bash scripts/sdlc/angular/test.sh --config configs/sdlc-angular.yaml
+
+  - id: build_frontend
+    type: shell
+    timeout: 900
+    deps: [test_frontend]
+    command: bash scripts/sdlc/angular/build.sh --config configs/sdlc-angular.yaml
+
+  - id: smoke_test_frontend
+    type: shell
+    timeout: 300
+    deps: [build_frontend]
+    command: bash scripts/sdlc/angular/smoke.sh --config configs/sdlc-angular.yaml
+
+  - id: compile_backend
+    type: shell
+    timeout: 900
+    deps: [scaffold_backend]
+    command: bash scripts/sdlc/springboot/compile.sh --config configs/sdlc-springboot.yaml
+
+  - id: test_backend
+    type: shell
+    timeout: 900
+    deps: [compile_backend]
+    command: bash scripts/sdlc/springboot/unit-test.sh --config configs/sdlc-springboot.yaml
+
+  - id: package_backend
+    type: shell
+    timeout: 900
+    deps: [test_backend]
+    command: bash scripts/sdlc/springboot/package.sh --config configs/sdlc-springboot.yaml
+
+  - id: install_playwright
+    type: shell
+    timeout: 1200
+    deps: [validate_stack]
+    command: bash scripts/sdlc/playwright/install.sh --config configs/sdlc-fullstack.yaml
 
   - id: start_backend
     type: shell
     timeout: 120
-    deps: [validate_frontend_artifact, validate_backend_artifact]
+    deps: [package_backend]
     command: bash scripts/sdlc/integration/start-backend.sh --config configs/sdlc-fullstack.yaml
 
   - id: start_frontend
     type: shell
     timeout: 120
-    deps: [validate_frontend_artifact, validate_backend_artifact]
+    deps: [smoke_test_frontend]
     command: bash scripts/sdlc/integration/start-frontend.sh --config configs/sdlc-fullstack.yaml
 
   - id: wait_services
@@ -41,24 +105,11 @@ tasks:
     deps: [start_backend, start_frontend]
     command: bash scripts/sdlc/integration/wait-services.sh --config configs/sdlc-fullstack.yaml
 
-  - id: playwright_install
-    type: shell
-    timeout: 900
-    deps: [wait_services]
-    command: bash scripts/sdlc/playwright/install.sh --config configs/sdlc-fullstack.yaml
-
   - id: playwright_e2e
     type: shell
     timeout: 1800
-    deps: [playwright_install]
+    deps: [wait_services, install_playwright]
     command: bash scripts/sdlc/playwright/run.sh --config configs/sdlc-fullstack.yaml
-
-  - id: collect_logs
-    type: shell
-    timeout: 180
-    deps: [playwright_e2e]
-    trigger_rule: all_done
-    command: bash scripts/sdlc/integration/collect-logs.sh --config configs/sdlc-fullstack.yaml
 
   - id: stop_services
     type: shell
@@ -67,9 +118,16 @@ tasks:
     trigger_rule: all_done
     command: bash scripts/sdlc/integration/stop-services.sh --config configs/sdlc-fullstack.yaml
 
+  - id: collect_logs
+    type: shell
+    timeout: 180
+    deps: [stop_services, playwright_e2e]
+    trigger_rule: all_done
+    command: bash scripts/sdlc/integration/collect-logs.sh --config configs/sdlc-fullstack.yaml
+
   - id: archive_results
     type: shell
     timeout: 300
-    deps: [stop_services]
+    deps: [collect_logs]
     trigger_rule: all_done
     command: bash scripts/sdlc/common/archive.sh --config configs/sdlc-fullstack.yaml

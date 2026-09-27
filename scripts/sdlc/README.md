@@ -8,8 +8,8 @@ Każdy skrypt przyjmuje:
 
 ```text
 --config PATH       wersjonowany plik sdlc YAML
---workspace PATH    katalog projektu (domyślnie CRONOVA_PROJECT_DIR lub repozytorium)
---artifacts PATH    katalog wyników (domyślnie artifacts)
+--workspace PATH    katalog projektu (domyślnie CRONOVA_PROJECT_DIR, workspace.directory z configu albo repozytorium)
+--artifacts PATH    katalog wyników (domyślnie CRONOVA_ARTIFACTS_DIR, artifacts.directory z configu albo artifacts)
 ```
 
 DAG opisuje kolejność zadań. Konfiguracja opisuje stack technologiczny i parametry projektu. Skrypt wykonuje operację.
@@ -31,4 +31,4 @@ Pierwsza wersja zawiera:
 - instalację i uruchomienie Playwright;
 - podstawowe DAG-i `sdlc_angular`, `sdlc_springboot_rest` i `sdlc_fullstack`.
 
-Skrypty Spring Boot i full-stack wymagają dalszego spięcia z workspace’ami artefaktów oraz zarządzaniem procesami Windows Job Object.
+Workspace’y i katalogi artefaktów są wybierane z konfiguracji projektu. Skrypty Spring Boot i full-stack nadal wymagają natywnego testu na Windows, zwłaszcza weryfikacji cyklu życia procesów usług.

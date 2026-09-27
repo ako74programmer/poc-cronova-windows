@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+COMMON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Shared Windows/Git Bash bootstrap. Source this file from a workflow script.
 CALLER_SOURCE="${BASH_SOURCE[1]:-${BASH_SOURCE[0]}}"
 SCRIPT_DIR="$(cd "$(dirname "$CALLER_SOURCE")" && pwd)"
@@ -8,8 +9,8 @@ SCRIPTS_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$SCRIPTS_ROOT/../.." && pwd)"
 
 CONFIG=""
-WORKSPACE="${CRONOVA_PROJECT_DIR:-$REPO_ROOT}"
-ARTIFACTS="${CRONOVA_ARTIFACTS_DIR:-$REPO_ROOT/artifacts}"
+WORKSPACE="${CRONOVA_PROJECT_DIR:-}"
+ARTIFACTS="${CRONOVA_ARTIFACTS_DIR:-}"
 
 usage_common() {
   cat <<EOF
@@ -43,6 +44,19 @@ parse_common_args() {
   done
   [[ -n "$CONFIG" ]] || { echo "Error: --config is required" >&2; return 2; }
   CONFIG="$(normalize_path "$CONFIG")"
+  source "$COMMON_DIR/config-value.sh"
+  if [[ -z "$WORKSPACE" ]]; then
+    # Project configs may provide a reusable default. An explicit --workspace
+    # or CRONOVA_PROJECT_DIR remains authoritative.
+    local configured_workspace
+    configured_workspace="$(config_value "$CONFIG" workspace directory || true)"
+    WORKSPACE="${configured_workspace:-$REPO_ROOT}"
+  fi
+  if [[ -z "$ARTIFACTS" ]]; then
+    local configured_artifacts
+    configured_artifacts="$(config_value "$CONFIG" artifacts directory || true)"
+    ARTIFACTS="${configured_artifacts:-$REPO_ROOT/artifacts}"
+  fi
   WORKSPACE="$(normalize_path "$WORKSPACE")"
   ARTIFACTS="$(normalize_path "$ARTIFACTS")"
   [[ -f "$CONFIG" ]] || { echo "Error: config not found: $CONFIG" >&2; return 2; }

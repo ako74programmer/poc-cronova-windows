@@ -1,5 +1,8 @@
 schema_version: 1
 
+workspace:
+  directory: .workspaces/springboot
+
 project:
   id: item-service
   kind: springboot

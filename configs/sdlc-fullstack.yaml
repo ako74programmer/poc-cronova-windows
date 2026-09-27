@@ -7,21 +7,21 @@ stack:
   openapi_file: contracts/openapi.yaml
 
 artifacts:
+  directory: artifacts/fullstack
   frontend_manifest: artifacts/angular/frontend-manifest.json
   frontend_dist: artifacts/angular/dist/browser
   backend_manifest: artifacts/springboot/backend-manifest.json
   backend_jar: artifacts/springboot/package/item-service.jar
 
 services:
-  backend:
-    host: 127.0.0.1
-    port: 18080
-    url: http://127.0.0.1:18080
-    health_url: http://127.0.0.1:18080/actuator/health
-  frontend:
-    host: 127.0.0.1
-    port: 4300
-    url: http://127.0.0.1:4300
+  backend_host: 127.0.0.1
+  backend_port: 18080
+  backend_health_url: http://127.0.0.1:18080/actuator/health
+  backend_profile: e2e
+  frontend_host: 127.0.0.1
+  frontend_port: 4300
+  frontend_url: http://127.0.0.1:4300
+  startup_timeout_seconds: 90
 
 playwright:
   directory: e2e/playwright
