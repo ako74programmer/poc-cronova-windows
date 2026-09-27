@@ -87,41 +87,16 @@ tasks:
     deps: [validate_stack]
     command: bash scripts/sdlc/playwright/install.sh --config configs/sdlc-fullstack.yaml
 
-  - id: start_backend
-    type: shell
-    timeout: 120
-    deps: [package_backend]
-    command: bash scripts/sdlc/integration/start-backend.sh --config configs/sdlc-fullstack.yaml
-
-  - id: start_frontend
-    type: shell
-    timeout: 120
-    deps: [smoke_test_frontend]
-    command: bash scripts/sdlc/integration/start-frontend.sh --config configs/sdlc-fullstack.yaml
-
-  - id: wait_services
-    type: shell
-    timeout: 180
-    deps: [start_backend, start_frontend]
-    command: bash scripts/sdlc/integration/wait-services.sh --config configs/sdlc-fullstack.yaml
-
   - id: playwright_e2e
     type: shell
-    timeout: 1800
-    deps: [wait_services, install_playwright]
-    command: bash scripts/sdlc/playwright/run.sh --config configs/sdlc-fullstack.yaml
-
-  - id: stop_services
-    type: shell
-    timeout: 180
-    deps: [start_backend, start_frontend, playwright_e2e]
-    trigger_rule: all_done
-    command: bash scripts/sdlc/integration/stop-services.sh --config configs/sdlc-fullstack.yaml
+    timeout: 2100
+    deps: [package_backend, smoke_test_frontend, install_playwright]
+    command: bash scripts/sdlc/integration/run-stack-e2e.sh --config configs/sdlc-fullstack.yaml
 
   - id: collect_logs
     type: shell
     timeout: 180
-    deps: [stop_services, playwright_e2e]
+    deps: [playwright_e2e]
     trigger_rule: all_done
     command: bash scripts/sdlc/integration/collect-logs.sh --config configs/sdlc-fullstack.yaml
 

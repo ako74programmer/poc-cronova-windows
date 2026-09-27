@@ -31,4 +31,4 @@ Pierwsza wersja zawiera:
 - instalację i uruchomienie Playwright;
 - podstawowe DAG-i `sdlc_angular`, `sdlc_springboot_rest` i `sdlc_fullstack`.
 
-Workspace’y i katalogi artefaktów są wybierane z konfiguracji projektu. Skrypty Spring Boot i full-stack nadal wymagają natywnego testu na Windows, zwłaszcza weryfikacji cyklu życia procesów usług.
+Workspace’y i katalogi artefaktów są wybierane z konfiguracji projektu. Na Windows Cronova sprząta procesy potomne wraz z końcem taska (Job Object), dlatego start usług, readiness, E2E i ich stop muszą być skomponowane w jednym tasku przez `integration/run-stack-e2e.sh`. Skrypty Spring Boot i full-stack nadal wymagają natywnego testu Windows.
