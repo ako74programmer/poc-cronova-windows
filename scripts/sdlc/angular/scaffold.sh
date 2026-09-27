@@ -6,8 +6,12 @@ source "$SCRIPT_DIR/../common/config-value.sh"
 parse_common_args "$@"
 require_command npx
 if [[ -f "$WORKSPACE/package.json" ]]; then
-  echo "Angular project already exists: $WORKSPACE"
-  exit 0
+	  echo "Angular project already exists: $WORKSPACE"
+	  if [[ ! -f "$WORKSPACE/package-lock.json" ]]; then
+	    echo "Generating missing package-lock.json: $WORKSPACE"
+	    (cd "$WORKSPACE" && npm install --package-lock-only --ignore-scripts)
+	  fi
+	  exit 0
 fi
 APP_NAME="$(config_value "$CONFIG" angular app_name || true)"
 CLI_VERSION="$(config_value "$CONFIG" runtime angular_cli_version || true)"
