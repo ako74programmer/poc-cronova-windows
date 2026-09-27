@@ -29,3 +29,8 @@ npx --yes "@angular/cli@$CLI_VERSION" new "$APP_NAME" \
   --skip-git \
   --package-manager=npm \
   --skip-install
+
+# --skip-install also skips package-lock generation in Angular CLI. The next
+# reusable DAG block deliberately runs `npm ci`, so create the lockfile here
+# without installing dependencies; install.sh remains the single install step.
+(cd "$WORKSPACE" && npm install --package-lock-only --ignore-scripts)
