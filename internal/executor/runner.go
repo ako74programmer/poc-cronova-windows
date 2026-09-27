@@ -547,6 +547,14 @@ func buildEnv(extra map[string]string) []string {
 	// Windows tools (java, mvn, node, etc.) inherited from cronova's env.
 	if runtime.GOOS == "windows" {
 		values["MSYS2_PATH_TYPE"] = "inherit"
+		// DAG commands intentionally use the portable `bash script.sh` form.
+		// Put the selected Git for Windows directories first so that this
+		// nested lookup cannot resolve Windows' WSL bash.exe from PATH.
+		if configured := os.Getenv("CRONOVA_BASH_PATH"); configured != "" {
+			gitBin := filepath.Dir(configured)
+			gitUsrBin := filepath.Clean(filepath.Join(gitBin, "..", "usr", "bin"))
+			values["PATH"] = strings.Join([]string{gitUsrBin, gitBin, values["PATH"]}, string(os.PathListSeparator))
+		}
 	}
 	keys := make([]string, 0, len(values))
 	for k := range values {
