@@ -14,9 +14,11 @@ if [[ -n "$DIST_DIR" && ! -d "$DIST_DIR" ]]; then
   DIST_DIR=""
 fi
 if [[ -z "$DIST_DIR" && -d "$WORKSPACE/dist/item-portal/browser" ]]; then
-  DIST_DIR="$WORKSPACE/dist/item-portal/browser"
+	  DIST_DIR="$WORKSPACE/dist/item-portal/browser"
 elif [[ -d "$WORKSPACE/dist" ]]; then
-  DIST_DIR="$WORKSPACE/dist"
+	  # Angular CLI 20 emits dist/<project>/index.html by default, while older
+	  # configurations may emit dist/<project>/browser/index.html.
+	  DIST_DIR="$(find "$WORKSPACE/dist" -type f -name index.html -print -quit | xargs -r dirname)"
 fi
 [[ -n "$DIST_DIR" && -f "$DIST_DIR/index.html" ]] || {
   echo "Error: Angular build did not produce index.html" >&2
