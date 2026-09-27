@@ -14,8 +14,15 @@ CLI_VERSION="$(config_value "$CONFIG" runtime angular_cli_version || true)"
 APP_NAME="${APP_NAME:-item-portal}"
 CLI_VERSION="${CLI_VERSION:-latest}"
 mkdir -p "$WORKSPACE"
+CLI_DIRECTORY="$WORKSPACE"
+if [[ "$WORKSPACE" == "$REPO_ROOT/"* ]]; then
+  # Angular CLI is a Windows Node process when this script runs under Git Bash.
+  # Pass a repo-relative path so MSYS/Node cannot treat a converted absolute
+  # path such as C:\repo\.workspaces\angular as a second relative segment.
+  CLI_DIRECTORY="${WORKSPACE#"$REPO_ROOT/"}"
+fi
 npx --yes "@angular/cli@$CLI_VERSION" new "$APP_NAME" \
-  --directory "$WORKSPACE" \
+  --directory "$CLI_DIRECTORY" \
   --routing \
   --style=scss \
   --standalone \
