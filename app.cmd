@@ -103,7 +103,8 @@ if not exist "%TOOLCHAIN_SCRIPT%" (
 
 set "POWERSHELL_EXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 if not exist "%POWERSHELL_EXE%" set "POWERSHELL_EXE=powershell.exe"
-for /f "tokens=1,* delims==" %%A in ('"%POWERSHELL_EXE%" -NoProfile -ExecutionPolicy Bypass -File "%TOOLCHAIN_SCRIPT%" 2^>nul') do (
+echo [app.cmd] Running toolchain detector: "%TOOLCHAIN_SCRIPT%"
+for /f "tokens=1,* delims==" %%A in ('"%POWERSHELL_EXE%" -NoProfile -ExecutionPolicy Bypass -File "%TOOLCHAIN_SCRIPT%"') do (
     if /i "%%A"=="CRONOVA_PYTHON" if not defined CRONOVA_PYTHON set "CRONOVA_PYTHON=%%B"
     if /i "%%A"=="CRONOVA_NODE" if not defined CRONOVA_NODE set "CRONOVA_NODE=%%B"
     if /i "%%A"=="CRONOVA_NPM" if not defined CRONOVA_NPM set "CRONOVA_NPM=%%B"
