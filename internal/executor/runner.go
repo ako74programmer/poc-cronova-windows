@@ -102,8 +102,8 @@ func (r *Runner) Launch(spec Spec) (string, error) {
 	// code to a sidecar file — it survives even if this executor process dies
 	// before the task finishes, letting a restarted executor report the real
 	// outcome instead of failing the task on principle.
-	script := wrapCommandForState(spec.Command, r.stateDir != "", exitFile(r.stateDir, ref))
-	cmd, err := shellCommand(script)
+	script := wrapCommandForState(spec.Type, spec.Command, r.stateDir != "", exitFile(r.stateDir, ref))
+	cmd, err := taskCommand(spec.Type, script)
 	if err != nil {
 		fmt.Fprintf(sink, "=== launch error: %v ===\n", err)
 		_ = sink.Close()

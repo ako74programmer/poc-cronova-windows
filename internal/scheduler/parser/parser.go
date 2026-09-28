@@ -340,7 +340,7 @@ func Parse(raw []byte) (*model.DAG, error) {
 
 		taskType := orDefault(strings.TrimSpace(t.Type), "shell")
 		switch taskType {
-		case "shell", "python", "sql", "jar", "http", "subdag":
+		case "shell", "powershell", "python", "sql", "jar", "http", "subdag":
 		default:
 			return nil, fmt.Errorf("dag %q: task %q has unsupported type %q", y.DagID, t.ID, taskType)
 		}

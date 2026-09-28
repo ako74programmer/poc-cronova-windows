@@ -7,108 +7,108 @@ default_retries: 1
 
 tasks:
   - id: validate_stack
-    type: shell
+    type: powershell
     timeout: 180
-    command: bash scripts/sdlc/integration/validate.sh --config configs/sdlc-fullstack.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step validate-stack -Config configs\\sdlc-fullstack.yaml"
 
   - id: validate_frontend_config
-    type: shell
+    type: powershell
     timeout: 180
-    command: bash scripts/sdlc/angular/validate.sh --config configs/sdlc-angular.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step validate-frontend -Config configs\\sdlc-angular.yaml"
 
   - id: validate_backend_config
-    type: shell
+    type: powershell
     timeout: 180
-    command: bash scripts/sdlc/springboot/validate.sh --config configs/sdlc-springboot.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step validate-backend -Config configs\\sdlc-springboot.yaml"
 
   - id: scaffold_frontend
-    type: shell
+    type: powershell
     timeout: 900
     deps: [validate_stack, validate_frontend_config]
-    command: bash scripts/sdlc/angular/scaffold.sh --config configs/sdlc-angular.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step scaffold-frontend -Config configs\\sdlc-angular.yaml"
 
   - id: scaffold_backend
-    type: shell
+    type: powershell
     timeout: 600
     deps: [validate_stack, validate_backend_config]
-    command: bash scripts/sdlc/springboot/scaffold.sh --config configs/sdlc-springboot.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step scaffold-backend -Config configs\\sdlc-springboot.yaml"
 
   - id: generate_contract_app
-    type: shell
+    type: powershell
     timeout: 300
     deps: [scaffold_frontend, scaffold_backend, validate_stack]
-    command: bash scripts/sdlc/integration/generate-contract-app.sh --config configs/sdlc-fullstack.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step generate-contract -Config configs\\sdlc-fullstack.yaml"
 
   - id: install_frontend_dependencies
-    type: shell
+    type: powershell
     timeout: 1200
     deps: [generate_contract_app]
-    command: bash scripts/sdlc/angular/install.sh --config configs/sdlc-angular.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step install-frontend -Config configs\\sdlc-angular.yaml"
 
   - id: lint_frontend
-    type: shell
+    type: powershell
     timeout: 600
     deps: [install_frontend_dependencies]
-    command: bash scripts/sdlc/angular/lint.sh --config configs/sdlc-angular.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step lint-frontend -Config configs\\sdlc-angular.yaml"
 
   - id: test_frontend
-    type: shell
+    type: powershell
     timeout: 900
     deps: [lint_frontend]
-    command: bash scripts/sdlc/angular/test.sh --config configs/sdlc-angular.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step test-frontend -Config configs\\sdlc-angular.yaml"
 
   - id: build_frontend
-    type: shell
+    type: powershell
     timeout: 900
     deps: [test_frontend]
-    command: bash scripts/sdlc/angular/build.sh --config configs/sdlc-angular.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step build-frontend -Config configs\\sdlc-angular.yaml"
 
   - id: smoke_test_frontend
-    type: shell
+    type: powershell
     timeout: 300
     deps: [build_frontend]
-    command: bash scripts/sdlc/angular/smoke.sh --config configs/sdlc-angular.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step smoke-frontend -Config configs\\sdlc-fullstack.yaml"
 
   - id: compile_backend
-    type: shell
+    type: powershell
     timeout: 900
     deps: [generate_contract_app]
-    command: bash scripts/sdlc/springboot/compile.sh --config configs/sdlc-springboot.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step compile-backend -Config configs\\sdlc-springboot.yaml"
 
   - id: test_backend
-    type: shell
+    type: powershell
     timeout: 900
     deps: [compile_backend]
-    command: bash scripts/sdlc/springboot/unit-test.sh --config configs/sdlc-springboot.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step test-backend -Config configs\\sdlc-springboot.yaml"
 
   - id: package_backend
-    type: shell
+    type: powershell
     timeout: 900
     deps: [test_backend]
-    command: bash scripts/sdlc/springboot/package.sh --config configs/sdlc-springboot.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step package-backend -Config configs\\sdlc-fullstack.yaml"
 
   - id: install_playwright
-    type: shell
+    type: powershell
     timeout: 1200
     deps: [validate_stack]
-    command: bash scripts/sdlc/playwright/install.sh --config configs/sdlc-fullstack.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step install-playwright -Config configs\\sdlc-fullstack.yaml"
 
   - id: playwright_e2e
-    type: shell
+    type: powershell
     timeout: 2100
     deps: [package_backend, smoke_test_frontend, install_playwright]
-    command: bash scripts/sdlc/integration/run-stack-e2e.sh --config configs/sdlc-fullstack.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step run-stack-e2e -Config configs\\sdlc-fullstack.yaml"
 
   - id: collect_logs
-    type: shell
+    type: powershell
     timeout: 180
     deps: [playwright_e2e]
     trigger_rule: all_done
-    command: bash scripts/sdlc/integration/collect-logs.sh --config configs/sdlc-fullstack.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step collect-logs -Config configs\\sdlc-fullstack.yaml"
 
   - id: archive_results
-    type: shell
+    type: powershell
     timeout: 300
     deps: [collect_logs]
     trigger_rule: all_done
-    command: bash scripts/sdlc/common/archive.sh --config configs/sdlc-fullstack.yaml
+    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step archive -Config configs\\sdlc-fullstack.yaml"

@@ -164,7 +164,7 @@ type DAG struct {
 // Task is a single node in a DAG.
 type Task struct {
 	ID         string   `json:"id"`
-	Type       string   `json:"type"` // shell/python/sql/jar/...
+	Type       string   `json:"type"` // shell/powershell/python/sql/jar/...
 	Command    string   `json:"command"`
 	Deps       []string `json:"deps,omitempty"`
 	Pool       string   `json:"pool"`

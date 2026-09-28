@@ -21,7 +21,7 @@ import (
 // Spec describes one task execution.
 type Spec struct {
 	TaskRunID string            // run_id + "/" + task_id; the idempotency key and ref
-	Type      string            // shell/python/sql/jar (informational)
+	Type      string            // shell/powershell/python/sql/jar (informational)
 	Command   string            // shell command line
 	Env       map[string]string // injected env (CRONOVA_* vars)
 	Timeout   time.Duration     // 0 = no timeout

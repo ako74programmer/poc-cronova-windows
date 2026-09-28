@@ -23,7 +23,11 @@ func shellCommand(script string) (*exec.Cmd, error) {
 	return exec.Command("sh", "-c", script), nil
 }
 
-func wrapCommandForState(command string, stateEnabled bool, exitFilePath string) string {
+func taskCommand(_ string, script string) (*exec.Cmd, error) {
+	return shellCommand(script)
+}
+
+func wrapCommandForState(_ string, command string, stateEnabled bool, exitFilePath string) string {
 	if !stateEnabled {
 		return command
 	}

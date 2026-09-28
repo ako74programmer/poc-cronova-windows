@@ -22,6 +22,13 @@ func sysProcAttrForGroup() *syscall.SysProcAttr {
 	return &syscall.SysProcAttr{CreationFlags: windows.CREATE_NEW_PROCESS_GROUP}
 }
 
+func taskCommand(taskType, script string) (*exec.Cmd, error) {
+	if taskType == "powershell" {
+		return exec.Command("powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script), nil
+	}
+	return shellCommand(script)
+}
+
 func attachProcessGroup(cmd *exec.Cmd) error {
 	if cmd == nil || cmd.Process == nil {
 		return fmt.Errorf("process has no handle")
@@ -132,9 +139,13 @@ func pinGitBashCommand(script string) string {
 	return script
 }
 
-func wrapCommandForState(command string, stateEnabled bool, exitFilePath string) string {
+func wrapCommandForState(taskType, command string, stateEnabled bool, exitFilePath string) string {
 	if !stateEnabled {
 		return command
+	}
+	if taskType == "powershell" {
+		path := strings.ReplaceAll(exitFilePath, "'", "''")
+		return fmt.Sprintf("$__cronova_ec = 0\ntry { & {\n%s\n}; if ($LASTEXITCODE -ne $null) { $__cronova_ec = $LASTEXITCODE } } catch { Write-Error $_; $__cronova_ec = 1 }\nSet-Content -LiteralPath '%s' -Value $__cronova_ec -NoNewline\nexit $__cronova_ec", command, path)
 	}
 	return fmt.Sprintf("(\n%s\n)\n__cronova_ec=$?\nprintf '%%s' \"$__cronova_ec\" > %q\nexit \"$__cronova_ec\"", command, exitFilePath)
 }

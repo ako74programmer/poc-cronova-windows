@@ -1,4 +1,4 @@
-# Test Windows runtime — `cmd.exe` → Cronova → Git Bash
+# Test Windows runtime — `cmd.exe` → Cronova → PowerShell
 
 Gałąź testowa:
 
@@ -8,10 +8,10 @@ feature/windows-cmd-runtime-sdlc-2026-09-26
 
 ## Cel
 
-Potwierdzić, że Cronova uruchomiony przez `start.cmd`:
+Potwierdzić, że Cronova uruchomiony przez `app.cmd start`:
 
 1. działa jako proces potomny `cmd.exe`;
-2. używa jawnie wskazanego Git Bash przez `CRONOVA_BASH_PATH`;
+2. uruchamia taski typu `powershell` przez natywny `powershell.exe`;
 3. przekazuje do tasków Java, Maven, Python i Node bez ustawiania ręcznej allowlisty;
 4. nie wybiera WSL ani przypadkowego `bash.exe` z `PATH`.
 

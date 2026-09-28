@@ -351,6 +351,16 @@ func TestParseRejectsUnknownFieldsAndTaskTypes(t *testing.T) {
 	}
 }
 
+func TestParseAcceptsPowerShellTask(t *testing.T) {
+	d, err := Parse([]byte("dag_id: windows\ntasks:\n  - id: run\n    type: powershell\n    command: Write-Output ok\n"))
+	if err != nil {
+		t.Fatalf("powershell task should parse: %v", err)
+	}
+	if got := d.Tasks[0].Type; got != "powershell" {
+		t.Fatalf("task type = %q, want powershell", got)
+	}
+}
+
 func TestParseRejectsMultipleDocumentsAndNegativeRetries(t *testing.T) {
 	for name, raw := range map[string]string{
 		"multiple documents": "dag_id: first\n---\ndag_id: second\n",
