@@ -79,8 +79,8 @@ if not exist "%BINARY%" (
     )
 )
 
-call :configure_toolchain
 if not defined CRONOVA_WINDOWS_PATH set "CRONOVA_WINDOWS_PATH=%PATH%"
+call :configure_toolchain
 
 echo [app.cmd] Stopping any leftover cronova processes...
 taskkill /F /IM cronova.exe 2>nul
