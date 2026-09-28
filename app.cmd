@@ -10,8 +10,14 @@ set "HOST=127.0.0.1"
 set "DB=data/cronova.db"
 set "LOGS=logs"
 set "DAGS=dags"
-if not defined CRONOVA_BASH_PATH set "CRONOVA_BASH_PATH=%ProgramFiles%\Git\usr\bin\bash.exe"
-if not exist "%CRONOVA_BASH_PATH%" if exist "%ProgramFiles%\Git\bin\bash.exe" set "CRONOVA_BASH_PATH=%ProgramFiles%\Git\bin\bash.exe"
+if not defined CRONOVA_BASH_PATH (
+    if exist "%ProgramFiles%\Git\usr\bin\bash.exe" set "CRONOVA_BASH_PATH=%ProgramFiles%\Git\usr\bin\bash.exe"
+    if not defined CRONOVA_BASH_PATH if exist "%ProgramW6432%\Git\usr\bin\bash.exe" set "CRONOVA_BASH_PATH=%ProgramW6432%\Git\usr\bin\bash.exe"
+    if not defined CRONOVA_BASH_PATH if exist "%LOCALAPPDATA%\Programs\Git\usr\bin\bash.exe" set "CRONOVA_BASH_PATH=%LOCALAPPDATA%\Programs\Git\usr\bin\bash.exe"
+    if not defined CRONOVA_BASH_PATH if exist "%ProgramFiles%\Git\bin\bash.exe" set "CRONOVA_BASH_PATH=%ProgramFiles%\Git\bin\bash.exe"
+    if not defined CRONOVA_BASH_PATH if exist "%ProgramW6432%\Git\bin\bash.exe" set "CRONOVA_BASH_PATH=%ProgramW6432%\Git\bin\bash.exe"
+    if not defined CRONOVA_BASH_PATH if exist "%LOCALAPPDATA%\Programs\Git\bin\bash.exe" set "CRONOVA_BASH_PATH=%LOCALAPPDATA%\Programs\Git\bin\bash.exe"
+)
 
 if "%~1"=="" goto :usage
 
@@ -74,6 +80,7 @@ if not exist "%BINARY%" (
 )
 
 call :configure_toolchain
+if not defined CRONOVA_WINDOWS_PATH set "CRONOVA_WINDOWS_PATH=%PATH%"
 
 echo [app.cmd] Stopping any leftover cronova processes...
 taskkill /F /IM cronova.exe 2>nul
@@ -106,7 +113,7 @@ if not exist "%TOOLCHAIN_SCRIPT%" (
 set "POWERSHELL_EXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 if not exist "%POWERSHELL_EXE%" set "POWERSHELL_EXE=powershell.exe"
 echo [app.cmd] Running toolchain detector: "%TOOLCHAIN_SCRIPT%"
-for /f "tokens=1,* delims==" %%A in ('"%POWERSHELL_EXE%" -NoProfile -ExecutionPolicy Bypass -File "%TOOLCHAIN_SCRIPT%"') do (
+for /f "tokens=1,* delims==" %%A in ('%POWERSHELL_EXE% -NoProfile -ExecutionPolicy Bypass -File "%TOOLCHAIN_SCRIPT%" 2^>nul') do (
     if /i "%%A"=="CRONOVA_PYTHON" if not defined CRONOVA_PYTHON set "CRONOVA_PYTHON=%%B"
     if /i "%%A"=="CRONOVA_NODE" if not defined CRONOVA_NODE set "CRONOVA_NODE=%%B"
     if /i "%%A"=="CRONOVA_NPM" if not defined CRONOVA_NPM set "CRONOVA_NPM=%%B"
@@ -115,6 +122,8 @@ for /f "tokens=1,* delims==" %%A in ('"%POWERSHELL_EXE%" -NoProfile -ExecutionPo
 )
 
 echo [app.cmd] Runtime tool paths for this Cronova process:
+if defined CRONOVA_BASH_PATH (echo   CRONOVA_BASH_PATH=!CRONOVA_BASH_PATH!) else (echo   Git Bash: not detected)
+if defined CRONOVA_WINDOWS_PATH (echo   CRONOVA_WINDOWS_PATH inherited) else (echo   CRONOVA_WINDOWS_PATH: not set)
 if defined CRONOVA_PYTHON (echo   CRONOVA_PYTHON=!CRONOVA_PYTHON!) else (echo   Python: not detected)
 if defined CRONOVA_NODE (echo   CRONOVA_NODE=!CRONOVA_NODE!) else (echo   Node: not detected)
 if defined CRONOVA_NPM (echo   CRONOVA_NPM=!CRONOVA_NPM!) else (echo   npm: not detected)
