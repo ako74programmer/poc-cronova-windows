@@ -33,10 +33,16 @@ tasks:
     deps: [validate_stack, validate_backend_config]
     command: bash scripts/sdlc/springboot/scaffold.sh --config configs/sdlc-springboot.yaml
 
+  - id: generate_contract_app
+    type: shell
+    timeout: 300
+    deps: [scaffold_frontend, scaffold_backend, validate_stack]
+    command: bash scripts/sdlc/integration/generate-contract-app.sh --config configs/sdlc-fullstack.yaml
+
   - id: install_frontend_dependencies
     type: shell
     timeout: 1200
-    deps: [scaffold_frontend]
+    deps: [generate_contract_app]
     command: bash scripts/sdlc/angular/install.sh --config configs/sdlc-angular.yaml
 
   - id: lint_frontend
@@ -66,7 +72,7 @@ tasks:
   - id: compile_backend
     type: shell
     timeout: 900
-    deps: [scaffold_backend]
+    deps: [generate_contract_app]
     command: bash scripts/sdlc/springboot/compile.sh --config configs/sdlc-springboot.yaml
 
   - id: test_backend

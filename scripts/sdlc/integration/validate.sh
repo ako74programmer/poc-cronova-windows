@@ -27,6 +27,7 @@ BACKEND_HEALTH_URL="$(config_value "$CONFIG" services backend_health_url || true
 FRONTEND_URL="$(config_value "$CONFIG" services frontend_url || true)"
 PLAYWRIGHT_DIR="$(config_value "$CONFIG" playwright directory || true)"
 PLAYWRIGHT_BASE_URL="$(config_value "$CONFIG" playwright base_url || true)"
+PLAYWRIGHT_API_URL="$(config_value "$CONFIG" playwright api_url || true)"
 
 required_config stack angular_config "$ANGULAR_CONFIG"
 required_config stack springboot_config "$SPRINGBOOT_CONFIG"
@@ -39,6 +40,7 @@ required_config services backend_health_url "$BACKEND_HEALTH_URL"
 required_config services frontend_url "$FRONTEND_URL"
 required_config playwright directory "$PLAYWRIGHT_DIR"
 required_config playwright base_url "$PLAYWRIGHT_BASE_URL"
+required_config playwright api_url "$PLAYWRIGHT_API_URL"
 
 for path in "$ANGULAR_CONFIG" "$SPRINGBOOT_CONFIG" "$OPENAPI_FILE"; do
   normalized="$(normalize_path "$path")"
@@ -46,16 +48,27 @@ for path in "$ANGULAR_CONFIG" "$SPRINGBOOT_CONFIG" "$OPENAPI_FILE"; do
 done
 
 OPENAPI_PATH="$(normalize_path "$OPENAPI_FILE")"
-python - "$OPENAPI_PATH" <<'PY'
-import sys
-from pathlib import Path
+python "$SCRIPT_DIR/generate_contract_app.py" --contract "$OPENAPI_PATH"
 
-path = Path(sys.argv[1])
-text = path.read_text(encoding="utf-8")
-for marker in ("openapi:", "paths:"):
-    if marker not in text:
-        raise SystemExit(f"missing required OpenAPI marker {marker!r}: {path}")
-print(f"OpenAPI contract validation passed: {path}")
+ANGULAR_CONFIG_PATH="$(normalize_path "$ANGULAR_CONFIG")"
+ANGULAR_API_URL="$(config_value "$ANGULAR_CONFIG_PATH" api base_url || true)"
+required_config angular api.base_url "$ANGULAR_API_URL"
+python - "$ANGULAR_API_URL" "$PLAYWRIGHT_API_URL" "$BACKEND_HEALTH_URL" "$FRONTEND_URL" "$PLAYWRIGHT_BASE_URL" <<'PY'
+import sys
+from urllib.parse import urlsplit
+
+angular_api, playwright_api, backend_health, frontend, playwright_frontend = sys.argv[1:]
+if angular_api.rstrip("/") != playwright_api.rstrip("/"):
+    raise SystemExit("Angular api.base_url and Fullstack playwright.api_url must match")
+if frontend.rstrip("/") != playwright_frontend.rstrip("/"):
+    raise SystemExit("Fullstack services.frontend_url and playwright.base_url must match")
+api = urlsplit(angular_api)
+health = urlsplit(backend_health)
+if not api.scheme or api.scheme not in ("http", "https") or api.netloc != health.netloc:
+    raise SystemExit("Angular API URL must use the same HTTP(S) host/port as the configured backend")
+if api.path.rstrip("/") != "/api":
+    raise SystemExit("Angular API URL path must match the Item API /api prefix")
+print("Frontend, Playwright, and backend API URLs are aligned")
 PY
 
 [[ "$FRONTEND_URL" == http://* || "$FRONTEND_URL" == https://* ]] || { echo "Error: services.frontend_url must be an HTTP(S) URL" >&2; exit 10; }

@@ -26,6 +26,7 @@ Pierwsza wersja zawiera:
 - `configs/sdlc-springboot.yaml`;
 - `configs/sdlc-fullstack.yaml`;
 - wspólny kontrakt `contracts/openapi.yaml`;
+- generator implementacji CRUD Spring Boot oraz klienta i interfejsu Angular dla `sdlc_fullstack`, walidujący zgodność z kontraktem;
 - podstawowe skrypty walidacji, npm, Angular build/test/lint;
 - Spring Boot compile/test/package wrappers;
 - instalację i uruchomienie Playwright;

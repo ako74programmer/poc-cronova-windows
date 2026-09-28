@@ -4,13 +4,13 @@
 
 Dokument opisuje [`dags/sdlc_fullstack.yaml`](../dags/sdlc_fullstack.yaml), konfiguracje Angular/Spring Boot, wywoływane skrypty oraz reużywalność przepływu.
 
-Analiza kodu dotyczy commita `40b660a94d3788a0c10c1d029d5fa1a9152e8689` na branchu `feature/windows-cmd-runtime-sdlc-2026-09-26`. DAG został uruchomiony na Windowsie: run `sdlc_fullstack__manual_1790528551441446400` zakończył się sukcesem, wszystkie 17 tasków przeszło, a porty 18080 i 4300 były wolne po cleanupie. Szczegóły pozostałych przepływów znajdują się w [indeksie opisów SDLC](SDLC_DAGS.md).
+Historyczny punkt odniesienia przed tą zmianą to commit `40b660a94d3788a0c10c1d029d5fa1a9152e8689` na branchu `feature/windows-cmd-runtime-sdlc-2026-09-26`: wtedy DAG miał 17 tasków, a run `sdlc_fullstack__manual_1790528551441446400` przeszedł na Windowsie. Aktualny DAG ma 18 tasków; jego nowa implementacja wymaga ponownego uruchomienia na Windowsie. Szczegóły pozostałych przepływów znajdują się w [indeksie opisów SDLC](SDLC_DAGS.md).
 
 ## 1. Cel i granice przepływu
 
 `sdlc_fullstack` buduje dwa komponenty jednej aplikacji i sprawdza podstawową ścieżkę przeglądarkową:
 
-1. waliduje konfigurację stosu, konfiguracje komponentów oraz minimalną strukturę kontraktu OpenAPI;
+1. waliduje konfigurację stosu, konfiguracje komponentów oraz operacje i schematy Item API w OpenAPI;
 2. tworzy lub wykorzystuje istniejące workspace’y Angular i Spring Boot;
 3. instaluje zależności frontendowe, uruchamia lint i testy jednostkowe Angular;
 4. kompiluje, testuje jednostkowo i pakuje backend Spring Boot;
@@ -20,7 +20,7 @@ Analiza kodu dotyczy commita `40b660a94d3788a0c10c1d029d5fa1a9152e8689` na branc
 
 DAG jest **orkiestratorem**, nie implementacją aplikacji. YAML określa kolejność, zależności, limity czasu i argumenty. Operacje wykonują skrypty z `scripts/sdlc/`, a wartości projektu i środowiska pochodzą z plików YAML.
 
-Zakres testu E2E jest obecnie wąski: `e2e/playwright/tests/health.spec.ts` otwiera `/`, asercją sprawdza udaną odpowiedź HTTP i widoczność `body`. Osobno `wait-services.sh` sprawdza endpoint zdrowia backendu. Test Playwright **nie wywołuje API**; walidacja OpenAPI również nie jest pełną walidacją schematu ani kontraktowym testem endpointów.
+Po scaffoldingu task `generate_contract_app` weryfikuje obsługiwany kontrakt Item API i generuje implementację Spring Boot oraz klienta/ekran Angular z operacjami list/create/read/update/delete. Playwright zachowuje osobny health check i dodatkowo wykonuje CRUD przez interfejs, sprawdzając odpowiedzi backendu oraz walidację 400/404. Walidator jest celowo ograniczony do operacji i schematów tego Item API; nie zastępuje ogólnego walidatora całej specyfikacji OpenAPI.
 
 ## 2. Parametry DAG-a
 
@@ -32,7 +32,7 @@ Zakres testu E2E jest obecnie wąski: `e2e/playwright/tests/health.spec.ts` otwi
 | `catchup` | `false` | Brak nadrabiania pominiętych uruchomień |
 | `max_active_runs` | `1` | Jeden aktywny run tego DAG-a |
 | `default_retries` | `1` | Domyślnie jeden retry taska |
-| liczba tasków | `17` | Wszystkie taski mają typ `shell` |
+| liczba tasków | `18` | Wszystkie taski mają typ `shell` |
 
 Na Windows Cronova uruchamia skrypty przez skonfigurowany Git Bash. Repozytorium uruchomieniowe przekazuje toolchain, między innymi przez `start.cmd`, `CRONOVA_BASH_PATH`, `CRONOVA_PYTHON`, `CRONOVA_NODE` i `CRONOVA_NPM`.
 
@@ -44,12 +44,15 @@ flowchart TD
   VF[validate_frontend_config] --> SF
   VS --> SB[scaffold_backend]
   VB[validate_backend_config] --> SB
-  SF --> IF[install_frontend_dependencies]
+  SF --> GEN[generate_contract_app]
+  SB --> GEN
+  VS --> GEN
+  GEN --> IF[install_frontend_dependencies]
   IF --> LF[lint_frontend]
   LF --> TF[test_frontend]
   TF --> BF[build_frontend]
   BF --> SM[smoke_test_frontend]
-  SB --> CB[compile_backend]
+  GEN --> CB[compile_backend]
   CB --> TB[test_backend]
   TB --> PB[package_backend]
   VS --> IP[install_playwright]
@@ -60,7 +63,7 @@ flowchart TD
   CL -->|all_done| AR[archive_results]
 ```
 
-Walidacje frontend/backend i instalacja Playwrighta mogą biec równolegle po swoich zależnościach. Gałęzie komponentów są sekwencyjne. E2E startuje dopiero, gdy istnieją gotowe artefakty obu komponentów i zainstalowany Playwright.
+Walidacje frontend/backend i instalacja Playwrighta mogą biec równolegle po swoich zależnościach. Scaffoldy Angular i Spring Boot są niezależne, a generator czeka na oba; dopiero potem komponenty przechodzą do instalacji/buildów/testów. E2E startuje, gdy istnieją gotowe artefakty obu komponentów i zainstalowany Playwright.
 
 ### Lista tasków
 
@@ -71,6 +74,7 @@ Walidacje frontend/backend i instalacja Playwrighta mogą biec równolegle po sw
 | `validate_backend_config` | `scripts/sdlc/springboot/validate.sh` | Inicjalizuje Java/Maven, wymaga `java`, sprawdza markery Spring Boot i zapisuje diagnostykę runtime’u. |
 | `scaffold_frontend` | `scripts/sdlc/angular/scaffold.sh` | Tworzy Angular CLI workspace, a następnie zapewnia konfigurację lint/test browser i lockfile; nie wykonuje właściwego `npm ci`. |
 | `scaffold_backend` | `scripts/sdlc/springboot/scaffold.sh` | Pobiera ZIP z Spring Initializr na podstawie konfiguracji i rozpakowuje do workspace’u; wymaga `pom.xml`. |
+| `generate_contract_app` | `scripts/sdlc/integration/generate-contract-app.sh` | Sprawdza operacje/schemat Item API i generuje kontroler, serwis oraz testy Spring Boot, serwis HTTP i UI Angular z kontraktu; konfiguruje CORS dla frontendu E2E. |
 | `install_frontend_dependencies` | `scripts/sdlc/angular/install.sh` | Wykonuje `npm ci` na podstawie lockfile’a. |
 | `lint_frontend` | `scripts/sdlc/angular/lint.sh` | Uruchamia projektowe `npm run lint`. |
 | `test_frontend` | `scripts/sdlc/angular/test.sh` | Uruchamia `npm test -- --watch=false`. |
@@ -92,6 +96,7 @@ Konfiguracja integracyjna deklaruje:
 
 - identyfikator stosu `item-platform` oraz ścieżki do konfiguracji Angular i Spring Boot;
 - kontrakt `contracts/openapi.yaml`;
+- zgodny z kontraktem backend Item API i klient Angular;
 - położenie manifestów komponentów oraz artefaktów: frontend dist i JAR backendu;
 - hosty, porty, endpoint health backendu, URL frontendu i profil Spring `e2e`;
 - katalog testów Playwright, browser, URL-e bazowe, workers/retries oraz ustawienia trace/screenshot/video.
@@ -108,10 +113,10 @@ Konfiguracje komponentowe są źródłem ustawień własnych buildów. Konfigura
 ### Przekazywanie danych
 
 ```text
-Angular config -> workspace Angular -> production dist -> frontend manifest ─┐
-                                                                            ├-> run-stack-e2e -> Playwright
-Spring config -> workspace Spring -> executable JAR -> backend manifest ────┘
-Fullstack config -> endpointy, health URLs, ścieżki manifestów, Playwright
+OpenAPI contract + component configs -> generate_contract_app
+  -> Angular HTTP service/UI + Spring Boot controller/service/tests
+  -> Angular production dist + executable Spring JAR
+  -> run-stack-e2e -> Playwright CRUD through the browser
 ```
 
 Manifesty umożliwiają sprawdzenie, że wymagane artefakty istnieją przed startem usług. Komponenty zapisują logi i wyniki pod swoimi katalogami artefaktów, natomiast logi runtime usług i raporty przeglądarkowe należą do `artifacts/fullstack`.
@@ -120,7 +125,7 @@ Manifesty umożliwiają sprawdzenie, że wymagane artefakty istnieją przed star
 
 ### Walidacja
 
-`integration/validate.sh` korzysta z `bootstrap.sh` i `config-value.sh`. Wymaga Pythona, odczytuje wymagane wartości dwupoziomowego YAML, sprawdza istnienie wskazanych konfiguracji i pliku OpenAPI, uruchamia krótki kod Python sprawdzający obecność markerów `openapi:` oraz `paths:`, a także weryfikuje, że URL-e usług są HTTP(S). Nie jest pełnym parserem ani walidatorem OpenAPI.
+`integration/validate.sh` korzysta z `bootstrap.sh` i `config-value.sh`. Wymaga Pythona, odczytuje wymagane wartości dwupoziomowego YAML, sprawdza istnienie wskazanych konfiguracji i uruchamia `generate_contract_app.py` w trybie walidacji. Walidator sprawdza oczekiwane ścieżki, metody, operationId, statusy, referencje do schematów i wymagane pola Item/ItemRequest. Następnie skrypt weryfikuje URL-e usług. To kontrola zgodności z implementowanym Item API, a nie pełna walidacja dowolnego OpenAPI 3.
 
 Walidatory komponentowe sprawdzają podstawowe markery YAML i toolchain. Angular wymaga Node/npm. Spring Boot konfiguruje Java/Maven i zapisuje wersję Javy oraz diagnostykę runtime’u.
 
@@ -144,7 +149,7 @@ Cronova przypisuje proces taska do Windows Job Object skonfigurowanego z `JOB_OB
 
 `playwright/run.sh` wymaga zainstalowanych `node_modules`, ustawia z konfiguracji `FRONTEND_URL`, `API_URL`, browser, workers/retries oraz parametry raportów i uruchamia `npx playwright test`. Wyjście jest równolegle zapisywane do `artifacts/fullstack/logs/playwright.log`; konfiguracja Playwright generuje reporter list, JUnit i HTML w katalogu raportów.
 
-Aktualny `health.spec.ts` korzysta z `FRONTEND_URL` i asercji strony głównej. Chociaż runner przekazuje `API_URL`, obecny test go nie używa.
+`health.spec.ts` sprawdza dostępność strony. `items.spec.ts` korzysta z `API_URL`, wykonuje tworzenie, odczyt, aktualizację i usunięcie przez UI, sprawdza statusy odpowiedzi oraz waliduje odrzucenie pustej nazwy i odczyt usuniętego elementu. Test potwierdza więc połączenie Angular → Spring Boot, a nie tylko osobną dostępność procesów.
 
 ### Logi i manifest
 
@@ -192,7 +197,7 @@ manifest     = kontrakt artefaktów pomiędzy komponentami
 | `common/config-value.sh` | Wspólny odczyt prostych wartości YAML | Tylko skalar w dwupoziomowej sekcji |
 | `angular/{validate,scaffold,install,lint,test,build,smoke}.sh` | Wysoka w obrębie projektów Angular | Korzystają z `package.json`, npm i Angular CLI; nazwa/output z configu |
 | `springboot/{validate,scaffold,compile,unit-test,package}.sh` | Wysoka w obrębie projektów Spring Boot/Maven Wrapper | Scaffold używa Spring Initializr i zestawu `web,validation,actuator`; compile/test/package wymagają `mvnw.cmd` |
-| `integration/validate.sh` | Wspólny smoke validator dla fullstack configu/OpenAPI | Sprawdza podstawowe markery, nie pełny schema ani endpointy |
+| `integration/validate.sh`, `generate_contract_app.py` | Walidacja implementowanego Item API i generator kodu dla obu komponentów | Obsługuje jawnie bieżące ścieżki, metody i schematy Item; nie jest generatorem dla dowolnego OpenAPI |
 | `integration/start-backend.sh` | Reużywalny launcher JAR Spring Boot | Artefakt, manifest, host/port/profil pochodzą z configu |
 | `integration/start-frontend.sh` | Reużywalny serwer statycznego dist | Dist, manifest, host/port pochodzą z configu; wymaga `npx http-server` |
 | `integration/wait-services.sh` | Ogólny readiness checker dwóch URL-i HTTP | Endpointy i timeout pochodzą z configu; wymaga `curl` |
@@ -205,9 +210,9 @@ DAG nie powiela kodu Angulara, Springa ani Playwrighta w definicji YAML. Nazwy k
 
 ### Ograniczenia i miejsca wymagające ostrożności
 
-1. `config-value.sh` obsługuje tylko prosty podzbiór YAML; walidatory stosu nie zastępują formalnej walidacji schematu.
-2. Walidacja OpenAPI sprawdza markery `openapi:` i `paths:` oraz obecność pliku, ale nie waliduje całego dokumentu ani zgodności API z frontendem.
-3. Playwright testuje obecnie dostępność strony, nie przepływy biznesowe ani odpowiedź backend API. `API_URL` jest przekazywany, lecz nieużywany w jedynym specu.
+1. `config-value.sh` obsługuje tylko prosty podzbiór YAML; walidatory stosu nie zastępują formalnej walidacji wszystkich konfiguracji.
+2. Generator celowo obsługuje aktualny Item API i odrzuca niezgodny zestaw ścieżek/metod/schematów; rozszerzenie kontraktu wymaga równoczesnej zmiany generatora i testu E2E.
+3. Test API E2E wymaga działającego backendu oraz prawidłowego `playwright.api_url`; bez uruchomienia DAG-a na docelowym Windowsie pozostaje do potwierdzenia zgodność środowiskowa (toolchain, profile i procesy).
 4. Konfiguracja Angular deklaruje Node 22, ale skrypty walidują tylko obecność Node/npm, nie egzekwują dokładnego numeru wersji. Raport Windows z udanego testu wskazał Node 24.20.0.
 5. Spring Boot scaffold jest zależny od zewnętrznego Spring Initializr i internetu; zestaw zależności generatora jest w skrypcie stały.
 6. Angular scaffolding może uzupełniać lint/test dependencies i lockfile. W razie istniejącego `package.json` nie odtwarza aplikacji, ale może zaktualizować konfigurację tych narzędzi.
@@ -215,4 +220,4 @@ DAG nie powiela kodu Angulara, Springa ani Playwrighta w definicji YAML. Nazwy k
 
 ## 8. Wniosek
 
-Fullstack DAG spełnia cel budowania przepływu z „klocków LEGO”: DAG pozostaje deklaratywną kompozycją, skrypty mają osobne odpowiedzialności, a parametry usług i artefaktów są konfigurowane. Najważniejszy element platformowy — wspólny task dla cyklu życia usług — jest konieczny dla semantyki Windows Job Object i został zweryfikowany rzeczywistym runem Windows. Pięć pozostałych DAG-ów ma własne opisy techniczne; wszystkie są zebrane w [indeksie SDLC](SDLC_DAGS.md).
+Fullstack DAG pozostaje deklaratywną kompozycją, a task `generate_contract_app` łączy kontrakt z rzeczywistą implementacją obu komponentów. Testy jednostkowe i Playwright obejmują CRUD, natomiast run na natywnym Windowsie nadal potwierdzi toolchain i semantykę Windows Job Object. Pozostałe DAG-i są zebrane w [indeksie SDLC](SDLC_DAGS.md).
