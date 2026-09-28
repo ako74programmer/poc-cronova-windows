@@ -542,10 +542,10 @@ func buildEnv(extra map[string]string) []string {
 	for k, v := range extra {
 		values[k] = v
 	}
-	// On Windows, Git Bash login shells reset PATH to a minimal Unix default
-	// unless MSYS2_PATH_TYPE=inherit is set. Force it so tasks can find
-	// Windows tools (java, mvn, node, etc.) inherited from cronova's env.
+	// Git Bash/MSYS must inherit the Windows PATH so tasks can find tools from
+	// the parent process and from the standard discovery roots below.
 	if runtime.GOOS == "windows" {
+		discoverWindowsToolchain(values, windowsToolchainRootsFromHost())
 		values["MSYS2_PATH_TYPE"] = "inherit"
 		// DAG commands intentionally use the portable `bash script.sh` form.
 		// Put the selected Git for Windows directories first so that this

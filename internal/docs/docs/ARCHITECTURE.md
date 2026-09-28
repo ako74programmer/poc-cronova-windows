@@ -398,7 +398,7 @@ Because tasks are subprocesses, the `type` field only affects how the command is
 
 | type | Launch |
 |---|---|
-| `shell` | Git for Windows `bash.exe -lc "<command>"` |
+| `shell` | Git for Windows `bash.exe -c "<command>"` |
 | `python` | `python <script> <args>` |
 | `sql` | via CLI/driver (e.g. `psql -f`) |
 | `jar` | `java -jar <jar> <args>` |
