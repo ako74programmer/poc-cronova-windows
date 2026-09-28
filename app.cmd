@@ -10,6 +10,8 @@ set "HOST=127.0.0.1"
 set "DB=data/cronova.db"
 set "LOGS=logs"
 set "DAGS=dags"
+if not defined CRONOVA_BASH_PATH set "CRONOVA_BASH_PATH=%ProgramFiles%\Git\usr\bin\bash.exe"
+if not exist "%CRONOVA_BASH_PATH%" if exist "%ProgramFiles%\Git\bin\bash.exe" set "CRONOVA_BASH_PATH=%ProgramFiles%\Git\bin\bash.exe"
 
 if "%~1"=="" goto :usage
 
