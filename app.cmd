@@ -71,6 +71,8 @@ if not exist "%BINARY%" (
     )
 )
 
+call :configure_toolchain
+
 echo [app.cmd] Stopping any leftover cronova processes...
 taskkill /F /IM cronova.exe 2>nul
 timeout /T 3 /NOBREAK >nul
@@ -91,3 +93,28 @@ if "!DEV_MODE!"=="1" (
 echo [app.cmd] Starting cronova on http://%HOST%:%PORT%
 "%BINARY%" serve -config "%CONFIG%" -http %HOST%:%PORT%
 exit /b 0
+
+:configure_toolchain
+set "TOOLCHAIN_SCRIPT=%~dp0scripts\windows\detect-toolchain.ps1"
+if not exist "%TOOLCHAIN_SCRIPT%" (
+    echo [app.cmd] Toolchain discovery script not found; relying on inherited environment.
+    goto :eof
+)
+
+set "POWERSHELL_EXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+if not exist "%POWERSHELL_EXE%" set "POWERSHELL_EXE=powershell.exe"
+for /f "tokens=1,* delims==" %%A in ('"%POWERSHELL_EXE%" -NoProfile -ExecutionPolicy Bypass -File "%TOOLCHAIN_SCRIPT%" 2^>nul') do (
+    if /i "%%A"=="CRONOVA_PYTHON" if not defined CRONOVA_PYTHON set "CRONOVA_PYTHON=%%B"
+    if /i "%%A"=="CRONOVA_NODE" if not defined CRONOVA_NODE set "CRONOVA_NODE=%%B"
+    if /i "%%A"=="CRONOVA_NPM" if not defined CRONOVA_NPM set "CRONOVA_NPM=%%B"
+    if /i "%%A"=="CRONOVA_JAVA_HOME" if not defined CRONOVA_JAVA_HOME set "CRONOVA_JAVA_HOME=%%B"
+    if /i "%%A"=="CRONOVA_MAVEN_HOME" if not defined CRONOVA_MAVEN_HOME set "CRONOVA_MAVEN_HOME=%%B"
+)
+
+echo [app.cmd] Runtime tool paths for this Cronova process:
+if defined CRONOVA_PYTHON (echo   CRONOVA_PYTHON=!CRONOVA_PYTHON!) else (echo   Python: not detected)
+if defined CRONOVA_NODE (echo   CRONOVA_NODE=!CRONOVA_NODE!) else (echo   Node: not detected)
+if defined CRONOVA_NPM (echo   CRONOVA_NPM=!CRONOVA_NPM!) else (echo   npm: not detected)
+if defined CRONOVA_JAVA_HOME (echo   CRONOVA_JAVA_HOME=!CRONOVA_JAVA_HOME!) else if defined JAVA_HOME (echo   JAVA_HOME=!JAVA_HOME!) else (echo   Java: not detected)
+if defined CRONOVA_MAVEN_HOME (echo   CRONOVA_MAVEN_HOME=!CRONOVA_MAVEN_HOME!) else if defined MAVEN_HOME (echo   MAVEN_HOME=!MAVEN_HOME!) else (echo   Maven: not detected)
+goto :eof
