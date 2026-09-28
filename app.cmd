@@ -10,14 +10,6 @@ set "HOST=127.0.0.1"
 set "DB=data/cronova.db"
 set "LOGS=logs"
 set "DAGS=dags"
-if not defined CRONOVA_BASH_PATH (
-    if exist "%ProgramFiles%\Git\usr\bin\bash.exe" set "CRONOVA_BASH_PATH=%ProgramFiles%\Git\usr\bin\bash.exe"
-    if not defined CRONOVA_BASH_PATH if exist "%ProgramW6432%\Git\usr\bin\bash.exe" set "CRONOVA_BASH_PATH=%ProgramW6432%\Git\usr\bin\bash.exe"
-    if not defined CRONOVA_BASH_PATH if exist "%LOCALAPPDATA%\Programs\Git\usr\bin\bash.exe" set "CRONOVA_BASH_PATH=%LOCALAPPDATA%\Programs\Git\usr\bin\bash.exe"
-    if not defined CRONOVA_BASH_PATH if exist "%ProgramFiles%\Git\bin\bash.exe" set "CRONOVA_BASH_PATH=%ProgramFiles%\Git\bin\bash.exe"
-    if not defined CRONOVA_BASH_PATH if exist "%ProgramW6432%\Git\bin\bash.exe" set "CRONOVA_BASH_PATH=%ProgramW6432%\Git\bin\bash.exe"
-    if not defined CRONOVA_BASH_PATH if exist "%LOCALAPPDATA%\Programs\Git\bin\bash.exe" set "CRONOVA_BASH_PATH=%LOCALAPPDATA%\Programs\Git\bin\bash.exe"
-)
 
 if "%~1"=="" goto :usage
 
@@ -100,7 +92,7 @@ if "!DEV_MODE!"=="1" (
 )
 
 echo [app.cmd] Starting cronova on http://%HOST%:%PORT%
-"%BINARY%" serve -config "%CONFIG%" -http %HOST%:%PORT%
+"%BINARY%" serve -config "%CONFIG%" -http %HOST%:%PORT% -auth=true
 exit /b 0
 
 :configure_toolchain
@@ -112,6 +104,7 @@ if not exist "%TOOLCHAIN_SCRIPT%" (
 
 set "POWERSHELL_EXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 if not exist "%POWERSHELL_EXE%" set "POWERSHELL_EXE=powershell.exe"
+if not defined CRONOVA_BASH_PATH for /f "delims=" %%B in ('%POWERSHELL_EXE% -NoProfile -ExecutionPolicy Bypass -Command "$p=@((Join-Path $env:ProgramFiles 'Git\usr\bin\bash.exe'),(Join-Path $env:ProgramW6432 'Git\usr\bin\bash.exe'),(Join-Path $env:LOCALAPPDATA 'Programs\Git\usr\bin\bash.exe'),(Join-Path $env:ProgramFiles 'Git\bin\bash.exe'),(Join-Path $env:ProgramW6432 'Git\bin\bash.exe'),(Join-Path $env:LOCALAPPDATA 'Programs\Git\bin\bash.exe')); foreach($x in $p){if(Test-Path -LiteralPath $x){Write-Output $x; break}}" 2^>nul') do if not defined CRONOVA_BASH_PATH set "CRONOVA_BASH_PATH=%%B"
 echo [app.cmd] Running toolchain detector: "%TOOLCHAIN_SCRIPT%"
 for /f "tokens=1,* delims==" %%A in ('%POWERSHELL_EXE% -NoProfile -ExecutionPolicy Bypass -File "%TOOLCHAIN_SCRIPT%" 2^>nul') do (
     if /i "%%A"=="CRONOVA_PYTHON" if not defined CRONOVA_PYTHON set "CRONOVA_PYTHON=%%B"
