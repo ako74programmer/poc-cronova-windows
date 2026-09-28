@@ -62,18 +62,14 @@ echo [app.cmd] Stopped.
 exit /b 0
 
 :do_start
-if not exist "%BINARY%" (
-    echo [app.cmd] Binary not found, building...
-    go build -o "%BINARY%" ./cmd/cronova
-    if errorlevel 1 (
-        echo [app.cmd] Build failed.
-        exit /b 1
-    )
+echo [app.cmd] Building cronova from the current working tree...
+go build -o "%BINARY%" ./cmd/cronova
+if errorlevel 1 (
+    echo [app.cmd] Build failed.
+    exit /b 1
 )
 
-if not defined CRONOVA_WINDOWS_PATH set "CRONOVA_WINDOWS_PATH=%PATH%"
 call :configure_toolchain
-
 echo [app.cmd] Stopping any leftover cronova processes...
 taskkill /F /IM cronova.exe 2>nul
 timeout /T 3 /NOBREAK >nul
@@ -113,6 +109,11 @@ for /f "tokens=1,* delims==" %%A in ('%POWERSHELL_EXE% -NoProfile -ExecutionPoli
     if /i "%%A"=="CRONOVA_MAVEN_HOME" if not defined CRONOVA_MAVEN_HOME set "CRONOVA_MAVEN_HOME=%%B"
 )
 
+if defined CRONOVA_PYTHON for %%P in ("!CRONOVA_PYTHON!") do set "PATH=%%~dpP;!PATH!"
+if defined CRONOVA_NODE for %%P in ("!CRONOVA_NODE!") do set "PATH=%%~dpP;!PATH!"
+if defined CRONOVA_JAVA_HOME set "PATH=!CRONOVA_JAVA_HOME!\bin;!PATH!"
+if defined CRONOVA_MAVEN_HOME set "PATH=!CRONOVA_MAVEN_HOME!\bin;!PATH!"
+set "CRONOVA_WINDOWS_PATH=%PATH%"
 echo [app.cmd] Runtime tool paths for this Cronova process:
 if defined CRONOVA_WINDOWS_PATH (echo   CRONOVA_WINDOWS_PATH inherited) else (echo   CRONOVA_WINDOWS_PATH: not set)
 if defined CRONOVA_PYTHON (echo   CRONOVA_PYTHON=!CRONOVA_PYTHON!) else (echo   Python: not detected)

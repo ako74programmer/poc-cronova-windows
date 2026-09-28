@@ -25,6 +25,19 @@ function Value([string]$file, [string]$section, [string]$key) {
 }
 function Required([string]$name, [string]$value) { if ([string]::IsNullOrWhiteSpace($value)) { throw "Missing configuration value: $name" } }
 function Tool([string]$name) {
+    $explicit = switch ($name) {
+        'python' { $env:CRONOVA_PYTHON }
+        'node' { $env:CRONOVA_NODE }
+        'npm' { $env:CRONOVA_NPM }
+        'java' { if ($env:CRONOVA_JAVA_HOME) { Join-Path $env:CRONOVA_JAVA_HOME 'bin\java.exe' } elseif ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME 'bin\java.exe' } }
+        'mvn' { if ($env:CRONOVA_MAVEN_HOME) { Join-Path $env:CRONOVA_MAVEN_HOME 'bin\mvn.cmd' } elseif ($env:MAVEN_HOME) { Join-Path $env:MAVEN_HOME 'bin\mvn.cmd' } }
+        'npx' { if ($env:CRONOVA_NODE) { Join-Path (Split-Path -Parent $env:CRONOVA_NODE) 'npx.cmd' } }
+    }
+    if ($explicit -and (Test-Path -LiteralPath $explicit)) { return $explicit }
+    if ($explicit) {
+        $resolvedExplicit = Get-Command $explicit -ErrorAction SilentlyContinue
+        if ($resolvedExplicit) { return $resolvedExplicit.Source }
+    }
     $cmd = Get-Command $name -ErrorAction SilentlyContinue
     if (-not $cmd) { throw "Required command not found: $name" }
     return $cmd.Source
