@@ -46,9 +46,9 @@ exit /b 1
 :usage
 echo Usage: app.cmd [start^|start-dev^|restart^|restart-dev^|stop^|status]
 echo.
-echo   start       - build binary if needed, kill old process and start cronova with auth
+echo   start       - build binary from current working tree, kill old process and start cronova with auth
 echo   start-dev   - same as start but with auth disabled and a temp DB (for testing)
-echo   restart     - stop and start again with auth
+echo   restart     - stop, rebuild binary and start again with auth
 echo   restart-dev - stop and start again in dev mode
 echo   stop        - kill all cronova processes
 echo   status      - show running cronova processes
