@@ -1,11 +1,11 @@
 Set-StrictMode -Version 3.0
 
-function Resolve-AiProvider([string]$Database, [string]$ProviderId) {
+function Resolve-AiProvider([string]$Database, [string]$ProviderId, [string]$Python) {
     if ($env:CRONOVA_AI_BASE_URL -and $env:CRONOVA_AI_MODEL) {
         return @($env:CRONOVA_AI_BASE_URL, $env:CRONOVA_AI_MODEL, $env:CRONOVA_AI_TOKEN)
     }
     if (-not (Test-Path -LiteralPath $Database -PathType Leaf)) { return $null }
-    $python = if ($env:CRONOVA_PYTHON) { $env:CRONOVA_PYTHON } else { 'python' }
+    $python = if ($Python) { $Python } elseif ($env:CRONOVA_PYTHON) { $env:CRONOVA_PYTHON } else { 'python' }
     $queryFile = Join-Path ([IO.Path]::GetTempPath()) ("cronova-provider-" + [guid]::NewGuid().ToString('N') + '.py')
     $query = @'
 import sqlite3, sys

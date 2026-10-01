@@ -18,7 +18,7 @@ if (-not $Python -or $Python -in @('python','python3')) { $Python = $env:CRONOVA
 if (-not $Python) { $Python = Get-ConfiguredCommand 'python' } else { $resolved = Get-Command $Python -ErrorAction SilentlyContinue; if ($resolved) { $Python = $resolved.Source } }
 $baseUrl = $env:CRONOVA_AI_BASE_URL; $token = $env:CRONOVA_AI_TOKEN
 $db = if ($env:CRONOVA_DB) { $env:CRONOVA_DB } else { Join-Path $repo 'data\cronova.db' }
-if (-not $Model -or -not $baseUrl) { $provider = Resolve-AiProvider $db $ProviderId; if ($provider) { if (-not $baseUrl) {$baseUrl=$provider[0]}; if (-not $Model) {$Model=$provider[1]}; if (-not $token) {$token=$provider[2]} } }
+if (-not $Model -or -not $baseUrl) { $provider = Resolve-AiProvider $db $ProviderId $Python; if ($provider) { if (-not $baseUrl) {$baseUrl=$provider[0]}; if (-not $Model) {$Model=$provider[1]}; if (-not $token) {$token=$provider[2]} } }
 if (-not $Model -or -not $baseUrl) { throw 'Could not determine AI provider. Configure a default AI provider or pass -r and -m.' }
 $tmp = Join-Path $repo '.tmp'; New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 $packagePath = $Package.Replace('.', '\')

@@ -15,7 +15,7 @@ $repo=Get-RepoRoot; if (-not $Workspace) {$Workspace=Join-Path $repo 'workspaces
 if (-not (Test-Path $projectDir -PathType Container)) {throw "Project directory not found: $projectDir"}
 if (-not $Python -or $Python -in @('python','python3')) {$Python=$env:CRONOVA_PYTHON}; if (-not $Python) {$Python=Get-ConfiguredCommand 'python'} else {$r=Get-Command $Python -ErrorAction SilentlyContinue;if($r){$Python=$r.Source}}
 $baseUrl=$env:CRONOVA_AI_BASE_URL;$token=$env:CRONOVA_AI_TOKEN;$db=if($env:CRONOVA_DB){$env:CRONOVA_DB}else{Join-Path $repo 'data\cronova.db'}
-if(-not $Model -or -not $baseUrl){$provider=Resolve-AiProvider $db $ProviderId;if($provider){if(-not $baseUrl){$baseUrl=$provider[0]};if(-not $Model){$Model=$provider[1]};if(-not $token){$token=$provider[2]}}}
+if(-not $Model -or -not $baseUrl){$provider=Resolve-AiProvider $db $ProviderId $Python;if($provider){if(-not $baseUrl){$baseUrl=$provider[0]};if(-not $Model){$Model=$provider[1]};if(-not $token){$token=$provider[2]}}}
 if(-not $Model -or -not $baseUrl){throw 'Could not determine AI provider. Configure a default AI provider or pass -r and -m.'}
 $tmp=Join-Path $repo '.tmp';New-Item -ItemType Directory -Force $tmp|Out-Null;Set-JavaMavenToolchain;$maven=Get-ConfiguredCommand 'maven';$m2=Join-Path $repo '.m2\repository';New-Item -ItemType Directory -Force $m2|Out-Null
 for($iter=1;$iter -le $Iterations;$iter++){
