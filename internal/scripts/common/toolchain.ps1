@@ -1,7 +1,9 @@
 Set-StrictMode -Version 3.0
 
+$script:ToolchainRepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
+
 function Get-RepoRoot {
-    return (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
+    return $script:ToolchainRepoRoot
 }
 
 function Resolve-RepoPath([string]$Path) {

@@ -4,7 +4,7 @@ function Resolve-AiProvider([string]$Database, [string]$ProviderId, [string]$Pyt
     if ($env:CRONOVA_AI_BASE_URL -and $env:CRONOVA_AI_MODEL) {
         return @($env:CRONOVA_AI_BASE_URL, $env:CRONOVA_AI_MODEL, $env:CRONOVA_AI_TOKEN)
     }
-    if (-not (Test-Path -LiteralPath $Database -PathType Leaf)) { return $null }
+    if (-not (Test-Path -LiteralPath $Database -PathType Leaf)) { throw "AI provider database not found: $Database" }
     $python = if ($Python) { $Python } elseif ($env:CRONOVA_PYTHON) { $env:CRONOVA_PYTHON } else { 'python' }
     $queryFile = Join-Path ([IO.Path]::GetTempPath()) ("cronova-provider-" + [guid]::NewGuid().ToString('N') + '.py')
     $query = @'
@@ -32,7 +32,8 @@ finally:
         Set-Content -LiteralPath $queryFile -Value $query -Encoding UTF8
         $result = & $python $queryFile $Database $ProviderId
         $exitCode = if (Test-Path variable:LASTEXITCODE) { [int]$LASTEXITCODE } else { 0 }
-        if ($exitCode -ne 0 -or -not $result) { return $null }
+        if ($exitCode -ne 0) { throw "AI provider lookup failed: python=$python database=$Database exit_code=$exitCode" }
+        if (-not $result) { throw "AI provider lookup returned no rows: python=$python database=$Database provider_id=$ProviderId" }
         $line = ($result | Select-Object -First 1).ToString()
         $parts = $line -split '\|', 3
         if ($parts.Count -lt 2 -or -not $parts[0] -or -not $parts[1]) { return $null }
