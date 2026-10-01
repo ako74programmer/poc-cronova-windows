@@ -20,7 +20,16 @@ if(-not $Model -or -not $baseUrl){throw 'Could not determine AI provider. Config
 $tmp=Join-Path $repo '.tmp';New-Item -ItemType Directory -Force $tmp|Out-Null;Set-JavaMavenToolchain;$maven=Get-ConfiguredCommand 'maven';$m2=Join-Path $repo '.m2\repository';New-Item -ItemType Directory -Force $m2|Out-Null
 for($iter=1;$iter -le $Iterations;$iter++){
     Write-Output "=== compile iteration $iter / $Iterations ==="
-    $log=Join-Path $tmp 'compile.log'; Push-Location $projectDir; try {& $maven '-B' "-Dmaven.repo.local=$m2" '-DskipTests' 'compile' 2>&1 | Tee-Object $log;$code=if(Test-Path variable:LASTEXITCODE){[int]$LASTEXITCODE}else{0}} finally {Pop-Location}
+    $log=Join-Path $tmp 'compile.log'; $stdoutFile=Join-Path $tmp 'compile.stdout'; $stderrFile=Join-Path $tmp 'compile.stderr'
+    try {
+        $process=Start-Process -FilePath $maven -ArgumentList @('-B',"-Dmaven.repo.local=$m2",'-DskipTests','compile') -WorkingDirectory $projectDir -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+        $code=[int]$process.ExitCode
+        $stdout=@(Get-Content -LiteralPath $stdoutFile -ErrorAction SilentlyContinue)
+        $stderr=@(Get-Content -LiteralPath $stderrFile -ErrorAction SilentlyContinue)
+        [IO.File]::WriteAllText($log, (($stdout + $stderr) -join [Environment]::NewLine))
+    } finally {
+        Remove-Item -LiteralPath $stdoutFile,$stderrFile -Force -ErrorAction SilentlyContinue
+    }
     if($code -eq 0){Write-Output "Compile succeeded on iteration $iter";exit 0}
     Get-Content $log -Tail 80
     if($iter -eq $Iterations){throw 'Max iterations reached. Giving up.'}
