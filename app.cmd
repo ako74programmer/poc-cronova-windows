@@ -21,6 +21,7 @@ if "%~1"=="status" (
 )
 if "%~1"=="start" (
     set "DEV_MODE=0"
+    set "CRONOVA_AUTH="
     goto :do_start
 )
 if "%~1"=="start-dev" (
@@ -31,6 +32,7 @@ if "%~1"=="restart" (
     call :do_stop
     timeout /T 3 /NOBREAK >nul
     set "DEV_MODE=0"
+    set "CRONOVA_AUTH="
     goto :do_start
 )
 if "%~1"=="restart-dev" (

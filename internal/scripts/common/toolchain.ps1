@@ -52,6 +52,18 @@ function Set-JavaMavenToolchain {
 function Write-ToolchainRuntime([string]$Path) {
     $java = Get-ConfiguredCommand 'java'
     $maven = Get-ConfiguredCommand 'maven'
+    function Capture-NativeVersion([string]$FilePath) {
+        $base = Join-Path ([IO.Path]::GetTempPath()) ("cronova-version-" + [guid]::NewGuid().ToString('N'))
+        $stdout = "$base.out"
+        $stderr = "$base.err"
+        try {
+            $process = Start-Process -FilePath $FilePath -ArgumentList '-version' -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+            $text = @((Get-Content -LiteralPath $stdout -ErrorAction SilentlyContinue), (Get-Content -LiteralPath $stderr -ErrorAction SilentlyContinue))
+            return (($text | Where-Object { $_ }) -join [Environment]::NewLine).Trim()
+        } finally {
+            Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
+        }
+    }
     @(
         "PATH=$env:Path"
         "JAVA_HOME=$($env:JAVA_HOME)"
@@ -59,9 +71,9 @@ function Write-ToolchainRuntime([string]$Path) {
         "MAVEN_HOME=$($env:MAVEN_HOME)"
         "CRONOVA_MAVEN_HOME=$($env:CRONOVA_MAVEN_HOME)"
         "java=$java"
-        (& $java -version 2>&1 | Out-String).Trim()
+        (Capture-NativeVersion $java)
         "mvn=$maven"
-        (& $maven -version 2>&1 | Select-Object -First 3 | Out-String).Trim()
+        ((Capture-NativeVersion $maven) -split [Environment]::NewLine | Select-Object -First 3) -join [Environment]::NewLine
     ) | Set-Content -LiteralPath $Path -Encoding UTF8
 }
 
