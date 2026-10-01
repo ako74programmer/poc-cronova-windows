@@ -81,6 +81,7 @@ function Invoke-Native([string]$FilePath, [string[]]$ArgumentList, [string]$Work
     Push-Location $WorkingDirectory
     try {
         & $FilePath @ArgumentList
-        if ($LASTEXITCODE -ne 0) { throw "$FilePath failed with exit code $LASTEXITCODE" }
+        $exitCode = if (Test-Path variable:LASTEXITCODE) { [int]$LASTEXITCODE } else { 0 }
+        if ($exitCode -ne 0) { throw "$FilePath failed with exit code $exitCode" }
     } finally { Pop-Location }
 }

@@ -15,6 +15,7 @@ row = cur.execute("SELECT base_url, model, token FROM ai_providers WHERE id=?", 
 if row: print("|".join(str(x or "") for x in row))
 '@
     $result = $query | & $python - $Database $ProviderId 2>$null
-    if ($LASTEXITCODE -ne 0 -or -not $result) { return $null }
+    $exitCode = if (Test-Path variable:LASTEXITCODE) { [int]$LASTEXITCODE } else { 0 }
+    if ($exitCode -ne 0 -or -not $result) { return $null }
     return (($result | Select-Object -First 1) -split '\|', 3)
 }

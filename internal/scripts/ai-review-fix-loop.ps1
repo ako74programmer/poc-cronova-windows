@@ -20,7 +20,7 @@ if(-not $Model -or -not $baseUrl){throw 'Could not determine AI provider. Config
 $tmp=Join-Path $repo '.tmp';New-Item -ItemType Directory -Force $tmp|Out-Null;Set-JavaMavenToolchain;$maven=Get-ConfiguredCommand 'maven';$m2=Join-Path $repo '.m2\repository';New-Item -ItemType Directory -Force $m2|Out-Null
 for($iter=1;$iter -le $Iterations;$iter++){
     Write-Output "=== compile iteration $iter / $Iterations ==="
-    $log=Join-Path $tmp 'compile.log'; Push-Location $projectDir; try {& $maven '-B' "-Dmaven.repo.local=$m2" '-DskipTests' 'compile' 2>&1 | Tee-Object $log;$code=$LASTEXITCODE} finally {Pop-Location}
+    $log=Join-Path $tmp 'compile.log'; Push-Location $projectDir; try {& $maven '-B' "-Dmaven.repo.local=$m2" '-DskipTests' 'compile' 2>&1 | Tee-Object $log;$code=if(Test-Path variable:LASTEXITCODE){[int]$LASTEXITCODE}else{0}} finally {Pop-Location}
     if($code -eq 0){Write-Output "Compile succeeded on iteration $iter";exit 0}
     Get-Content $log -Tail 80
     if($iter -eq $Iterations){throw 'Max iterations reached. Giving up.'}
@@ -37,5 +37,5 @@ $sources
 "@
     $promptFile=Join-Path $tmp 'ai_review_prompt.txt';$reqFile=Join-Path $tmp 'ai_review_request.json';$respFile=Join-Path $tmp 'ai_review.json';Set-Content $promptFile $prompt -Encoding UTF8
     & $Python (Join-Path $repo 'internal\scripts\ai\review_fix_v2.py') $projectDir ($Package.Replace('.','/')) $promptFile $reqFile $respFile $Model $baseUrl $token
-    if($LASTEXITCODE -ne 0){throw "AI review/fix failed with exit code $LASTEXITCODE"}
+    $exitCode=if(Test-Path variable:LASTEXITCODE){[int]$LASTEXITCODE}else{0}; if($exitCode -ne 0){throw "AI review/fix failed with exit code $exitCode"}
 }

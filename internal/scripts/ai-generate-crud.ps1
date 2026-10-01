@@ -40,5 +40,6 @@ $app
 $promptFile=Join-Path $tmp 'ai_prompt.txt'; $reqFile=Join-Path $tmp 'ai_request.json'; $respFile=Join-Path $tmp 'ai_response.json'; Set-Content $promptFile $prompt -Encoding UTF8
 $script=Join-Path $repo 'internal\scripts\ai\add_crud.py'
 & $Python $script $projectDir ($Package.Replace('.','/')) $promptFile $reqFile $respFile $Model $baseUrl $token
-if ($LASTEXITCODE -ne 0) { throw "AI CRUD generation failed with exit code $LASTEXITCODE" }
+$exitCode = if (Test-Path variable:LASTEXITCODE) { [int]$LASTEXITCODE } else { 0 }
+if ($exitCode -ne 0) { throw "AI CRUD generation failed with exit code $exitCode" }
 Write-Output "AI added CRUD to $projectDir"
