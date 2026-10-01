@@ -30,11 +30,19 @@ finally:
 '@
     try {
         Set-Content -LiteralPath $queryFile -Value $query -Encoding UTF8
-        $result = & $python $queryFile $Database $ProviderId
-        $exitCode = if (Test-Path variable:LASTEXITCODE) { [int]$LASTEXITCODE } else { 0 }
-        if ($exitCode -ne 0) { throw "AI provider lookup failed: python=$python database=$Database exit_code=$exitCode" }
-        if (-not $result) { throw "AI provider lookup returned no rows: python=$python database=$Database provider_id=$ProviderId" }
-        $line = ($result | Select-Object -First 1).ToString()
+        $stdoutFile = "$queryFile.out"
+        $stderrFile = "$queryFile.err"
+        try {
+            $process = Start-Process -FilePath $python -ArgumentList @($queryFile, $Database, $ProviderId) -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+            $exitCode = [int]$process.ExitCode
+            $result = @(Get-Content -LiteralPath $stdoutFile -ErrorAction SilentlyContinue)
+            $stderr = ((Get-Content -LiteralPath $stderrFile -ErrorAction SilentlyContinue) -join [Environment]::NewLine).Trim()
+            if ($exitCode -ne 0) { throw "AI provider lookup failed: python=$python database=$Database exit_code=$exitCode error=$stderr" }
+            if (-not $result) { throw "AI provider lookup returned no rows: python=$python database=$Database provider_id=$ProviderId error=$stderr" }
+        } finally {
+            Remove-Item -LiteralPath $stdoutFile, $stderrFile -Force -ErrorAction SilentlyContinue
+        }
+        $line = ($result | Select-Object -First 1).ToString().Trim()
         $parts = $line -split '\|', 3
         if ($parts.Count -lt 2 -or -not $parts[0] -or -not $parts[1]) { return $null }
         return @($parts[0], $parts[1], $(if ($parts.Count -ge 3) { $parts[2] } else { '' }))
