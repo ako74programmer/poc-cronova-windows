@@ -19,14 +19,12 @@ W klasycznym `cmd.exe`:
 
 ```bat
 cd /d C:\ścieżka\do\poc-cronova-windows
-git fetch origin
-git switch feature/windows-cmd-runtime-sdlc-2026-09-26
+
 git pull --ff-only origin feature/windows-cmd-runtime-sdlc-2026-09-26
-git rev-parse HEAD
 git status --short
 ```
 
-Repozytorium powinno być czyste przed startem testu. Nie tworzyć commitów i nie modyfikować kodu podczas testu.
+Agent pracuje już na właściwej gałęzi. Należy pobrać całą aktualną zawartość tej gałęzi przez `git pull`. Nie wykonywać `switch`, `reset`, nie wskazywać ani nie wybierać pojedynczego commitu. Repozytorium powinno być czyste przed startem testu. Nie tworzyć commitów i nie modyfikować kodu podczas testu.
 
 ## Uruchomienie
 
@@ -82,7 +80,6 @@ internal/scripts/run-tests.ps1
 
 ```text
 BRANCH=feature/windows-cmd-runtime-sdlc-2026-09-26
-COMMIT=
 START_COMMAND=app.cmd start
 AUTH_ENABLED=
 LOGIN_SCREEN_VISIBLE=
