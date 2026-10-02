@@ -193,6 +193,8 @@ Na Windows nie ustawiaj `CRONOVA_TASK_ENV_ALLOWLIST`. `app.cmd` wykrywa toolchai
 
 Agent nie wykonuje `switch`, `reset`, nie wybiera pojedynczego commita, nie poprawia kodu i zatrzymuje test na pierwszym błędzie.
 
+Agent Windows jest tylko wykonawcą testu. Nie prowadzi diagnozy i nie szuka przyczyny po stronie kodu. Ma uruchomić wskazany DAG, zebrać statusy oraz pełny log pierwszego failed taska i przekazać raport. Diagnoza, implementacja poprawki i testy sandboxowe należą do procesu repozytorium.
+
 ## Procedura dla każdego następnego DAG-a
 
 ### Faza A — inwentaryzacja

@@ -10,6 +10,8 @@ cmd.exe -> app.cmd start -> Cronova auth -> sdlc_maven_luhn
 
 DAG został przepisany z Bash na osobne moduły PowerShell. Graf DAG, task IDs, zależności i timeouty mają pozostać takie same.
 
+Agent Windows jest wyłącznie wykonawcą testu. Nie diagnozuje problemu, nie interpretuje przyczyny, nie modyfikuje kodu ani DAG-a. Ma uruchomić test, zatrzymać go na pierwszym błędzie i przekazać statusy tasków oraz pełny log. Diagnozę i zmiany wykonuję po stronie repozytorium na podstawie raportu.
+
 ## Przygotowanie
 
 Na istniejącej gałęzi repozytorium wykonaj:

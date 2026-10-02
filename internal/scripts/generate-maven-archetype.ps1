@@ -37,7 +37,18 @@ $args = @('-B', 'archetype:generate', "-DgroupId=$Group", "-DartifactId=$Artifac
 if ($ArchetypeVersion) { $args += "-DarchetypeVersion=$ArchetypeVersion" }
 $args += @('-DinteractiveMode=false', "-DoutputDirectory=$tmpOut")
 Write-Output "Generating Maven archetype $Archetype..."
-Invoke-Native $maven $args $repo
+$stdoutFile = Join-Path $tmpOut 'maven.stdout.log'
+$stderrFile = Join-Path $tmpOut 'maven.stderr.log'
+try {
+    $process = Start-Process -FilePath $maven -ArgumentList $args -WorkingDirectory $repo -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+    Get-Content -LiteralPath $stdoutFile -ErrorAction SilentlyContinue | Write-Output
+    Get-Content -LiteralPath $stderrFile -ErrorAction SilentlyContinue | Write-Output
+    if ([int]$process.ExitCode -ne 0) {
+        throw "Maven archetype generation failed with exit code $($process.ExitCode)"
+    }
+} finally {
+    Remove-Item -LiteralPath $stdoutFile, $stderrFile -Force -ErrorAction SilentlyContinue
+}
 $generatedDir = Join-Path $tmpOut $Artifact
 if (-not (Test-Path -LiteralPath $generatedDir -PathType Container)) {
     Remove-Item -LiteralPath $tmpOut -Recurse -Force -ErrorAction SilentlyContinue
