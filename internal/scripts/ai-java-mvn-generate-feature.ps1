@@ -6,7 +6,8 @@ param(
     [Alias('k')][string]$Package = 'com.example',
     [Alias('r')][string]$ProviderId,
     [Alias('m')][string]$Model,
-    [Alias('y')][string]$Python
+    [Alias('y')][string]$Python,
+    [Alias('s')][switch]$IncludeSources
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common\toolchain.ps1')

@@ -1,38 +1,44 @@
 dag_id: sdlc_maven_luhn
-schedule: "0 2 * * *"        # nightly build; remove for manual-only
+schedule: 0 2 * * *
 start_date: "2026-09-01"
 catchup: false
 max_active_runs: 1
-default_retries: 0
-
-# Composable Maven + AI feature pipeline:
-# scaffold -> compile -> add feature -> review/fix loop -> tests.
 tasks:
-  - id: scaffold
-    type: powershell
-    timeout: 300
-    command: "& .\\internal\\scripts\\generate-maven-archetype.ps1 -a maven-archetype-quickstart -g com.example -r luhn -k com.example.luhn -j 21 -w workspaces/sdlc_maven_luhn -p app -C"
-
-  - id: compile_skeleton
-    type: powershell
-    timeout: 600
-    deps: [scaffold]
-    command: "& .\\internal\\scripts\\compile-project.ps1 -w workspaces/sdlc_maven_luhn -p app"
-
-  - id: ai_add_feature
-    type: powershell
-    timeout: 300
-    deps: [compile_skeleton]
-    command: "& .\\internal\\scripts\\ai-generate-feature.ps1 -f prompts/luhn.txt -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -r default -y python"
-
-  - id: compile_loop
-    type: powershell
-    timeout: 900
-    deps: [ai_add_feature]
-    command: "& .\\internal\\scripts\\ai-review-fix-loop.ps1 -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -m kimi-k2.7-code -y python"
-
-  - id: tests
-    type: powershell
-    timeout: 300
-    deps: [compile_loop]
-    command: "& .\\internal\\scripts\\run-tests.ps1 -w workspaces/sdlc_maven_luhn -p app"
+    - id: scaffold
+      type: powershell
+      command: '& .\internal\scripts\generate-maven-archetype.ps1 -a maven-archetype-quickstart -g com.example -r luhn -k com.example.luhn -j 21 -w workspaces/sdlc_maven_luhn -p app -C'
+      pool: default
+      timeout: 300
+      trigger_rule: all_success
+    - id: compile_skeleton
+      type: powershell
+      command: '& .\internal\scripts\compile-project.ps1 -w workspaces/sdlc_maven_luhn -p app'
+      deps:
+        - scaffold
+      pool: default
+      timeout: 600
+      trigger_rule: all_success
+    - id: ai_add_feature
+      type: powershell
+      command: '& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/luhn.txt -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -r default -y python'
+      deps:
+        - compile_skeleton
+      pool: default
+      timeout: 300
+      trigger_rule: all_success
+    - id: compile_loop
+      type: powershell
+      command: '& .\internal\scripts\ai-review-fix-loop.ps1 -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -m kimi-k2.7-code -y python'
+      deps:
+        - ai_add_feature
+      pool: default
+      timeout: 900
+      trigger_rule: all_success
+    - id: tests
+      type: powershell
+      command: '& .\internal\scripts\run-tests.ps1 -w workspaces/sdlc_maven_luhn -p app'
+      deps:
+        - compile_loop
+      pool: default
+      timeout: 300
+      trigger_rule: all_success
