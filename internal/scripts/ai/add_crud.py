@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import urllib.request
+from pom_xml import normalize_pom_xml
 
 project_dir = sys.argv[1]
 package = sys.argv[2]
@@ -59,8 +60,9 @@ data = json.loads(content)
 
 base = project_dir
 pkg_path = package.replace(".", "/")
+pom_xml = normalize_pom_xml(data["pom_xml"])
 with open(os.path.join(base, "pom.xml"), "w", encoding="utf-8") as f:
-    f.write(data["pom_xml"])
+    f.write(pom_xml)
 with open(os.path.join(base, f"src/main/java/{pkg_path}/model/Item.java"), "w", encoding="utf-8") as f:
     f.write(data["Item_java"])
 with open(os.path.join(base, f"src/main/java/{pkg_path}/api/ItemController.java"), "w", encoding="utf-8") as f:

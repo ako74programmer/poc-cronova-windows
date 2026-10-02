@@ -4,7 +4,7 @@
 
 Ten dokument opisuje definicję [`dags/sdlc_springboot_startio.yaml`](../dags/sdlc_springboot_startio.yaml) oraz skrypty, które są przez nią wywoływane. Jest to analiza kodu na branchu `feature/windows-cmd-runtime-sdlc-2026-09-26`; **nie jest to raport wykonania DAG-a na Windows**.
 
-Po poprawkę resolvera i instrukcję weryfikacji na Windows zob. [`WINDOWS_SPRINGBOOT_STARTIO_TEST_2026-09-26.md`](WINDOWS_SPRINGBOOT_STARTIO_TEST_2026-09-26.md).
+Instrukcja runtime testu po migracji PowerShell-native: [`WINDOWS_SPRINGBOOT_STARTIO_NATIVE_TEST_2026-10-02.md`](WINDOWS_SPRINGBOOT_STARTIO_NATIVE_TEST_2026-10-02.md).
 
 Ten DAG korzysta z biblioteki skryptów `internal/scripts/`. Nie korzysta z pliku `configs/sdlc-springboot.yaml` ani z nowszych wrapperów w `scripts/sdlc/springboot/` (te są używane przez `sdlc_springboot_rest`). Nazwa `startio` odnosi się tu do Spring Initializr (`start.spring.io`), z którego pobierany jest szkielet projektu.
 
@@ -32,6 +32,22 @@ flowchart LR
 ```
 
 Timeouty tasków wynoszą odpowiednio 300, 600, 300, 900 i 300 sekund. Są to limity poszczególnych tasków, nie gwarantowany łączny czas wykonania.
+
+## Refaktoring Windows-native
+
+Migracja na branchu `feature/windows-cmd-runtime-sdlc-2026-09-26` zachowuje pięć tasków, identyfikatory, zależności, timeouty, argumenty i wartości domyślne z DAG-a Bash. Każdy task uruchamia osobny moduł PowerShell:
+
+| Task | Referencyjny Bash | Moduł PowerShell | Parametry DAG-a |
+|---|---|---|---|
+| `scaffold` | `internal/scripts/fetch-springboot-project` | `internal/scripts/fetch-springboot-project.ps1` | Bash `-p jar` → PowerShell `-Packaging jar`; Bash `-P app` → `-Project app`; Bash `-C` → `-Clean`; pozostałe wartości bez zmian |
+| `compile_skeleton` | `internal/scripts/compile-project` | `internal/scripts/compile-project.ps1` | `-w workspaces/springboot-startio -p app` |
+| `ai_add_crud` | `internal/scripts/ai-generate-crud` | `internal/scripts/ai-generate-crud.ps1` | `-w workspaces/springboot-startio -p app -k com.example.demo -r default -y python` |
+| `compile_loop` | `internal/scripts/ai-review-fix-loop` | `internal/scripts/ai-review-fix-loop.ps1` | `-w workspaces/springboot-startio -p app -k com.example.demo -r default -y python` |
+| `tests` | `internal/scripts/run-tests` | `internal/scripts/run-tests.ps1` | `-w workspaces/springboot-startio -p app` |
+
+Zmiana DAG-a ogranicza się do `type: shell` → `type: powershell` i wywołania odpowiadającego modułu `.ps1`. Dla trzech opcji scaffoldingu Bash rozróżnia wielkość liter (`-p`/`-P` i `-c`/`-C`), czego aliasy parametrów PowerShell nie mogą zrobić; dlatego mapują się na jednoznaczne parametry nazwane przy zachowaniu wartości i semantyki. Dla Maven, Python i pobierania PowerShell używa `Start-Process`, osobnych plików stdout/stderr oraz jawnego `ExitCode`. Prompty CRUD/review zachowują wymagania Bash, w tym pojedyncze escapowanie nowych linii; helpery Python walidują POM XML przed zapisem.
+
+W sandboxie należy sprawdzić parser PowerShell, helper POM, składnię Python, kontrakt DAG-a, `git diff --check` oraz dostępne testy. To nie potwierdza działania na Windows. Status runtime Windows pozostaje **niezweryfikowany** do momentu, gdy agent prześle raport wszystkich pięciu tasków.
 
 ## Przepływ krok po kroku
 
@@ -122,4 +138,4 @@ Kilka skryptów zapisuje do stałych nazw plików w `.tmp/` (`springboot-project
 5. **Różne rodziny SDLC w repo:** `sdlc_springboot_startio` korzysta z `internal/scripts/`; `sdlc_springboot_rest` korzysta z osobnej rodziny wrapperów `scripts/sdlc/springboot/` oraz wersjonowanej konfiguracji YAML. Nie należy traktować ich jako tego samego kontraktu tylko dlatego, że oba budują Spring Boot.
 6. **Wytwory są modyfikowalne/destrukcyjne:** `-C` w pierwszym kroku usuwa projekt docelowy przy każdym uruchomieniu. To jest zamierzone dla powtarzalnego scaffoldu, ale warto pamiętać, że lokalne zmiany w `workspaces/springboot-startio/app` nie są zachowywane.
 
-Wniosek: **architektura przepływu jest kompozycyjna, a blocker `find_python` został naprawiony jako współdzielony klocek; teraz potrzebna jest weryfikacja Go na Windows i uruchomienie pełnego DAG-a na wskazanym commicie.** Ten dokument nie deklaruje, że test Windows został wykonany.
+Wniosek: **architektura przepływu pozostaje kompozycyjna i Windows-native; teraz potrzebny jest pełny runtime test DAG-a na Windows.** Sandbox nie zastępuje tego testu i ten dokument nie deklaruje jego wykonania.

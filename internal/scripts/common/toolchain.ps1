@@ -79,11 +79,46 @@ function Write-ToolchainRuntime([string]$Path) {
     ) | Set-Content -LiteralPath $Path -Encoding UTF8
 }
 
+function ConvertTo-NativeArgumentString([string[]]$ArgumentList) {
+    $quotedArguments = foreach ($argument in $ArgumentList) {
+        $text = if ($null -eq $argument) { '' } else { [string]$argument }
+        $builder = New-Object System.Text.StringBuilder
+        [void]$builder.Append([char]34)
+        $backslashes = 0
+        foreach ($character in $text.ToCharArray()) {
+            if ($character -eq [char]92) { $backslashes++; continue }
+            if ($character -eq [char]34) {
+                [void]$builder.Append([char]92, (2 * $backslashes) + 1)
+                [void]$builder.Append([char]34)
+                $backslashes = 0
+                continue
+            }
+            if ($backslashes -gt 0) { [void]$builder.Append([char]92, $backslashes); $backslashes = 0 }
+            [void]$builder.Append($character)
+        }
+        if ($backslashes -gt 0) { [void]$builder.Append([char]92, 2 * $backslashes) }
+        [void]$builder.Append([char]34)
+        $builder.ToString()
+    }
+    return ($quotedArguments -join ' ')
+}
+
 function Invoke-Native([string]$FilePath, [string[]]$ArgumentList, [string]$WorkingDirectory=(Get-Location).Path) {
-    Push-Location $WorkingDirectory
+    $base = Join-Path ([IO.Path]::GetTempPath()) ("cronova-native-" + [guid]::NewGuid().ToString('N'))
+    $stdoutFile = "$base.out"
+    $stderrFile = "$base.err"
+    $argumentString = ConvertTo-NativeArgumentString $ArgumentList
     try {
-        & $FilePath @ArgumentList
-        $exitCode = if (Test-Path variable:LASTEXITCODE) { [int]$LASTEXITCODE } else { 0 }
-        if ($exitCode -ne 0) { throw "$FilePath failed with exit code $exitCode" }
-    } finally { Pop-Location }
+        $process = Start-Process -FilePath $FilePath -ArgumentList $argumentString -WorkingDirectory $WorkingDirectory -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+        $stdout = if (Test-Path -LiteralPath $stdoutFile) { [IO.File]::ReadAllText($stdoutFile) } else { '' }
+        $stderr = if (Test-Path -LiteralPath $stderrFile) { [IO.File]::ReadAllText($stderrFile) } else { '' }
+        if ($stdout) { [Console]::Out.Write($stdout) }
+        if ($stderr) { [Console]::Error.Write($stderr) }
+        if ([int]$process.ExitCode -ne 0) {
+            [Console]::Error.WriteLine("$FilePath failed with exit code $($process.ExitCode). stderr: $stderr")
+            exit [int]$process.ExitCode
+        }
+    } finally {
+        Remove-Item -LiteralPath $stdoutFile, $stderrFile -Force -ErrorAction SilentlyContinue
+    }
 }

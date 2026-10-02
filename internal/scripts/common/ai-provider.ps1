@@ -35,7 +35,7 @@ finally:
         try {
             $lookupArgs = @($queryFile, $Database)
             if ($ProviderId) { $lookupArgs += $ProviderId }
-            $process = Start-Process -FilePath $python -ArgumentList $lookupArgs -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+            $process = Start-Process -FilePath $python -ArgumentList (ConvertTo-NativeArgumentString $lookupArgs) -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
             $exitCode = [int]$process.ExitCode
             $result = @(Get-Content -LiteralPath $stdoutFile -ErrorAction SilentlyContinue)
             $stderr = ((Get-Content -LiteralPath $stderrFile -ErrorAction SilentlyContinue) -join [Environment]::NewLine).Trim()
