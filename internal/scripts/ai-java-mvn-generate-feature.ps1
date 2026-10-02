@@ -31,33 +31,46 @@ if (-not $Model -or -not $baseUrl) {
 }
 if (-not $Model -or -not $baseUrl) { throw 'Could not determine AI provider. Configure a default AI provider or pass -r and -m.' }
 $tmp = Join-Path $repo '.tmp'; New-Item -ItemType Directory -Force -Path $tmp | Out-Null
-$packagePath = $Package.Replace('.', '\')
-$pom = if (Test-Path (Join-Path $projectDir 'pom.xml')) { Get-Content (Join-Path $projectDir 'pom.xml') -Raw } else { '' }
-$appFile = Join-Path $projectDir "src\main\java\$packagePath\App.java"
-$testFile = Join-Path $projectDir "src\test\java\$packagePath\AppTest.java"
-$app = if (Test-Path $appFile) { Get-Content $appFile -Raw } else { '' }
-$test = if (Test-Path $testFile) { Get-Content $testFile -Raw } else { '' }
+$pomFile = Join-Path $projectDir 'pom.xml'
+$pom = if (Test-Path -LiteralPath $pomFile) { Get-Content -LiteralPath $pomFile -Raw } else { '' }
+if (-not $pom) { throw "pom.xml not found in project directory: $projectDir" }
+
+$sourceContext = ''
+if ($IncludeSources) {
+    $javaFiles = Get-ChildItem -Path $projectDir -Recurse -Filter '*.java' -ErrorAction SilentlyContinue |
+        Where-Object { $_.Length -gt 0 } |
+        Sort-Object FullName
+    if ($javaFiles) {
+        $sourceContext = ($javaFiles | ForEach-Object {
+            $relative = $_.FullName.Substring($projectDir.Length).TrimStart('\', '/')
+            "--- $relative ---`n" + (Get-Content -LiteralPath $_.FullName -Raw)
+        }) -join "`n`n"
+    }
+}
+
 $userPrompt = Get-Content -LiteralPath $promptPath -Raw
 $fullPrompt = @"
-You are a Java code generator.
+You are a Java code generator for Maven projects.
 $userPrompt
 
-Given the project below, return ONLY a JSON object where:
-- key = relative file path (e.g. "src/main/java/com/example/luhn/Luhn.java" or "src/test/java/com/example/luhn/LuhnTest.java")
-- value = full file content as a string
-- optional key "pom_xml" = updated pom.xml if dependencies need changes
+Given the Maven project below, return ONLY a JSON object where:
+- keys are relative file paths (e.g. "src/main/java/com/example/luhn/Luhn.java", "src/test/java/com/example/luhn/LuhnTest.java")
+- values are full file contents as strings
+- optional key "pom_xml" = complete updated pom.xml content ONLY if new dependencies are required; omit this key if no dependency changes are needed
 
-Do NOT add <version> tags to dependencies managed by the Maven parent or BOM.
-Escape JSON string newlines as \n (one backslash followed by n); do not leave literal backslash-n text in generated file contents. Escape quotes as \".
+Rules:
+- Do NOT add <version> tags to dependencies managed by the Maven parent or BOM.
+- Generate new classes for the requested feature and corresponding tests.
+- Do NOT assume existing source files have specific names like App.java or AppTest.java.
+- If you generate code or tests that require dependencies not present in pom.xml, you MUST return a complete updated pom_xml.
+- Before omitting pom_xml, verify that every import used by the generated Java and test files is already satisfied by the current pom.xml.
+- If you generate JUnit 4 or JUnit 5 style tests and the current pom.xml only contains older JUnit dependencies, you MUST update pom_xml accordingly.
+- Escape JSON string newlines as \n (one backslash followed by n); do not leave literal backslash-n text in generated file contents. Escape quotes as \".
 
 pom.xml:
 $pom
 
-App.java:
-$app
-
-AppTest.java:
-$test
+$sourceContext
 "@
 $fullPromptFile=Join-Path $tmp 'ai_feature_prompt.txt'; $reqFile=Join-Path $tmp 'ai_feature_request.json'; $respFile=Join-Path $tmp 'ai_feature_response.json'
 Set-Content -LiteralPath $fullPromptFile -Value $fullPrompt -Encoding UTF8

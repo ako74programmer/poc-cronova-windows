@@ -56,7 +56,7 @@ if (-not (Test-Path -LiteralPath $generatedDir -PathType Container)) {
 }
 Remove-Item -LiteralPath $targetDir -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path (Split-Path $targetDir -Parent) | Out-Null
-Move-Item -LiteralPath $generatedDir -Destination $targetDir
+Copy-Item -LiteralPath $generatedDir -Destination $targetDir -Recurse -Force
 Remove-Item -LiteralPath $tmpOut -Recurse -Force -ErrorAction SilentlyContinue
 $pom = Join-Path $targetDir 'pom.xml'
 if (Test-Path -LiteralPath $pom -PathType Leaf) {

@@ -10,10 +10,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot 'common\toolchain.ps1')
-. (Join-Path $PSScriptRoot 'common\ai-provider.ps1')
+. (Join-Path $PSScriptRoot 'common/toolchain.ps1')
+. (Join-Path $PSScriptRoot 'common/ai-provider.ps1')
 $repo = Get-RepoRoot
-if (-not $Workspace) { $Workspace = Join-Path $repo 'workspaces\springboot-demo' }
+if (-not $Workspace) { $Workspace = Join-Path $repo 'workspaces/springboot-demo' }
 $projectDir = Resolve-RepoPath (Join-Path $Workspace $Project)
 if (-not (Test-Path -LiteralPath $projectDir -PathType Container)) { throw "Project directory not found: $projectDir" }
 
@@ -26,7 +26,7 @@ else {
 
 $baseUrl = $env:CRONOVA_AI_BASE_URL
 $token = $env:CRONOVA_AI_TOKEN
-$db = if ($env:CRONOVA_DB) { $env:CRONOVA_DB } else { Join-Path $repo 'data\cronova.db' }
+$db = if ($env:CRONOVA_DB) { $env:CRONOVA_DB } else { Join-Path $repo 'data/cronova.db' }
 if (-not $Model -or -not $baseUrl) {
     $provider = Resolve-AiProvider $db $ProviderId $Python
     if ($provider) {
@@ -40,75 +40,73 @@ if (-not $Model -or -not $baseUrl) {
 }
 
 $tmp = Join-Path $repo '.tmp'
-$m2 = Join-Path $repo '.m2\repository'
+$m2 = Join-Path $repo '.m2/repository'
 New-Item -ItemType Directory -Force -Path $tmp, $m2 | Out-Null
 Set-JavaMavenToolchain
 $maven = Get-ConfiguredCommand 'maven'
 
 for ($iteration = 1; $iteration -le $Iterations; $iteration++) {
-    Write-Output "=== compile iteration $iteration / $Iterations ==="
-    $log = Join-Path $tmp 'compile.log'
-    $stdoutFile = Join-Path $tmp ("compile-" + [guid]::NewGuid().ToString('N') + '.stdout')
-    $stderrFile = Join-Path $tmp ("compile-" + [guid]::NewGuid().ToString('N') + '.stderr')
+    Write-Output "=== test iteration $iteration / $Iterations ==="
+    $log = Join-Path $tmp 'test.log'
+    $stdoutFile = Join-Path $tmp ("test-" + [guid]::NewGuid().ToString('N') + '.stdout')
+    $stderrFile = Join-Path $tmp ("test-" + [guid]::NewGuid().ToString('N') + '.stderr')
     try {
-        $mavenArgs = @('-B', "-Dmaven.repo.local=$m2", '-DskipTests', 'test-compile')
+        $mavenArgs = @('-B', "-Dmaven.repo.local=$m2", 'test')
         $process = Start-Process -FilePath $maven -ArgumentList (ConvertTo-NativeArgumentString $mavenArgs) -WorkingDirectory $projectDir -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
         $stdout = if (Test-Path -LiteralPath $stdoutFile) { [IO.File]::ReadAllText($stdoutFile) } else { '' }
         $stderr = if (Test-Path -LiteralPath $stderrFile) { [IO.File]::ReadAllText($stderrFile) } else { '' }
         [IO.File]::WriteAllText($log, $stdout + $stderr, [Text.UTF8Encoding]::new($false))
-        $compileExitCode = [int]$process.ExitCode
+        $testExitCode = [int]$process.ExitCode
     } finally {
         Remove-Item -LiteralPath $stdoutFile, $stderrFile -Force -ErrorAction SilentlyContinue
     }
 
-    if ($compileExitCode -eq 0) {
-        Write-Output "Test compile succeeded on iteration $iteration"
+    if ($testExitCode -eq 0) {
+        Write-Output "Tests succeeded on iteration $iteration"
         exit 0
     }
 
-    Write-Output 'Test compile failed. Sending report to AI reviewer...'
+    Write-Output 'Tests failed. Sending report to AI reviewer...'
     Get-Content -LiteralPath $log -Tail 80
     if ($iteration -eq $Iterations) {
         Write-Output 'Max iterations reached. Giving up.'
         Get-Content -LiteralPath $log
-        throw "Max iterations reached. Maven exit code: $compileExitCode"
+        throw "Max iterations reached. Maven exit code: $testExitCode"
     }
 
-    $sourceFiles = Get-ChildItem -LiteralPath (Join-Path $projectDir 'src\main\java') -Filter '*.java' -Recurse
-    $sources = ($sourceFiles | ForEach-Object {
+    $sourceFiles = Get-ChildItem -LiteralPath (Join-Path $projectDir 'src/main/java') -Filter '*.java' -Recurse
+    $testFiles = Get-ChildItem -LiteralPath (Join-Path $projectDir 'src/test/java') -Filter '*.java' -Recurse
+    $sources = ($sourceFiles + $testFiles | ForEach-Object {
         $relativePath = $_.FullName.Substring($projectDir.Length + 1).Replace('\', '/')
         "--- $relativePath ---"
         Get-Content -LiteralPath $_.FullName -Raw
     }) -join "`n"
     $pom = Get-Content -LiteralPath (Join-Path $projectDir 'pom.xml') -Raw
-    $compileLog = (Get-Content -LiteralPath $log -Tail 80) -join "`n"
+    $testLog = (Get-Content -LiteralPath $log -Tail 80) -join "`n"
 
     $prompt = @"
-You are a Java build-error reviewer. The Maven project below failed during test compilation.
-Fix the code (and pom.xml if needed) so both main and test sources compile.
-IMPORTANT:
-- do NOT add <version> tags to dependencies that are managed by the Spring Boot parent POM. Use only <groupId> and <artifactId> for Spring Boot starters.
-- Use jakarta.validation.constraints.NotBlank and jakarta.validation.Valid (NOT javax.validation).
-Return ONLY a JSON object with keys: pom_xml, and for each Java file you change, key = relative path like "src/main/java/com/example/demo/api/ItemController.java".
+You are a Java test-error reviewer. The Maven project below failed its tests.
+Fix the code (and pom.xml if needed) so all tests pass. Do not remove tests unless they are invalid.
+Return ONLY a JSON object with keys: pom_xml, and for each Java file you change, key = relative path like "src/main/java/com/example/demo/Luhn.java" or "src/test/java/com/example/demo/LuhnTest.java".
 Escape newlines in strings as \n and quotes as \".
 
 pom.xml:
 $pom
 
-Test compile error:
-$compileLog
+Test error:
+$testLog
 
 Source files:
 $sources
 "@
 
-    $promptFile = Join-Path $tmp 'ai_review_prompt.txt'
-    $reqFile = Join-Path $tmp 'ai_review_request.json'
-    $respFile = Join-Path $tmp 'ai_review.json'
+    $promptFile = Join-Path $tmp 'ai_review_test_prompt.txt'
+    $reqFile = Join-Path $tmp 'ai_review_test_request.json'
+    $respFile = Join-Path $tmp 'ai_review_test.json'
     [IO.File]::WriteAllText($promptFile, $prompt, [Text.UTF8Encoding]::new($false))
-    $aiScript = Join-Path $repo 'internal\scripts\ai\review_fix_v2.py'
-    $aiStdoutFile = Join-Path $tmp ("ai-review-" + [guid]::NewGuid().ToString('N') + '.stdout')
-    $aiStderrFile = Join-Path $tmp ("ai-review-" + [guid]::NewGuid().ToString('N') + '.stderr')
+    $aiScript = Join-Path $repo 'internal/scripts/ai/review_fix_v2.py'
+    $aiStdoutFile = Join-Path $tmp ("ai-review-test-" + [guid]::NewGuid().ToString('N') + '.stdout')
+    $aiStderrFile = Join-Path $tmp ("ai-review-test-" + [guid]::NewGuid().ToString('N') + '.stderr')
     $aiArgs = @($aiScript, $projectDir, $Package.Replace('.', '/'), $promptFile, $reqFile, $respFile, $Model, $baseUrl, $token)
     try {
         $aiProcess = Start-Process -FilePath $Python -ArgumentList (ConvertTo-NativeArgumentString $aiArgs) -Wait -PassThru -NoNewWindow -RedirectStandardOutput $aiStdoutFile -RedirectStandardError $aiStderrFile
@@ -118,9 +116,11 @@ $sources
         if ($aiStdout) { [Console]::Out.Write($aiStdout) }
         if ($aiProcess.ExitCode -ne 0) {
             [Console]::Error.WriteLine("AI review/fix failed: python=$Python script=$aiScript exit_code=$($aiProcess.ExitCode) stderr=$aiStderr")
-            exit [int]$aiProcess.ExitCode
+            throw "AI review/fix failed."
         }
     } finally {
         Remove-Item -LiteralPath $aiStdoutFile, $aiStderrFile -Force -ErrorAction SilentlyContinue
     }
+    # TODO: Apply AI changes (parse $respFile and update files)
 }
+throw "Test fix loop failed."

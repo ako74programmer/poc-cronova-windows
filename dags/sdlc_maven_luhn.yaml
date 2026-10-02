@@ -42,3 +42,12 @@ tasks:
       pool: default
       timeout: 300
       trigger_rule: all_success
+
+    - id: ai_fix_tests_loop
+      type: powershell
+      command: '& .\internal\scripts\ai-review-fix-tests-loop.ps1 -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -m kimi-k2.7-code -y python'
+      deps:
+        - tests
+      pool: default
+      timeout: 900
+      trigger_rule: all_failed
