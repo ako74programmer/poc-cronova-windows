@@ -39,6 +39,22 @@ function ConvertTo-InitializrValue([string]$Value) {
     return ([Uri]::EscapeDataString($Value.Trim())).Replace('%2F', '/')
 }
 
+function Find-ConfiguredExecutable([string]$Name) {
+    $command = Get-Command $Name -ErrorAction SilentlyContinue
+    if ($command) { return $command.Source }
+
+    foreach ($pathValue in @($env:CRONOVA_WINDOWS_PATH, $env:Path)) {
+        if (-not $pathValue) { continue }
+        foreach ($directory in $pathValue.Split([IO.Path]::PathSeparator, [StringSplitOptions]::RemoveEmptyEntries)) {
+            $candidate = Join-Path $directory.Trim().Trim('"') $Name
+            if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+                return (Resolve-Path -LiteralPath $candidate).Path
+            }
+        }
+    }
+    return $null
+}
+
 $query = @(
     'type=' + (ConvertTo-InitializrValue $Type)
     'language=' + (ConvertTo-InitializrValue $Language)
@@ -59,17 +75,18 @@ Write-Output 'Downloading Spring Boot project from start.spring.io...'
 Write-Output "Using Python: $Python"
 Write-Output "URL: $url"
 $zipFile = Join-Path $tmpDir 'springboot-project.zip'
-$curl = Get-Command 'curl.exe' -ErrorAction SilentlyContinue
-$wget = if (-not $curl) { Get-Command 'wget.exe' -ErrorAction SilentlyContinue }
+$curl = Find-ConfiguredExecutable 'curl.exe'
+$wget = if (-not $curl) { Find-ConfiguredExecutable 'wget.exe' }
 if ($curl) {
-    $downloader = $curl.Source
+    $downloader = $curl
     $downloadArgs = @('-L', '-o', $zipFile, $url)
 } elseif ($wget) {
-    $downloader = $wget.Source
+    $downloader = $wget
     $downloadArgs = @('-O', $zipFile, $url)
 } else {
-    throw 'Error: curl.exe or wget.exe is required.'
+    throw 'Error: curl.exe or wget.exe was not found on PATH or CRONOVA_WINDOWS_PATH.'
 }
+Write-Output "Using downloader: $downloader"
 $downloadStdout = Join-Path $tmpDir ("springboot-download-" + [guid]::NewGuid().ToString('N') + '.stdout')
 $downloadStderr = Join-Path $tmpDir ("springboot-download-" + [guid]::NewGuid().ToString('N') + '.stderr')
 try {
