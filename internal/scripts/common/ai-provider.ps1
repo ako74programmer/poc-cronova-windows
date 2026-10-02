@@ -33,7 +33,9 @@ finally:
         $stdoutFile = "$queryFile.out"
         $stderrFile = "$queryFile.err"
         try {
-            $process = Start-Process -FilePath $python -ArgumentList @($queryFile, $Database, $ProviderId) -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+            $lookupArgs = @($queryFile, $Database)
+            if ($ProviderId) { $lookupArgs += $ProviderId }
+            $process = Start-Process -FilePath $python -ArgumentList $lookupArgs -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
             $exitCode = [int]$process.ExitCode
             $result = @(Get-Content -LiteralPath $stdoutFile -ErrorAction SilentlyContinue)
             $stderr = ((Get-Content -LiteralPath $stderrFile -ErrorAction SilentlyContinue) -join [Environment]::NewLine).Trim()

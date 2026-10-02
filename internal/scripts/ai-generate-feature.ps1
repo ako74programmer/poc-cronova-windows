@@ -64,7 +64,9 @@ Write-Output "Calling AI provider (model: $Model, url: $baseUrl)..."
 $aiScript = Join-Path $repo 'internal\scripts\ai_generate_feature.py'
 $stdoutFile=Join-Path $tmp 'ai_feature.stdout'; $stderrFile=Join-Path $tmp 'ai_feature.stderr'
 try {
-    $process=Start-Process -FilePath $Python -ArgumentList @($aiScript,$projectDir,$fullPromptFile,$reqFile,$respFile,$Model,$baseUrl,$token) -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+    $aiArgs=@($aiScript,$projectDir,$fullPromptFile,$reqFile,$respFile,$Model,$baseUrl)
+    if($token){$aiArgs += $token}
+    $process=Start-Process -FilePath $Python -ArgumentList $aiArgs -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
     $stdout=Get-Content $stdoutFile -ErrorAction SilentlyContinue; $stderr=(Get-Content $stderrFile -ErrorAction SilentlyContinue)-join [Environment]::NewLine
     $stdout | Write-Output
     if($process.ExitCode -ne 0){throw "AI feature generation failed with exit code $($process.ExitCode): $stderr"}
