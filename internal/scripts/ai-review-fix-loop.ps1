@@ -45,6 +45,11 @@ Source files:
 $sources
 "@
     $promptFile=Join-Path $tmp 'ai_review_prompt.txt';$reqFile=Join-Path $tmp 'ai_review_request.json';$respFile=Join-Path $tmp 'ai_review.json';Set-Content $promptFile $prompt -Encoding UTF8
-    & $Python (Join-Path $repo 'internal\scripts\ai\review_fix_v2.py') $projectDir ($Package.Replace('.','/')) $promptFile $reqFile $respFile $Model $baseUrl $token
-    $exitCode=if(Test-Path variable:LASTEXITCODE){[int]$LASTEXITCODE}else{0}; if($exitCode -ne 0){throw "AI review/fix failed with exit code $exitCode"}
+    $aiScript=Join-Path $repo 'internal\scripts\ai\review_fix_v2.py';$stdoutFile=Join-Path $tmp 'ai_review.stdout';$stderrFile=Join-Path $tmp 'ai_review.stderr'
+    try {
+        $process=Start-Process -FilePath $Python -ArgumentList @($aiScript,$projectDir,($Package.Replace('.','/')),$promptFile,$reqFile,$respFile,$Model,$baseUrl,$token) -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+        Get-Content $stdoutFile -ErrorAction SilentlyContinue | Write-Output
+        $stderr=(Get-Content $stderrFile -ErrorAction SilentlyContinue)-join [Environment]::NewLine
+        if($process.ExitCode -ne 0){throw "AI review/fix failed with exit code $($process.ExitCode): $stderr"}
+    } finally { Remove-Item -LiteralPath $stdoutFile,$stderrFile -Force -ErrorAction SilentlyContinue }
 }

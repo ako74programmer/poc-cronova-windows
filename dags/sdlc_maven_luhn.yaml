@@ -9,30 +9,30 @@ default_retries: 0
 # scaffold -> compile -> add feature -> review/fix loop -> tests.
 tasks:
   - id: scaffold
-    type: shell
+    type: powershell
     timeout: 300
-    command: bash internal/scripts/generate-maven-archetype -a maven-archetype-quickstart -g com.example -r luhn -k com.example.luhn -j 21 -w workspaces/sdlc_maven_luhn -p app -C
+    command: "& .\\internal\\scripts\\generate-maven-archetype.ps1 -a maven-archetype-quickstart -g com.example -r luhn -k com.example.luhn -j 21 -w workspaces/sdlc_maven_luhn -p app -C"
 
   - id: compile_skeleton
-    type: shell
+    type: powershell
     timeout: 600
     deps: [scaffold]
-    command: bash internal/scripts/compile-project -w workspaces/sdlc_maven_luhn -p app
+    command: "& .\\internal\\scripts\\compile-project.ps1 -w workspaces/sdlc_maven_luhn -p app"
 
   - id: ai_add_feature
-    type: shell
+    type: powershell
     timeout: 300
     deps: [compile_skeleton]
-    command: bash internal/scripts/ai-generate-feature -f prompts/luhn.txt -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -r default -y python
+    command: "& .\\internal\\scripts\\ai-generate-feature.ps1 -f prompts/luhn.txt -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -r default -y python"
 
   - id: compile_loop
-    type: shell
+    type: powershell
     timeout: 900
     deps: [ai_add_feature]
-    command: bash internal/scripts/ai-review-fix-loop -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -m kimi-k2.7-code -y python
+    command: "& .\\internal\\scripts\\ai-review-fix-loop.ps1 -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -m kimi-k2.7-code -y python"
 
   - id: tests
-    type: shell
+    type: powershell
     timeout: 300
     deps: [compile_loop]
-    command: bash internal/scripts/run-tests -w workspaces/sdlc_maven_luhn -p app
+    command: "& .\\internal\\scripts\\run-tests.ps1 -w workspaces/sdlc_maven_luhn -p app"
