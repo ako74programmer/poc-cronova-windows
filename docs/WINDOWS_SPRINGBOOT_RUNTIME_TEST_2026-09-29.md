@@ -29,9 +29,10 @@ Agent pracuje już na właściwej gałęzi. Należy pobrać całą aktualną zaw
 ## Uruchomienie
 
 ```bat
-set CRONOVA_TASK_ENV_ALLOWLIST=
 app.cmd start
 ```
+
+Nie ustawiaj `CRONOVA_TASK_ENV_ALLOWLIST`. Na Windows `app.cmd` i Cronova automatycznie przekazują wymagane zmienne toolchainu do tasków.
 
 `app.cmd` powinien zbudować `cronova.exe` z aktualnego working tree, wykryć toolchain Windows i uruchomić usługę z autoryzacją.
 

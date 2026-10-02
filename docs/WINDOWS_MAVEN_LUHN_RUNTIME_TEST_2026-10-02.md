@@ -18,9 +18,10 @@ Na istniejącej gałęzi repozytorium wykonaj:
 cd /d C:\ścieżka\do\poc-cronova-windows
 git pull --ff-only origin feature/windows-cmd-runtime-sdlc-2026-09-26
 git status --short
-set CRONOVA_TASK_ENV_ALLOWLIST=
 app.cmd start
 ```
+
+Nie ustawiaj `CRONOVA_TASK_ENV_ALLOWLIST`. Na Windows `app.cmd` i Cronova automatycznie przekazują wymagane zmienne toolchainu do tasków.
 
 Nie wykonuj `switch`, `reset` ani wyboru pojedynczego commitu. Nie modyfikuj kodu na Windows.
 

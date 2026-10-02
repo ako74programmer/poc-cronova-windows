@@ -31,9 +31,10 @@ Nie modyfikować plików repozytorium i nie tworzyć commitów podczas testu.
 Nie używać `start-dev` ani `start.cmd`.
 
 ```bat
-set CRONOVA_TASK_ENV_ALLOWLIST=
 app.cmd start
 ```
+
+Nie ustawiaj `CRONOVA_TASK_ENV_ALLOWLIST`. Na Windows `app.cmd` i Cronova automatycznie przekazują wymagane zmienne toolchainu do tasków.
 
 Oczekiwane zachowanie:
 

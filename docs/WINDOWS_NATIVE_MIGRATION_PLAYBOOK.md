@@ -184,11 +184,12 @@ Instrukcja dla agenta:
 
 ```bat
 cd /d C:\ścieżka\do\repo
- git pull --ff-only origin feature/windows-cmd-runtime-sdlc-2026-09-26
- git status --short
- set CRONOVA_TASK_ENV_ALLOWLIST=
- app.cmd start
+git pull --ff-only origin feature/windows-cmd-runtime-sdlc-2026-09-26
+git status --short
+app.cmd start
 ```
+
+Na Windows nie ustawiaj `CRONOVA_TASK_ENV_ALLOWLIST`. `app.cmd` wykrywa toolchain, a `buildEnv()` automatycznie przekazuje bezpieczne zmienne Java/Maven/Python/PATH do tasków.
 
 Agent nie wykonuje `switch`, `reset`, nie wybiera pojedynczego commita, nie poprawia kodu i zatrzymuje test na pierwszym błędzie.
 
