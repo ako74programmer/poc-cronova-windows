@@ -47,7 +47,7 @@ Migracja na branchu `feature/windows-cmd-runtime-sdlc-2026-09-26` zachowuje pię
 
 Zmiana DAG-a ogranicza się do `type: shell` → `type: powershell` i wywołania odpowiadającego modułu `.ps1`. Dla trzech opcji scaffoldingu Bash rozróżnia wielkość liter (`-p`/`-P` i `-c`/`-C`), czego aliasy parametrów PowerShell nie mogą zrobić; dlatego mapują się na jednoznaczne parametry nazwane przy zachowaniu wartości i semantyki. Dla Maven, Python i pobierania PowerShell używa `Start-Process`, osobnych plików stdout/stderr oraz jawnego `ExitCode`. `curl.exe`/`wget.exe` są szukane zarówno przez PowerShell `PATH`, jak i odziedziczone `CRONOVA_WINDOWS_PATH`. Windows runner zachowuje zmienne środowiskowe bez względu na wielkość liter, w tym `PATH`, `PATHEXT`, `SystemRoot` i `ComSpec`; `PATHEXT` jest potrzebne zagnieżdżonemu `cmd.exe`, które Surefire wykorzystuje do uruchomienia `java` bez jawnego rozszerzenia `.exe`. Prompty CRUD/review zachowują wymagania Bash, w tym pojedyncze escapowanie nowych linii; helpery Python walidują POM XML przed zapisem.
 
-W sandboxie należy sprawdzić parser PowerShell, helper POM, składnię Python, kontrakt DAG-a, `git diff --check` oraz dostępne testy. To nie potwierdza działania na Windows. Status runtime Windows pozostaje **niezweryfikowany** do momentu, gdy agent prześle raport wszystkich pięciu tasków.
+Walidacja sandboxowa (parser PowerShell, helper POM, składnia Python, kontrakt DAG-a i dostępne testy) nie zastępuje testu Windows. Runtime Windows został potwierdzony 2026-10-02: run `sdlc_springboot_startio__manual_1790952167446808200` na commicie `c041ee0a1e1cac91ce6b07ffb848d4658d9f0d9e` zakończył się sukcesem, wszystkie pięć tasków miało status `success`, a runtime wyniósł 46 s. Git Bash i WSL nie były użyte.
 
 ## Przepływ krok po kroku
 
@@ -131,11 +131,11 @@ Kilka skryptów zapisuje do stałych nazw plików w `.tmp/` (`springboot-project
 
 **Jednak klocki nie są jeszcze w pełni niezależne ani gotowe do przenoszenia bez warunków.** Wykryte ograniczenia:
 
-1. **Resolver Pythona został ujednolicony w tym branchu, ale Windows runtime nie jest jeszcze potwierdzony:** `fetch-springboot-project`, `ai-generate-crud`, `ai-review-fix-loop` i `ai-generate-feature` używają wspólnego helpera dla `-y`, `CRONOVA_PYTHON` i autodetekcji. Ten poprawiony kod wymaga testu na docelowym Git Bash/Windows.
+1. **Resolver Pythona został ujednolicony w tym branchu:** `fetch-springboot-project`, `ai-generate-crud`, `ai-review-fix-loop` i `ai-generate-feature` używają wspólnego helpera dla `-y`, `CRONOVA_PYTHON` i autodetekcji. Cały DAG przeszedł natywny Windows runtime test na commicie `c041ee0`.
 2. **Zależność od repozytorium i uruchomienia z jego katalogu:** komendy DAG-a są względne (`internal/scripts/...`, `workspaces/...`), więc wymagają właściwego katalogu roboczego Cronova. Skrypty zakładają też dostęp do `curl`/`wget`, `unzip`, `python`, Maven, Java i sieci.
 3. **Współdzielone nazwy plików tymczasowych:** stałe pliki w `.tmp/` mogą kolidować między jednocześnie działającymi DAG-ami.
 4. **Dwa modele toolchain:** skrypty `compile-project`, `ai-review-fix-loop` i `run-tests` konfigurują Java/Maven helperem; `fetch-springboot-project` i skrypty AI mają inną ścieżkę konfiguracji Pythona. Przekazanie `-y python` do kroków AI nie naprawia kroku `scaffold`.
 5. **Różne rodziny SDLC w repo:** `sdlc_springboot_startio` korzysta z `internal/scripts/`; `sdlc_springboot_rest` korzysta z osobnej rodziny wrapperów `scripts/sdlc/springboot/` oraz wersjonowanej konfiguracji YAML. Nie należy traktować ich jako tego samego kontraktu tylko dlatego, że oba budują Spring Boot.
 6. **Wytwory są modyfikowalne/destrukcyjne:** `-C` w pierwszym kroku usuwa projekt docelowy przy każdym uruchomieniu. To jest zamierzone dla powtarzalnego scaffoldu, ale warto pamiętać, że lokalne zmiany w `workspaces/springboot-startio/app` nie są zachowywane.
 
-Wniosek: **architektura przepływu pozostaje kompozycyjna i Windows-native; teraz potrzebny jest pełny runtime test DAG-a na Windows.** Sandbox nie zastępuje tego testu i ten dokument nie deklaruje jego wykonania.
+Wniosek: **architektura przepływu pozostaje kompozycyjna i Windows-native; pełny runtime test DAG-a został zaliczony na Windows (5/5 tasków).** Sandbox nie zastępuje natywnego testu; wynik potwierdza załączony run, a nie sama walidacja sandboxowa.

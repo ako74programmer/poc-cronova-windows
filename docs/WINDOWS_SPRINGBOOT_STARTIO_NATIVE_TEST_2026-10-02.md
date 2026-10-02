@@ -89,4 +89,20 @@ COMPILE_LOOP=success
 TESTS=success
 ```
 
-Do czasu otrzymania takiego raportu DAG pozostaje **niezweryfikowany na Windows**.
+## Wynik wykonania — 2026-10-02
+
+Raport Windows potwierdza sukces na branchu `feature/windows-cmd-runtime-sdlc-2026-09-26`, commit `c041ee0a1e1cac91ce6b07ffb848d4658d9f0d9e`:
+
+```text
+RUN_ID=sdlc_springboot_startio__manual_1790952167446808200
+SCAFFOLD=success
+COMPILE_SKELETON=success
+AI_ADD_CRUD=success
+COMPILE_LOOP=success
+TESTS=success
+TASK_RUNTIME=46s
+GIT_BASH_USED=no
+WSL_USED=no
+```
+
+W raporze wskazano nieśledzony katalog `sdlc-verify/`; jego zawartości nie analizowano ani nie usuwano. Poza tym nie zgłoszono zmian ani commitów.
