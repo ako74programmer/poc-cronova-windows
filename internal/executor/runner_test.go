@@ -402,6 +402,11 @@ func TestWindowsToolchainEnvironmentIsInheritedWithoutAllowlist(t *testing.T) {
 		t.Skip("Windows-specific environment policy")
 	}
 	t.Setenv("CRONOVA_TASK_ENV_ALLOWLIST", "")
+	t.Setenv("pAtH", `C:\Windows\System32`)
+	t.Setenv("sYsTeMrOoT", `C:\Windows`)
+	t.Setenv("wInDiR", `C:\Windows`)
+	t.Setenv("cOmSpEc", `C:\Windows\System32\cmd.exe`)
+	t.Setenv("pAtHeXt", `.COM;.EXE;.BAT;.CMD`)
 	t.Setenv("JAVA_HOME", `C:\Java\jdk-25`)
 	t.Setenv("MAVEN_HOME", `C:\Maven`)
 	t.Setenv("PYTHONHOME", `C:\Python`)
@@ -417,6 +422,11 @@ func TestWindowsToolchainEnvironmentIsInheritedWithoutAllowlist(t *testing.T) {
 		}
 	}
 	for name := range map[string]bool{
+		"SYSTEMROOT":         true,
+		"WINDIR":             true,
+		"COMSPEC":            true,
+		"PATHEXT":            true,
+		"PATH":               true,
 		"JAVA_HOME":          true,
 		"MAVEN_HOME":         true,
 		"PYTHONHOME":         true,

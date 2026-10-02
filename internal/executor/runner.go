@@ -507,6 +507,12 @@ func openLog(path string) (*os.File, error) {
 }
 
 func buildEnv(extra map[string]string) []string {
+	envKey := func(name string) string {
+		if runtime.GOOS == "windows" {
+			return strings.ToUpper(name)
+		}
+		return name
+	}
 	allowed := map[string]bool{
 		"PATH": true, "HOME": true, "USER": true, "LOGNAME": true,
 		"SHELL": true, "TMPDIR": true, "TMP": true, "TEMP": true,
@@ -515,32 +521,36 @@ func buildEnv(extra map[string]string) []string {
 		"SSL_CERT_DIR": true, "GIT_SSL_CAINFO": true,
 	}
 	if runtime.GOOS == "windows" {
-		// These are runtime toolchain settings, not credentials. They must survive
-		// the scheduler -> executor -> Git Bash boundary without requiring an
-		// operator to maintain CRONOVA_TASK_ENV_ALLOWLIST manually.
+		// These are Windows process/toolchain settings, not credentials. They must
+		// survive the scheduler -> executor -> task boundary without requiring an
+		// operator to maintain CRONOVA_TASK_ENV_ALLOWLIST manually. PATHEXT is
+		// required by cmd.exe for child tools (e.g. Surefire starts "java" without
+		// an explicit .exe extension); the OS variables are needed by native tools.
 		for _, name := range []string{
+			"SystemRoot", "WINDIR", "ComSpec", "PATHEXT",
 			"JAVA_HOME", "MAVEN_HOME", "PYTHONHOME", "PYTHONPATH", "NODE_PATH", "NVM_HOME",
 			"CRONOVA_JAVA_HOME", "CRONOVA_MAVEN_HOME", "CRONOVA_BASH_PATH",
 			"CRONOVA_PYTHON", "CRONOVA_NODE", "CRONOVA_NPM", "CRONOVA_WINDOWS_PATH", "MSYS2_PATH_TYPE",
 		} {
-			allowed[name] = true
+			allowed[envKey(name)] = true
 		}
 	}
 	for _, name := range strings.FieldsFunc(os.Getenv("CRONOVA_TASK_ENV_ALLOWLIST"), func(r rune) bool {
 		return r == ',' || r == ' ' || r == '\t' || r == '\n'
 	}) {
-		allowed[name] = true
+		allowed[envKey(name)] = true
 	}
 
 	values := make(map[string]string, len(allowed)+len(extra))
 	for _, item := range os.Environ() {
 		name, value, ok := strings.Cut(item, "=")
-		if ok && (allowed[name] || strings.HasPrefix(name, "LC_")) {
-			values[name] = value
+		key := envKey(name)
+		if ok && (allowed[key] || strings.HasPrefix(key, "LC_")) {
+			values[key] = value
 		}
 	}
 	for k, v := range extra {
-		values[k] = v
+		values[envKey(k)] = v
 	}
 	// Git Bash/MSYS must inherit the Windows PATH so tasks can find tools from
 	// the parent process and from the standard discovery roots below.
