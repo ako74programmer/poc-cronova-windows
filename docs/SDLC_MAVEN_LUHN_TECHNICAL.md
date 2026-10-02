@@ -228,8 +228,10 @@ Skrypt Python:
 5. odczytuje `choices[0].message.content`;
 6. usuwa opcjonalne ogrodzenie Markdown ` ```json `;
 7. parsuje zwrócony JSON;
-8. jeśli istnieje klucz `pom_xml`, zapisuje go do `pom.xml`;
+8. jeśli istnieje klucz `pom_xml`, waliduje go jako XML przed zapisem; przy nieparsowalnym XML próbuje normalizować dosłowne sekwencje escaped whitespace (`\n`, `\r`, `\t`) i zapisuje je tylko wtedy, gdy wynik jest poprawnym XML-em;
 9. zapisuje każdy pozostały klucz jako ścieżkę względną względem katalogu projektu.
+
+Prompt PowerShell musi przekazywać tę samą instrukcję co Bash: znaki nowej linii w wartościach JSON są kodowane pojedynczą sekwencją `\n`. Podwójne escapowanie tej instrukcji prowadziło do literalnych znaków `\n` w `pom.xml`, których Maven nie potrafił parsować.
 
 Oczekiwane rezultaty dla tego DAG-a to co najmniej:
 

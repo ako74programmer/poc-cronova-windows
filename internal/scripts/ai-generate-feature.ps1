@@ -47,7 +47,7 @@ Given the project below, return ONLY a JSON object where:
 - optional key "pom_xml" = updated pom.xml if dependencies need changes
 
 Do NOT add <version> tags to dependencies managed by the Maven parent or BOM.
-Escape newlines in strings as \\n and quotes as \\".
+Escape JSON string newlines as \n (one backslash followed by n); do not leave literal backslash-n text in generated file contents. Escape quotes as \".
 
 pom.xml:
 $pom

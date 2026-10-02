@@ -2,6 +2,41 @@ import json
 import os
 import sys
 import urllib.request
+import xml.etree.ElementTree as ET
+
+
+def normalize_pom_xml(pom_xml):
+    if not isinstance(pom_xml, str):
+        raise ValueError("AI returned pom_xml that is not a string")
+
+    try:
+        ET.fromstring(pom_xml)
+        return pom_xml
+    except ET.ParseError as original_error:
+        # Some models double-escape formatting newlines in the JSON payload,
+        # leaving literal backslash-n sequences in the decoded XML string.
+        normalized = (
+            pom_xml.replace(r"\r\n", "\r\n")
+            .replace(r"\n", "\n")
+            .replace(r"\r", "\r")
+            .replace(r"\t", "\t")
+        )
+        if normalized == pom_xml:
+            raise ValueError(f"AI returned invalid pom_xml: {original_error}") from original_error
+
+        try:
+            ET.fromstring(normalized)
+        except ET.ParseError as normalized_error:
+            raise ValueError(
+                "AI returned invalid pom_xml after escaped-whitespace normalization: "
+                f"{normalized_error} (original error: {original_error})"
+            ) from normalized_error
+
+        print(
+            "Normalized literal escaped whitespace in AI-generated pom.xml after XML validation.",
+            file=sys.stderr,
+        )
+        return normalized
 
 project_dir = sys.argv[1]
 prompt_file = sys.argv[2]
@@ -58,8 +93,9 @@ data = json.loads(content)
 
 base = project_dir
 if "pom_xml" in data:
+    pom_xml = normalize_pom_xml(data["pom_xml"])
     with open(os.path.join(base, "pom.xml"), "w", encoding="utf-8") as f:
-        f.write(data["pom_xml"])
+        f.write(pom_xml)
     print("Wrote pom.xml")
 
 for key in data:
