@@ -1,38 +1,29 @@
 dag_id: sdlc_springboot_startio
-schedule: "0 2 * * *"        # nightly build; remove for manual-only
+schedule: 0 2 * * *
 start_date: "2026-09-01"
 catchup: false
 max_active_runs: 1
-default_retries: 0
-
-# Composable Spring Initializr pipeline:
-# scaffold -> compile -> add CRUD -> review/fix loop -> tests.
 tasks:
-  - id: scaffold
-    type: powershell
-    timeout: 300
-    command: "& .\\internal\\scripts\\fetch-springboot-project.ps1 -t maven-project -l java -b 4.0.8 -g com.example -a demo -n com.example.demo -Packaging jar -c properties -j 21 -d web -w workspaces/springboot-startio -Project app -Clean"
-
-  - id: compile_skeleton
-    type: powershell
-    timeout: 600
-    deps: [scaffold]
-    command: "& .\\internal\\scripts\\compile-project.ps1 -w workspaces/springboot-startio -p app"
-
-  - id: ai_add_crud
-    type: powershell
-    timeout: 300
-    deps: [compile_skeleton]
-    command: "& .\\internal\\scripts\\ai-generate-crud.ps1 -w workspaces/springboot-startio -p app -k com.example.demo -r default -y python"
-
-  - id: compile_loop
-    type: powershell
-    timeout: 900
-    deps: [ai_add_crud]
-    command: "& .\\internal\\scripts\\ai-review-fix-loop.ps1 -w workspaces/springboot-startio -p app -k com.example.demo -r default -y python"
-
-  - id: tests
-    type: powershell
-    timeout: 300
-    deps: [compile_loop]
-    command: "& .\\internal\\scripts\\run-tests.ps1 -w workspaces/springboot-startio -p app"
+    - id: fetch_springboot_project
+      type: powershell
+      command: '& .\internal\scripts\fetch-springboot-project.ps1 -t maven-project -l java -b 4.0.8 -g com.example -a demo -n com.example.demo -Packaging jar -c properties -j 21 -d web -w workspaces/springboot-startio -Project app -Clean'
+    - id: maven_compile
+      type: powershell
+      command: '& .\internal\scripts\maven-compile.ps1 -w workspaces/springboot-startio -p app'
+      deps:
+        - fetch_springboot_project
+    - id: ai_generate_java_maven_feature
+      type: powershell
+      command: '& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/springboot_crud.txt -w workspaces/springboot-startio -p app -k com.example.demo -r default -y python'
+      deps:
+        - maven_compile
+    - id: java_maven_compile_fix_loop
+      type: powershell
+      command: '& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/springboot-startio -LoopProject app -LoopPackage com.example.demo -LoopProvider default -LoopPython python'
+      deps:
+        - ai_generate_java_maven_feature
+    - id: maven_test
+      type: powershell
+      command: '& .\internal\scripts\maven-test.ps1 -w workspaces/springboot-startio -p app'
+      deps:
+        - java_maven_compile_fix_loop

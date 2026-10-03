@@ -1,0 +1,23 @@
+Add a simple Spring Boot Item CRUD feature to the existing project.
+
+Requirements:
+1. Use the existing pom.xml as the base. Do not rewrite it from scratch.
+2. If the new feature requires dependencies that are missing from the current pom.xml, return an updated `pom_xml`.
+3. If no dependency changes are needed, omit `pom_xml`.
+4. Do NOT add `<version>` tags for dependencies managed by the Spring Boot parent POM.
+5. Respect the existing Spring Boot version and existing starter family already present in pom.xml.
+6. If the scaffold uses Spring Boot 4 webmvc starters, keep using the matching webmvc/webmvc-test family instead of switching to Boot 3 style starter names.
+7. Generated tests must only use APIs that are available from the dependencies present in pom.xml or added in `pom_xml`.
+8. Do not generate tests that use `MockMvc`, `@AutoConfigureMockMvc`, or `@WebMvcTest`.
+9. Prefer simple direct controller tests that instantiate the controller and verify CRUD behavior in memory.
+10. If an integration-style test is still needed, use a minimal `@SpringBootTest` smoke test without `MockMvc`.
+11. Create an `Item` model with fields `Long id` and `String name`.
+12. Create a REST controller exposing:
+   - `GET /items`
+   - `POST /items`
+   - `GET /items/{id}`
+   - `DELETE /items/{id}`
+13. Store items in a `java.util.Map<Long, Item>` inside the controller.
+14. Use `jakarta.validation.constraints.NotBlank` and `jakarta.validation.Valid`.
+15. Do not use `javax.validation`.
+16. Keep the existing application bootstrap class intact.

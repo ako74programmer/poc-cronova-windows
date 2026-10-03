@@ -14,6 +14,7 @@ New-Item -ItemType Directory -Force -Path $m2 | Out-Null
 Set-JavaMavenToolchain
 Write-ToolchainRuntime (Join-Path $projectDir 'toolchain-runtime.txt')
 $maven = Get-ConfiguredCommand 'maven'
-Write-Output "Running tests in $projectDir"
-Invoke-Native $maven @('-B', "-Dmaven.repo.local=$m2", 'test') $projectDir
-Write-Output "All tests passed in $projectDir"
+$mavenArgs = @('-B', "-Dmaven.repo.local=$m2", '-DskipTests', 'compile')
+Write-Output "Running: $maven $($mavenArgs -join ' ') in $projectDir"
+Invoke-Native $maven $mavenArgs $projectDir
+Write-Output "Maven compile succeeded: $projectDir"

@@ -2,7 +2,7 @@ import json
 import os
 import sys
 import urllib.request
-from pom_xml import normalize_pom_xml
+from apply_ai_file_patch import apply_ai_file_patch
 
 project_dir = sys.argv[1]
 package = sys.argv[2]
@@ -47,27 +47,4 @@ with open(resp_file, "w", encoding="utf-8") as f:
     f.write(resp_body)
 
 resp_json = json.loads(resp_body)
-content = resp_json["choices"][0]["message"]["content"]
-
-# Strip optional markdown code fences (```json ... ```)
-content = content.strip()
-if content.startswith("```"):
-    content = "\n".join(content.split("\n")[1:])
-    if content.endswith("```"):
-        content = content[:-3].strip()
-
-data = json.loads(content)
-
-base = project_dir
-if "pom_xml" in data:
-    pom_xml = normalize_pom_xml(data["pom_xml"])
-    with open(os.path.join(base, "pom.xml"), "w", encoding="utf-8") as f:
-        f.write(pom_xml)
-for key in data:
-    if key == "pom_xml":
-        continue
-    path = os.path.join(base, key)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(data[key])
-    print("Wrote", key)
+apply_ai_file_patch(project_dir, resp_body)

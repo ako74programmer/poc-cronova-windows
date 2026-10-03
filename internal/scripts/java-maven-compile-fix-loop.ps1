@@ -1,20 +1,21 @@
 [CmdletBinding()]
 param(
-    [Alias('w')][string]$Workspace,
-    [Alias('p')][string]$Project = 'demo',
-    [Alias('k')][string]$Package = 'com.example.demo',
-    [Alias('i')][int]$Iterations = 3,
-    [Alias('r')][string]$ProviderId,
-    [Alias('m')][string]$Model,
-    [Alias('y')][string]$Python
+    [Alias('LoopWorkspace')][string]$WorkspacePath,
+    [Alias('LoopProject')][string]$ProjectName = 'demo',
+    [Alias('LoopPackage')][string]$JavaPackage = 'com.example.demo',
+    [Alias('LoopIterations')][int]$Iterations = 3,
+    [Alias('LoopProvider')][string]$ProviderId,
+    [Alias('LoopModel')][string]$Model,
+    [Alias('LoopPython')][string]$Python
 )
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common\toolchain.ps1')
 . (Join-Path $PSScriptRoot 'common\ai-provider.ps1')
+
 $repo = Get-RepoRoot
-if (-not $Workspace) { $Workspace = Join-Path $repo 'workspaces\springboot-demo' }
-$projectDir = Resolve-RepoPath (Join-Path $Workspace $Project)
+$workspace = if ($WorkspacePath) { $WorkspacePath } else { Join-Path $repo 'workspaces\springboot-demo' }
+$projectDir = Resolve-RepoPath (Join-Path $workspace $ProjectName)
 if (-not (Test-Path -LiteralPath $projectDir -PathType Container)) { throw "Project directory not found: $projectDir" }
 
 if (-not $Python -or $Python -in @('python', 'python3')) { $Python = $env:CRONOVA_PYTHON }
@@ -76,7 +77,7 @@ for ($iteration = 1; $iteration -le $Iterations; $iteration++) {
 
     $sourceFiles = Get-ChildItem -LiteralPath (Join-Path $projectDir 'src\main\java') -Filter '*.java' -Recurse
     $sources = ($sourceFiles | ForEach-Object {
-        $relativePath = $_.FullName.Substring($projectDir.Length + 1).Replace('\', '/')
+        $relativePath = $_.FullName.Substring($projectDir.Length + 1).Replace('\\', '/')
         "--- $relativePath ---"
         Get-Content -LiteralPath $_.FullName -Raw
     }) -join "`n"
@@ -88,6 +89,11 @@ You are a Java build-error reviewer. The Maven project below failed during test 
 Fix the code (and pom.xml if needed) so both main and test sources compile.
 IMPORTANT:
 - do NOT add <version> tags to dependencies that are managed by the Spring Boot parent POM. Use only <groupId> and <artifactId> for Spring Boot starters.
+- preserve the existing Spring Boot version and starter family already present in pom.xml.
+- if pom.xml already uses Spring Boot 4 webmvc starters, keep using the matching webmvc/webmvc-test family instead of switching to Boot 3 style starter names.
+- do not leave test imports that are unsupported by the current pom.xml.
+- if test imports from org.springframework.boot.test.autoconfigure.web.servlet are unsupported, replace those tests with simpler scaffold-compatible tests instead of keeping unsupported annotations.
+- prefer plain @SpringBootTest smoke tests or direct controller tests over MockMvc auto-configuration when that avoids unsupported imports.
 - Use jakarta.validation.constraints.NotBlank and jakarta.validation.Valid (NOT javax.validation).
 Return ONLY a JSON object with keys: pom_xml, and for each Java file you change, key = relative path like "src/main/java/com/example/demo/api/ItemController.java".
 Escape newlines in strings as \n and quotes as \".
@@ -106,21 +112,16 @@ $sources
     $reqFile = Join-Path $tmp 'ai_review_request.json'
     $respFile = Join-Path $tmp 'ai_review.json'
     [IO.File]::WriteAllText($promptFile, $prompt, [Text.UTF8Encoding]::new($false))
-    $aiScript = Join-Path $repo 'internal\scripts\ai\review_fix_v2.py'
-    $aiStdoutFile = Join-Path $tmp ("ai-review-" + [guid]::NewGuid().ToString('N') + '.stdout')
-    $aiStderrFile = Join-Path $tmp ("ai-review-" + [guid]::NewGuid().ToString('N') + '.stderr')
-    $aiArgs = @($aiScript, $projectDir, $Package.Replace('.', '/'), $promptFile, $reqFile, $respFile, $Model, $baseUrl, $token)
-    try {
-        $aiProcess = Start-Process -FilePath $Python -ArgumentList (ConvertTo-NativeArgumentString $aiArgs) -Wait -PassThru -NoNewWindow -RedirectStandardOutput $aiStdoutFile -RedirectStandardError $aiStderrFile
-        $aiStdout = if (Test-Path -LiteralPath $aiStdoutFile) { [IO.File]::ReadAllText($aiStdoutFile) } else { '' }
-        $aiStderr = if (Test-Path -LiteralPath $aiStderrFile) { [IO.File]::ReadAllText($aiStderrFile) } else { '' }
-        if ($token) { $aiStderr = $aiStderr.Replace($token, '[REDACTED]') }
-        if ($aiStdout) { [Console]::Out.Write($aiStdout) }
-        if ($aiProcess.ExitCode -ne 0) {
-            [Console]::Error.WriteLine("AI review/fix failed: python=$Python script=$aiScript exit_code=$($aiProcess.ExitCode) stderr=$aiStderr")
-            exit [int]$aiProcess.ExitCode
-        }
-    } finally {
-        Remove-Item -LiteralPath $aiStdoutFile, $aiStderrFile -Force -ErrorAction SilentlyContinue
+    $reviewParams = @{
+        Workspace = $workspace
+        Project = $ProjectName
+        Package = $JavaPackage
+        ProviderId = $ProviderId
+        Model = $Model
+        Python = $Python
+        PromptFile = $promptFile
+        RequestFile = $reqFile
+        ResponseFile = $respFile
     }
+    & (Join-Path $PSScriptRoot 'ai-review-java-maven-errors.ps1') @reviewParams
 }

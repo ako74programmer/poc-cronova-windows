@@ -4,50 +4,26 @@ start_date: "2026-09-01"
 catchup: false
 max_active_runs: 1
 tasks:
-    - id: scaffold
+    - id: generate_maven_archetype
       type: powershell
       command: '& .\internal\scripts\generate-maven-archetype.ps1 -a maven-archetype-quickstart -g com.example -r luhn -k com.example.luhn -j 21 -w workspaces/sdlc_maven_luhn -p app -C'
-      pool: default
-      timeout: 300
-      trigger_rule: all_success
-    - id: compile_skeleton
+    - id: maven_compile
       type: powershell
-      command: '& .\internal\scripts\compile-project.ps1 -w workspaces/sdlc_maven_luhn -p app'
+      command: '& .\internal\scripts\maven-compile.ps1 -w workspaces/sdlc_maven_luhn -p app'
       deps:
-        - scaffold
-      pool: default
-      timeout: 600
-      trigger_rule: all_success
-    - id: ai_add_feature
+        - generate_maven_archetype
+    - id: ai_generate_java_maven_feature
       type: powershell
       command: '& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/luhn.txt -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -r default -y python'
       deps:
-        - compile_skeleton
-      pool: default
-      timeout: 300
-      trigger_rule: all_success
-    - id: compile_loop
+        - maven_compile
+    - id: java_maven_compile_fix_loop
       type: powershell
-      command: '& .\internal\scripts\ai-review-fix-loop.ps1 -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -m kimi-k2.7-code -y python'
+      command: '& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/sdlc_maven_luhn -LoopProject app -LoopPackage com.example.luhn -LoopModel kimi-k2.7-code -LoopPython python'
       deps:
-        - ai_add_feature
-      pool: default
-      timeout: 900
-      trigger_rule: all_success
-    - id: tests
+        - ai_generate_java_maven_feature
+    - id: maven_test
       type: powershell
-      command: '& .\internal\scripts\run-tests.ps1 -w workspaces/sdlc_maven_luhn -p app'
+      command: '& .\internal\scripts\maven-test.ps1 -w workspaces/sdlc_maven_luhn -p app'
       deps:
-        - compile_loop
-      pool: default
-      timeout: 300
-      trigger_rule: all_success
-
-    - id: ai_fix_tests_loop
-      type: powershell
-      command: '& .\internal\scripts\ai-review-fix-tests-loop.ps1 -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -m kimi-k2.7-code -y python'
-      deps:
-        - tests
-      pool: default
-      timeout: 900
-      trigger_rule: all_failed
+        - java_maven_compile_fix_loop

@@ -1,326 +1,91 @@
-# Reużywalne skrypty build/SDLC
+# Reuzywalne klocki SDLC
 
-Katalog `internal/scripts/` zawiera narzędzia CLI używane przez przepływy Cronova.
-Każdy skrypt jest niezależny i można go wywołać ręcznie lub z innego workflow.
+Katalog `internal/scripts/` zawiera techniczne klocki używane przez DAG-i Cronova.
+Każdy klocek ma własny plik `.md` w tym samym katalogu z opisem celu, parametrów i przykładowego użycia.
 
-## Wymagania
+## Jak czytać ten katalog
 
-- Git Bash lub inne środowisko bash (np. WSL, MSYS2)
-- Java JDK dostępny w `PATH` lub przez `JAVA_HOME`/`CRONOVA_JAVA_HOME`
-- Apache Maven dostępny w `PATH` lub przez `MAVEN_HOME`/`CRONOVA_MAVEN_HOME`
-- Python dostępny jako `python3`, `python` lub przez `CRONOVA_PYTHON`
-
-Klocki nie zakładają konkretnego użytkownika, katalogu instalacyjnego ani systemu plików. Helper `internal/scripts/common_toolchain.sh` wykrywa narzędzia i zwraca czytelny błąd, jeśli wymagane narzędzie nie jest dostępne.
-
-## Konfiguracja toolchain
+- skrypt `.ps1` to wykonywalny klocek,
+- odpowiadający mu plik `.ps1.md` to dokumentacja tego klocka,
+- DAG w katalogu `dags/` pokazuje, jak te klocki są składane w przepływ.
 
-Skrypty SDLC w `scripts/sdlc/` oraz reusable skrypty w `internal/scripts/` używają
-wspólnego helpera `internal/scripts/common_toolchain.sh`. Można nadpisać lokalizację
-JDK i Mavena przez zmienne środowiskowe (Windows lub Unix path):
+## Klocki scaffoldingu
 
-```bash
-export CRONOVA_JAVA_HOME="C:\Program Files\Java\jdk-25"
-export CRONOVA_MAVEN_HOME="C:\apache-maven-3.9.14"
-```
+- [internal/scripts/copy-template-to-workspace.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/copy-template-to-workspace.ps1)
+  Dokumentacja: [internal/scripts/copy-template-to-workspace.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/copy-template-to-workspace.ps1.md)
+- [internal/scripts/fetch-springboot-project.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/fetch-springboot-project.ps1)
+  Dokumentacja: [internal/scripts/fetch-springboot-project.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/fetch-springboot-project.ps1.md)
+- [internal/scripts/generate-maven-archetype.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/generate-maven-archetype.ps1)
+  Dokumentacja: [internal/scripts/generate-maven-archetype.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/generate-maven-archetype.ps1.md)
 
-lub w Git Bash:
+## Klocki walidacji Maven
 
-```bash
-export CRONOVA_JAVA_HOME="/c/Program Files/Java/jdk-25"
-export CRONOVA_MAVEN_HOME="/c/apache-maven-3.9.14"
-```
+- [internal/scripts/maven-compile.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-compile.ps1)
+  Dokumentacja: [internal/scripts/maven-compile.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-compile.ps1.md)
+- [internal/scripts/maven-test-compile.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-test-compile.ps1)
+  Dokumentacja: [internal/scripts/maven-test-compile.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-test-compile.ps1.md)
+- [internal/scripts/maven-test.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-test.ps1)
+  Dokumentacja: [internal/scripts/maven-test.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-test.ps1.md)
 
-Helper normalizuje ścieżki Windows przez `cygpath`, ustawia `JAVA_HOME`/`MAVEN_HOME`
-i dodaje `$JAVA_HOME/bin` oraz `$MAVEN_HOME/bin` do `PATH` przed wywołaniem `java`/`mvn`.
+## Klocki AI dla Java + Maven
 
-## Konwencja parametrów
+- [internal/scripts/ai-java-mvn-generate-feature.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/ai-java-mvn-generate-feature.ps1)
+  Dokumentacja: [internal/scripts/ai-java-mvn-generate-feature.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/ai-java-mvn-generate-feature.ps1.md)
+- [internal/scripts/ai-review-java-maven-errors.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/ai-review-java-maven-errors.ps1)
+  Dokumentacja: [internal/scripts/ai-review-java-maven-errors.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/ai-review-java-maven-errors.ps1.md)
+- [internal/scripts/java-maven-compile-fix-loop.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/java-maven-compile-fix-loop.ps1)
+  Dokumentacja: [internal/scripts/java-maven-compile-fix-loop.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/java-maven-compile-fix-loop.ps1.md)
 
-| Parametr | Znaczenie | Domyślna wartość |
-|---|---|---|
-| `-w WORKSPACE` | Katalog workspace (bezwzględny lub względem repo) | `workspaces/springboot-demo` |
-| `-p PROJECT` | Podkatalog projektu wewnątrz workspace | `demo` |
-| `-h` | Pomoc | — |
+## Jak używać klocków lego
 
-## Skrypty
+Najprostszy wzorzec dla projektu Java + Maven wygląda tak:
 
-### `fetch-springboot-project`
+1. scaffold projektu,
+2. kompilacja szkieletu,
+3. wygenerowanie feature'a z promptu,
+4. compile-fix loop,
+5. testy.
 
-Pobiera szkielet Spring Boot z `https://start.spring.io/` i rozpakowuje go do wybranego workspace'u.
+### Template Spring Boot
 
-```bash
-# Domyślnie: Maven, Java, Spring Boot wybrany przez start.spring.io, workspaces/springboot-demo/demo
-internal/scripts/fetch-springboot-project
+1. [internal/scripts/copy-template-to-workspace.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/copy-template-to-workspace.ps1)
+2. [internal/scripts/maven-compile.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-compile.ps1)
+3. [internal/scripts/ai-java-mvn-generate-feature.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/ai-java-mvn-generate-feature.ps1)
+4. [internal/scripts/java-maven-compile-fix-loop.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/java-maven-compile-fix-loop.ps1)
+5. [internal/scripts/maven-test.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-test.ps1)
 
-# Wybierz konkretną wersję Spring Boot i zależności
-internal/scripts/fetch-springboot-project -b 4.0.8 -d web,lombok
+Zobacz DAG: [dags/sdlc_springboot_template_crud.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_template_crud.yaml)
+Dokumentacja DAG-a: [dags/sdlc_springboot_template_crud.yaml.md](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_template_crud.yaml.md)
 
-# Projekt Gradle + Kotlin
-internal/scripts/fetch-springboot-project -t gradle-project-kotlin -l kotlin -b 4.0.8 -d web
+### Spring Initializr
 
-# Własna grupa/artifact i inny workspace
-internal/scripts/fetch-springboot-project \
-  -b 4.0.8 \
-  -g com.acme \
-  -a store \
-  -n com.acme.store \
-  -d web,data-jpa \
-  -w workspaces/my-app \
-  -P app \
-  -C
-```
+1. [internal/scripts/fetch-springboot-project.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/fetch-springboot-project.ps1)
+2. [internal/scripts/maven-compile.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-compile.ps1)
+3. [internal/scripts/ai-java-mvn-generate-feature.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/ai-java-mvn-generate-feature.ps1)
+4. [internal/scripts/java-maven-compile-fix-loop.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/java-maven-compile-fix-loop.ps1)
+5. [internal/scripts/maven-test.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-test.ps1)
 
-Parametry:
-- `-t TYPE` — `maven-project`, `gradle-project`, `gradle-project-kotlin` (domyślnie `maven-project`)
-- `-l LANG` — `java`, `kotlin`, `groovy` (domyślnie `java`)
-- `-b BOOT` — wersja Spring Boot, np. `4.0.8`
-- `-g GROUP` — groupId (domyślnie `com.example`)
-- `-a ARTIFACT` — artifactId (domyślnie `demo`)
-- `-n NAME` — nazwa pakietu (domyślnie `GROUP.ARTIFACT`)
-- `-p PACKAGING` — `jar` lub `war` (domyślnie `jar`)
-- `-c CONFIG` — `properties` lub `yaml` (domyślnie `properties`)
-- `-j JAVA` — wersja Javy: `27`, `25`, `21`, `17` (domyślnie `21`)
-- `-d DEPS` — zależności rozdzielone przecinkami, np. `web,lombok`
-- `-w WORKSPACE` — workspace docelowy
-- `-P PROJECT` — podkatalog projektu w workspace
-- `-y PYTHON` — interpreter Python (domyślnie `CRONOVA_PYTHON`, potem autodetekcja `python3`/`python`)
-- `-C` — wyczyść docelowy katalog przed rozpakowaniem
-- `-h` — pomoc
+Zobacz DAG: [dags/sdlc_springboot_startio.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_startio.yaml)
+Dokumentacja DAG-a: [dags/sdlc_springboot_startio.yaml.md](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_startio.yaml.md)
 
----
+### Maven archetype
 
-### `copy-template-to-workspace`
+1. [internal/scripts/generate-maven-archetype.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/generate-maven-archetype.ps1)
+2. [internal/scripts/maven-compile.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-compile.ps1)
+3. [internal/scripts/ai-java-mvn-generate-feature.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/ai-java-mvn-generate-feature.ps1)
+4. [internal/scripts/java-maven-compile-fix-loop.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/java-maven-compile-fix-loop.ps1)
+5. [internal/scripts/maven-test.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-test.ps1)
 
-Kopiuje template z `templates/` do wybranego workspace'u.
+Zobacz DAG: [dags/sdlc_maven_luhn.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_maven_luhn.yaml)
+Dokumentacja DAG-a: [dags/sdlc_maven_luhn.yaml.md](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_maven_luhn.yaml.md)
 
-```bash
-# Użycie podstawowe — kopiuje templates/springboot-simple do workspaces/springboot-demo/demo
-internal/scripts/copy-template-to-workspace -t springboot-simple
+## Referencje do DAG-ów
 
-# Wyczyść docelowy katalog przed kopiowaniem
-internal/scripts/copy-template-to-workspace -t springboot-simple -c
+- [dags/sdlc_maven_luhn.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_maven_luhn.yaml)
+- [dags/sdlc_springboot_template_crud.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_template_crud.yaml)
+- [dags/sdlc_springboot_startio.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_startio.yaml)
+- [dags/sdlc_maven_luhn.yaml.md](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_maven_luhn.yaml.md)
+- [dags/sdlc_springboot_template_crud.yaml.md](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_template_crud.yaml.md)
+- [dags/sdlc_springboot_startio.yaml.md](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_startio.yaml.md)
 
-# Inny workspace i projekt
-internal/scripts/copy-template-to-workspace -t springboot-simple -w workspaces/my-app -p app
-```
-
-Parametry:
-- `-t TEMPLATE` — nazwa katalogu w `templates/` (wymagane)
-- `-w WORKSPACE` — docelowy workspace
-- `-p PROJECT` — podkatalog projektu
-- `-c` — wyczyść docelowy katalog przed kopiowaniem
-- `-h` — pomoc
-
----
-
-### `compile-project`
-
-Kompiluje projekt Maven w wybranym workspace.
-
-```bash
-# Domyślnie: workspaces/springboot-demo/demo, cel compile, bez testów
-internal/scripts/compile-project
-
-# Kompiluj inny projekt w tym samym workspace
-internal/scripts/compile-project -p other-app
-
-# Uruchom testy zamiast kompilacji
-internal/scripts/compile-project -g test -t
-
-# Inny workspace
-internal/scripts/compile-project -w workspaces/simple_flow -p app -g compile
-```
-
-Parametry:
-- `-w WORKSPACE` — workspace
-- `-p PROJECT` — podkatalog projektu
-- `-g GOAL` — cel Mavena (domyślnie `compile`)
-- `-t` — nie pomijaj testów
-- `-h` — pomoc
-
----
-
-### `ai-generate-crud`
-
-Generuje prosty CRUD (Item + ItemController) przez lokalne AI proxy.
-
-```bash
-# Domyślnie: workspaces/springboot-demo/demo, pakiet com.example.demo
-internal/scripts/ai-generate-crud
-
-# Inny pakiet
-internal/scripts/ai-generate-crud -k com.example.store
-
-# Inny projekt i interpreter Pythona
-internal/scripts/ai-generate-crud -w workspaces/my-app -p app -k com.example.app -y /usr/bin/python3
-
-# Wymuś model (zamiast domyślnego z konfiguracji cronova)
-internal/scripts/ai-generate-crud -m "kimi-k2.7-code"
-```
-
-Parametry:
-- `-w WORKSPACE` — workspace
-- `-p PROJECT` — podkatalog projektu
-- `-k PACKAGE` — pakiet Java (domyślnie `com.example.demo`)
-- `-r PROVIDER_ID` — id dostawcy AI z konfiguracji cronova (domyślnie dostawca oznaczony jako default)
-- `-m MODEL` — model AI (domyślnie model z domyślnego dostawcy lub zmienna `CRONOVA_AI_MODEL`)
-- `-y PYTHON` — ścieżka do Pythona
-- `-h` — pomoc
-
----
-
-### `ai-review-fix-loop`
-
-Pętla: kompilacja → w razie błędu wywołanie AI reviewer → ponowna kompilacja.
-
-```bash
-# Domyślnie 3 iteracje
-internal/scripts/ai-review-fix-loop
-
-# 5 iteracji
-internal/scripts/ai-review-fix-loop -i 5
-
-# Inny projekt i pakiet
-internal/scripts/ai-review-fix-loop -w workspaces/my-app -p app -k com.example.app -i 5
-
-# Wymuż model
-internal/scripts/ai-review-fix-loop -m "kimi-k2.7-code"
-```
-
-Parametry:
-- `-w WORKSPACE` — workspace
-- `-p PROJECT` — podkatalog projektu
-- `-k PACKAGE` — pakiet Java
-- `-i ITERATIONS` — maksymalna liczba iteracji (domyślnie `3`)
-- `-r PROVIDER_ID` — id dostawcy AI z konfiguracji cronova (domyślnie dostawca oznaczony jako default)
-- `-m MODEL` — model AI (domyślnie model z domyślnego dostawcy lub zmienna `CRONOVA_AI_MODEL`)
-- `-y PYTHON` — ścieżka do Pythona
-- `-h` — pomoc
-
----
-
-### `run-tests`
-
-Uruchamia testy Maven w wybranym projekcie.
-
-```bash
-# Domyślnie: workspaces/springboot-demo/demo
-internal/scripts/run-tests
-
-# Inny projekt
-internal/scripts/run-tests -w workspaces/simple_flow -p app
-```
-
-Parametry:
-- `-w WORKSPACE` — workspace
-- `-p PROJECT` — podkatalog projektu
-- `-h` — pomoc
-
----
-
-### `generate-maven-archetype`
-
-Generuje szkielet Java + Maven przez `mvn archetype:generate`.
-
-```bash
-# Domyślnie: maven-archetype-quickstart, com.example, artifact demo, Java 21
-internal/scripts/generate-maven-archetype
-
-# Własny archetyp i parametry
-internal/scripts/generate-maven-archetype \
-  -a maven-archetype-archetype \
-  -v 1.5 \
-  -g com.acme \
-  -r luhn \
-  -k com.acme.luhn \
-  -j 21 \
-  -w workspaces/sdlc_maven_luhn \
-  -p app \
-  -C
-```
-
-Parametry:
-- `-a ARCHETYPE` — artifactId archetypu (domyślnie `maven-archetype-quickstart`)
-- `-v VERSION` — wersja archetypu (opcjonalnie)
-- `-g GROUP` — groupId projektu (domyślnie `com.example`)
-- `-r ARTIFACT` — artifactId projektu (domyślnie `demo`)
-- `-k PACKAGE` — pakiet Java (domyślnie `com.example.demo`)
-- `-j JAVA` — wersja Javy (domyślnie `21`)
-- `-w WORKSPACE` — workspace docelowy
-- `-p PROJECT` — podkatalog projektu w workspace
-- `-C` — wyczyść docelowy katalog przed generowaniem
-- `-h` — pomoc
-
----
-
-### `ai-generate-feature`
-
-Generuje dowolną funkcję biznesową na podstawie pliku promptu. Jest to generyczna wersja `ai-generate-crud`.
-
-```bash
-# Użyj promptu z prompts/luhn.txt
-internal/scripts/ai-generate-feature -f prompts/luhn.txt
-
-# Inny projekt i pakiet
-internal/scripts/ai-generate-feature \
-  -f prompts/my-feature.txt \
-  -w workspaces/sdlc_maven_luhn \
-  -p app \
-  -k com.example.luhn
-
-# Wymuś model
-internal/scripts/ai-generate-feature -f prompts/luhn.txt -m "kimi-k2.7-code"
-```
-
-Parametry:
-- `-f PROMPT_FILE` — ścieżka do pliku promptu (wymagane)
-- `-w WORKSPACE` — workspace
-- `-p PROJECT` — podkatalog projektu
-- `-k PACKAGE` — pakiet Java
-- `-r PROVIDER_ID` — id dostawcy AI z konfiguracji cronova (domyślnie dostawca oznaczony jako default)
-- `-m MODEL` — model AI (domyślnie model z domyślnego dostawcy lub zmienna `CRONOVA_AI_MODEL`)
-- `-y PYTHON` — ścieżka do Pythona
-- `-h` — pomoc
-
-Plik promptu powinien zawierać instrukcje dla modelu AI, w tym:
-- opis generowanej funkcji,
-- wymagane klasy i testy,
-- zasady dotyczące zależności (np. brak hardkodowanych wersji dla zarządzanych zależności),
-- unikanie problematycznych konstrukcji (np. regex z niedozwolonymi escape'ami w zwykłym Java).
-
-Przykład promptu: [prompts/luhn.txt](prompts/luhn.txt).
-
----
-
-
-## Kompozycja DAG-ów z klocków
-
-DAG jest deklaratywnym opisem przepływu, a `internal/scripts/` jest biblioteką reużywalnych klocków. Definicje w `dags/` wywołują klocki bezpośrednio i przekazują im parametry workspace, projektu, pakietu oraz promptu. Nie tworzymy dedykowanych wrapperów w `workflows/<nazwa_dag>/`.
-
-Szczegółowy opis konkretnego przepływu Spring Initializr, w tym analiza zależności, helperów, ryzyk i reużywalności, znajduje się w [`docs/SDLC_SPRINGBOOT_STARTIO.md`](../../docs/SDLC_SPRINGBOOT_STARTIO.md).
-Instrukcja weryfikacji Go i pełnego uruchomienia tego DAG-a na Windows: [`docs/WINDOWS_SPRINGBOOT_STARTIO_TEST_2026-09-26.md`](../../docs/WINDOWS_SPRINGBOOT_STARTIO_TEST_2026-09-26.md).
-
-Różne przepływy powstają przez inną kompozycję tych samych klocków:
-
-| Cel przepływu | Klocki |
-|---|---|
-| Spring Boot z szablonu | `copy-template-to-workspace` → `compile-project` → `ai-generate-crud` → `ai-review-fix-loop` → `run-tests` |
-| Spring Boot ze Spring Initializr | `fetch-springboot-project` → `compile-project` → `ai-generate-crud` → `ai-review-fix-loop` → `run-tests` |
-| Maven + funkcja biznesowa | `generate-maven-archetype` → `compile-project` → `ai-generate-feature` → `ai-review-fix-loop` → `run-tests` |
-
-Przykład zadania w DAG-u:
-
-```yaml
-- id: ai_add_crud
-  type: shell
-  timeout: 300
-  deps: [compile_skeleton]
-  command: bash internal/scripts/ai-generate-crud -w workspaces/my-app -p app -k com.example.app -r default -y python
-```
-
-Klocki AI korzystają z pomocniczych implementacji w `internal/scripts/ai/`. Ten katalog jest częścią biblioteki narzędzi i nie jest związany z żadnym konkretnym DAG-iem.
-
-Jeżeli autodetekcja nie wystarcza, środowisko może jawnie ustawić `CRONOVA_PYTHON`, `CRONOVA_JAVA_HOME` albo `CRONOVA_MAVEN_HOME`. Są to opcjonalne parametry środowiska, a nie ścieżki zapisane w DAG-ach.
-
-### Dodawanie nowego przepływu
-
-Nowy przepływ powinien wymagać wyłącznie nowego pliku YAML w `dags/`. Nie należy dodawać skryptów do `dags/` ani tworzyć katalogu `workflows/<nazwa_dag>/`. Jeżeli istniejące klocki nie mają potrzebnego parametru, należy rozszerzyć klocek uniwersalnie, tak aby był użyteczny również dla innych przepływów.
+Każdy aktywny DAG `.yaml` opisany w tym README ma teraz własny plik `.md` w katalogu `dags/`.

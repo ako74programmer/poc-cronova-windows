@@ -1,0 +1,29 @@
+dag_id: sdlc_springboot_template_crud
+schedule: 0 2 * * *
+start_date: "2026-09-01"
+catchup: false
+max_active_runs: 1
+tasks:
+    - id: copy_template_to_workspace
+      type: powershell
+      command: '& .\internal\scripts\copy-template-to-workspace.ps1 -t springboot-simple -w workspaces/springboot -p app -c'
+    - id: maven_compile
+      type: powershell
+      command: '& .\internal\scripts\maven-compile.ps1 -w workspaces/springboot -p app'
+      deps:
+        - copy_template_to_workspace
+    - id: ai_generate_java_maven_feature
+      type: powershell
+      command: '& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/springboot_crud.txt -w workspaces/springboot -p app -k com.example.demo -r default -y python'
+      deps:
+        - maven_compile
+    - id: java_maven_compile_fix_loop
+      type: powershell
+      command: '& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/springboot -LoopProject app -LoopPackage com.example.demo -LoopProvider default -LoopPython python'
+      deps:
+        - ai_generate_java_maven_feature
+    - id: maven_test
+      type: powershell
+      command: '& .\internal\scripts\maven-test.ps1 -w workspaces/springboot -p app'
+      deps:
+        - java_maven_compile_fix_loop
