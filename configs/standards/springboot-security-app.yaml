@@ -1,0 +1,19 @@
+schema_version: 1
+
+standard:
+  file: configs/standards/springboot-base.yaml
+
+project:
+  id: item-security-app
+  artifact_name: item-security-app.jar
+
+springboot:
+  group_id: com.example.security
+  artifact_id: item-security-app
+  package_name: com.example.security
+
+dependencies:
+  starters: web,validation,actuator,security
+
+server:
+  port: 18083

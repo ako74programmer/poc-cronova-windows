@@ -1,0 +1,14 @@
+schema_version: 1
+
+standard:
+  file: configs/standards/springboot-h2-app.yaml
+
+workspace:
+  directory: .workspaces/springboot-h2
+
+project:
+  id: item-h2-app
+
+artifacts:
+  directory: artifacts/springboot-h2
+  manifest: backend-manifest.json

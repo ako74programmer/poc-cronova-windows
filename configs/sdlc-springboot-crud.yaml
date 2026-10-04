@@ -1,0 +1,14 @@
+schema_version: 1
+
+standard:
+  file: configs/standards/springboot-crud-app.yaml
+
+workspace:
+  directory: .workspaces/springboot-crud
+
+project:
+  id: item-crud-app
+
+artifacts:
+  directory: artifacts/springboot-crud
+  manifest: backend-manifest.json

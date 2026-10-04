@@ -1,0 +1,22 @@
+schema_version: 1
+
+standard:
+  file: configs/standards/springboot-base.yaml
+
+project:
+  id: item-service
+  artifact_name: item-service.jar
+
+springboot:
+  group_id: com.example.items
+  artifact_id: item-service
+  package_name: com.example.items
+
+dependencies:
+  starters: web,validation,actuator
+
+server:
+  port: 18080
+
+ai:
+  enabled: false

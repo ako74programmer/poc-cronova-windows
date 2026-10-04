@@ -1,0 +1,39 @@
+schema_version: 1
+
+project:
+  kind: springboot
+  directory: backend
+  artifact_directory: target
+
+runtime:
+  java_version: "25"
+  spring_boot_version: "4.0.0"
+  build_tool: maven-wrapper
+  maven_wrapper: ./mvnw.cmd
+
+springboot:
+  profile_test: test
+  profile_e2e: e2e
+
+api:
+  openapi_file: contracts/openapi.yaml
+  base_path: /api
+  health_path: /actuator/health
+
+quality:
+  compile: true
+  unit_tests: true
+  integration_tests: true
+  openapi_validation: true
+
+server:
+  host: 127.0.0.1
+  startup_timeout_seconds: 90
+  shutdown_timeout_seconds: 30
+
+ai:
+  enabled: true
+  max_iterations: 3
+  max_changed_files: 30
+  provider_id: default
+  model: ""

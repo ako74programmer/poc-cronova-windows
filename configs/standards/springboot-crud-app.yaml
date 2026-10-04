@@ -1,0 +1,19 @@
+schema_version: 1
+
+standard:
+  file: configs/standards/springboot-base.yaml
+
+project:
+  id: item-crud-app
+  artifact_name: item-crud-app.jar
+
+springboot:
+  group_id: com.example.crud
+  artifact_id: item-crud-app
+  package_name: com.example.crud
+
+dependencies:
+  starters: web,validation,actuator
+
+server:
+  port: 18081

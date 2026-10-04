@@ -6,37 +6,37 @@ max_active_runs: 1
 default_retries: 1
 
 tasks:
-  - id: validate_config
-    type: shell
+  - id: springboot_validate_config
+    type: powershell
     timeout: 120
-    command: bash scripts/sdlc/springboot/validate.sh --config configs/sdlc-springboot.yaml
+    command: "& .\\internal\\scripts\\springboot-validate-config.ps1 -Config configs\\sdlc-springboot.yaml -Artifacts artifacts\\springboot"
 
-  - id: validate_openapi
-    type: shell
+  - id: springboot_validate_openapi
+    type: powershell
     timeout: 180
-    deps: [validate_config]
-    command: bash scripts/sdlc/integration/validate.sh --config configs/sdlc-fullstack.yaml
+    deps: [springboot_validate_config]
+    command: "& .\\internal\\scripts\\springboot-validate-openapi.ps1 -Config configs\\sdlc-springboot.yaml -Artifacts artifacts\\springboot"
 
-  - id: scaffold
-    type: shell
+  - id: springboot_scaffold_from_config
+    type: powershell
     timeout: 600
-    deps: [validate_openapi]
-    command: bash scripts/sdlc/springboot/scaffold.sh --config configs/sdlc-springboot.yaml --workspace .workspaces/springboot --artifacts artifacts/springboot
+    deps: [springboot_validate_openapi]
+    command: "& .\\internal\\scripts\\springboot-scaffold-from-config.ps1 -Config configs\\sdlc-springboot.yaml -Workspace .workspaces\\springboot -Artifacts artifacts\\springboot"
 
-  - id: compile
-    type: shell
+  - id: springboot_maven_compile_from_config
+    type: powershell
     timeout: 900
-    deps: [scaffold]
-    command: bash scripts/sdlc/springboot/compile.sh --config configs/sdlc-springboot.yaml --workspace .workspaces/springboot --artifacts artifacts/springboot
+    deps: [springboot_scaffold_from_config]
+    command: "& .\\internal\\scripts\\springboot-maven-compile-from-config.ps1 -Config configs\\sdlc-springboot.yaml -Workspace .workspaces\\springboot -Artifacts artifacts\\springboot"
 
-  - id: unit_tests
-    type: shell
+  - id: springboot_maven_test_from_config
+    type: powershell
     timeout: 900
-    deps: [compile]
-    command: bash scripts/sdlc/springboot/unit-test.sh --config configs/sdlc-springboot.yaml --workspace .workspaces/springboot --artifacts artifacts/springboot
+    deps: [springboot_maven_compile_from_config]
+    command: "& .\\internal\\scripts\\springboot-maven-test-from-config.ps1 -Config configs\\sdlc-springboot.yaml -Workspace .workspaces\\springboot -Artifacts artifacts\\springboot"
 
-  - id: package
-    type: shell
+  - id: springboot_package_from_config
+    type: powershell
     timeout: 600
-    deps: [unit_tests]
-    command: bash scripts/sdlc/springboot/package.sh --config configs/sdlc-springboot.yaml --workspace .workspaces/springboot --artifacts artifacts/springboot
+    deps: [springboot_maven_test_from_config]
+    command: "& .\\internal\\scripts\\springboot-package-from-config.ps1 -Config configs\\sdlc-springboot.yaml -Workspace .workspaces\\springboot -Artifacts artifacts\\springboot"

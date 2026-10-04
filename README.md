@@ -132,6 +132,31 @@ trigger_after:               # optional: run after another DAG succeeds
 **Template variables** work in any command, URL, header, body, or query:
 `{{ logical_date }}`, `{{ logical_datetime }}`, `{{ run_id }}`, `{{ dag_id }}`, `{{ task_id }}`, `{{ try_number }}` (also injected as `CRONOVA_*` env vars), plus UI-managed `{{ var.KEY }}`, `{{ conn.ID.host }}`, and `{{ params.KEY }}`. In the console you don't type the `{{ }}` — a **visual editor renders each variable as a color-coded pill** and a grouped palette inserts them by **click or drag**.
 
+## Spring Boot Variant DAG
+
+The repository now includes a config-driven Spring Boot SDLC DAG that selects the application variant per run:
+
+- DAG: [dags/sdlc_springboot_variant.yaml](dags/sdlc_springboot_variant.yaml)
+- supported variants: `rest`, `crud`, `h2`, `security`
+- variant selection: `{{ params.variant }}` / `CRONOVA_PARAM_VARIANT`
+
+Example trigger:
+
+```powershell
+.\cronova.exe trigger sdlc_springboot_variant -params '{"variant":"h2"}'
+```
+
+Confirmed test run:
+
+- UI: `http://127.0.0.1:8090/#/run/sdlc_springboot_variant__manual_1791107718627011000`
+- variant: `h2`
+- result: `success`
+
+Technical details:
+
+- [docs/SDLC_DAGS.md](docs/SDLC_DAGS.md)
+- [docs/SDLC_SPRINGBOOT_REST_TECHNICAL.md](docs/SDLC_SPRINGBOOT_REST_TECHNICAL.md)
+
 ### Run your own scripts and projects
 
 Upload a single script, a whole project folder, or a `.zip` in the console (task editor → **Project**), then point a shell task at it:

@@ -1,0 +1,19 @@
+schema_version: 1
+
+standard:
+  file: configs/standards/springboot-base.yaml
+
+project:
+  id: item-h2-app
+  artifact_name: item-h2-app.jar
+
+springboot:
+  group_id: com.example.h2
+  artifact_id: item-h2-app
+  package_name: com.example.h2
+
+dependencies:
+  starters: web,validation,actuator,data-jpa,h2
+
+server:
+  port: 18082

@@ -1,8 +1,11 @@
-# Techniczny opis DAG-u `sdlc_springboot_rest`
+# Techniczny opis DAG-ów `sdlc_springboot_rest` i `sdlc_springboot_variant`
 
 ## 1. Cel przepływu
 
-`sdlc_springboot_rest` jest deterministycznym przepływem SDLC dla backendu Spring Boot udostępniającego API REST. Jego zadaniem jest:
+`sdlc_springboot_rest` jest deterministycznym przepływem SDLC dla backendu Spring Boot udostępniającego API REST.
+`sdlc_springboot_variant` używa tego samego zestawu klocków, ale wybiera wariant aplikacji per-run przez `params.variant`.
+
+Zadaniem obu przepływów jest:
 
 1. sprawdzić konfigurację Spring Boot i dostępność Java/Maven;
 2. sprawdzić minimalną spójność kontraktu OpenAPI;
@@ -19,13 +22,15 @@ Plik:
 
 ```text
 dags/sdlc_springboot_rest.yaml
+dags/sdlc_springboot_variant.yaml
 ```
 
 Ustawienia:
 
 | Właściwość | Wartość | Znaczenie |
 |---|---:|---|
-| `dag_id` | `sdlc_springboot_rest` | Identyfikator przepływu |
+| `dag_id` | `sdlc_springboot_rest` | Historyczny, kompatybilny entrypoint dla wariantu REST API |
+| `dag_id` | `sdlc_springboot_variant` | Docelowy entrypoint wariantowy dla `rest`, `crud`, `h2`, `security` |
 | `schedule` | pusty | Przepływ uruchamiany ręcznie |
 | `catchup` | `false` | Brak uruchamiania zaległych instancji |
 | `max_active_runs` | `1` | Tylko jeden aktywny run tego DAG-u |
@@ -34,41 +39,64 @@ Ustawienia:
 ## 3. Graf zależności
 
 ```text
-validate_config
+springboot_validate_config
         │
         ▼
-validate_openapi
+springboot_validate_openapi
         │
         ▼
-scaffold
+springboot_scaffold_from_config
         │
         ▼
-compile
+springboot_maven_compile_from_config
         │
         ▼
-unit_tests
+springboot_maven_test_from_config
         │
         ▼
-package
+springboot_package_from_config
 ```
 
-Każdy task ma typ `shell`. Cronova uruchamia go przez Windows/Git Bash zgodnie z konfiguracją runtime. Wszystkie taski korzystają z argumentów `--config`, `--workspace` i `--artifacts` tam, gdzie potrzebują workspace’u lub artefaktów.
+Każdy task ma typ `powershell`.
+W `sdlc_springboot_rest` config jest wskazany na stałe jako [configs/sdlc-springboot.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot.yaml).
+W `sdlc_springboot_variant` config jest wybierany per-run przez `CRONOVA_PARAM_VARIANT` i resolver [internal/scripts/resolve-springboot-variant-config.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/resolve-springboot-variant-config.ps1).
+
+Obsługiwane warianty:
+
+- `rest`
+- `crud`
+- `h2`
+- `security`
+
+Mapowanie wariantów prowadzi do workflow configów:
+
+- [configs/sdlc-springboot.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot.yaml)
+- [configs/sdlc-springboot-crud.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot-crud.yaml)
+- [configs/sdlc-springboot-h2.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot-h2.yaml)
+- [configs/sdlc-springboot-security.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot-security.yaml)
+
+Każdy z tych configów wskazuje standard wariantu dziedziczący po [configs/standards/springboot-base.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/standards/springboot-base.yaml).
+
+Potwierdzony test DAG-a wariantowego:
+
+- run UI: [http://127.0.0.1:8090/#/run/sdlc_springboot_variant__manual_1791107718627011000](http://127.0.0.1:8090/#/run/sdlc_springboot_variant__manual_1791107718627011000)
+- wariant: `h2`
+- wynik: `success`
 
 ## 4. Przebieg krok po kroku
 
-### 4.1. `validate_config`
+### 4.1. `springboot_validate_config`
 
 Wywołanie:
 
-```bash
-bash scripts/sdlc/springboot/validate.sh \
-  --config configs/sdlc-springboot.yaml
+```powershell
+& .\internal\scripts\springboot-validate-config.ps1 -Config configs\sdlc-springboot.yaml
 ```
 
 Używany skrypt:
 
 ```text
-scripts/sdlc/springboot/validate.sh
+internal/scripts/springboot-validate-config.ps1
 ```
 
 Skrypt:
@@ -92,19 +120,18 @@ artifacts/metadata/runtime.txt
 artifacts/metadata/toolchain-runtime.txt
 ```
 
-### 4.2. `validate_openapi`
+### 4.2. `springboot_validate_openapi`
 
 Wywołanie:
 
-```bash
-bash scripts/sdlc/integration/validate.sh \
-  --config configs/sdlc-fullstack.yaml
+```powershell
+& .\internal\scripts\springboot-validate-openapi.ps1 -Config configs\sdlc-springboot.yaml
 ```
 
 Używany skrypt:
 
 ```text
-scripts/sdlc/integration/validate.sh
+internal/scripts/springboot-validate-openapi.ps1
 ```
 
 Skrypt:
@@ -122,22 +149,19 @@ Skrypt:
 
 Jest to smoke test kontraktu, nie pełna walidacja schematu OpenAPI.
 
-### 4.3. `scaffold`
+### 4.3. `springboot_scaffold_from_config`
 
 Wywołanie:
 
-```bash
-bash scripts/sdlc/springboot/scaffold.sh \
-  --config configs/sdlc-springboot.yaml \
-  --workspace .workspaces/springboot \
-  --artifacts artifacts/springboot
+```powershell
+& .\internal\scripts\springboot-scaffold-from-config.ps1 -Config configs\sdlc-springboot.yaml
 ```
 
 Używane skrypty:
 
 ```text
-scripts/sdlc/springboot/scaffold.sh
-scripts/sdlc/common/config-value.sh
+internal/scripts/springboot-scaffold-from-config.ps1
+scripts/sdlc/common/SpringbootConfig.ps1
 ```
 
 Skrypt:
@@ -164,21 +188,18 @@ Generator używa zależności:
 web, validation, actuator
 ```
 
-### 4.4. `compile`
+### 4.4. `springboot_maven_compile_from_config`
 
 Wywołanie:
 
-```bash
-bash scripts/sdlc/springboot/compile.sh \
-  --config configs/sdlc-springboot.yaml \
-  --workspace .workspaces/springboot \
-  --artifacts artifacts/springboot
+```powershell
+& .\internal\scripts\springboot-maven-compile-from-config.ps1 -Config configs\sdlc-springboot.yaml
 ```
 
 Używany skrypt:
 
 ```text
-scripts/sdlc/springboot/compile.sh
+internal/scripts/springboot-maven-compile-from-config.ps1
 ```
 
 Skrypt:
@@ -202,21 +223,18 @@ artifacts/springboot/logs/springboot-compile.log
 
 Maven Wrapper jest generowany przez Spring Initializr. Skrypt wymaga konkretnego pliku `mvnw.cmd`, więc ten klocek jest reużywalny dla projektów Spring Boot generowanych lub dostarczanych z wrapperem Maven.
 
-### 4.5. `unit_tests`
+### 4.5. `springboot_maven_test_from_config`
 
 Wywołanie:
 
-```bash
-bash scripts/sdlc/springboot/unit-test.sh \
-  --config configs/sdlc-springboot.yaml \
-  --workspace .workspaces/springboot \
-  --artifacts artifacts/springboot
+```powershell
+& .\internal\scripts\springboot-maven-test-from-config.ps1 -Config configs\sdlc-springboot.yaml
 ```
 
 Używany skrypt:
 
 ```text
-scripts/sdlc/springboot/unit-test.sh
+internal/scripts/springboot-maven-test-from-config.ps1
 ```
 
 Skrypt:
@@ -237,21 +255,18 @@ Log zapisuje do:
 artifacts/springboot/logs/springboot-unit-tests.log
 ```
 
-### 4.6. `package`
+### 4.6. `springboot_package_from_config`
 
 Wywołanie:
 
-```bash
-bash scripts/sdlc/springboot/package.sh \
-  --config configs/sdlc-springboot.yaml \
-  --workspace .workspaces/springboot \
-  --artifacts artifacts/springboot
+```powershell
+& .\internal\scripts\springboot-package-from-config.ps1 -Config configs\sdlc-springboot.yaml
 ```
 
 Używany skrypt:
 
 ```text
-scripts/sdlc/springboot/package.sh
+internal/scripts/springboot-package-from-config.ps1
 ```
 
 Skrypt:

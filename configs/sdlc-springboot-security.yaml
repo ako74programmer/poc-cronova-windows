@@ -1,0 +1,14 @@
+schema_version: 1
+
+standard:
+  file: configs/standards/springboot-security-app.yaml
+
+workspace:
+  directory: .workspaces/springboot-security
+
+project:
+  id: item-security-app
+
+artifacts:
+  directory: artifacts/springboot-security
+  manifest: backend-manifest.json

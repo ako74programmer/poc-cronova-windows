@@ -1,0 +1,42 @@
+dag_id: sdlc_springboot_variant
+schedule: ""
+start_date: "2026-09-01"
+catchup: false
+max_active_runs: 1
+default_retries: 1
+
+tasks:
+  - id: springboot_validate_config
+    type: powershell
+    timeout: 120
+    command: "$variant = if ($env:CRONOVA_PARAM_VARIANT) { $env:CRONOVA_PARAM_VARIANT } else { 'rest' }; $config = & .\\internal\\scripts\\resolve-springboot-variant-config.ps1 -Variant $variant; & .\\internal\\scripts\\springboot-validate-config.ps1 -Config $config"
+
+  - id: springboot_validate_openapi
+    type: powershell
+    timeout: 180
+    deps: [springboot_validate_config]
+    command: "$variant = if ($env:CRONOVA_PARAM_VARIANT) { $env:CRONOVA_PARAM_VARIANT } else { 'rest' }; $config = & .\\internal\\scripts\\resolve-springboot-variant-config.ps1 -Variant $variant; & .\\internal\\scripts\\springboot-validate-openapi.ps1 -Config $config"
+
+  - id: springboot_scaffold_from_config
+    type: powershell
+    timeout: 600
+    deps: [springboot_validate_openapi]
+    command: "$variant = if ($env:CRONOVA_PARAM_VARIANT) { $env:CRONOVA_PARAM_VARIANT } else { 'rest' }; $config = & .\\internal\\scripts\\resolve-springboot-variant-config.ps1 -Variant $variant; & .\\internal\\scripts\\springboot-scaffold-from-config.ps1 -Config $config"
+
+  - id: springboot_maven_compile_from_config
+    type: powershell
+    timeout: 900
+    deps: [springboot_scaffold_from_config]
+    command: "$variant = if ($env:CRONOVA_PARAM_VARIANT) { $env:CRONOVA_PARAM_VARIANT } else { 'rest' }; $config = & .\\internal\\scripts\\resolve-springboot-variant-config.ps1 -Variant $variant; & .\\internal\\scripts\\springboot-maven-compile-from-config.ps1 -Config $config"
+
+  - id: springboot_maven_test_from_config
+    type: powershell
+    timeout: 900
+    deps: [springboot_maven_compile_from_config]
+    command: "$variant = if ($env:CRONOVA_PARAM_VARIANT) { $env:CRONOVA_PARAM_VARIANT } else { 'rest' }; $config = & .\\internal\\scripts\\resolve-springboot-variant-config.ps1 -Variant $variant; & .\\internal\\scripts\\springboot-maven-test-from-config.ps1 -Config $config"
+
+  - id: springboot_package_from_config
+    type: powershell
+    timeout: 600
+    deps: [springboot_maven_test_from_config]
+    command: "$variant = if ($env:CRONOVA_PARAM_VARIANT) { $env:CRONOVA_PARAM_VARIANT } else { 'rest' }; $config = & .\\internal\\scripts\\resolve-springboot-variant-config.ps1 -Variant $variant; & .\\internal\\scripts\\springboot-package-from-config.ps1 -Config $config"

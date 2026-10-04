@@ -8,7 +8,8 @@ Ten indeks zbiera **wszystkie sześć DAG-ów** z katalogu `dags/`, ich przeznac
 |---|---|---|---|---|
 | [`sdlc_angular`](../dags/sdlc_angular.yaml) | Walidacja → Angular scaffold → npm install → lint → testy → production build → smoke test | Ręczny | `scripts/sdlc/angular/`, `scripts/sdlc/common/` | [Opis Angular](SDLC_ANGULAR_TECHNICAL.md) |
 | [`sdlc_fullstack`](../dags/sdlc_fullstack.yaml) | Walidacja → równoległe przygotowanie Angular/Spring Boot → build/test komponentów → jeden task integracyjny z backendem, frontendem i Playwright → logi/manifest | Ręczny | `scripts/sdlc/angular/`, `springboot/`, `integration/`, `playwright/`, `common/` | [Opis Fullstack](SDLC_FULLSTACK_TECHNICAL.md) |
-| [`sdlc_springboot_rest`](../dags/sdlc_springboot_rest.yaml) | Walidacja konfiguracji i OpenAPI → Spring Initializr scaffold → compile → unit tests → JAR package | Ręczny | `scripts/sdlc/springboot/`, `integration/`, `common/` | [Opis Spring Boot REST](SDLC_SPRINGBOOT_REST_TECHNICAL.md) |
+| [`sdlc_springboot_rest`](../dags/sdlc_springboot_rest.yaml) | Walidacja konfiguracji i OpenAPI → Spring Initializr scaffold → compile → unit tests → JAR package | Ręczny | `internal/scripts/`, `scripts/sdlc/common/` | [Opis Spring Boot REST](SDLC_SPRINGBOOT_REST_TECHNICAL.md) |
+| [`sdlc_springboot_variant`](../dags/sdlc_springboot_variant.yaml) | Ten sam pipeline Spring Boot, ale wariant aplikacji wybierany per-run przez `params.variant` (`rest`, `crud`, `h2`, `security`) | Ręczny | `internal/scripts/`, `scripts/sdlc/common/` | [Opis Spring Boot REST](SDLC_SPRINGBOOT_REST_TECHNICAL.md) |
 | [`sdlc_maven_luhn`](../dags/sdlc_maven_luhn.yaml) | Maven archetype → compile skeleton → AI feature Luhn → AI review/fix loop → Maven tests | Codziennie, `0 2 * * *` | `internal/scripts/` i prompt `prompts/luhn.txt` | [Opis Maven Luhn](SDLC_MAVEN_LUHN_TECHNICAL.md) |
 | [`sdlc_springboot`](../dags/sdlc_springboot.yaml) | Lokalny template Spring Boot → compile → AI CRUD → AI review/fix loop → Maven tests | Codziennie, `0 2 * * *` | `internal/scripts/`, `templates/springboot-simple` | [Opis Spring Boot](SDLC_SPRINGBOOT_TECHNICAL.md) |
 | [`sdlc_springboot_startio`](../dags/sdlc_springboot_startio.yaml) | Spring Initializr → compile → AI CRUD → AI review/fix loop → Maven tests | Codziennie, `0 2 * * *` | `internal/scripts/`, Spring Initializr | [Opis Spring Boot Start.io](SDLC_SPRINGBOOT_STARTIO.md) |
@@ -26,6 +27,7 @@ Pięć przepływów miało już dokumenty techniczne. Dodano brakujący opis Ful
 | `sdlc_maven_luhn` | [`SDLC_MAVEN_LUHN_TECHNICAL.md`](SDLC_MAVEN_LUHN_TECHNICAL.md) |
 | `sdlc_springboot` | [`SDLC_SPRINGBOOT_TECHNICAL.md`](SDLC_SPRINGBOOT_TECHNICAL.md) |
 | `sdlc_springboot_rest` | [`SDLC_SPRINGBOOT_REST_TECHNICAL.md`](SDLC_SPRINGBOOT_REST_TECHNICAL.md) |
+| `sdlc_springboot_variant` | [`SDLC_SPRINGBOOT_REST_TECHNICAL.md`](SDLC_SPRINGBOOT_REST_TECHNICAL.md) |
 | `sdlc_springboot_startio` | [`SDLC_SPRINGBOOT_STARTIO.md`](SDLC_SPRINGBOOT_STARTIO.md) |
 
 ## Rodziny implementacyjne i stopień reużywalności
