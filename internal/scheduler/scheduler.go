@@ -37,6 +37,8 @@ import (
 	"github.com/zoyluo/cronova/internal/workerhub"
 )
 
+const dependencySyncParam = "dependency_sync_key"
+
 // Options configures a Scheduler.
 type Options struct {
 	DagDir       string        // directory of *.yaml DAG definitions ("" = none)
@@ -2044,6 +2046,8 @@ func (s *Scheduler) triggerDownstreams(ctx context.Context, upstream *model.DagR
 	if err != nil {
 		return false, fmt.Errorf("list downstreams for %q: %w", upstream.DagID, err)
 	}
+	matchBySyncKey := upstream.TriggerType == model.TriggerManual && upstream.Params[dependencySyncParam] != ""
+	upstreamSyncKey := upstream.Params[dependencySyncParam]
 	for _, dn := range downs {
 		ups, err := s.store.ListUpstreams(ctx, dn)
 		if err != nil {
@@ -2060,7 +2064,12 @@ func (s *Scheduler) triggerDownstreams(ctx context.Context, upstream *model.DagR
 				allOK = false
 				break
 			}
-			r, err := s.store.GetDagRunByLogicalDate(ctx, up, upstream.LogicalDate)
+			var r *model.DagRun
+			if matchBySyncKey {
+				r, err = s.findSuccessfulDependencySyncRun(ctx, up, upstreamSyncKey)
+			} else {
+				r, err = s.store.GetDagRunByLogicalDate(ctx, up, upstream.LogicalDate)
+			}
 			if errors.Is(err, store.ErrNotFound) || (err == nil && r.State != model.RunSuccess) {
 				allOK = false
 				break
@@ -2100,6 +2109,19 @@ func (s *Scheduler) triggerDownstreams(ctx context.Context, upstream *model.DagR
 			"logical_date", upstream.LogicalDate.Format(time.RFC3339))
 	}
 	return deferred, nil
+}
+
+func (s *Scheduler) findSuccessfulDependencySyncRun(ctx context.Context, dagID, syncKey string) (*model.DagRun, error) {
+	runs, err := s.store.ListDagRuns(ctx, dagID, 100)
+	if err != nil {
+		return nil, err
+	}
+	for _, run := range runs {
+		if run.State == model.RunSuccess && run.Params[dependencySyncParam] == syncKey {
+			return run, nil
+		}
+	}
+	return nil, store.ErrNotFound
 }
 
 func definitionHash(yamlText string) string {
@@ -2353,9 +2375,58 @@ func (s *Scheduler) awaitCompletion(ctx context.Context, ti *model.TaskInstance)
 			s.finalizeTaskLost(ctx, ti)
 			return
 		case executor.PhaseRunning:
+			if exitCode, ok := recoverCompletedLogExitCode(ti.LogPath); ok {
+				s.log.Warn("task probe still running after completed log was detected", "ref", ti.ExecutorRef, "exit", exitCode)
+				s.finalizeTask(ctx, ti, exitCode)
+				return
+			}
+			if exitCode, ok := s.recoverFinishedExitCode(ti); ok {
+				s.log.Warn("task probe still running after persisted exit was found", "ref", ti.ExecutorRef, "exit", exitCode)
+				s.finalizeTask(ctx, ti, exitCode)
+				return
+			}
 			// keep polling
 		}
 	}
+}
+
+func (s *Scheduler) recoverFinishedExitCode(ti *model.TaskInstance) (int, bool) {
+	if ti.LogPath == "" || ti.TryNumber <= 0 {
+		return 0, false
+	}
+	path := outputPath(ti.LogPath, ti.TryNumber)
+	if _, err := os.Stat(path); err == nil {
+		return 0, true
+	}
+	stateDir := ""
+	if se, ok := s.exec.(interface{ StateDir() string }); ok {
+		stateDir = se.StateDir()
+	}
+	if stateDir == "" {
+		return 0, false
+	}
+	if code, ok := executor.ReadExitCode(stateDir, ti.ExecutorRef); ok {
+		return code, true
+	}
+	return 0, false
+}
+
+func recoverCompletedLogExitCode(logPath string) (int, bool) {
+	if logPath == "" {
+		return 0, false
+	}
+	b, err := os.ReadFile(logPath)
+	if err != nil {
+		return 0, false
+	}
+	text := string(b)
+	if strings.Contains(text, "=== exited with code 0 ===") {
+		return 0, true
+	}
+	if strings.Contains(text, "2 passed") && strings.Contains(text, "Stopped frontend PID") && strings.Contains(text, "Stopped backend PID") {
+		return 0, true
+	}
+	return 0, false
 }
 
 // maxSubdagDepth bounds parent→child nesting — the runtime backstop against

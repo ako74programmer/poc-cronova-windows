@@ -15,7 +15,7 @@
 
 </div>
 
-cronova to **scheduler workflowów i orkiestrator zadań** w duchu Airflow i Azkabana, zbudowany dla zespołów, które chcą planowania opartego na DAG **bez operacyjnego ciężaru**. To niezależnie rozwijany i kastomizowany projekt Windows-only, oparty na pomysłach i kodzie pierwotnego [repozytorium cronova](https://github.com/zoyluoblue/cronova). Dostarcza natywne usługi Go z wbudowaną bazą SQLite oraz samodzielny executor uruchamiający zadania przez Git for Windows Bash.
+cronova to **scheduler workflowów i orkiestrator zadań** w duchu Airflow i Azkabana, zbudowany dla zespołów, które chcą planowania opartego na DAG **bez operacyjnego ciężaru**. To niezależnie rozwijany i kastomizowany projekt Windows-only, oparty na pomysłach i kodzie pierwotnego [repozytorium cronova](https://github.com/zoyluoblue/cronova). Dostarcza natywne usługi Go z wbudowaną bazą SQLite oraz samodzielny executor uruchamiający zadania przez natywne runtime Windows, z PowerShellem jako główną ścieżką skryptową workflowów w tym repozytorium.
 
 Pierwotne repozytorium jest źródłem inspiracji i punktem wyjścia. Rozwój, dostosowanie do Windows, pakowanie wydań i utrzymanie odbywają się obecnie w tym repozytorium i nie są wydaniami oryginalnego projektu.
 
@@ -41,7 +41,7 @@ Pierwotne repozytorium jest źródłem inspiracji i punktem wyjścia. Rozwój, d
 
 ## Czym jest cronova?
 
-**cronova to otwartoźródłowy, samodzielnie hostowany scheduler workflowów** (inaczej scheduler zadań / orkiestrator zadań / scheduler DAG) napisany w Go. Planuje **DAG-i** — skierowane grafy acykliczne zadań — na wyzwalaczach cron lub interwałowych, uruchamia każde zadanie jako podproces Windows przez Git for Windows Bash i dostarcza konsolę webową, REST API, CLI oraz endpoint MCP dla agentów AI. Możesz traktować go jako **zamiennik cron z zależnościami, ponawianiami, backfill i obserwowalnością**, lub **lekką alternatywę dla Airflow** dostarczaną jako kompaktowa para natywnych usług.
+**cronova to otwartoźródłowy, samodzielnie hostowany scheduler workflowów** (inaczej scheduler zadań / orkiestrator zadań / scheduler DAG) napisany w Go. Planuje **DAG-i** — skierowane grafy acykliczne zadań — na wyzwalaczach cron lub interwałowych, uruchamia każde zadanie jako podproces Windows i dostarcza konsolę webową, REST API, CLI oraz endpoint MCP dla agentów AI. Możesz traktować go jako **zamiennik cron z zależnościami, ponawianiami, backfill i obserwowalnością**, lub **lekką alternatywę dla Airflow** dostarczaną jako kompaktowa para natywnych usług.
 
 ## Szybki start
 
@@ -147,7 +147,7 @@ cronova api POST /api/dags/validate '{"dag_id":"x","tasks":[…]}'   # walidacja
 
 ## Wdrażanie na produkcję
 
-cronova to **scheduler, a nie runtime**: uruchamia każde zadanie przy użyciu interpreterów dostępnych na hoście Windows. Zarządzane instalacje uruchamiają scheduler i samodzielny executor jako **usługi Windows**. Zadania są wykonywane przez Git for Windows Bash; Python, Java, Node, klient PostgreSQL i inne narzędzia trzeba zainstalować osobno, jeśli wymagają ich zadania.
+cronova to **scheduler, a nie runtime**: uruchamia każde zadanie przy użyciu interpreterów dostępnych na hoście Windows. Zarządzane instalacje uruchamiają scheduler i samodzielny executor jako **usługi Windows**. Python, Java, Node, klient PostgreSQL i inne narzędzia trzeba zainstalować osobno, jeśli wymagają ich zadania.
 
 ```powershell
 .\deploy\install.ps1 -Start       # zainstaluj i uruchom obie usługi Windows
@@ -156,7 +156,7 @@ cronova.exe start | stop | restart | status
 .\deploy\uninstall.ps1 -Purge     # usuń usługi, binaria i dane
 ```
 
-Instalator PowerShell wymaga uruchomienia jako Administrator i obecności Git for Windows Bash. Pełny przewodnik, konfiguracja usług i executora: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+Instalator PowerShell wymaga uruchomienia jako Administrator. Pełny przewodnik, konfiguracja usług i executora: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
 <div align="center">
   <img src="docs/img/graph.png" alt="Graf DAG cronova — zależności wyzwalaczy między DAG-ami zwizualizowane w konsoli webowej" width="820">

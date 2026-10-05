@@ -216,6 +216,9 @@ public class ItemController {
     }
 }
 """,
+}
+
+JAVA_TEST_SOURCES = {
     "ItemServiceTest.java": """package __PACKAGE__;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -452,6 +455,10 @@ def generate(args: argparse.Namespace) -> None:
     java_dir = backend / "src/main/java" / java_package
     for filename, content in JAVA_SOURCES.items():
         write_file(java_dir / filename, content.replace("__PACKAGE__", args.backend_package))
+
+    java_test_dir = backend / "src/test/java" / java_package
+    for filename, content in JAVA_TEST_SOURCES.items():
+      write_file(java_test_dir / filename, content.replace("__PACKAGE__", args.backend_package))
 
     resources = backend / "src/main/resources"
     write_file(resources / "application-e2e.yml", f"""app:

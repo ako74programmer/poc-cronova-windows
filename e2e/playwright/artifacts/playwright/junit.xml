@@ -1,0 +1,10 @@
+<testsuites id="" name="" tests="2" failures="0" skipped="0" errors="0" time="3.0036690000000004">
+<testsuite name="health.spec.ts" timestamp="2026-10-04T21:10:10.687Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.787" errors="0">
+<testcase name="frontend is reachable" classname="health.spec.ts" time="0.787">
+</testcase>
+</testsuite>
+<testsuite name="items.spec.ts" timestamp="2026-10-04T21:10:10.687Z" hostname="chromium" tests="1" failures="0" skipped="0" time="1.239" errors="0">
+<testcase name="Angular UI performs the Item API CRUD flow" classname="items.spec.ts" time="1.239">
+</testcase>
+</testsuite>
+</testsuites>

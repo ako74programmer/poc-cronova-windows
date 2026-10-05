@@ -1,6 +1,6 @@
 # cronova FAQ — Frequently Asked Questions
 
-> **Windows-only:** This repository targets Windows amd64. Use `deploy\install.ps1`, Windows Services, Git for Windows Bash and `deploy\update.ps1`. Any older Unix deployment examples in historical sections are not supported here; the authoritative instructions are in [Deployment](DEPLOY.md).
+> **Windows-only:** This repository targets Windows amd64. Use `deploy\install.ps1`, Windows Services and `deploy\update.ps1`. Any older Unix deployment examples in historical sections are not supported here; the authoritative instructions are in [Deployment](DEPLOY.md).
 
 Answers to the most common questions about cronova, the lightweight, self-hosted **workflow scheduler** and open-source Airflow / Azkaban alternative — what it is, how it installs, where it stores data, and how to run it in production.
 
@@ -110,7 +110,7 @@ Bind cronova to localhost and terminate TLS at your proxy (nginx, Caddy, Traefik
 
 ## Do I need Docker or Kubernetes?
 
-No. cronova is a subprocess scheduler that runs tasks with the **host's own interpreters**, so it deploys as two small Windows binaries registered as Windows Services — no container image to build and no runtime to bundle. Shell tasks require Git for Windows Bash. See [Deployment](DEPLOY.md).
+No. cronova is a subprocess scheduler that runs tasks with the **host's own interpreters**, so it deploys as two small Windows binaries registered as Windows Services — no container image to build and no runtime to bundle. See [Deployment](DEPLOY.md).
 
 ## How do I uninstall cronova?
 

@@ -146,4 +146,11 @@ func readExitFile(path string) (int, bool) {
 	return code, true
 }
 
+func ReadExitCode(stateDir, ref string) (int, bool) {
+	if stateDir == "" || ref == "" {
+		return 0, false
+	}
+	return readExitFile(exitFile(stateDir, ref))
+}
+
 

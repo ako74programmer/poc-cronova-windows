@@ -40,7 +40,10 @@ finally:
             $result = @(Get-Content -LiteralPath $stdoutFile -ErrorAction SilentlyContinue)
             $stderr = ((Get-Content -LiteralPath $stderrFile -ErrorAction SilentlyContinue) -join [Environment]::NewLine).Trim()
             if ($exitCode -ne 0) { throw "AI provider lookup failed: python=$python database=$Database exit_code=$exitCode error=$stderr" }
-            if (-not $result) { throw "AI provider lookup returned no rows: python=$python database=$Database provider_id=$ProviderId error=$stderr" }
+            if (-not $result) {
+                $effectiveProvider = if ($ProviderId) { $ProviderId } else { 'default' }
+                throw "AI provider '$effectiveProvider' is not configured in $Database. If the database was reset, recreate the provider in the UI under AI Provider or set CRONOVA_AI_BASE_URL and CRONOVA_AI_MODEL (optionally CRONOVA_AI_TOKEN)."
+            }
         } finally {
             Remove-Item -LiteralPath $stdoutFile, $stderrFile -Force -ErrorAction SilentlyContinue
         }

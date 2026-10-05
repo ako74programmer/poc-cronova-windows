@@ -6,7 +6,7 @@ Projekt jest rozwijany jako rozwiązanie uruchamiane wyłącznie w środowisku W
 
 ## Zakończone
 
-- Runner uruchamia zadania przez **Git for Windows Bash** (`bash.exe -lc`). Brak Bash jest zgłaszany jako jawny błąd.
+- Runner uruchamia zadania jako procesy Windows, a workflowy repozytorium są porządkowane do modelu PowerShell-first.
 - Lokalny scheduler–executor używa loopback TCP `127.0.0.1:port`. Zdalny TCP nadal wymaga wzajemnego TLS (mTLS).
 - Dodano integrację z Windows Service Control Manager przez `sc.exe`.
 - Dodano instalację i odinstalowanie przez `deploy/install.ps1` oraz `deploy/uninstall.ps1`.
@@ -29,7 +29,7 @@ Dodać do `windows-latest` testy Git Bash, ścieżek zawierających spacje i zna
 
 ### 4. Uporządkować dokumentację wdrożeniową
 
-Utrzymywać instrukcje instalacji, konfiguracji Git Bash, rejestracji usług i diagnostyki w jednej ścieżce dokumentacyjnej. Dokumentacja nie powinna sugerować obsługi `systemd`, `launchd` ani Unix socketów jako elementów produktu Windows-only.
+Utrzymywać instrukcje instalacji, rejestracji usług i diagnostyki w jednej ścieżce dokumentacyjnej. Dokumentacja nie powinna sugerować obsługi `systemd`, `launchd`, Git Bash ani Unix socketów jako elementów produktu Windows-only.
 
 ### 5. Ustabilizować release
 

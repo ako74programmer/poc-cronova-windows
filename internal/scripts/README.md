@@ -3,6 +3,8 @@
 Katalog `internal/scripts/` zawiera techniczne klocki używane przez DAG-i Cronova.
 Każdy klocek ma własny plik `.md` w tym samym katalogu z opisem celu, parametrów i przykładowego użycia.
 
+Aktywne entrypointy workflow w tym katalogu są PowerShellowe (`.ps1`). Historyczne odpowiedniki bashowe są usuwane z głównej ścieżki Windows-only.
+
 ## Jak czytać ten katalog
 
 - skrypt `.ps1` to wykonywalny klocek,
@@ -44,6 +46,8 @@ W przypadku DAG-a wariantowego config jest wybierany per-run przez `CRONOVA_PARA
 - [internal/scripts/maven-test.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-test.ps1)
   Dokumentacja: [internal/scripts/maven-test.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-test.ps1.md)
 
+Te klocki zastępują stare bashowe entrypointy `compile-project` i `run-tests`, które nie są już częścią aktywnej ścieżki Windows-only.
+
 ## Klocki AI dla Java + Maven
 
 - [internal/scripts/ai-java-mvn-generate-feature.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/ai-java-mvn-generate-feature.ps1)
@@ -52,6 +56,8 @@ W przypadku DAG-a wariantowego config jest wybierany per-run przez `CRONOVA_PARA
   Dokumentacja: [internal/scripts/ai-review-java-maven-errors.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/ai-review-java-maven-errors.ps1.md)
 - [internal/scripts/java-maven-compile-fix-loop.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/java-maven-compile-fix-loop.ps1)
   Dokumentacja: [internal/scripts/java-maven-compile-fix-loop.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/java-maven-compile-fix-loop.ps1.md)
+
+Te klocki zastępują stare bashowe entrypointy `ai-generate-crud`, `ai-generate-feature` i `ai-review-fix-loop`, które nie są już częścią aktywnej ścieżki Windows-only.
 
 ## Jak używać klocków lego
 

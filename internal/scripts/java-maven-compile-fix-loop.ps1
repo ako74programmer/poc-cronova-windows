@@ -75,8 +75,11 @@ for ($iteration = 1; $iteration -le $Iterations; $iteration++) {
         throw "Max iterations reached. Maven exit code: $compileExitCode"
     }
 
-    $sourceFiles = Get-ChildItem -LiteralPath (Join-Path $projectDir 'src\main\java') -Filter '*.java' -Recurse
-    $sources = ($sourceFiles | ForEach-Object {
+    $sourceFiles = @(
+        Get-ChildItem -LiteralPath (Join-Path $projectDir 'src\main\java') -Filter '*.java' -Recurse -ErrorAction SilentlyContinue
+        Get-ChildItem -LiteralPath (Join-Path $projectDir 'src\test\java') -Filter '*.java' -Recurse -ErrorAction SilentlyContinue
+    )
+    $sources = ($sourceFiles | Sort-Object FullName | ForEach-Object {
         $relativePath = $_.FullName.Substring($projectDir.Length + 1).Replace('\\', '/')
         "--- $relativePath ---"
         Get-Content -LiteralPath $_.FullName -Raw
@@ -93,7 +96,11 @@ IMPORTANT:
 - if pom.xml already uses Spring Boot 4 webmvc starters, keep using the matching webmvc/webmvc-test family instead of switching to Boot 3 style starter names.
 - do not leave test imports that are unsupported by the current pom.xml.
 - if test imports from org.springframework.boot.test.autoconfigure.web.servlet are unsupported, replace those tests with simpler scaffold-compatible tests instead of keeping unsupported annotations.
-- prefer plain @SpringBootTest smoke tests or direct controller tests over MockMvc auto-configuration when that avoids unsupported imports.
+- for simple CRUD/controller slices, prefer only direct in-memory controller tests that instantiate the controller and call its methods.
+- do NOT generate or keep tests using MockMvc, WebMvcTest, AutoConfigureMockMvc, MockBean, RestTemplate, TestRestTemplate, localhost HTTP calls, random ports, or full HTTP integration paths unless the compile error explicitly proves that such infrastructure is already supported and required.
+- do NOT switch test style between iterations; keep or rewrite tests to the simplest direct-controller style when fixing compile errors in CRUD scaffolds.
+- when asserting ResponseEntity values, use only methods that are supported by the currently compiled Spring version and the actual return type in source; do not invent helper methods.
+- do NOT use `getStatusCodeValue()`; prefer `getStatusCode().value()` or another compatible assertion on `getStatusCode()`.
 - Use jakarta.validation.constraints.NotBlank and jakarta.validation.Valid (NOT javax.validation).
 Return ONLY a JSON object with keys: pom_xml, and for each Java file you change, key = relative path like "src/main/java/com/example/demo/api/ItemController.java".
 Escape newlines in strings as \n and quotes as \".

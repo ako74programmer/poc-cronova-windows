@@ -1,48 +1,39 @@
 dag_id: sdlc_angular
-schedule: ""
 start_date: "2026-09-01"
 catchup: false
 max_active_runs: 1
 default_retries: 1
-
 tasks:
-  - id: validate_config
-    type: shell
-    timeout: 120
-    command: bash scripts/sdlc/angular/validate.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular
-
-  - id: scaffold
-    type: shell
-    timeout: 600
-    deps: [validate_config]
-    command: bash scripts/sdlc/angular/scaffold.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular
-
-  - id: install_dependencies
-    type: shell
-    timeout: 900
-    deps: [scaffold]
-    command: bash scripts/sdlc/angular/install.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular
-
-  - id: lint
-    type: shell
-    timeout: 600
-    deps: [install_dependencies]
-    command: bash scripts/sdlc/angular/lint.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular
-
-  - id: unit_tests
-    type: shell
-    timeout: 900
-    deps: [lint]
-    command: bash scripts/sdlc/angular/test.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular
-
-  - id: build
-    type: shell
-    timeout: 900
-    deps: [unit_tests]
-    command: bash scripts/sdlc/angular/build.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular
-
-  - id: smoke_test
-    type: shell
-    timeout: 300
-    deps: [build]
-    command: bash scripts/sdlc/angular/smoke.sh --config configs/sdlc-angular.yaml --workspace .workspaces/angular --artifacts artifacts/angular
+    - id: angular_validate_config
+      type: powershell
+      command: '& .\internal\scripts\angular-validate-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular'
+    - id: angular_scaffold_from_config
+      type: powershell
+      command: '& .\internal\scripts\angular-scaffold-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular'
+      deps:
+        - angular_validate_config
+    - id: angular_npm_install_from_config
+      type: powershell
+      command: '& .\internal\scripts\angular-npm-install-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular'
+      deps:
+        - angular_scaffold_from_config
+    - id: angular_lint_from_config
+      type: powershell
+      command: '& .\internal\scripts\angular-lint-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular'
+      deps:
+        - angular_npm_install_from_config
+    - id: angular_test_from_config
+      type: powershell
+      command: '& .\internal\scripts\angular-test-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular'
+      deps:
+        - angular_lint_from_config
+    - id: angular_build_from_config
+      type: powershell
+      command: '& .\internal\scripts\angular-build-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular'
+      deps:
+        - angular_test_from_config
+    - id: angular_smoke_test_from_config
+      type: powershell
+      command: '& .\internal\scripts\angular-smoke-test-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular'
+      deps:
+        - angular_build_from_config

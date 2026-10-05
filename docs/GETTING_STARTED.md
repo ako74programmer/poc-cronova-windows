@@ -1,12 +1,12 @@
 # Getting Started with cronova
 
-Install cronova on Windows, start the scheduler and web console, write and trigger your first DAG, and wire your own scripts into a workflow. This repository targets Windows amd64 and uses Git for Windows Bash for `shell` tasks.
+Install cronova on Windows, start the scheduler and web console, write and trigger your first DAG, and wire your own scripts into a workflow. This repository targets Windows amd64 and uses Windows-native runtimes, with PowerShell as the primary scripting path for repository workflows.
 
 This guide is task-oriented. For the full field-by-field DAG spec see the [DAG Reference](DAG_REFERENCE.md); for every command and flag see the [CLI Reference](CLI.md); for production install see [Deployment](DEPLOY.md). New to cronova? Start with the [README](https://github.com/zoyluoblue/cronova#readme).
 
 ## 1. Install cronova
 
-The recommended production path is the Windows release ZIP. Install Git for Windows first, then open an elevated PowerShell in the extracted directory.
+The recommended production path is the Windows release ZIP. Open an elevated PowerShell in the extracted directory.
 
 ### Install the release ZIP
 

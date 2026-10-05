@@ -15,7 +15,7 @@
 
 </div>
 
-cronova is a **workflow scheduler and job orchestrator** in the spirit of Airflow and Azkaban, built for teams who want DAG-based scheduling **without the operational weight**. This repository is a customized, independently developed Windows-only project based on the ideas and source of the original [cronova repository](https://github.com/zoyluoblue/cronova). It ships as native Go services with an embedded SQLite database and a standalone executor that runs tasks through Git for Windows Bash.
+cronova is a **workflow scheduler and job orchestrator** in the spirit of Airflow and Azkaban, built for teams who want DAG-based scheduling **without the operational weight**. This repository is a customized, independently developed Windows-only project based on the ideas and source of the original [cronova repository](https://github.com/zoyluoblue/cronova). It ships as native Go services with an embedded SQLite database and a standalone executor that runs tasks through Windows-native runtimes, with PowerShell as the primary workflow scripting path in this repository.
 
 The original repository is the source of inspiration and the starting point for this project. Development, customization, Windows support, release packaging, and maintenance now take place in this repository and are not releases of the original project.
 
@@ -41,7 +41,7 @@ The original repository is the source of inspiration and the starting point for 
 
 ## What is cronova?
 
-**cronova is an open-source, self-hosted workflow scheduler** (a.k.a. job scheduler / task orchestrator / DAG scheduler) written in Go. It schedules **DAGs** — directed acyclic graphs of tasks — on cron or interval triggers, runs each task as a Windows subprocess through Git for Windows Bash, and gives you a web console, a REST API, a CLI, and an MCP endpoint for AI agents. Think of it as a **cron replacement with dependencies, retries, backfill, and observability**, or a **lightweight Airflow alternative** shipped as a compact native service pair.
+**cronova is an open-source, self-hosted workflow scheduler** (a.k.a. job scheduler / task orchestrator / DAG scheduler) written in Go. It schedules **DAGs** — directed acyclic graphs of tasks — on cron or interval triggers, runs each task as a Windows subprocess, and gives you a web console, a REST API, a CLI, and an MCP endpoint for AI agents. Think of it as a **cron replacement with dependencies, retries, backfill, and observability**, or a **lightweight Airflow alternative** shipped as a compact native service pair.
 
 ## Quick start on Windows
 
@@ -188,7 +188,7 @@ cronova api POST /api/dags/validate '{"dag_id":"x","tasks":[…]}'   # dry-run v
 
 ## Deploy in production
 
-cronova is a **scheduler, not a runtime**: it launches each task using interpreters available on the Windows host. Managed installs run the scheduler and standalone executor as **Windows services**. Tasks are executed through Git for Windows Bash; Python, Java, Node, PostgreSQL clients, and other tools must be installed separately when a task needs them.
+cronova is a **scheduler, not a runtime**: it launches each task using interpreters available on the Windows host. Managed installs run the scheduler and standalone executor as **Windows services**. Python, Java, Node, PostgreSQL clients, and other tools must be installed separately when a task needs them.
 
 ```powershell
 .\deploy\install.ps1 -Start       # install and start both Windows services
@@ -197,7 +197,7 @@ cronova.exe start | stop | restart | status
 .\deploy\uninstall.ps1 -Purge     # remove services, binaries, and data
 ```
 
-The PowerShell installer must run as Administrator and requires Git for Windows Bash. Full guide, service configuration, and executor setup: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+The PowerShell installer must run as Administrator. Full guide, service configuration, and executor setup: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
 <div align="center">
   <img src="docs/img/graph.png" alt="cronova DAG graph — cross-DAG trigger dependencies visualized in the web console" width="820">

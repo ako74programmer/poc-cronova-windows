@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -437,5 +438,24 @@ func TestWindowsToolchainEnvironmentIsInheritedWithoutAllowlist(t *testing.T) {
 		if values[name] == "" {
 			t.Errorf("Windows toolchain variable %s was not inherited", name)
 		}
+	}
+}
+
+func TestProbeReconcilesExitedProcessGroup(t *testing.T) {
+	r := NewRunner()
+	cmd := exec.Command("cmd", "/c", "exit 0")
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	if err := attachProcessGroup(cmd); err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.Wait(); err != nil {
+		t.Fatal(err)
+	}
+	r.tasks["stale"] = &procTask{pgid: cmd.Process.Pid}
+	st := r.Probe("stale")
+	if st.Phase != PhaseExited {
+		t.Fatalf("phase = %v, want PhaseExited", st.Phase)
 	}
 }

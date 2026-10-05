@@ -11,13 +11,17 @@ Requirements:
 8. Do not generate tests that use `MockMvc`, `@AutoConfigureMockMvc`, or `@WebMvcTest`.
 9. Prefer simple direct controller tests that instantiate the controller and verify CRUD behavior in memory.
 10. If an integration-style test is still needed, use a minimal `@SpringBootTest` smoke test without `MockMvc`.
-11. Create an `Item` model with fields `Long id` and `String name`.
-12. Create a REST controller exposing:
+11. For controller tests, do not autowire Spring MVC infrastructure. Instantiate `ItemController` directly and call its methods.
+12. Do not import `org.springframework.boot.test.autoconfigure.web.servlet.*` or `org.springframework.test.web.servlet.*`.
+13. Match assertions to the actual controller return type. If `getAllItems()` returns `ResponseEntity<Collection<Item>>` or `ResponseEntity<Map<Long, Item>>`, do not cast the body to `List` unless the controller really returns a `List`.
+14. When testing `getAllItems()`, prefer checking collection size from the returned body without unsafe casts.
+15. Create an `Item` model with fields `Long id` and `String name`.
+16. Create a REST controller exposing:
    - `GET /items`
    - `POST /items`
    - `GET /items/{id}`
    - `DELETE /items/{id}`
-13. Store items in a `java.util.Map<Long, Item>` inside the controller.
-14. Use `jakarta.validation.constraints.NotBlank` and `jakarta.validation.Valid`.
-15. Do not use `javax.validation`.
-16. Keep the existing application bootstrap class intact.
+17. Store items in a `java.util.Map<Long, Item>` inside the controller.
+18. Use `jakarta.validation.constraints.NotBlank` and `jakarta.validation.Valid`.
+19. Do not use `javax.validation`.
+20. Keep the existing application bootstrap class intact.

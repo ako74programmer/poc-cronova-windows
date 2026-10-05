@@ -65,6 +65,10 @@ Rules:
 - If you generate code or tests that require dependencies not present in pom.xml, you MUST return a complete updated pom_xml.
 - Before omitting pom_xml, verify that every import used by the generated Java and test files is already satisfied by the current pom.xml.
 - If you generate JUnit 4 or JUnit 5 style tests and the current pom.xml only contains older JUnit dependencies, you MUST update pom_xml accordingly.
+- For simple Spring controller CRUD features, generate only direct in-memory controller tests that instantiate the controller class and call its methods.
+- Do NOT generate tests using MockMvc, WebMvcTest, AutoConfigureMockMvc, MockBean, RestTemplate, TestRestTemplate, random ports, localhost HTTP calls, or any Spring MVC/web test infrastructure unless the user prompt explicitly requires that style.
+- For controller tests, assert on the actual ResponseEntity API available in the current dependency set and on the actual return type of the controller method; do not assume List, HTTP clients, or helper methods that are not already present.
+- Do NOT use `getStatusCodeValue()`. Prefer `getStatusCode().value()` or boolean/status comparisons supported by the current Spring API.
 - Escape JSON string newlines as \n (one backslash followed by n); do not leave literal backslash-n text in generated file contents. Escape quotes as \".
 
 pom.xml:

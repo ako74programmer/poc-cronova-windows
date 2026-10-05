@@ -1,114 +1,33 @@
 dag_id: sdlc_fullstack
-schedule: ""
 start_date: "2026-09-01"
 catchup: false
 max_active_runs: 1
 default_retries: 1
-
 tasks:
-  - id: validate_stack
-    type: powershell
-    timeout: 180
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step validate-stack -Config configs\\sdlc-fullstack.yaml"
-
-  - id: validate_frontend_config
-    type: powershell
-    timeout: 180
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step validate-frontend -Config configs\\sdlc-angular.yaml"
-
-  - id: validate_backend_config
-    type: powershell
-    timeout: 180
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step validate-backend -Config configs\\sdlc-springboot.yaml"
-
-  - id: scaffold_frontend
-    type: powershell
-    timeout: 900
-    deps: [validate_stack, validate_frontend_config]
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step scaffold-frontend -Config configs\\sdlc-angular.yaml"
-
-  - id: scaffold_backend
-    type: powershell
-    timeout: 600
-    deps: [validate_stack, validate_backend_config]
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step scaffold-backend -Config configs\\sdlc-springboot.yaml"
-
-  - id: generate_contract_app
-    type: powershell
-    timeout: 300
-    deps: [scaffold_frontend, scaffold_backend, validate_stack]
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step generate-contract -Config configs\\sdlc-fullstack.yaml"
-
-  - id: install_frontend_dependencies
-    type: powershell
-    timeout: 1200
-    deps: [generate_contract_app]
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step install-frontend -Config configs\\sdlc-angular.yaml"
-
-  - id: lint_frontend
-    type: powershell
-    timeout: 600
-    deps: [install_frontend_dependencies]
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step lint-frontend -Config configs\\sdlc-angular.yaml"
-
-  - id: test_frontend
-    type: powershell
-    timeout: 900
-    deps: [lint_frontend]
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step test-frontend -Config configs\\sdlc-angular.yaml"
-
-  - id: build_frontend
-    type: powershell
-    timeout: 900
-    deps: [test_frontend]
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step build-frontend -Config configs\\sdlc-angular.yaml"
-
-  - id: smoke_test_frontend
-    type: powershell
-    timeout: 300
-    deps: [build_frontend]
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step smoke-frontend -Config configs\\sdlc-fullstack.yaml"
-
-  - id: compile_backend
-    type: powershell
-    timeout: 900
-    deps: [generate_contract_app]
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step compile-backend -Config configs\\sdlc-springboot.yaml"
-
-  - id: test_backend
-    type: powershell
-    timeout: 900
-    deps: [compile_backend]
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step test-backend -Config configs\\sdlc-springboot.yaml"
-
-  - id: package_backend
-    type: powershell
-    timeout: 900
-    deps: [test_backend]
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step package-backend -Config configs\\sdlc-fullstack.yaml"
-
-  - id: install_playwright
-    type: powershell
-    timeout: 1200
-    deps: [validate_stack]
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step install-playwright -Config configs\\sdlc-fullstack.yaml"
-
-  - id: playwright_e2e
-    type: powershell
-    timeout: 2100
-    deps: [package_backend, smoke_test_frontend, install_playwright]
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step run-stack-e2e -Config configs\\sdlc-fullstack.yaml"
-
-  - id: collect_logs
-    type: powershell
-    timeout: 180
-    deps: [playwright_e2e]
-    trigger_rule: all_done
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step collect-logs -Config configs\\sdlc-fullstack.yaml"
-
-  - id: archive_results
-    type: powershell
-    timeout: 300
-    deps: [collect_logs]
-    trigger_rule: all_done
-    command: "& .\\scripts\\sdlc\\Invoke-Sdlc.ps1 -Step archive -Config configs\\sdlc-fullstack.yaml"
+    - id: validate_stack
+      type: powershell
+      command: '& .\internal\scripts\fullstack-validate-config.ps1 -Config configs\sdlc-fullstack.yaml -Artifacts artifacts\fullstack'
+    - id: install_playwright
+      type: powershell
+      command: '& .\internal\scripts\fullstack-install-playwright.ps1 -Config configs\sdlc-fullstack.yaml -Artifacts artifacts\fullstack'
+      deps:
+        - validate_stack
+    - id: playwright_e2e
+      type: powershell
+      command: '& .\internal\scripts\fullstack-run-stack-e2e.ps1 -Config configs\sdlc-fullstack.yaml -Artifacts artifacts\fullstack'
+      deps:
+        - validate_stack
+        - install_playwright
+    - id: collect_logs
+      type: powershell
+      command: '& .\internal\scripts\fullstack-collect-logs.ps1 -Config configs\sdlc-fullstack.yaml -Artifacts artifacts\fullstack'
+      deps:
+        - playwright_e2e
+    - id: archive_results
+      type: powershell
+      command: '& .\internal\scripts\fullstack-archive-results.ps1 -Config configs\sdlc-fullstack.yaml -Artifacts artifacts\fullstack'
+      deps:
+        - collect_logs
+trigger_after:
+    - dag_id: sdlc_angular
+    - dag_id: sdlc_springboot_rest
