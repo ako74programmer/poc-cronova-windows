@@ -59,16 +59,16 @@ go build -o cronova.exe ./cmd/cronova
 ./cronova.exe runs example_etl
 ```
 
-On Windows use the included `app.cmd` helper:
+On Windows use the included PowerShell helper [app.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/scripts/windows/app.ps1):
 
 ```powershell
 # Development: clean temp DB, auth disabled
-.\app.cmd start-dev
+.\scripts\windows\app.ps1 start-dev
 
 # Production: persistent data/cronova.db, reads cronova.yaml
-.\app.cmd start
+.\scripts\windows\app.ps1 start
 
-.\app.cmd stop
+.\scripts\windows\app.ps1 stop
 ```
 
 Open **http://localhost:8090** for the console — DAG list, run history, task states, live logs, and one-click manual triggers.

@@ -365,7 +365,7 @@ scripts/sdlc/common/config-value.sh
 |---|---|---|
 | `bootstrap.sh` | wysoka | Wspólny kontrakt argumentów, ścieżki, artefakty i runtime |
 | `config-value.sh` | średnia | Reużywalny dla prostych sekcji YAML, ale nie zastępuje parsera YAML |
-| `common_toolchain.sh` | wysoka w Windows/Git Bash | Wspólna konfiguracja Java/Maven/Python/Node i ścieżek |
+| `common_toolchain.sh` | historyczna poza aktywną ścieżką | Dokumentuje dawną wspólną konfigurację Java/Maven/Python/Node i ścieżek dla wariantu bashowego |
 | `validate.sh` Spring Boot | średnia/wysoka | Może obsługiwać różne projekty Spring Boot z podobnym manifestem |
 | `scaffold.sh` | średnia | Reużywalny dla projektów Spring Initializr, ale zależny od parametrów Spring Boot |
 | `compile.sh` | średnia/wysoka | Ogólny compile Maven Wrapper dla workspace’u Spring Boot |

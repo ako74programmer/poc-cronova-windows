@@ -442,7 +442,6 @@ func TestWindowsToolchainEnvironmentIsInheritedWithoutAllowlist(t *testing.T) {
 	t.Setenv("PYTHONHOME", `C:\Python`)
 	t.Setenv("CRONOVA_JAVA_HOME", `C:\Java\jdk-25`)
 	t.Setenv("CRONOVA_MAVEN_HOME", `C:\Maven`)
-	t.Setenv("CRONOVA_BASH_PATH", `C:\Program Files\Git\bin\bash.exe`)
 
 	values := map[string]string{}
 	for _, item := range buildEnv(nil) {
@@ -462,7 +461,6 @@ func TestWindowsToolchainEnvironmentIsInheritedWithoutAllowlist(t *testing.T) {
 		"PYTHONHOME":         true,
 		"CRONOVA_JAVA_HOME":  true,
 		"CRONOVA_MAVEN_HOME": true,
-		"CRONOVA_BASH_PATH":  true,
 	} {
 		if values[name] == "" {
 			t.Errorf("Windows toolchain variable %s was not inherited", name)

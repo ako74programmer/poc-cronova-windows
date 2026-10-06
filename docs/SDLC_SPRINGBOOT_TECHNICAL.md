@@ -37,7 +37,7 @@ dags/sdlc_springboot.yaml
 | `max_active_runs` | `1` | Najwyżej jeden aktywny run tego DAG-a |
 | `default_retries` | `0` | Brak automatycznego retry tasków |
 
-Każdy task ma `type: shell`, więc Cronova uruchamia polecenie jako proces systemowy. Na Windowsie oznacza to wykonanie przez skonfigurowany runtime Cronova/Git Bash. Wszystkie ścieżki w komendach DAG-a są względne wobec katalogu repozytorium, z którego Cronova wykonuje taski.
+Każdy task ma `type: powershell`, więc Cronova uruchamia polecenie jako proces systemowy. Na Windowsie oznacza to natywne wykonanie przez PowerShell. Wszystkie ścieżki w komendach DAG-a są względne wobec katalogu repozytorium, z którego Cronova wykonuje taski.
 
 ## 3. Graf zależności
 

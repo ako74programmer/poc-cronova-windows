@@ -35,7 +35,7 @@ dags/sdlc_maven_luhn.yaml
 | `max_active_runs` | `1` | Najwyżej jeden aktywny run tego DAG-a |
 | `default_retries` | `0` | Brak automatycznego ponawiania tasków |
 
-Każdy task ma `type: shell`. Cronova uruchamia komendy jako procesy systemowe, a na Windowsie wykonuje je przez skonfigurowany Git Bash. Komendy używają ścieżek względnych wobec katalogu repozytorium.
+Każdy task ma `type: powershell`. Cronova uruchamia komendy jako procesy systemowe natywnie przez PowerShell na Windowsie. Komendy używają ścieżek względnych wobec katalogu repozytorium.
 
 ## 3. Graf zależności
 

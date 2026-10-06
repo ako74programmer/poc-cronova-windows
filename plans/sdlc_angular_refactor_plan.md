@@ -1,86 +1,76 @@
-# Plan refaktoryzacji `sdlc_angular`
+# Plan dalszego rozwoju `sdlc_angular`
 
 ## Cel
 
-Przepisać `sdlc_angular` z modelu shell + `scripts/sdlc/angular/*.sh` do modelu:
+Dalszy krok dla `sdlc_angular` nie dotyczy już migracji shell → PowerShell, bo ta część została wykonana. Aktualny cel to:
 
-1. wykonanie jest złożone z małych klocków `.ps1`,
-2. task IDs są samoopisujące się,
-3. frontend jest budowany z tego samego kontraktu OpenAPI co backend, ale w osobnym przepływie,
-4. config workflow pozostaje wersjonowanym wejściem do klocków,
-5. główna ścieżka jest Windows-only i nie rozwija dalej shell/bash,
-6. dokumentacja zostaje domknięta dopiero po potwierdzeniu pełnego runa DAG-a i po ustaleniu docelowego kontraktu frontendowego.
+1. utrzymać działający, PowerShellowy DAG komponentowy Angular,
+2. oprzeć frontend na tym samym kontrakcie OpenAPI co backend,
+3. zachować config-driven model workflow,
+4. nie mieszać komponentowego DAG-a Angular z integracyjnym DAG-iem fullstack,
+5. wrócić do rozwoju funkcjonalnego dopiero wtedy, gdy będziemy gotowi przejść na model kontraktowy frontendu.
 
 ## Stan obecny
 
 - DAG: [dags/sdlc_angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_angular.yaml)
 - config: [configs/sdlc-angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-angular.yaml)
-- wykonanie: `scripts/sdlc/angular/*.sh`
+- wykonanie: `internal/scripts/angular-*.ps1`
 - opis techniczny: [docs/SDLC_ANGULAR_TECHNICAL.md](c:/Users/Andrzej/Downloads/sdlc/cronova/docs/SDLC_ANGULAR_TECHNICAL.md)
 
-Problem:
+## Co jest już zrobione
 
-- DAG nadal używa `type: shell` i komend `bash ...`;
-- task IDs opisują etapy biznesowo, ale nie są nazwami docelowych klocków `.ps1`;
-- repo nie ma jeszcze rodziny `internal/scripts/angular-*.ps1`;
-- config Angular jest już sensownie wydzielony, ale nie opisuje jeszcze frontendu generowanego z kontraktu OpenAPI;
-- dokumentacja nadal opisuje stan shellowy i zostaje zaktualizowana dopiero po domknięciu udrożnienia.
+- [dags/sdlc_angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_angular.yaml) działa na `type: powershell`,
+- istnieje rodzina klocków `internal/scripts/angular-*.ps1`,
+- task IDs są samoopisujące się i odpowiadają uruchamianym klockom,
+- pełny run DAG-a zakończył się sukcesem,
+- główna ścieżka nie rozwija już modelu shell/bash dla Angulara.
 
-## Zasady refaktoru
+## Co nadal jest otwarte
 
-1. Reużywalność: każdy krok Angular ma być osobnym klockiem `.ps1`.
-2. Minimalizm: najpierw odtworzyć istniejący kontrakt DAG-a, bez rozszerzania zakresu o nowe funkcje.
-3. Samoopisujące się nazwy: task ID ma odpowiadać nazwie uruchamianego klocka.
+- frontend nadal jest głównie pipeline'em scaffold + jakość techniczna,
+- workflow nie jest jeszcze przestawiony na model „frontend z kontraktu OpenAPI”,
+- nie ma jeszcze opisanego i wdrożonego docelowego sposobu generowania klienta API z [contracts/openapi.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/contracts/openapi.yaml),
+- nie ma jeszcze decyzji, jak głęboko `sdlc_angular` ma wejść w generowanie CRUD/UI z kontraktu bez mieszania odpowiedzialności z DAG-iem fullstack.
+
+## Zasady dalszych prac
+
+1. Reużywalność: nowe kroki Angular nadal budujemy z małych klocków `.ps1`.
+2. Minimalizm: nie ruszamy działającej ścieżki tylko po to, żeby ją przepisać ponownie.
+3. Samoopisujące się nazwy: jeśli dojdą nowe taski, ich ID nadal mają odpowiadać nazwom klocków.
 4. Config-driven: workspace, artifacts i kluczowe ustawienia mają dalej pochodzić z `configs/sdlc-angular.yaml`.
-5. Windows-only: nie budujemy nowych wrapperów shellowych.
+5. Windows-only: nie wracamy do wrapperów shellowych.
 6. Modułowość: frontend pozostaje osobnym DAG-iem względem backendu; wspólnym źródłem prawdy jest kontrakt OpenAPI, a nie wspólny DAG komponentowy.
 
-## Kolejność prac
+## Kolejność dalszych prac
 
-### Etap 1. Wspólny odczyt configu Angular
+### Etap 1. Potwierdzenie docelowego kontraktu frontendowego
 
-- sprawdzić, czy wystarczy prosty helper Angular analogiczny do Spring Boot,
-- helper ma zwracać ustandaryzowane wartości dla workspace, artifactów, runtime Node/npm i sekcji `angular`.
+- ustalić, które zasoby z [contracts/openapi.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/contracts/openapi.yaml) mają być podstawą dla Angulara,
+- zdecydować, czy klient API ma być generowany automatycznie, czy tylko częściowo wspierany generacją,
+- opisać granicę między odpowiedzialnością DAG-a Angular a DAG-a fullstack.
 
-### Etap 2. Backend klocków Angular `.ps1`
+### Etap 2. Przejście na model kontraktowy
 
-- `angular-validate-config.ps1`
-- `angular-scaffold-from-config.ps1`
-- `angular-npm-install-from-config.ps1`
-- `angular-lint-from-config.ps1`
-- `angular-test-from-config.ps1`
-- `angular-build-from-config.ps1`
-- `angular-smoke-test-from-config.ps1`
-
-### Etap 3. Udrożnienie DAG-a Angular
-
-- przepisać [dags/sdlc_angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_angular.yaml) na `type: powershell`,
-- zastąpić shellowe komendy wywołaniami nowych klocków,
-- zmienić task IDs na samoopisujące się nazwy klocków.
-
-### Etap 4. Walidacja wykonania
-
-- uruchomić lokalną walidację krok po kroku dla każdego nowego klocka,
-- przepiąć [dags/sdlc_angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_angular.yaml) na nowe klocki,
-- wykonać pełny run DAG-a przez Cronova i potwierdzić sukces na nowych task IDs.
-
-### Etap 5. Dokumentacja
-
-- dodać `.ps1.md` dla nowych klocków Angular,
-- dodać [dags/sdlc_angular.yaml.md](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_angular.yaml.md), jeśli go jeszcze nie ma,
-- zaktualizować [docs/SDLC_ANGULAR_TECHNICAL.md](c:/Users/Andrzej/Downloads/sdlc/cronova/docs/SDLC_ANGULAR_TECHNICAL.md),
-- zaktualizować indeksy i README po potwierdzeniu finalnego kontraktu.
-
-### Etap 6. Przejście na model kontraktowy
-
-- oprzeć frontend na tym samym [contracts/openapi.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/contracts/openapi.yaml), z którego korzysta backend,
+- oprzeć frontend na tym samym kontrakcie OpenAPI co backend,
 - wygenerować klienta API i warstwę komunikacji z kontraktu,
 - przygotować frontendowy CRUD oparty o kontrakt, ale bez integracji runtime z backendem w tym DAG-u,
 - unikać hardkodowanych mocków; jeśli potrzebne będą mocki frontendowe, mają wynikać z kontraktu i być traktowane jako etap przejściowy przed integracją.
 
+### Etap 3. Walidacja wykonania po zmianie zakresu
+
+- uruchomić lokalną walidację krok po kroku dla zmienionych klocków,
+- wykonać pełny run [dags/sdlc_angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_angular.yaml) przez Cronova,
+- potwierdzić, że wynik dalej jest zgodny z rolą DAG-a komponentowego.
+
+### Etap 4. Dokumentacja końcowa
+
+- zaktualizować [docs/SDLC_ANGULAR_TECHNICAL.md](c:/Users/Andrzej/Downloads/sdlc/cronova/docs/SDLC_ANGULAR_TECHNICAL.md),
+- zaktualizować [dags/sdlc_angular.yaml.md](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_angular.yaml.md), jeśli zajdzie potrzeba,
+- uzupełnić README i indeksy dopiero po potwierdzeniu docelowego kontraktu frontendowego.
+
 ## Hipoteza lokalna
 
-Najtańsza ścieżka refaktoru nie wymaga nowego modelu konfiguracji, bo [configs/sdlc-angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-angular.yaml) jest już rozdzielony sensownie. Główny brak to warstwa wykonawcza: shellowe skrypty Angular trzeba zastąpić rodziną klocków `.ps1`, zachowując obecny kontrakt DAG-a.
+Najtańsza dalsza ścieżka nie wymaga przebudowy samego DAG-a od zera, bo [configs/sdlc-angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-angular.yaml) i PowerShellowa warstwa wykonawcza już działają. Główny brak to nie runtime, tylko docelowy model kontraktowy frontendu oparty o OpenAPI.
 
 ## Stan po iteracji udrożnienia
 

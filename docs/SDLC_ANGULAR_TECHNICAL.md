@@ -37,7 +37,7 @@ dags/sdlc_angular.yaml
 | `max_active_runs` | `1` | Najwyżej jeden aktywny run tego DAG-a |
 | `default_retries` | `1` | Jeden domyślny retry taska, jeśli task nie ustawia własnej wartości |
 
-Wszystkie taski mają `type: shell`. Cronova uruchamia je przez skonfigurowany runtime shell; na Windowsie oczekiwany jest Git Bash wskazany przez `CRONOVA_BASH_PATH`.
+Wszystkie taski mają `type: powershell`. Cronova uruchamia je natywnie przez PowerShell na Windowsie.
 
 ## 3. Graf zależności
 

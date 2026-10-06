@@ -111,7 +111,7 @@ Skrypt ładuje ten sam helper toolchain, zapisuje `toolchain-runtime.txt`, a nas
 - **Cache Maven:** `.m2/repository` (współdzielony pomiędzy przebiegami DAG-ów; ignorowany przez Git).
 - **Pliki tymczasowe:** `.tmp/` (ignorowany przez Git), m.in. ZIP ze Spring Initializr, prompty i odpowiedzi AI oraz `compile.log`.
 - **Konfiguracja AI:** `data/cronova.db` lub zmienne `CRONOVA_AI_*`; sekret tokenu nie jest częścią definicji DAG-a.
-- **Toolchain Windows:** Cronova uruchomiony przez `start.cmd` przekazuje `CRONOVA_WINDOWS_PATH`, `CRONOVA_BASH_PATH` oraz ustawienia Java/Maven zgodnie z Windows test planem. `common_toolchain.sh` konwertuje ścieżki przez `cygpath` w Git Bash.
+- **Toolchain Windows:** Cronova uruchomiony przez `start.cmd` przekazuje `CRONOVA_WINDOWS_PATH` oraz ustawienia Java/Maven zgodnie z Windows test planem. Aktywna ścieżka PowerShell nie wymaga Git Bash ani `cygpath`.
 
 Kilka skryptów zapisuje do stałych nazw plików w `.tmp/` (`springboot-project.zip`, `ai_prompt.txt`, `ai_request.json`, `ai_response.json`, `compile.log`, `ai_review_prompt.txt`, itd.). `max_active_runs: 1` chroni przed dwoma równoległymi przebiegami **tego DAG-a**, ale nie przed równoległym użyciem tych samych plików tymczasowych przez inne DAG-i. W razie równoległych workflowów może dojść do kolizji.
 

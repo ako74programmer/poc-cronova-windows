@@ -1,4 +1,8 @@
-# Plan iteracji 2: AI wiki — lepszy retrieval, LLM i więcej akcji
+# AI wiki — iteracja 2: lepszy retrieval, LLM i więcej akcji
+
+## Status
+
+Ten plan jest zasadniczo **zrealizowany** i pozostaje w repo jako notatka archiwalna opisująca drugą iterację AI wiki.
 
 ## Cel
 Usprawnić AI wiki chat w cronova: lepsze wyszukiwanie odpowiedzi, generowanie odpowiedzi przez skonfigurowanego LLM, więcej akcji testowych i wsparcie dla języka angielskiego.
@@ -65,6 +69,18 @@ Tak, ale jako **opcjonalna funkcja**. Domyślnie chat działa offline (RAG + sza
 1. Każde zadanie ma test terminalowy lub w przeglądarce.
 2. `go test ./internal/aiwiki/... ./internal/api/...` przechodzi.
 3. Pełny scenariusz E2E działa w przeglądarce.
+
+## Stan po wdrożeniu
+
+W repo istnieją już kluczowe elementy iteracji 2:
+
+- retrieval BM25 w [bm25.go](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki/bm25.go),
+- integracja LLM w [llm.go](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki/llm.go),
+- logika `answer + sources + actions` w [aiwiki.go](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki/aiwiki.go),
+- endpoint `POST /api/ask` w [server.go](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/api/server.go),
+- decyzja architektoniczna BM25 w [003- aiwiki-retrieval-bm25.md](c:/Users/Andrzej/Downloads/sdlc/cronova/docs/ADR/003-%20aiwiki-retrieval-bm25.md).
+
+Plan nie jest już aktywną listą prac. Dalsze usprawnienia AI wiki powinny trafiać do kolejnych planów iteracyjnych.
 
 ## Postęp
 

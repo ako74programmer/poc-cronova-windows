@@ -56,7 +56,7 @@ func main() {
 	var err error
 	switch cmd {
 	case "serve":
-		err = cmdServe(args)
+		err = runWindowsService("Cronova", func() error { return cmdServe(args) })
 	case "trigger":
 		err = cmdTrigger(args)
 	case "dags":
@@ -359,17 +359,21 @@ func cmdServe(args []string) error {
 		return err
 	}
 	applyEnv(&cfg)
-	if cfg.BashPath != "" {
-		if err := os.Setenv("CRONOVA_BASH_PATH", cfg.BashPath); err != nil {
-			return fmt.Errorf("set Git Bash path: %w", err)
+	authExplicit := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "auth" {
+			authExplicit = true
 		}
-	}
+	})
 	overlaySetFlags(&cfg, fs, map[string]any{
 		"db": dbPath, "dags": dagDir, "logs": logDir, "projects": projectsDir, "workspaces": workspacesDir, "tick": tick, "reload": reload,
-		"executor": executorAddr, "http": httpAddr, "auth": authFlag, "retention": retention, "audit-retention": auditRetention,
+		"executor": executorAddr, "http": httpAddr, "retention": retention, "audit-retention": auditRetention,
 		"max-queued-runs": maxQueuedRuns, "max-active-runs": maxActiveRuns, "max-concurrent-tasks": maxConcurrentTasks,
 		"allow-unauthenticated-remote": allowUnauthenticatedRemote,
 	})
+	if authExplicit {
+		cfg.Auth.Enabled = *authFlag
+	}
 	if cfg.Projects == "" {
 		cfg.Projects = defaultProjectsDir() // ~/.cronova/projects (may be "" if no home)
 	}

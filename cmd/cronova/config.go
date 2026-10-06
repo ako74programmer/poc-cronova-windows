@@ -23,7 +23,6 @@ type Config struct {
 	Workspaces string `yaml:"workspaces"` // shared per-attempt project copies
 	Tick       string `yaml:"tick"`
 	Executor   string `yaml:"executor"`
-	BashPath   string `yaml:"bash_path"`
 	HTTP       string `yaml:"http"`
 	// Reload re-scans the dags directory for changed YAML this often (GitOps:
 	// a git pull goes live without restart). "0"/empty = off.
@@ -147,7 +146,6 @@ func applyEnv(c *Config) {
 	env("CRONOVA_TICK", &c.Tick)
 	env("CRONOVA_RELOAD", &c.Reload)
 	env("CRONOVA_EXECUTOR", &c.Executor)
-	env("CRONOVA_BASH_PATH", &c.BashPath)
 	env("CRONOVA_HTTP", &c.HTTP)
 	if v, ok := os.LookupEnv("CRONOVA_ALLOW_UNAUTHENTICATED_REMOTE"); ok {
 		if b, valid := parseBool(v); valid {
@@ -271,9 +269,6 @@ func overlaySetFlags(c *Config, fs *flag.FlagSet, vals map[string]any) {
 	integer("max-queued-runs", &c.MaxQueuedRunsGlobal)
 	integer("max-active-runs", &c.MaxActiveRunsGlobal)
 	integer("max-concurrent-tasks", &c.MaxConcurrentTasks)
-	if set["auth"] {
-		c.Auth.Enabled = *vals["auth"].(*bool)
-	}
 	if set["allow-unauthenticated-remote"] {
 		c.AllowUnauthenticatedRemote = *vals["allow-unauthenticated-remote"].(*bool)
 	}

@@ -389,6 +389,28 @@ func TestGetDAGRetriesInheritRoundTrip(t *testing.T) {
 	}
 }
 
+func TestGetDAGPreservesPowerShellTaskType(t *testing.T) {
+	h, st, _, _ := setup(t)
+	ctx := context.Background()
+	yaml := "dag_id: pwsh\ntasks:\n  - id: run\n    type: powershell\n    command: \"Write-Output 'ok'\"\n"
+	if err := st.UpsertDAG(ctx, &model.DAG{DagID: "pwsh", DefinitionYAML: yaml, MaxActiveRuns: 1, StartDate: time.Now().UTC()}); err != nil {
+		t.Fatal(err)
+	}
+	_, body := get(t, h, "GET", "/api/dags/pwsh")
+	d := body.(map[string]any)
+	tasks := d["tasks"].([]any)
+	if len(tasks) != 1 {
+		t.Fatalf("tasks len = %d, want 1", len(tasks))
+	}
+	tk := tasks[0].(map[string]any)
+	if got := tk["type"]; got != "powershell" {
+		t.Fatalf("task type = %v, want powershell", got)
+	}
+	if got := tk["command"]; got != "Write-Output 'ok'" {
+		t.Fatalf("task command = %v, want exact round-trip", got)
+	}
+}
+
 func TestDeleteDAG(t *testing.T) {
 	h, _, trig, _ := setup(t)
 	// success

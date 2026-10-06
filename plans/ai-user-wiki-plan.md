@@ -1,4 +1,8 @@
-# Plan: AI wiki / chat do nauki cronova od strony użytkownika
+# AI wiki / chat do nauki cronova od strony użytkownika
+
+## Status
+
+Ten plan jest zasadniczo **zrealizowany** i pozostaje w repo jako notatka archiwalna opisująca wdrożenie AI wiki oraz chatu użytkownika.
 
 ## Cel
 Stworzyć wewnętrzne AI wiki oraz interaktywny chat w cronova console, który pomaga użytkownikowi zrozumieć projekt i przetestować funkcjonalności na żywo — bez czytania suchej dokumentacji.
@@ -101,6 +105,18 @@ Stworzyć wewnętrzne AI wiki oraz interaktywny chat w cronova console, który p
 1. Test terminalowy / skryptowy przechodzi pozytywnie.
 2. Jeśli dotyczy UI — weryfikacja w przeglądarce pod `http://127.0.0.1:8090`.
 3. Zadanie jest oznaczone jako done w tym planie (sekcja „Postęp”).
+
+## Stan po wdrożeniu
+
+W repo istnieją już wszystkie kluczowe elementy tej inicjatywy:
+
+- backend AI wiki w [internal/aiwiki/](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki),
+- endpoint `POST /api/ask` w [server.go](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/api/server.go),
+- baza wiedzy [knowledge-base.json](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki/knowledge-base.json),
+- skrypt regeneracji [build-ai-wiki.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/scripts/build-ai-wiki.ps1),
+- panel AI wiki w konsoli cronova.
+
+Plan nie jest już aktywną listą prac. Nowe zmiany wokół AI wiki powinny trafiać do osobnych, nowszych planów iteracyjnych.
 
 ## Decyzje projektowe
 

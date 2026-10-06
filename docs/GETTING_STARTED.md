@@ -88,30 +88,30 @@ You can also manage accounts with `cronova users add|list|passwd|delete`.
 override template; it never leaves the admin password in a long-lived file.
 Details in the [CLI Reference](CLI.md).
 
-### Quick start with `app.cmd` (Windows)
+### Quick start with `app.ps1` (Windows)
 
-On Windows the repository includes `app.cmd`, a small helper that builds the
+On Windows the repository includes [app.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/scripts/windows/app.ps1), a PowerShell helper that builds the
 binary if needed, kills any leftover `cronova.exe` process, and starts the
-server in the background. It has two modes:
+server in the foreground. It has two modes:
 
 | Command | Mode | Database | Auth | Use for |
 |---|---|---|---|---|
-| `app.cmd start` | production | `data/cronova.db` | from `cronova.yaml` | normal work |
-| `app.cmd start-dev` | development | `.tmp/dev-cronova.db` (reset on start) | disabled | testing changes |
-| `app.cmd restart` | production | `data/cronova.db` | from `cronova.yaml` | stop + start |
-| `app.cmd restart-dev` | development | `.tmp/dev-cronova.db` (reset on start) | disabled | stop + start dev |
-| `app.cmd stop` | — | — | — | kill all cronova processes |
-| `app.cmd status` | — | — | — | list running cronova processes |
+| `.\scripts\windows\app.ps1 start` | production | `data/cronova.db` | from `cronova.yaml` plus explicit `-auth=true` | normal work |
+| `.\scripts\windows\app.ps1 start-dev` | development | `.tmp/dev-cronova.db` (reset on start) | disabled | testing changes |
+| `.\scripts\windows\app.ps1 restart` | production | `data/cronova.db` | from `cronova.yaml` plus explicit `-auth=true` | stop + start |
+| `.\scripts\windows\app.ps1 restart-dev` | development | `.tmp/dev-cronova.db` (reset on start) | disabled | stop + start dev |
+| `.\scripts\windows\app.ps1 stop` | — | — | — | kill all cronova processes |
+| `.\scripts\windows\app.ps1 status` | — | — | — | list running cronova processes |
 
 ```powershell
 # Development: clean slate, no auth, console at http://127.0.0.1:8090
-.\app.cmd start-dev
+.\scripts\windows\app.ps1 start-dev
 
 # Production: persistent DB, auth from cronova.yaml
-.\app.cmd start
+.\scripts\windows\app.ps1 start
 
 # Stop any running server
-.\app.cmd stop
+.\scripts\windows\app.ps1 stop
 ```
 
 The dev mode is useful when you are iterating on code: it wipes the temporary
@@ -131,11 +131,11 @@ max_active_runs: 1
 default_retries: 0
 tasks:
   - id: greet
-    type: shell
-    command: echo "hello from cronova at $CRONOVA_LOGICAL_DATETIME"
+    type: powershell
+    command: Write-Output "hello from cronova at $env:CRONOVA_LOGICAL_DATETIME"
   - id: report
-    type: shell
-    command: echo "run $CRONOVA_RUN_ID finished greeting"
+    type: powershell
+    command: Write-Output "run $env:CRONOVA_RUN_ID finished greeting"
     deps: [greet]            # runs after greet succeeds
 ```
 
@@ -155,7 +155,7 @@ Now run it. With `serve` running, list and trigger the DAG:
 ./cronova trigger hello -params '{"day":"2026-01-01"}'
 ```
 
-Common task fields — `type` (`shell`, `python`, `sql`, `jar`, `http`), `command`, `deps`, `pool`, `retries`, `retry_delay`, `timeout`, `trigger_rule`, `project` — and DAG-level fields like `schedule`, `catchup`, `max_active_runs`, `default_retries`, `trigger_after`, and `dagrun_timeout` are documented in full in the [DAG Reference](DAG_REFERENCE.md).
+Common task fields — `type` (`powershell`, `python`, `sql`, `jar`, `http`; `shell` remains a legacy Windows alias), `command`, `deps`, `pool`, `retries`, `retry_delay`, `timeout`, `trigger_rule`, `project` — and DAG-level fields like `schedule`, `catchup`, `max_active_runs`, `default_retries`, `trigger_after`, and `dagrun_timeout` are documented in full in the [DAG Reference](DAG_REFERENCE.md).
 
 ## 4. Template variables
 
@@ -179,11 +179,11 @@ The **logical date** is what makes catchup meaningful: a backfilled run processe
 ```yaml
 tasks:
   - id: extract
-    type: shell
+    type: powershell
     command: python extract.py --date {{ logical_date }}     # via template
   - id: load
-    type: shell
-    command: echo "loading for $CRONOVA_LOGICAL_DATE"        # via env var
+    type: powershell
+    command: Write-Output "loading for $env:CRONOVA_LOGICAL_DATE"   # via env var
     deps: [extract]
 ```
 
@@ -198,8 +198,8 @@ Three more namespaces resolve lazily from state you manage in the console (or vi
 ```yaml
 tasks:
   - id: notify
-    type: shell
-    command: curl -u {{ conn.api.login }}:{{ conn.api.password }} {{ var.webhook_url }}?day={{ params.day }}
+    type: powershell
+    command: curl.exe -u {{ conn.api.login }}:{{ conn.api.password }} {{ var.webhook_url }}?day={{ params.day }}
 ```
 
 > Variables and connections are **not** blanket-injected into every task's environment — they enter only through explicit `{{ var.X }}` / `{{ conn.Y.Z }}` references, so secrets don't leak into unrelated tasks' env. Only `run` variables and `params` become `CRONOVA_*` env vars.
@@ -208,21 +208,21 @@ In the console you don't type the `{{ }}` braces: the visual task editor renders
 
 ## 5. Run your own scripts and projects
 
-To run a real script or a whole codebase, upload it as a **project** and point a shell task at it. cronova stages a fresh, isolated copy of the project as each attempt's working directory.
+To run a real script or a whole codebase, upload it as a **project** and point a PowerShell task at it. cronova stages a fresh, isolated copy of the project as each attempt's working directory.
 
 Upload from the console (task editor → **Project**). You can upload a single script, a whole folder, or a `.zip` (auto-extracted). Then reference the project by name:
 
 ```yaml
 tasks:
   - id: run_main
-    type: shell
-    command: python3 main.py     # cwd is a clean copy of the project, so this resolves
+    type: powershell
+    command: python main.py      # cwd is a clean copy of the project, so this resolves
     project: my_app
 ```
 
 How project attach works:
 
-- The `project` field is honored for **shell** tasks only (the `python`/`sql`/`http` task types run in-process, where a working directory is meaningless).
+- The `project` field is honored for command-based tasks such as **`powershell`** and legacy **`shell`** (the `python`/`sql`/`http` task types run in-process, where a working directory is meaningless).
 - Each attempt gets a **fresh isolated copy** of the uploaded project as its `cwd`. Attempts never interfere, and a re-upload takes effect on the next run.
 - The copy's path is exported as **`CRONOVA_PROJECT_DIR`**, so a script can locate its own bundled data files.
 - Project names allow letters, digits, and `. _ -`. Uploads are size-capped (per file and per project) and guarded against path traversal / zip-slip.

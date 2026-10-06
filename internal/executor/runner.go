@@ -529,8 +529,8 @@ func buildEnv(extra map[string]string) []string {
 		for _, name := range []string{
 			"SystemRoot", "WINDIR", "ComSpec", "PATHEXT",
 			"JAVA_HOME", "MAVEN_HOME", "PYTHONHOME", "PYTHONPATH", "NODE_PATH", "NVM_HOME",
-			"CRONOVA_JAVA_HOME", "CRONOVA_MAVEN_HOME", "CRONOVA_BASH_PATH",
-			"CRONOVA_PYTHON", "CRONOVA_NODE", "CRONOVA_NPM", "CRONOVA_WINDOWS_PATH", "MSYS2_PATH_TYPE",
+			"CRONOVA_JAVA_HOME", "CRONOVA_MAVEN_HOME",
+			"CRONOVA_PYTHON", "CRONOVA_NODE", "CRONOVA_NPM", "CRONOVA_WINDOWS_PATH",
 		} {
 			allowed[envKey(name)] = true
 		}
@@ -552,19 +552,8 @@ func buildEnv(extra map[string]string) []string {
 	for k, v := range extra {
 		values[envKey(k)] = v
 	}
-	// Git Bash/MSYS must inherit the Windows PATH so tasks can find tools from
-	// the parent process and from the standard discovery roots below.
 	if runtime.GOOS == "windows" {
 		discoverWindowsToolchain(values, windowsToolchainRootsFromHost())
-		values["MSYS2_PATH_TYPE"] = "inherit"
-		// DAG commands intentionally use the portable `bash script.sh` form.
-		// Put the selected Git for Windows directories first so that this
-		// nested lookup cannot resolve Windows' WSL bash.exe from PATH.
-		if configured := os.Getenv("CRONOVA_BASH_PATH"); configured != "" {
-			gitBin := filepath.Dir(configured)
-			gitUsrBin := filepath.Clean(filepath.Join(gitBin, "..", "usr", "bin"))
-			values["PATH"] = strings.Join([]string{gitUsrBin, gitBin, values["PATH"]}, string(os.PathListSeparator))
-		}
 	}
 	keys := make([]string, 0, len(values))
 	for k := range values {

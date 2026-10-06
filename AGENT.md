@@ -62,8 +62,8 @@ Aktywne klocki wykonawcze są w:
 
 ## Najważniejsze ustalenia operacyjne
 
-1. Do realnego runtime używamy `app.cmd start`.
-Nie używać `app.cmd start-dev` do walidacji docelowego przepływu, bo rozjeżdża runtime, DB i auth względem właściwej ścieżki.
+1. Do realnego runtime używamy `scripts/windows/app.ps1 start`.
+Nie używać `scripts/windows/app.ps1 start-dev` do walidacji docelowego przepływu, bo rozjeżdża runtime, DB i auth względem właściwej ścieżki.
 
 2. Najpierw udrożnienie i test jak użytkownik, potem dokumentacja.
 Dokumentacja nie może wyprzedzać działającej ścieżki runtime.
@@ -168,7 +168,7 @@ czy to jest potrzebne w aktywnej ścieżce Windows-only?
 ## Priorytet na jutro
 
 1. Testować na czystym stanie po porządkach.
-2. Uruchamiać przez `app.cmd start`.
+2. Uruchamiać przez `scripts/windows/app.ps1 start`.
 3. Zweryfikować end-to-end `sdlc_fullstack` jak użytkownik.
 4. Jeśli problem z `playwright_e2e` wróci, wejść bezpośrednio w ścieżkę finalizacji runtime, a nie wracać do szerokiej architektury.
 5. Po stabilizacji runtime wrócić do migracji `deploy/install.ps1` z zależności od Git Bash.

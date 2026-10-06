@@ -14,29 +14,37 @@ OUT_FILE = REPO_ROOT / "internal" / "aiwiki" / "knowledge-base.json"
 
 DOC_SOURCES = [
     "README.md",
+    "docs/README.md",
     "docs/GETTING_STARTED.md",
     "docs/DAG_REFERENCE.md",
     "docs/AGENTS.md",
     "docs/CLI.md",
     "docs/ARCHITECTURE.md",
+    "docs/DEPLOY.md",
 ]
 
 DAG_SOURCES = [
-    "dags/sdlc_springboot.yaml",
+    "dags/sdlc_angular.yaml",
+    "dags/sdlc_fullstack.yaml",
     "dags/sdlc_maven_luhn.yaml",
+    "dags/sdlc_springboot_rest.yaml",
     "dags/sdlc_springboot_startio.yaml",
+    "dags/sdlc_springboot_template_crud.yaml",
+    "dags/sdlc_springboot_variant.yaml",
 ]
 
 SCRIPT_SOURCES = [
-    "internal/scripts/copy-template-to-workspace",
-    "internal/scripts/fetch-springboot-project",
-    "internal/scripts/generate-maven-archetype",
-    "internal/scripts/compile-project",
-    "internal/scripts/run-tests",
-    "internal/scripts/ai-generate-crud",
-    "internal/scripts/ai-generate-feature",
-    "internal/scripts/ai-review-fix-loop",
-    "internal/scripts/common_toolchain.sh",
+    "internal/scripts/copy-template-to-workspace.ps1",
+    "internal/scripts/fetch-springboot-project.ps1",
+    "internal/scripts/generate-maven-archetype.ps1",
+    "internal/scripts/maven-compile.ps1",
+    "internal/scripts/maven-test.ps1",
+    "internal/scripts/ai-java-mvn-generate-feature.ps1",
+    "internal/scripts/java-maven-compile-fix-loop.ps1",
+    "internal/scripts/angular-validate-config.ps1",
+    "internal/scripts/angular-scaffold-from-config.ps1",
+    "internal/scripts/fullstack-run-stack-e2e.ps1",
+    "internal/scripts/springboot-validate-config.ps1",
     "internal/scripts/README.md",
 ]
 
@@ -99,7 +107,7 @@ def chunk_yaml(path: Path, text: str):
 
 
 def chunk_script(path: Path, text: str):
-    """Return a single chunk for a shell script."""
+    """Return a single chunk for a PowerShell or helper script."""
     return [{"heading": f"Script {path.name}", "body": text.strip()}]
 
 
@@ -147,6 +155,9 @@ def build():
             print(f"skip missing script: {rel}")
             continue
         text = path.read_text(encoding="utf-8")
+        if rel.endswith("README.md"):
+            text = re.sub(r"\((?:[a-zA-Z]:)?/[^)]+\)", "", text)
+            text = re.sub(r"\((?:[a-zA-Z]:)?\\[^)]+\)", "", text)
         for c in chunk_script(path, text):
             chunk_id += 1
             chunks.append({
@@ -179,7 +190,7 @@ def infer_topics(text: str) -> list[str]:
         "template": ["template", "copy-template-to-workspace"],
         "compile": ["compile", "maven", "mvn"],
         "test": ["test", "tests", "run-tests"],
-        "install": ["install", "bootstrap", "serve"],
+        "install": ["install", "bootstrap", "serve", "powershell"],
         "variable": ["variable", "var.", "connection", "conn.", "params"],
     }
     for topic, words in keywords.items():

@@ -1,6 +1,6 @@
 # Deploying cronova on Windows
 
-Cronova in this repository targets Windows 10/11 and Windows Server on `amd64`. It consists of `cronova.exe` (scheduler, REST API and web console) and `cronova-executor.exe` (task process owner). Repository workflows are being standardized on Windows-native execution, with PowerShell as the primary scripting path.
+Cronova in this repository targets Windows 10/11 and Windows Server on `amd64`. It consists of `cronova.exe` (scheduler, REST API and web console) and `cronova-executor.exe` (task process owner). Repository workflows are being standardized on Windows-native execution, with PowerShell as the primary scripting path. On Windows, `shell` is treated only as a legacy alias for PowerShell and should not be used in new DAGs.
 
 ## Requirements
 
@@ -12,8 +12,6 @@ Extract `cronova_windows_amd64.zip`, open an elevated PowerShell in the extracte
 
 ```powershell
 .\deploy\install.ps1
-# Non-standard Git installation:
-.\deploy\install.ps1 -BashPath 'D:\Tools\Git\bin\bash.exe'
 ```
 
 The installer installs binaries below `C:\Program Files\Cronova`, creates the data root `C:\ProgramData\Cronova`, and registers two Windows Services: `CronovaExecutor` and `Cronova`. The scheduler depends on the executor and both services have failure recovery configured.
@@ -22,7 +20,7 @@ The installer installs binaries below `C:\Program Files\Cronova`, creates the da
 
 The default data root contains `cronova.yaml`, `cronova.db`, `dags`, `projects`, `workspaces`, `logs` and `executor-state`.
 
-The local scheduler–executor endpoint is loopback TCP, normally `tcp://127.0.0.1:19090` for the installed service. It must not be bound to a public interface. Remote executor connections use mTLS; loopback-only local traffic may use the local transport without TLS.
+The local scheduler–executor endpoint is loopback TCP, normally `tcp://127.0.0.1:19090` for the installed service. It must not be bound to a public interface. Remote executor connections use mTLS; loopback-only local traffic may use the local transport without TLS. Both installed binaries are intended to run as native Windows Services under Service Control Manager.
 
 ## Service operations
 
@@ -41,7 +39,7 @@ The CLI commands `cronova start`, `cronova stop`, `cronova restart` and `cronova
 
 Tasks are executed as Windows subprocesses using the configured runtime for the task type. The Windows runner creates a Job Object per task, enables `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, assigns the task process to it, and uses `TerminateJobObject` for timeout and cancellation. A controlled executor restart removes the kill-on-close flag before closing the local handle so persisted tasks can continue; a hard executor termination still requires native Windows recovery testing.
 
-When started with `app.cmd`, Cronova runs a Windows PowerShell discovery helper before launch and sets missing `CRONOVA_*` runtime paths in the child process environment. It searches per-user Python under `%LOCALAPPDATA%\Programs\Python\Python*`, Node.js under `%ProgramFiles%\nodejs`, JDKs under `%ProgramFiles%\Java\jdk-*` or Eclipse Adoptium/Microsoft directories, and Maven under `%ProgramFiles%\Apache\Maven` or `%SystemDrive%\apache-maven-*`. The task runner also has a Go-side discovery fallback. Explicit `CRONOVA_PYTHON`, `CRONOVA_NODE`, `CRONOVA_NPM`, `CRONOVA_JAVA_HOME`, `CRONOVA_MAVEN_HOME`, `JAVA_HOME`, and `MAVEN_HOME` values take precedence. Installations in other locations must be added to the Windows `PATH` or configured with those `CRONOVA_*` overrides before starting Cronova.
+When started with [app.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/scripts/windows/app.ps1), Cronova runs a Windows PowerShell discovery helper before launch and sets missing `CRONOVA_*` runtime paths in the child process environment. It searches per-user Python under `%LOCALAPPDATA%\Programs\Python\Python*`, Node.js under `%ProgramFiles%\nodejs`, JDKs under `%ProgramFiles%\Java\jdk-*` or Eclipse Adoptium/Microsoft directories, and Maven under `%ProgramFiles%\Apache\Maven` or `%SystemDrive%\apache-maven-*`. The task runner also has a Go-side discovery fallback. Explicit `CRONOVA_PYTHON`, `CRONOVA_NODE`, `CRONOVA_NPM`, `CRONOVA_JAVA_HOME`, `CRONOVA_MAVEN_HOME`, `JAVA_HOME`, and `MAVEN_HOME` values take precedence. Installations in other locations must be added to the Windows `PATH` or configured with those `CRONOVA_*` overrides before starting Cronova.
 
 ## Upgrade and uninstall
 
@@ -68,7 +66,7 @@ On Windows with Go 1.26.5 or newer:
 .\scripts\package.ps1
 ```
 
-The script builds both `windows/amd64` executables and creates `dist\cronova_windows_amd64.zip` with a SHA-256 checksum. The package includes the three PowerShell lifecycle scripts, `cronova.yaml`, example DAGs and this deployment guide.
+The script builds both `windows/amd64` executables and creates `dist\cronova_windows_amd64.zip` with a SHA-256 checksum. The package includes the three PowerShell lifecycle scripts, `cronova.yaml`, example DAGs, runtime PowerShell scripts from `internal/scripts`, and supporting `configs`, `contracts`, `prompts`, `templates`, and Playwright assets required by distributed DAGs.
 
 ## Verification status
 

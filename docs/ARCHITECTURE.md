@@ -398,7 +398,8 @@ Because tasks are subprocesses, the `type` field only affects how the command is
 
 | type | Launch |
 |---|---|
-| `shell` | Git for Windows `bash.exe -c "<command>"` |
+| `powershell` | `powershell.exe -Command "<command>"` |
+| `shell` | legacy Windows alias for `powershell` |
 | `python` | `python <script> <args>` |
 | `sql` | via CLI/driver (e.g. `psql -f`) |
 | `jar` | `java -jar <jar> <args>` |
@@ -476,7 +477,7 @@ With `catchup: false` only the 6/11 run is created.
 
 Every task subprocess receives:
 
-```bash
+```text
 CRONOVA_LOGICAL_DATE=2026-06-09
 CRONOVA_RUN_ID=daily_etl__2026-06-09
 CRONOVA_TASK_ID=extract
@@ -602,18 +603,18 @@ notify_group: oncall           # references alert_groups table
 
 tasks:
   - id: extract
-    type: shell
+    type: powershell
     command: "python extract.py --date {{ logical_date }}"
     pool: default
     priority: 10
 
   - id: transform
-    type: shell
+    type: powershell
     command: "python transform.py --date {{ logical_date }}"
     deps: [extract]
 
   - id: load
-    type: shell
+    type: powershell
     command: "psql -f load.sql"
     deps: [transform]
     retries: 3
@@ -621,7 +622,7 @@ tasks:
     retry_backoff: exponential
 
   - id: cleanup
-    type: shell
+    type: powershell
     command: "python cleanup.py"
     deps: [transform]
     trigger_rule: all_done       # run regardless of load outcome

@@ -1847,7 +1847,7 @@ function renderTaskPage() {
     <div class="form-page">
       <div class="tc-grid">
         <div class="b-field"><label>${t("t_id")}</label><input class="tf" data-k="id" value="${esc(tk.id)}" placeholder="step_a"></div>
-        <div class="b-field"><label>${t("t_type")}</label><select class="tf" data-k="type">${["shell", "python", "sql", "jar", "http", "subdag"].map((o) => `<option ${tk.type === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
+        <div class="b-field"><label>${t("t_type")}</label><select class="tf" data-k="type">${["powershell", "python", "sql", "jar", "http", "subdag", ...(tk.type === "shell" ? ["shell"] : [])].map((o) => `<option ${tk.type === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
       </div>
       ${commandFieldHtml(tk)}
       ${tk.type === "shell" ? projectSectionHtml(tk) : ""}

@@ -32,9 +32,9 @@ Po scaffoldingu task `generate_contract_app` weryfikuje obsługiwany kontrakt It
 | `catchup` | `false` | Brak nadrabiania pominiętych uruchomień |
 | `max_active_runs` | `1` | Jeden aktywny run tego DAG-a |
 | `default_retries` | `1` | Domyślnie jeden retry taska |
-| liczba tasków | `18` | Wszystkie taski mają typ `shell` |
+| liczba tasków | `5` | Wszystkie taski mają typ `powershell` |
 
-Na Windows Cronova uruchamia skrypty przez skonfigurowany Git Bash. Repozytorium uruchomieniowe przekazuje toolchain, między innymi przez `start.cmd`, `CRONOVA_BASH_PATH`, `CRONOVA_PYTHON`, `CRONOVA_NODE` i `CRONOVA_NPM`.
+Na Windows Cronova uruchamia skrypty natywnie przez PowerShell. Repozytorium uruchomieniowe przekazuje toolchain, między innymi przez `start.cmd`, `CRONOVA_PYTHON`, `CRONOVA_NODE` i `CRONOVA_NPM`.
 
 ## 3. Graf zależności
 

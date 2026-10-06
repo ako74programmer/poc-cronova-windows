@@ -19,7 +19,7 @@ max_active_runs: 1
 default_retries: 2
 tasks:
   - id: extract
-    type: shell
+    type: powershell
     command: "python extract.py --date {{ logical_date }}"
     pool: default
   - id: transform
@@ -103,7 +103,7 @@ Each entry under `tasks:` describes one task.
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `id` | string | — (required) | Task identifier, unique within the DAG. |
-| `type` | string | `shell` | One of `shell`, `python`, `sql`, `jar`, `http`, `subdag`. See [Task types](#task-types). |
+| `type` | string | `shell` | One of `powershell`, `shell`, `python`, `sql`, `jar`, `http`, `subdag`. On Windows, `shell` is a legacy alias for `powershell`. See [Task types](#task-types). |
 | `command` | string | — | The command (shell), code (python), or query (sql). Supports [template variables](#template-variables). Not used for `http`. |
 | `deps` | list of task ids | — | Upstream tasks that must satisfy this task's `trigger_rule` before it runs. Edges are cycle-checked. |
 | `pool` | string | `default` | The [resource pool](#resource-pools) this task consumes a slot from. |

@@ -10,7 +10,7 @@ try {
   $ld = "-s -w -X main.version=$Version"
   go build -trimpath -ldflags $ld -o (Join-Path $Stage "cronova.exe") (Join-Path $Root "./cmd/cronova")
   go build -trimpath -ldflags $ld -o (Join-Path $Stage "cronova-executor.exe") (Join-Path $Root "./cmd/cronova-executor")
-  New-Item -ItemType Directory -Force -Path (Join-Path $Stage "deploy"), (Join-Path $Stage "dags"), (Join-Path $Stage "docs"), (Join-Path $Stage "configs"), (Join-Path $Stage "contracts"), (Join-Path $Stage "scripts\sdlc"), (Join-Path $Stage "e2e\playwright") | Out-Null
+  New-Item -ItemType Directory -Force -Path (Join-Path $Stage "deploy"), (Join-Path $Stage "dags"), (Join-Path $Stage "docs"), (Join-Path $Stage "configs"), (Join-Path $Stage "contracts"), (Join-Path $Stage "internal\scripts"), (Join-Path $Stage "prompts"), (Join-Path $Stage "templates"), (Join-Path $Stage "scripts\sdlc"), (Join-Path $Stage "e2e\playwright") | Out-Null
   Copy-Item (Join-Path $Root "deploy/install.ps1") (Join-Path $Stage "deploy")
   Copy-Item (Join-Path $Root "deploy/uninstall.ps1") (Join-Path $Stage "deploy")
   Copy-Item (Join-Path $Root "deploy/update.ps1") (Join-Path $Stage "deploy")
@@ -19,6 +19,9 @@ try {
   Copy-Item (Join-Path $Root "docs/DEPLOY.md") (Join-Path $Stage "docs")
   Copy-Item (Join-Path $Root "configs/*") (Join-Path $Stage "configs") -Recurse
   Copy-Item (Join-Path $Root "contracts/*") (Join-Path $Stage "contracts") -Recurse
+  Copy-Item (Join-Path $Root "internal/scripts/*") (Join-Path $Stage "internal\scripts") -Recurse
+  Copy-Item (Join-Path $Root "prompts/*") (Join-Path $Stage "prompts") -Recurse -ErrorAction SilentlyContinue
+  Copy-Item (Join-Path $Root "templates/*") (Join-Path $Stage "templates") -Recurse -ErrorAction SilentlyContinue
   Copy-Item (Join-Path $Root "scripts/sdlc/*") (Join-Path $Stage "scripts\sdlc") -Recurse
   Copy-Item (Join-Path $Root "e2e/playwright/*") (Join-Path $Stage "e2e\playwright") -Recurse
   Set-Content -NoNewline -Path (Join-Path $Stage "VERSION") -Value $Version

@@ -134,6 +134,6 @@ cronova is released under the **[MIT License](https://github.com/zoyluoblue/cron
 - [DAG Reference](DAG_REFERENCE.md) — every DAG/task field, task types, triggers, pools
 - [CLI Reference](CLI.md) — every `cronova` command and flag
 - [AI Agents (MCP)](AGENTS.md) — MCP server, remote CLI, tokens, security
-- [Deployment](DEPLOY.md) — Windows Services, Git Bash, Job Objects, updates and backup
+- [Deployment](DEPLOY.md) — Windows Services, PowerShell task execution, Job Objects, updates and backup
 - [Architecture](ARCHITECTURE.md) — design rationale, execution model, diagrams
 - [cronova vs Airflow](COMPARISON.md) — when to choose cronova, feature-by-feature

@@ -182,14 +182,14 @@ Sandboxowy test nie zastępuje Windows. Wynik należy opisywać precyzyjnie: co 
 
 Instrukcja dla agenta:
 
-```bat
-cd /d C:\ścieżka\do\repo
+```powershell
+Set-Location C:\ścieżka\do\repo
 git pull --ff-only origin feature/windows-cmd-runtime-sdlc-2026-09-26
 git status --short
-app.cmd start
+.\scripts\windows\app.ps1 start
 ```
 
-Na Windows nie ustawiaj `CRONOVA_TASK_ENV_ALLOWLIST`. `app.cmd` wykrywa toolchain, a `buildEnv()` automatycznie przekazuje bezpieczne zmienne Java/Maven/Python/PATH do tasków.
+Na Windows nie ustawiaj `CRONOVA_TASK_ENV_ALLOWLIST`. [app.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/scripts/windows/app.ps1) wykrywa toolchain, a `buildEnv()` automatycznie przekazuje bezpieczne zmienne Java/Maven/Python/PATH do tasków.
 
 Agent nie wykonuje `switch`, `reset`, nie wybiera pojedynczego commita, nie poprawia kodu i zatrzymuje test na pierwszym błędzie.
 

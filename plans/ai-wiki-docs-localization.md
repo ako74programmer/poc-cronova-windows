@@ -1,4 +1,8 @@
-# Plan: PL/EN documentation localization for AI wiki
+# PL/EN documentation localization for AI wiki
+
+## Status
+
+Ten plan jest zasadniczo **zrealizowany** i pozostaje w repo jako notatka archiwalna opisująca lokalizację dokumentacji dla AI wiki.
 
 ## Goal
 Make the AI wiki documentation links open in the user's UI language (Polish or English). Remove Chinese (`.zh.md`) documentation versions.
@@ -74,3 +78,14 @@ Other docs fall back to English until translated.
 - AI wiki `open_docs` respects UI language.
 - `go test ./internal/aiwiki/...` passes.
 - Build succeeds.
+
+## Stan po wdrożeniu
+
+W repo istnieją już kluczowe elementy tej inicjatywy:
+
+- frontend AI wiki przekazuje `lang` do `POST /api/ask` w [aiwiki.js](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/web/static/aiwiki.js),
+- akcja `open_docs` respektuje język UI w [aiwiki.js](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/web/static/aiwiki.js),
+- backend AI wiki przyjmuje parametr `lang` w [aiwiki.go](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki/aiwiki.go),
+- repo zawiera ścieżkę dokumentacji PL/EN i mechanizm przełączania języka powiązany z AI wiki.
+
+Plan nie jest już aktywną listą prac. Dalsze zmiany lokalizacyjne powinny trafiać do kolejnych planów iteracyjnych lub bezpośrednio do dokumentacji produktowej.
