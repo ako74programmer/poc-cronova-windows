@@ -3,7 +3,6 @@ package executor
 import (
 	"context"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -29,10 +28,20 @@ func waitExited(t *testing.T, e Executor, ref string, within time.Duration) Stat
 	return Status{}
 }
 
+func testTask(posix, powershell string) (string, string) {
+	if runtime.GOOS == "windows" {
+		return "powershell", powershell
+	}
+	return "", posix
+}
+
+func psLiteral(value string) string { return "'" + strings.ReplaceAll(value, "'", "''") + "'" }
+
 func TestLocalSuccess(t *testing.T) {
 	e := NewLocal()
 	logPath := filepath.Join(t.TempDir(), "ok.log")
-	ref, err := e.Launch(context.Background(), Spec{TaskRunID: "r/t", Command: "echo hello && echo world", LogPath: logPath})
+	taskType, command := testTask("echo hello && echo world", "Write-Output hello; Write-Output world")
+	ref, err := e.Launch(context.Background(), Spec{TaskRunID: "r/t", Type: taskType, Command: command, LogPath: logPath})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,9 +67,11 @@ func TestLocalDir(t *testing.T) {
 	workdir := t.TempDir()
 	logPath := filepath.Join(t.TempDir(), "dir.log")
 	// pwd resolves symlinks (/var -> /private/var on macOS); compare via -ef instead.
+	taskType, command := testTask(`[ "$PWD" -ef "`+workdir+`" ] && echo CWD_OK`, "if ((Get-Location).Path -ne "+psLiteral(workdir)+") { exit 1 }; Write-Output CWD_OK")
 	ref, err := e.Launch(context.Background(), Spec{
 		TaskRunID: "r/t",
-		Command:   `[ "$PWD" -ef "` + workdir + `" ] && echo CWD_OK`,
+		Type:      taskType,
+		Command:   command,
 		Dir:       workdir,
 		LogPath:   logPath,
 	})
@@ -82,9 +93,11 @@ func TestLocalDir(t *testing.T) {
 // clear, shared-filesystem message rather than a cryptic chdir error.
 func TestLocalMissingDir(t *testing.T) {
 	e := NewLocal()
+	taskType, command := testTask("echo hi", "Write-Output hi")
 	_, err := e.Launch(context.Background(), Spec{
 		TaskRunID: "r/t",
-		Command:   "echo hi",
+		Type:      taskType,
+		Command:   command,
 		Dir:       filepath.Join(t.TempDir(), "does-not-exist"),
 		LogPath:   filepath.Join(t.TempDir(), "m.log"),
 	})
@@ -98,7 +111,8 @@ func TestLocalMissingDir(t *testing.T) {
 
 func TestLocalFailure(t *testing.T) {
 	e := NewLocal()
-	ref, err := e.Launch(context.Background(), Spec{TaskRunID: "r/t", Command: "exit 3", LogPath: filepath.Join(t.TempDir(), "f.log")})
+	taskType, command := testTask("exit 3", "cmd.exe /c exit 3")
+	ref, err := e.Launch(context.Background(), Spec{TaskRunID: "r/t", Type: taskType, Command: command, LogPath: filepath.Join(t.TempDir(), "f.log")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +124,8 @@ func TestLocalFailure(t *testing.T) {
 func TestLocalTimeout(t *testing.T) {
 	e := NewLocal()
 	start := time.Now()
-	ref, err := e.Launch(context.Background(), Spec{TaskRunID: "r/t", Command: "sleep 10", Timeout: 200 * time.Millisecond, LogPath: filepath.Join(t.TempDir(), "to.log")})
+	taskType, command := testTask("sleep 10", "Start-Sleep -Seconds 10")
+	ref, err := e.Launch(context.Background(), Spec{TaskRunID: "r/t", Type: taskType, Command: command, Timeout: 200 * time.Millisecond, LogPath: filepath.Join(t.TempDir(), "to.log")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +141,9 @@ func TestLocalTimeout(t *testing.T) {
 func TestLocalIdempotentLaunch(t *testing.T) {
 	e := NewLocal()
 	logPath := filepath.Join(t.TempDir(), "idem.log")
-	spec := Spec{TaskRunID: "same", Command: "echo once >> " + filepath.Join(t.TempDir(), "count"), LogPath: logPath}
+	countPath := filepath.Join(t.TempDir(), "count")
+	taskType, command := testTask("echo once >> "+countPath, "Add-Content -LiteralPath "+psLiteral(countPath)+" -Value once")
+	spec := Spec{TaskRunID: "same", Type: taskType, Command: command, LogPath: logPath}
 	r1, _ := e.Launch(context.Background(), spec)
 	r2, err := e.Launch(context.Background(), spec)
 	if err != nil {
@@ -144,9 +161,11 @@ func TestRunnerRedactsSecretsInLog(t *testing.T) {
 	secret := "S3cr3tP@ss"
 	// The command embeds the secret (echoed on the "$ " line) AND prints it with NO
 	// trailing newline (so it flushes only on Close) — both must be masked.
+	taskType, command := testTask("printf 'pw=%s' "+secret, "[Console]::Out.Write('pw="+secret+"')")
 	ref, err := r.Launch(Spec{
 		TaskRunID: "r/red/1",
-		Command:   "printf 'pw=%s' " + secret,
+		Type:      taskType,
+		Command:   command,
 		LogPath:   logPath,
 		Redact:    []string{secret},
 	})
@@ -285,11 +304,13 @@ func TestRunnerSweepFinished(t *testing.T) {
 	r := NewRunner()
 	dir := t.TempDir()
 
-	done, err := r.Launch(Spec{TaskRunID: "r/done/1", Command: "true", LogPath: filepath.Join(dir, "d.log")})
+	doneType, doneCommand := testTask("true", "cmd.exe /c exit 0")
+	done, err := r.Launch(Spec{TaskRunID: "r/done/1", Type: doneType, Command: doneCommand, LogPath: filepath.Join(dir, "d.log")})
 	if err != nil {
 		t.Fatal(err)
 	}
-	live, err := r.Launch(Spec{TaskRunID: "r/live/1", Command: "sleep 30", LogPath: filepath.Join(dir, "l.log")})
+	liveType, liveCommand := testTask("sleep 30", "Start-Sleep -Seconds 30")
+	live, err := r.Launch(Spec{TaskRunID: "r/live/1", Type: liveType, Command: liveCommand, LogPath: filepath.Join(dir, "l.log")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -337,7 +358,8 @@ func TestLocalProbeUnknown(t *testing.T) {
 
 func TestLocalCancel(t *testing.T) {
 	e := NewLocal()
-	ref, err := e.Launch(context.Background(), Spec{TaskRunID: "r/c", Command: "sleep 30", LogPath: filepath.Join(t.TempDir(), "c.log")})
+	taskType, command := testTask("sleep 30", "Start-Sleep -Seconds 30")
+	ref, err := e.Launch(context.Background(), Spec{TaskRunID: "r/c", Type: taskType, Command: command, LogPath: filepath.Join(t.TempDir(), "c.log")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -355,9 +377,11 @@ func TestLocalCancel(t *testing.T) {
 func TestLocalEnvInjection(t *testing.T) {
 	e := NewLocal()
 	logPath := filepath.Join(t.TempDir(), "env.log")
+	taskType, command := testTask("echo date=$CRONOVA_LOGICAL_DATE", "Write-Output \"date=$env:CRONOVA_LOGICAL_DATE\"")
 	ref, _ := e.Launch(context.Background(), Spec{
 		TaskRunID: "r/e",
-		Command:   "echo date=$CRONOVA_LOGICAL_DATE",
+		Type:      taskType,
+		Command:   command,
 		Env:       map[string]string{"CRONOVA_LOGICAL_DATE": "2026-06-09"},
 		LogPath:   logPath,
 	})
@@ -375,9 +399,14 @@ func TestTaskEnvironmentFiltersSchedulerSecrets(t *testing.T) {
 
 	e := NewLocal()
 	logPath := filepath.Join(t.TempDir(), "filtered-env.log")
+	taskType, command := testTask(
+		`printf 'admin=%s safe=%s injected=%s\n' "${CRONOVA_ADMIN_PASSWORD-unset}" "$SAFE_PARENT_VALUE" "$CRONOVA_RUN_ID"`,
+		`$admin = if ($env:CRONOVA_ADMIN_PASSWORD) { $env:CRONOVA_ADMIN_PASSWORD } else { 'unset' }; Write-Output "admin=$admin safe=$env:SAFE_PARENT_VALUE injected=$env:CRONOVA_RUN_ID"`,
+	)
 	ref, err := e.Launch(context.Background(), Spec{
 		TaskRunID: "r/env-filter",
-		Command:   `printf 'admin=%s safe=%s injected=%s\n' "${CRONOVA_ADMIN_PASSWORD-unset}" "$SAFE_PARENT_VALUE" "$CRONOVA_RUN_ID"`,
+		Type:      taskType,
+		Command:   command,
 		Env:       map[string]string{"CRONOVA_RUN_ID": "run-123"},
 		LogPath:   logPath,
 	})
@@ -441,21 +470,22 @@ func TestWindowsToolchainEnvironmentIsInheritedWithoutAllowlist(t *testing.T) {
 	}
 }
 
-func TestProbeReconcilesExitedProcessGroup(t *testing.T) {
+func TestProbeReportsExitedTask(t *testing.T) {
 	r := NewRunner()
-	cmd := exec.Command("cmd", "/c", "exit 0")
-	if err := cmd.Start(); err != nil {
+	taskType, command := testTask("exit 0", "cmd.exe /c exit 0")
+	ref, err := r.Launch(Spec{TaskRunID: "probe-exited", Type: taskType, Command: command, LogPath: filepath.Join(t.TempDir(), "probe.log")})
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err := attachProcessGroup(cmd); err != nil {
-		t.Fatal(err)
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		if status := r.Probe(ref); status.Phase == PhaseExited {
+			if status.ExitCode != 0 {
+				t.Fatalf("exit code = %d, want 0", status.ExitCode)
+			}
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
-	if err := cmd.Wait(); err != nil {
-		t.Fatal(err)
-	}
-	r.tasks["stale"] = &procTask{pgid: cmd.Process.Pid}
-	st := r.Probe("stale")
-	if st.Phase != PhaseExited {
-		t.Fatalf("phase = %v, want PhaseExited", st.Phase)
-	}
+	t.Fatal("probe did not report exited task")
 }

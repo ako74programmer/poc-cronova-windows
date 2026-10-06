@@ -1,38 +1,46 @@
 //go:build windows
-// +build windows
 
 package executor
 
-import "testing"
+import (
+	"path/filepath"
+	"strings"
+	"testing"
+)
 
-func TestPinGitBashCommand(t *testing.T) {
-	tests := []struct {
-		name string
-		in   string
-		want string
-	}{
-		{
-			name: "plain dag command",
-			in:   "bash scripts/sdlc/angular/validate.sh --config configs/sdlc-angular.yaml",
-			want: "/usr/bin/bash scripts/sdlc/angular/validate.sh --config configs/sdlc-angular.yaml",
-		},
-		{
-			name: "state wrapper",
-			in:   "(\nbash internal/scripts/run-tests -w workspaces/app\n)\nprintf '%s' \"$code\"",
-			want: "(\n/usr/bin/bash internal/scripts/run-tests -w workspaces/app\n)\nprintf '%s' \"$code\"",
-		},
-		{
-			name: "unrelated command",
-			in:   "echo bash scripts/example.sh",
-			want: "echo bash scripts/example.sh",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			if got := pinGitBashCommand(tc.in); got != tc.want {
-				t.Fatalf("pinGitBashCommand() = %q, want %q", got, tc.want)
+func TestWindowsTaskCommandUsesPowerShell(t *testing.T) {
+	for _, taskType := range []string{"", "shell", "powershell", "jar"} {
+		t.Run(taskType, func(t *testing.T) {
+			cmd, err := taskCommand(taskType, "Write-Output ok")
+			if err != nil {
+				t.Fatalf("taskCommand: %v", err)
+			}
+			if got := filepath.Base(cmd.Path); !strings.EqualFold(got, "powershell.exe") {
+				t.Fatalf("executable = %q, want powershell.exe", got)
+			}
+			joined := strings.Join(cmd.Args, " ")
+			if !strings.Contains(joined, "-NoProfile") || !strings.Contains(joined, "Write-Output ok") {
+				t.Fatalf("unexpected PowerShell arguments: %q", joined)
 			}
 		})
+	}
+}
+
+func TestWindowsOperatorTaskUsesPowerShellCallOperator(t *testing.T) {
+	cmd, err := taskCommand("python", `"C:\Cronova\cronova.exe" run-op python`)
+	if err != nil {
+		t.Fatalf("taskCommand: %v", err)
+	}
+	if got := filepath.Base(cmd.Path); !strings.EqualFold(got, "powershell.exe") {
+		t.Fatalf("executable = %q, want powershell.exe", got)
+	}
+	if got := cmd.Args[len(cmd.Args)-1]; !strings.HasPrefix(got, "& ") {
+		t.Fatalf("operator command = %q, want PowerShell call operator prefix", got)
+	}
+}
+
+func TestWindowsTaskCommandRejectsUnknownType(t *testing.T) {
+	if _, err := taskCommand("bash", "echo not supported"); err == nil {
+		t.Fatal("unknown task type should not fall back to a shell")
 	}
 }

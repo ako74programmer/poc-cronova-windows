@@ -17,9 +17,11 @@ func TestStateRecoveryAdoptsRunningTask(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	taskType, command := testTask("sleep 1; exit 7", "Start-Sleep -Seconds 1; cmd.exe /c exit 7")
 	ref, err := r1.Launch(Spec{
 		TaskRunID: "run/task/1",
-		Command:   "sleep 1; exit 7",
+		Type:      taskType,
+		Command:   command,
 		LogPath:   filepath.Join(logs, "t.log"),
 	})
 	if err != nil {
@@ -62,7 +64,8 @@ func TestStateRecoveryRestoresFinishedResult(t *testing.T) {
 	dir := t.TempDir()
 	logs := t.TempDir()
 	r1, _ := NewRunnerWithState(dir)
-	ref, err := r1.Launch(Spec{TaskRunID: "run/quick/1", Command: "exit 3", LogPath: filepath.Join(logs, "q.log")})
+	quickType, quickCommand := testTask("exit 3", "cmd.exe /c exit 3")
+	ref, err := r1.Launch(Spec{TaskRunID: "run/quick/1", Type: quickType, Command: quickCommand, LogPath: filepath.Join(logs, "q.log")})
 	if err != nil {
 		t.Fatal(err)
 	}
