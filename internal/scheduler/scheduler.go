@@ -1023,8 +1023,7 @@ func (s *Scheduler) Run(ctx context.Context) error {
 		s.tickOnce(ctx)
 		select {
 		case <-ctx.Done():
-			s.log.Info("scheduler stopping; waiting for in-flight tasks")
-			s.inflight.Wait()
+			s.log.Info("scheduler stopping")
 			return ctx.Err()
 		case <-gc.C:
 			s.gcWorkspaces(ctx, time.Hour) // age guard: skip anything mid-launch

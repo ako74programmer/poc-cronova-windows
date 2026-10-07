@@ -4,13 +4,15 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"syscall"
 
 	"golang.org/x/sys/windows/svc"
 )
+
+var serviceSignalRelay chan os.Signal
 
 func runWindowsService(name string, runConsole func() error) error {
 	isService, err := svc.IsWindowsService()
@@ -30,6 +32,13 @@ type windowsServiceHandler struct {
 func (h *windowsServiceHandler) Execute(_ []string, requests <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
 	const accepted = svc.AcceptStop | svc.AcceptShutdown
 	changes <- svc.Status{State: svc.StartPending}
+
+	cleanup, err := installServiceSignalRelay()
+	if err != nil {
+		return false, 1
+	}
+	defer cleanup()
+
 	changes <- svc.Status{State: svc.Running, Accepts: accepted}
 
 	errCh := make(chan error, 1)
@@ -37,6 +46,7 @@ func (h *windowsServiceHandler) Execute(_ []string, requests <-chan svc.ChangeRe
 		errCh <- h.run()
 	}()
 
+	stopRequested := false
 	for {
 		select {
 		case req := <-requests:
@@ -44,14 +54,16 @@ func (h *windowsServiceHandler) Execute(_ []string, requests <-chan svc.ChangeRe
 			case svc.Interrogate:
 				changes <- req.CurrentStatus
 			case svc.Stop, svc.Shutdown:
-				changes <- svc.Status{State: svc.StopPending}
-				interruptServiceProcess()
+				if !stopRequested {
+					stopRequested = true
+					changes <- svc.Status{State: svc.StopPending, Accepts: 0}
+					relayServiceStopSignal()
+				}
 			case svc.Pause, svc.Continue:
 			default:
 			}
-		case err := <-errCh:
-			changes <- svc.Status{State: svc.StopPending}
-			if err != nil && !errors.Is(err, os.ErrProcessDone) {
+		case runErr := <-errCh:
+			if runErr != nil {
 				return false, 1
 			}
 			return false, 0
@@ -59,11 +71,22 @@ func (h *windowsServiceHandler) Execute(_ []string, requests <-chan svc.ChangeRe
 	}
 }
 
-func interruptServiceProcess() {
-	proc, err := os.FindProcess(os.Getpid())
-	if err != nil {
+func installServiceSignalRelay() (func(), error) {
+	serviceSignalRelay = make(chan os.Signal, 2)
+	signal.Notify(serviceSignalRelay, os.Interrupt, syscall.SIGTERM)
+	return func() {
+		signal.Stop(serviceSignalRelay)
+		close(serviceSignalRelay)
+		serviceSignalRelay = nil
+	}, nil
+}
+
+func relayServiceStopSignal() {
+	if serviceSignalRelay == nil {
 		return
 	}
-	_ = proc.Signal(os.Interrupt)
-	_ = proc.Signal(syscall.SIGTERM)
+	select {
+	case serviceSignalRelay <- syscall.SIGTERM:
+	default:
+	}
 }

@@ -4,6 +4,144 @@ z# Plan naprawczy po audycie Windows + PowerShell
 
 Doprowadzić repozytorium i produkt do spójnego modelu **Windows-only, PowerShell-first**, bez ukrytych zależności od Git Bash w aktywnej ścieżce produktu, z poprawnym instalatorem, UI, paczką release i dokumentacją.
 
+## Procedura ręcznej weryfikacji usług Windows
+
+Cel procedury:
+- potwierdzić na realnym Windows, że `Cronova` i `CronovaExecutor` da się zainstalować jako natywne usługi Windows,
+- potwierdzić, że po starcie przez SCM są widoczne także jako procesy systemowe,
+- po teście odinstalować usługi i wrócić do obecnego trybu ręcznego uruchamiania przez `app.cmd start` lub `scripts\windows\app.ps1 start`.
+
+Ważne doprecyzowanie:
+- po instalacji jako usługa nie potrzebujesz `app.cmd start`, żeby aplikacja działała w tle,
+- ale usługą nie zarządza się przez Menedżera zadań,
+- Menedżer zadań służy tylko do obserwacji procesu,
+- start/stop należy robić przez `services.msc`, `Get-Service`, `Start-Service`, `Stop-Service`, `sc.exe` albo nasze skrypty `deploy\install.ps1` i `deploy\uninstall.ps1`.
+
+Warunki wstępne:
+- uruchom PowerShell jako Administrator,
+- pracuj z katalogu głównego repozytorium,
+- upewnij się, że ręcznie uruchomione procesy `cronova.exe` i `cronova-executor.exe` nie działają.
+
+### Krok 1. Zatrzymanie trybu ręcznego
+
+```powershell
+.\scripts\windows\app.ps1 stop
+Get-Process cronova, 'cronova-executor' -ErrorAction SilentlyContinue
+Get-Service Cronova, CronovaExecutor -ErrorAction SilentlyContinue
+```
+
+Oczekiwany wynik:
+- ręczne procesy są zatrzymane,
+- usługi nie istnieją albo nie działają.
+
+### Krok 2. Zbudowanie świeżej paczki
+
+```powershell
+.\scripts\package.ps1
+```
+
+Oczekiwany wynik:
+- pakowanie kończy się sukcesem,
+- artefakty są w `dist\`.
+
+### Krok 3. Instalacja i start usług
+
+```powershell
+.\deploy\install.ps1 -Source .\dist -Start
+```
+
+Oczekiwany wynik:
+- powstają usługi `CronovaExecutor` i `Cronova`,
+- start nie kończy się błędem.
+
+### Krok 4. Weryfikacja rejestracji w SCM
+
+```powershell
+Get-Service Cronova, CronovaExecutor
+sc.exe query Cronova
+sc.exe query CronovaExecutor
+```
+
+Oczekiwany wynik:
+- obie usługi istnieją,
+- obie przechodzą do stanu `Running`.
+
+### Krok 5. Weryfikacja procesów
+
+```powershell
+Get-Process cronova, 'cronova-executor'
+```
+
+Oczekiwany wynik:
+- oba procesy są widoczne,
+- to potwierdza, że usługa Windows jest także normalnym procesem systemowym,
+- opcjonalnie można otworzyć Menedżera zadań i sprawdzić, że `cronova.exe` i `cronova-executor.exe` są widoczne.
+
+### Krok 6. Weryfikacja odpowiedzi aplikacji
+
+```powershell
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8090/
+```
+
+Oczekiwany wynik:
+- jest odpowiedź HTTP,
+- nawet `401` albo `501` potwierdza, że proces web działa.
+
+### Krok 7. Weryfikacja cyklu stop/start
+
+```powershell
+Stop-Service Cronova
+Stop-Service CronovaExecutor
+Get-Service Cronova, CronovaExecutor
+Start-Service CronovaExecutor
+Start-Service Cronova
+Get-Service Cronova, CronovaExecutor
+```
+
+Oczekiwany wynik:
+- obie usługi zatrzymują się poprawnie,
+- obie usługi da się uruchomić ponownie,
+- SCM pokazuje poprawne przejścia stanów.
+
+Rzeczywisty wynik z testu 2026-10-06:
+- `Cronova` weszła w `STOP_PENDING` i nie zatrzymała się poprawnie,
+- `CronovaExecutor` również nie zatrzymywał się poprawnie,
+- odzyskanie kontroli wymagało ręcznego ubijania PID,
+- test wykazał, że lifecycle `stop` dla hosta usługi Windows nie jest gotowy operacyjnie,
+- punkt audytowy można uznać tylko za częściowo naprawiony: `install/start` działa, ale `stop/restart/uninstall` nie są jeszcze wiarygodnie domknięte.
+
+### Krok 8. Weryfikacja GUI systemu
+
+- Otwórz `services.msc` i sprawdź, że obie usługi są na liście.
+- Otwórz Menedżera zadań i sprawdź, że procesy `cronova.exe` oraz `cronova-executor.exe` są widoczne, gdy usługi działają.
+
+### Krok 9. Odinstalowanie usług po teście
+
+```powershell
+.\deploy\uninstall.ps1
+Get-Service Cronova, CronovaExecutor -ErrorAction SilentlyContinue
+Get-Process cronova, 'cronova-executor' -ErrorAction SilentlyContinue
+```
+
+Oczekiwany wynik:
+- usługi są usunięte,
+- binarki z `C:\Program Files\Cronova` są usunięte,
+- dane w `C:\ProgramData\Cronova` pozostają.
+
+### Krok 10. Powrót do obecnego trybu pracy
+
+```powershell
+.\app.cmd start
+```
+
+Oczekiwany wynik:
+- wraca obecny ręczny workflow,
+- usługi nie sterują już uruchomieniem aplikacji.
+
+Uwagi:
+- jeśli chcesz usunąć także dane, użyj `deploy\uninstall.ps1 -Purge`,
+- do tego testu lepiej użyć zwykłego `deploy\uninstall.ps1`, żeby nie kasować danych roboczych.
+
 ## Jak używać tej checklisty
 
 - `[ ]` oznacza zadanie otwarte,
@@ -56,17 +194,20 @@ Doprowadzić repozytorium i produkt do spójnego modelu **Windows-only, PowerShe
   - [x] po każdym wywołaniu `sc.exe` sprawdzać `$LASTEXITCODE`
   - [x] przerwać instalację przy błędzie
   - [x] dopisać końcową walidację stanu usług
-  - [ ] zweryfikować przypadek niepowodzenia
+  - [x] zweryfikować przypadek niepowodzenia
+  - [x] poprawić format argumentów `sc.exe create/failure` po błędzie 1639 ujawnionym w teście ręcznym
 
 - [ ] **1.6 Dodać test ręczny instalacji usług na czystym Windows**
-  - [ ] zbudować paczkę
-  - [ ] uruchomić instalację na czystym katalogu danych
-  - [ ] wykonać `install`
-  - [ ] wykonać `start`
-  - [ ] wykonać `stop`
-  - [ ] wykonać `restart`
-  - [ ] wykonać `uninstall`
-  - [ ] spisać wynik testu
+  - [x] zbudować paczkę
+  - [x] uruchomić instalację na czystym katalogu danych
+  - [x] wykonać `install`
+  - [x] wykonać `start`
+  - [x] wykonać podstawową weryfikację `query` i procesów
+  - [ ] naprawić `stop` dla `Cronova`
+  - [ ] naprawić `stop` dla `CronovaExecutor`
+  - [ ] zweryfikować `restart`
+  - [ ] zweryfikować `uninstall`
+  - [x] spisać wynik testu
 
 ### Etap 2. UI i edycja tasków PowerShell
 
@@ -321,7 +462,21 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 - uruchomić instalację na czystym katalogu danych,
 - wykonać `install`, `start`, `stop`, `restart`, `uninstall`.
 
-**Wynik:** potwierdzona ścieżka wdrożeniowa.
+**Wynik testu z 2026-10-06:**
+- `install` działa po użyciu `New-Service` w [install.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/deploy/install.ps1),
+- `start` działa; usługi `Cronova` i `CronovaExecutor` osiągają `RUNNING`,
+- `query` działa; SCM pokazuje `WIN32_OWN_PROCESS`,
+- procesy `cronova.exe` i `cronova-executor.exe` są widoczne w systemie,
+- logowanie do UI wymagało ręcznego dodania użytkownika admin do bazy,
+- `stop` nie działa poprawnie: `Cronova` wpada w `STOP_PENDING`,
+- `CronovaExecutor` także nie zatrzymuje się poprawnie,
+- test był bardzo kosztowny operacyjnie i wymagał ręcznego ubijania PID,
+- ścieżka wdrożeniowa nie jest jeszcze domknięta.
+
+**Dalsze działania po teście:**
+- naprawić lifecycle `stop/shutdown` w [service_host_windows.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova/service_host_windows.go),
+- naprawić lifecycle `stop/shutdown` w [service_host_windows.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova-executor/service_host_windows.go),
+- dodać skrypt PowerShell seedujący konto administratora do wskazanej bazy SQLite, domyślnie `admin` / `admin123`, użyteczny dla testów instalacji usług.
 
 ---
 

@@ -1,0 +1,5 @@
+.\deploy\uninstall.ps1            # usuwa usługi i binaria, zostawia dane
+.\deploy\uninstall.ps1 -Purge     # usuwa też C:\ProgramData\Cronova
+.\deploy\uninstall.ps1 -KillAll   # zabija też cronova*.exe spoza katalogu instalacji (np. z dist)
+
+.\deploy\reinstall.ps1 -Source .\dist -Start
