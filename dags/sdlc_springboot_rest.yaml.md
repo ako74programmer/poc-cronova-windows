@@ -16,18 +16,18 @@ Jest kompatybilnym entrypointem dla wariantu `rest` i używa tego samego zestawu
 
 ## Jakich klocków używa
 
-- [internal/scripts/springboot-validate-config.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/springboot-validate-config.ps1)
-- [internal/scripts/springboot-validate-openapi.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/springboot-validate-openapi.ps1)
-- [internal/scripts/springboot-scaffold-from-config.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/springboot-scaffold-from-config.ps1)
-- [internal/scripts/springboot-maven-compile-from-config.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/springboot-maven-compile-from-config.ps1)
-- [internal/scripts/springboot-maven-test-from-config.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/springboot-maven-test-from-config.ps1)
-- [internal/scripts/springboot-package-from-config.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/springboot-package-from-config.ps1)
+- [internal/scripts/springboot-validate-config.ps1](../internal/scripts/springboot-validate-config.ps1)
+- [internal/scripts/springboot-validate-openapi.ps1](../internal/scripts/springboot-validate-openapi.ps1)
+- [internal/scripts/springboot-scaffold-from-config.ps1](../internal/scripts/springboot-scaffold-from-config.ps1)
+- [internal/scripts/springboot-maven-compile-from-config.ps1](../internal/scripts/springboot-maven-compile-from-config.ps1)
+- [internal/scripts/springboot-maven-test-from-config.ps1](../internal/scripts/springboot-maven-test-from-config.ps1)
+- [internal/scripts/springboot-package-from-config.ps1](../internal/scripts/springboot-package-from-config.ps1)
 
 ## Wejścia
 
-- workflow config [configs/sdlc-springboot.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot.yaml)
-- standard wariantu [configs/standards/springboot-rest-api.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/standards/springboot-rest-api.yaml)
-- standard bazowy [configs/standards/springboot-base.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/standards/springboot-base.yaml)
+- workflow config [configs/sdlc-springboot.yaml](../configs/sdlc-springboot.yaml)
+- standard wariantu [configs/standards/springboot-rest-api.yaml](../configs/standards/springboot-rest-api.yaml)
+- standard bazowy [configs/standards/springboot-base.yaml](../configs/standards/springboot-base.yaml)
 
 ## Wynik
 

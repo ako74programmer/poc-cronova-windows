@@ -145,7 +145,7 @@ Działanie:
 4. tworzy `artifacts/angular/logs`, `reports` i `metadata`;
 5. zapisuje runtime do `artifacts/angular/metadata/runtime.txt`;
 6. wymaga dostępności `node` i `npm`;
-7. odrzuca konfigurację zawierającą nieprzenośne ścieżki Unix/prywatne, takie jak `/home/`, `/tmp/`, `/var/`, `systemd`, `launchd` lub `/c/Users/`;
+7. odrzuca konfigurację zawierającą nieprzenośne ścieżki Unix/prywatne, takie jak `/home/`, `/tmp/`, `/var/` lub `/c/Users/`;
 8. sprawdza sekcję `project:` i marker `kind: angular`;
 9. zapisuje wersje Node i npm do:
 

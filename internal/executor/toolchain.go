@@ -30,7 +30,7 @@ func discoverWindowsToolchain(env map[string]string, roots windowsToolchainRoots
 
 	python := env["CRONOVA_PYTHON"]
 	if python == "" {
-		python = findExecutableOnPath(path, "python.exe", "python3.exe")
+		python = findExecutableOnPath(withoutWindowsApps(path), "python.exe", "python3.exe")
 	}
 	if python == "" {
 		python = newestFile(
@@ -174,6 +174,19 @@ func firstExistingFile(paths ...string) string {
 		}
 	}
 	return ""
+}
+
+// withoutWindowsApps drops %LOCALAPPDATA%\Microsoft\WindowsApps, whose
+// python.exe/python3.exe are Microsoft Store stubs that exit 9009.
+func withoutWindowsApps(path string) string {
+	var kept []string
+	for _, directory := range filepath.SplitList(path) {
+		if strings.HasSuffix(strings.ToLower(filepath.Clean(directory)), `\microsoft\windowsapps`) {
+			continue
+		}
+		kept = append(kept, directory)
+	}
+	return strings.Join(kept, string(filepath.ListSeparator))
 }
 
 func findExecutableOnPath(path string, names ...string) string {

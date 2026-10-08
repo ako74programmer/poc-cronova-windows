@@ -36,4 +36,4 @@ To klocek scaffoldingu dla przepływów opartych o archetyp Maven.
 
 ## Gdzie używany
 
-- [dags/sdlc_maven_luhn.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_maven_luhn.yaml)
+- [dags/sdlc_maven_luhn.yaml](../../dags/sdlc_maven_luhn.yaml)

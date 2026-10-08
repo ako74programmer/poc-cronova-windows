@@ -133,7 +133,7 @@ Ustaw pod kluczem `http:` zadania, gdy `type: http`:
 | Typ | Uruchamiane jako | `command` zawiera | Wymaga na hoście |
 |---|---|---|---|
 | `powershell` | podproces OS (`powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command`) | dowolną komendę PowerShell | narzędzia wywoływane przez komendę |
-| `python` | podproces OS (`python3`) | kod Python | `python3` na `PATH` usługi |
+| `python` | podproces OS (`python -c`) | kod Python | `python` na `PATH` usługi (lub `CRONOVA_PYTHON`) |
 | `sql` | w procesie (natywny sterownik) | zapytanie SQL; `conn` wybiera połączenie | nic dodatkowego |
 | `jar` | podproces OS (`java`) | komendę `java -jar …` | JRE/JDK na `PATH` |
 | `http` | klient HTTP w procesie | — (użyj specyfikacji `http:`) | nic dodatkowego |

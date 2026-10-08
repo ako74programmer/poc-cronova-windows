@@ -110,10 +110,10 @@ Stworzyć wewnętrzne AI wiki oraz interaktywny chat w cronova console, który p
 
 W repo istnieją już wszystkie kluczowe elementy tej inicjatywy:
 
-- backend AI wiki w [internal/aiwiki/](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki),
-- endpoint `POST /api/ask` w [server.go](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/api/server.go),
-- baza wiedzy [knowledge-base.json](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki/knowledge-base.json),
-- skrypt regeneracji [build-ai-wiki.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/scripts/build-ai-wiki.ps1),
+- backend AI wiki w [internal/aiwiki/](../internal/aiwiki),
+- endpoint `POST /api/ask` w [server.go](../internal/api/server.go),
+- baza wiedzy [knowledge-base.json](../internal/aiwiki/knowledge-base.json),
+- skrypt regeneracji [build-ai-wiki.ps1](../scripts/build-ai-wiki.ps1),
 - panel AI wiki w konsoli cronova.
 
 Plan nie jest już aktywną listą prac. Nowe zmiany wokół AI wiki powinny trafiać do osobnych, nowszych planów iteracyjnych.

@@ -306,7 +306,7 @@ Wspólny helper `internal/scripts/common_toolchain.sh`:
 - wykorzystuje `CRONOVA_WINDOWS_PATH` do przywrócenia systemowego Windows `PATH` w procesie zadania PowerShell;
 - dodaje do `PATH` katalogi Pythona, Node i npm;
 - ustawia `JAVA_HOME` i `MAVEN_HOME` z `CRONOVA_JAVA_HOME`/`CRONOVA_MAVEN_HOME` albo standardowych zmiennych;
-- autodetekuje `python3` lub `python`;
+- autodetekuje `python` (lub używa `CRONOVA_PYTHON`);
 - przy selektorze `-y python` preferuje konkretną ścieżkę `CRONOVA_PYTHON`;
 - sprawdza `java` i `mvn`;
 - zapisuje diagnostykę toolchainu.

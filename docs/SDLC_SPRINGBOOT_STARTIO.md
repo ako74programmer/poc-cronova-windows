@@ -61,7 +61,7 @@ Walidacja sandboxowa (parser PowerShell, helper POM, składnia Python, kontrakt 
 
 **Co ma robić skrypt:** `internal/scripts/fetch-springboot-project` składa URL do `https://start.spring.io/starter.zip`, pobiera ZIP przez `curl` (lub `wget` jako fallback), a następnie rozpakowuje projekt do `workspaces/springboot-startio/app`. `-C` usuwa wcześniej istniejący katalog docelowy przed rozpakowaniem. Ustawienia generatora: Maven, Java, Spring Boot `4.0.8`, Java `21`, `jar`, konfiguracja `properties`, zależność `web`, grupa `com.example`, artefakt `demo`, pakiet `com.example.demo`.
 
-**Poprawka wprowadzona w tym branchu:** skrypt używa teraz `find_python` z `internal/scripts/common_toolchain.sh`, obsługuje `-y PYTHON`, preferuje jawne `CRONOVA_PYTHON` nad ogólnym wyborem `python`/`python3` przekazanym przez DAG i normalizował ścieżkę Windows dla dawnego wariantu Bash (obecnie zastąpionego modułem `fetch-springboot-project.ps1`). Przy braku interpretera albo błędnej jawnej ścieżce resolver kończy się czytelnym błędem przed pobieraniem. Zachowanie na Windows jest **do potwierdzenia przez test runtime**.
+**Poprawka wprowadzona w tym branchu:** skrypt używa teraz `find_python` z `internal/scripts/common_toolchain.sh`, obsługuje `-y PYTHON`, preferuje jawne `CRONOVA_PYTHON` nad ogólnym wyborem `python` przekazanym przez DAG i normalizował ścieżkę Windows dla dawnego wariantu Bash (obecnie zastąpionego modułem `fetch-springboot-project.ps1`). Przy braku interpretera albo błędnej jawnej ścieżce resolver kończy się czytelnym błędem przed pobieraniem. Zachowanie na Windows jest **do potwierdzenia przez test runtime**.
 
 ### 2. `compile_skeleton` — kompilacja czystego projektu
 

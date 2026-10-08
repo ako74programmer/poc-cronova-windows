@@ -59,7 +59,7 @@ go build -o cronova.exe ./cmd/cronova
 ./cronova.exe runs example_etl
 ```
 
-On Windows use the included PowerShell helper [app.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/scripts/windows/app.ps1):
+On Windows use the included PowerShell helper [app.ps1](scripts/windows/app.ps1):
 
 ```powershell
 # Development: clean temp DB, auth disabled
@@ -165,7 +165,7 @@ Upload a single script, a whole project folder, or a `.zip` in the console (task
 tasks:
   - id: run_main
     type: shell
-    command: python3 main.py     # runs with cwd = a clean copy of the project
+    command: python main.py     # runs with cwd = a clean copy of the project
     project: my_app
 ```
 
@@ -235,7 +235,7 @@ cron runs isolated commands on a clock. cronova runs **DAGs**: tasks with depend
 Yes. It ships a built-in **MCP server** (`cronova mcp`) and a remote JSON CLI, so AI agents can manage workflows through the same authenticated, role-gated API as humans.
 
 **Which platforms are supported?**
-This project targets **Windows amd64**. The installer requires PowerShell with administrator privileges and Git for Windows Bash. Linux and macOS belong to the original project and are not supported targets of this repository.
+This project targets **Windows amd64**. The installer requires PowerShell with administrator privileges. Only Windows is supported.
 
 **Is it production-ready / crash-safe?**
 Managed installs use a decoupled gRPC executor, but Windows Job Objects and a full clean-machine installation test remain roadmap items. Review [ROADMAP.md](ROADMAP.md) before production adoption.

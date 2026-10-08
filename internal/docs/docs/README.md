@@ -7,7 +7,7 @@
 [![Release](https://img.shields.io/github/v/release/zoyluoblue/cronova?sort=semver&logo=github)](https://github.com/zoyluoblue/cronova/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Go](https://img.shields.io/github/go-mod/go-version/zoyluoblue/cronova?logo=go)](go.mod)
-[![Platforms](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20·%20amd64%20%7C%20arm64-informational)](docs/DEPLOY.md)
+[![Platforms](https://img.shields.io/badge/platform-windows%20·%20amd64-informational)](docs/DEPLOY.md)
 [![GitHub stars](https://img.shields.io/github/stars/zoyluoblue/cronova?logo=github&color=1f6feb)](https://github.com/zoyluoblue/cronova/stargazers)
 
 **English** · [Polski](README.pl.md)
@@ -16,21 +16,21 @@
 
 </div>
 
-cronova is a **workflow scheduler and job orchestrator** in the spirit of Airflow and Azkaban, built for teams who want DAG-based scheduling **without the operational weight**. It ships as **one static Go binary** with an **embedded SQLite** database — no JVM, no Python runtime, no external database, no message broker, no containers required. Install it on any Linux or macOS box with a single command, define your pipelines, and open the built-in web console.
+cronova is a **workflow scheduler and job orchestrator** in the spirit of Airflow and Azkaban, built for teams who want DAG-based scheduling **without the operational weight**. It ships as **one static Go binary** with an **embedded SQLite** database — no JVM, no Python runtime, no external database, no message broker, no containers required. Install it on Windows with one PowerShell script, define your pipelines, and open the built-in web console.
 
 <div align="center">
   <img src="docs/img/task-editor.png" alt="cronova web console — visual task editor with drag-and-drop template variable pills for a polyglot workflow scheduler" width="900">
   <br><em>The console task editor: build commands with click/drag variable pills (built-in, variables, connections, params).</em>
 </div>
 
-```bash
-# Install the scheduler + web console + native service on Linux or macOS, in one line:
-curl -fsSL https://raw.githubusercontent.com/zoyluoblue/cronova/main/deploy/bootstrap.sh | sudo bash
+```powershell
+# Download and extract the release ZIP, then in an elevated PowerShell:
+powershell -ExecutionPolicy Bypass -File deploy\install.ps1
 ```
 
 ## Why cronova?
 
-- 🟢 **Small native install, zero service dependencies.** Pure-Go, CGO-free scheduler + standalone executor with embedded SQLite (PostgreSQL optional for multi-instance setups). `curl | bash` to install, `cronova update` to upgrade, `cronova uninstall` to remove — no Airflow-style stack to babysit. Docker images and a compose stack included.
+- 🟢 **Small native install, zero service dependencies.** Pure-Go, CGO-free scheduler + standalone executor with embedded SQLite (PostgreSQL optional for multi-instance setups). `deploy\install.ps1` to install, `deploy\update.ps1` to upgrade, `deploy\uninstall.ps1` to remove — no Airflow-style stack to babysit. Docker images and a compose stack included.
 - 🗂️ **Airflow / Azkaban-style DAGs.** Declarative YAML DAGs with dependency edges, cron / `@every` schedules, cross-DAG triggers and waits (`trigger_after`, `depends_on_dag`), sub-workflows, catchup / backfill, per-task retries & timeouts, resource pools, run priorities & serial execution policies, and trigger rules — the orchestration primitives you already know.
 - 📡 **Scale out when you need to — dial-in workers.** Remote workers join with a one-time token over mTLS and **dial in** (no inbound port, no shared filesystem, NAT-friendly); tasks route by `worker_group:`, logs stream back live, and a worker restart re-adopts its running tasks instead of re-running them. Zero workers configured = the same single binary as always.
 - 🌐 **Polyglot tasks + project upload.** Every task runs as an OS subprocess, so write tasks in **PowerShell, Python, SQL, a JAR, or HTTP** — any language on the host. Drag-and-drop a script, a whole project folder, or a `.zip` in the console and cronova runs it in an isolated working copy.
@@ -138,7 +138,7 @@ Upload a single script, a whole project folder, or a `.zip` in the console (task
 tasks:
   - id: run_main
     type: powershell
-    command: python3 main.py     # runs with cwd = a clean copy of the project
+    command: python main.py     # runs with cwd = a clean copy of the project
     project: my_app
 ```
 
@@ -185,7 +185,7 @@ The one-line installer runs an interactive setup wizard (port, bind scope, admin
 | [DAG Reference](docs/DAG_REFERENCE.md) | Every DAG/task field, task types, triggers, pools |
 | [CLI Reference](docs/CLI.md) | Every `cronova` command and flag |
 | [AI Agents (MCP)](docs/AGENTS.md) | MCP server, remote CLI, tokens, security |
-| [Deployment](docs/DEPLOY.md) | systemd/launchd, updates, crash-recoverable executor |
+| [Deployment](docs/DEPLOY.md) | Windows services, updates, crash-recoverable executor |
 | [Architecture](docs/ARCHITECTURE.md) | Design rationale, execution model, diagrams |
 | [cronova vs Airflow](docs/COMPARISON.md) | When to choose cronova, feature-by-feature |
 | [FAQ](docs/FAQ.md) | Common questions, answered |
@@ -208,7 +208,7 @@ cron runs isolated commands on a clock. cronova runs **DAGs**: tasks with depend
 Yes. It ships a built-in **MCP server** (`cronova mcp`) and a remote JSON CLI, so AI agents can manage workflows through the same authenticated, role-gated API as humans.
 
 **Which platforms are supported?**
-Linux and macOS, on both amd64 and arm64. Prebuilt binaries are on the [Releases](https://github.com/zoyluoblue/cronova/releases) page.
+Windows amd64 only. Release ZIPs are on the [Releases](https://github.com/zoyluoblue/cronova/releases) page.
 
 **Is it production-ready / crash-safe?**
 Managed installs use the decoupled gRPC executor by default, so the scheduler can restart or upgrade without killing running jobs; on recovery it re-attaches to in-flight tasks with no double execution.

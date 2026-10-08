@@ -4,7 +4,7 @@ One-line `echo` commands only get you so far — real pipelines are a script, or
 
 ## Why projects
 
-A `powershell` task runs its `command` from the scheduler's working directory, so `python3 main.py` fails unless `main.py` happens to live there. You *could* hardcode absolute paths and deploy your code by hand next to the scheduler — or you can upload it once as a project and let the workflow scheduler stage it for every run.
+A `powershell` task runs its `command` from the scheduler's working directory, so `python main.py` fails unless `main.py` happens to live there. You *could* hardcode absolute paths and deploy your code by hand next to the scheduler — or you can upload it once as a project and let the workflow scheduler stage it for every run.
 
 ## Create a small project
 
@@ -57,7 +57,7 @@ dag_id: my_app_report
 tasks:
   - id: run_main
     type: powershell
-    command: python3 main.py     # cwd is a clean copy of my_app, so this resolves
+    command: python main.py     # cwd is a clean copy of my_app, so this resolves
     project: my_app
 ```
 
@@ -109,7 +109,7 @@ A DAG that references a project which was never uploaded parses fine — and the
 
 ```bash
 ./cronova api POST /api/dags/validate \
-  '{"dag_id":"my_app_report","tasks":[{"id":"run_main","type":"powershell","command":"python3 main.py","project":"ghost"}]}' \
+  '{"dag_id":"my_app_report","tasks":[{"id":"run_main","type":"powershell","command":"python main.py","project":"ghost"}]}' \
   -server http://localhost:8090
 ```
 

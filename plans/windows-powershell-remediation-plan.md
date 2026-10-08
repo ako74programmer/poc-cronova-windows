@@ -160,15 +160,15 @@ Uwagi:
   - [ ] zanotować jednoznaczny wynik decyzji
 
 - [ ] **0.2 Skorygować tezy audytu o aktualny runner Windows**
-  - [ ] dopisać notatkę, że [runner_windows.go](C:/Users/Andrzej/Downloads/sdlc/cronova/internal/executor/runner_windows.go) uruchamia obecnie zadania przez `powershell.exe`
+  - [ ] dopisać notatkę, że [runner_windows.go](../internal/executor/runner_windows.go) uruchamia obecnie zadania przez `powershell.exe`
   - [ ] zostawić jako otwarte problemy: instalator, konfigurację, dokumentację i legacy alias `shell`
   - [ ] potwierdzić, że opis audytu nie wprowadza w błąd co do runtime
 
 ### Etap 1. Instalacja i usługi Windows
 
 - [x] **1.1 Potwierdzić, czy binarki są prawdziwymi usługami Windows**
-  - [x] sprawdzić [main.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova/main.go)
-  - [x] sprawdzić [main.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova-executor/main.go)
+  - [x] sprawdzić [main.go](../cmd/cronova/main.go)
+  - [x] sprawdzić [main.go](../cmd/cronova-executor/main.go)
   - [x] potwierdzić brak lub obecność hosta usługi Windows
   - [x] opisać wynik krótką notatką techniczną
 
@@ -190,7 +190,7 @@ Uwagi:
   - [x] zachować dotychczasowe uruchamianie konsolowe
   - [ ] zweryfikować działanie lokalne
 
-- [x] **1.5 Poprawić obsługę błędów `sc.exe` w [install.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/deploy/install.ps1)**
+- [x] **1.5 Poprawić obsługę błędów `sc.exe` w [install.ps1](../deploy/install.ps1)**
   - [x] po każdym wywołaniu `sc.exe` sprawdzać `$LASTEXITCODE`
   - [x] przerwać instalację przy błędzie
   - [x] dopisać końcową walidację stanu usług
@@ -212,7 +212,7 @@ Uwagi:
 ### Etap 2. UI i edycja tasków PowerShell
 
 - [x] **2.1 Dodać `powershell` do selektora typu taska**
-  - [x] rozszerzyć listę typów w [views.js](C:/Users/Andrzej/Downloads/sdlc/cronova/internal/web/static/views.js)
+  - [x] rozszerzyć listę typów w [views.js](../internal/web/static/views.js)
   - [x] upewnić się, że istniejący task `powershell` pozostaje zaznaczony po otwarciu formularza
   - [ ] sprawdzić zapis bez niejawnej podmiany na `shell`
 
@@ -231,7 +231,7 @@ Uwagi:
 ### Etap 3. Packaging i kompletność release
 
 - [x] **3.1 Spisać manifest runtime dla dołączanych DAG-ów**
-  - [x] przejrzeć wszystkie aktywne DAG-i w [dags/](C:/Users/Andrzej/Downloads/sdlc/cronova/dags)
+  - [x] przejrzeć wszystkie aktywne DAG-i w [dags/](../dags)
   - [x] wypisać zależności `internal/scripts`
   - [x] wypisać zależności `configs`
   - [x] wypisać zależności `contracts`
@@ -240,7 +240,7 @@ Uwagi:
   - [x] wypisać zależności `e2e`
   - [x] dopisać inne wymagane katalogi, jeśli występują
 
-- [x] **3.2 Uzupełnić [package.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/scripts/package.ps1)**
+- [x] **3.2 Uzupełnić [package.ps1](../scripts/package.ps1)**
   - [x] dodać kopiowanie brakujących katalogów z manifestu
   - [x] nie kopiować zbędnych artefaktów deweloperskich
   - [ ] zbudować nową paczkę testową
@@ -259,25 +259,25 @@ Uwagi:
 ### Etap 4. Konfiguracja i usunięcie legacy Git Bash
 
 - [ ] **4.1 Zinwentaryzować wszystkie miejsca użycia `bash_path`**
-  - [ ] przejrzeć [config.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova/config.go)
-  - [ ] przejrzeć [main.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova/main.go)
-  - [ ] przejrzeć [start.cmd](C:/Users/Andrzej/Downloads/sdlc/cronova/start.cmd)
+  - [ ] przejrzeć [config.go](../cmd/cronova/config.go)
+  - [ ] przejrzeć [main.go](../cmd/cronova/main.go)
+  - [ ] przejrzeć [start.cmd](../start.cmd)
   - [ ] przejrzeć testy
   - [ ] spisać, które użycia są aktywne, a które historyczne
 
 - [x] **4.2 Usunąć wymóg Git Bash z instalatora**
-  - [x] usunąć wyszukiwanie `bash.exe` z [install.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/deploy/install.ps1)
+  - [x] usunąć wyszukiwanie `bash.exe` z [install.ps1](../deploy/install.ps1)
   - [x] przestać ustawiać `CRONOVA_BASH_PATH`
   - [x] przestać nadpisywać `bash_path` w YAML
   - [ ] zweryfikować instalację bez Git Bash
 
-- [ ] **4.3 Uprościć [start.cmd](C:/Users/Andrzej/Downloads/sdlc/cronova/start.cmd)**
+- [ ] **4.3 Uprościć [start.cmd](../start.cmd)**
   - [ ] usunąć detekcję `CRONOVA_BASH_PATH`
   - [ ] zostawić tylko wymagania realnie potrzebne dla aktywnej ścieżki
   - [ ] zweryfikować lokalny start po zmianie
 
 - [x] **4.4 Usunąć `bash_path` z konfiguracji, jeśli nie jest już potrzebny**
-  - [x] usunąć pole z [config.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova/config.go)
+  - [x] usunąć pole z [config.go](../cmd/cronova/config.go)
   - [x] usunąć obsługę env `CRONOVA_BASH_PATH`
   - [x] poprawić przykładowe YAML
   - [x] poprawić testy
@@ -291,21 +291,21 @@ Uwagi:
 
 ### Etap 5. Dokumentacja i AI Wiki
 
-- [x] **5.1 Naprawić [DEPLOY.md](C:/Users/Andrzej/Downloads/sdlc/cronova/docs/DEPLOY.md)**
+- [x] **5.1 Naprawić [DEPLOY.md](../docs/DEPLOY.md)**
   - [x] usunąć nieobsługiwaną opcję `-BashPath`
   - [x] opisać realne parametry i kroki instalacji
-  - [x] zsynchronizować dokument z aktualnym [install.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/deploy/install.ps1)
+  - [x] zsynchronizować dokument z aktualnym [install.ps1](../deploy/install.ps1)
 
 - [x] **5.2 Przejrzeć tutoriale pod kątem Bash/Linux/macOS**
-  - [x] przejrzeć [docs/](C:/Users/Andrzej/Downloads/sdlc/cronova/docs)
+  - [x] przejrzeć [docs/](../docs)
   - [x] przejrzeć README
   - [x] poprawić opisy `sh -c`
   - [x] poprawić opisy `curl | sudo bash`
   - [x] poprawić opisy `systemd`
   - [x] poprawić opisy `launchd`, jeśli nie są już wspierane
-  - [x] wskazać [app.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/scripts/windows/app.ps1) jako zalecany launcher Windows
+  - [x] wskazać [app.ps1](../scripts/windows/app.ps1) jako zalecany launcher Windows
 
-- [x] **5.3 Odbudować [knowledge-base.json](C:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki/knowledge-base.json)**
+- [x] **5.3 Odbudować [knowledge-base.json](../internal/aiwiki/knowledge-base.json)**
   - [x] przebudować indeks z aktualnych plików
   - [x] usunąć stare bashowe workflowy i ścieżki deweloperskie
   - [x] zweryfikować brak `#!/usr/bin/env bash`
@@ -319,10 +319,10 @@ Uwagi:
 ### Etap 6. Porządki platformowe
 
 - [ ] **6.1 Zinwentaryzować aktywny kod unixowy**
-  - [ ] przejrzeć [runner_unix.go](C:/Users/Andrzej/Downloads/sdlc/cronova/internal/executor/runner_unix.go)
-  - [ ] przejrzeć [endpoint_unix.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova-executor/endpoint_unix.go)
-  - [ ] przejrzeć [service.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova/service.go)
-  - [ ] przejrzeć pliki w [deploy/](C:/Users/Andrzej/Downloads/sdlc/cronova/deploy)
+  - [ ] przejrzeć [runner_unix.go](../internal/executor/runner_unix.go)
+  - [ ] przejrzeć [endpoint_unix.go](../cmd/cronova-executor/endpoint_unix.go)
+  - [ ] przejrzeć [service.go](../cmd/cronova/service.go)
+  - [ ] przejrzeć pliki w [deploy/](../deploy)
   - [ ] opisać, które elementy mają zostać, a które usunąć po decyzji `Windows-only`
 
 - [ ] **6.2 Usunąć lub wyłączyć niewspierane ścieżki platformowe**
@@ -332,12 +332,12 @@ Uwagi:
 ### Etap 7. Testy i bramki jakości
 
 - [x] **7.1 Dodać test walidujący wszystkie aktywne DAG-i**
-  - [x] sprawdzić parsowanie wszystkich plików z [dags/](C:/Users/Andrzej/Downloads/sdlc/cronova/dags)
+  - [x] sprawdzić parsowanie wszystkich plików z [dags/](../dags)
   - [x] wykrywać nieobsługiwane typy
   - [x] wykrywać brakujące pliki runtime
 
 - [x] **7.2 Dodać test parsera skryptów PowerShell**
-  - [x] uruchamiać walidację składni dla aktywnych skryptów w [internal/scripts/](C:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts)
+  - [x] uruchamiać walidację składni dla aktywnych skryptów w [internal/scripts/](../internal/scripts)
   - [x] spisać minimalny sposób uruchamiania tej walidacji w CI lub lokalnie
 
 - [x] **7.3 Dodać test packaging smoke**
@@ -393,7 +393,7 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 **Cel:** odróżnić problemy realne od już naprawionych.
 
 **Do zrobienia:**
-- dopisać notatkę, że [runner_windows.go](C:/Users/Andrzej/Downloads/sdlc/cronova/internal/executor/runner_windows.go) uruchamia obecnie zadania przez `powershell.exe`,
+- dopisać notatkę, że [runner_windows.go](../internal/executor/runner_windows.go) uruchamia obecnie zadania przez `powershell.exe`,
 - zostawić jako otwarty problem: instalator, konfiguracja, dokumentacja i legacy alias `shell`.
 
 **Wynik:** audyt roboczy nie wprowadza w błąd co do bieżącego runtime.
@@ -406,7 +406,7 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 **Cel:** ustalić, czy obecna instalacja przez `sc.exe create` może działać.
 
 **Do zrobienia:**
-- sprawdzić entrypointy [cmd/cronova/main.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova/main.go) i [cmd/cronova-executor/main.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova-executor/main.go),
+- sprawdzić entrypointy [cmd/cronova/main.go](../cmd/cronova/main.go) i [cmd/cronova-executor/main.go](../cmd/cronova-executor/main.go),
 - potwierdzić brak lub obecność hosta usługi Windows,
 - opisać wynik krótką notatką techniczną.
 
@@ -444,7 +444,7 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 
 **Wynik:** `cronova-executor.exe` działa jako usługa.
 
-### Zadanie 1.5 — poprawić obsługę błędów `sc.exe` w [install.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/deploy/install.ps1)
+### Zadanie 1.5 — poprawić obsługę błędów `sc.exe` w [install.ps1](../deploy/install.ps1)
 **Cel:** instalator ma kończyć się błędem przy nieudanej operacji SCM.
 
 **Do zrobienia:**
@@ -463,7 +463,7 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 - wykonać `install`, `start`, `stop`, `restart`, `uninstall`.
 
 **Wynik testu z 2026-10-06:**
-- `install` działa po użyciu `New-Service` w [install.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/deploy/install.ps1),
+- `install` działa po użyciu `New-Service` w [install.ps1](../deploy/install.ps1),
 - `start` działa; usługi `Cronova` i `CronovaExecutor` osiągają `RUNNING`,
 - `query` działa; SCM pokazuje `WIN32_OWN_PROCESS`,
 - procesy `cronova.exe` i `cronova-executor.exe` są widoczne w systemie,
@@ -474,8 +474,8 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 - ścieżka wdrożeniowa nie jest jeszcze domknięta.
 
 **Dalsze działania po teście:**
-- naprawić lifecycle `stop/shutdown` w [service_host_windows.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova/service_host_windows.go),
-- naprawić lifecycle `stop/shutdown` w [service_host_windows.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova-executor/service_host_windows.go),
+- naprawić lifecycle `stop/shutdown` w [service_host_windows.go](../cmd/cronova/service_host_windows.go),
+- naprawić lifecycle `stop/shutdown` w [service_host_windows.go](../cmd/cronova-executor/service_host_windows.go),
 - dodać skrypt PowerShell seedujący konto administratora do wskazanej bazy SQLite, domyślnie `admin` / `admin123`, użyteczny dla testów instalacji usług.
 
 ---
@@ -486,7 +486,7 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 **Cel:** UI ma poprawnie prezentować aktualny typ taska.
 
 **Do zrobienia:**
-- rozszerzyć listę typów w [views.js](C:/Users/Andrzej/Downloads/sdlc/cronova/internal/web/static/views.js),
+- rozszerzyć listę typów w [views.js](../internal/web/static/views.js),
 - upewnić się, że istniejący task `powershell` pozostaje zaznaczony po otwarciu formularza.
 
 **Wynik:** brak niejawnej podmiany `powershell` na `shell` w edytorze.
@@ -518,12 +518,12 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 **Cel:** wiedzieć dokładnie, jakie pliki są potrzebne po rozpakowaniu ZIP-a.
 
 **Do zrobienia:**
-- przejrzeć wszystkie aktywne DAG-i w [dags/](C:/Users/Andrzej/Downloads/sdlc/cronova/dags),
+- przejrzeć wszystkie aktywne DAG-i w [dags/](../dags),
 - wypisać zależności: `internal/scripts`, `configs`, `contracts`, `templates`, `prompts`, `e2e`, ewentualne inne katalogi.
 
 **Wynik:** lista plików wymaganych przez każdy dystrybuowany DAG.
 
-### Zadanie 3.2 — uzupełnić [package.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/scripts/package.ps1)
+### Zadanie 3.2 — uzupełnić [package.ps1](../scripts/package.ps1)
 **Cel:** ZIP ma zawierać komplet zależności runtime.
 
 **Do zrobienia:**
@@ -559,7 +559,7 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 **Cel:** znać pełny zasięg zmiany.
 
 **Do zrobienia:**
-- przejrzeć [config.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova/config.go), [main.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova/main.go), [start.cmd](C:/Users/Andrzej/Downloads/sdlc/cronova/start.cmd) i testy,
+- przejrzeć [config.go](../cmd/cronova/config.go), [main.go](../cmd/cronova/main.go), [start.cmd](../start.cmd) i testy,
 - spisać, które użycia są jeszcze aktywne, a które tylko historyczne.
 
 **Wynik:** lista miejsc do usunięcia lub migracji.
@@ -568,13 +568,13 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 **Cel:** instalacja Windows nie wymaga już bash.exe.
 
 **Do zrobienia:**
-- usunąć wyszukiwanie `bash.exe` z [install.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/deploy/install.ps1),
+- usunąć wyszukiwanie `bash.exe` z [install.ps1](../deploy/install.ps1),
 - przestać ustawiać `CRONOVA_BASH_PATH`,
 - przestać nadpisywać `bash_path` w YAML.
 
 **Wynik:** instalator jest zgodny z modelem PowerShell-first.
 
-### Zadanie 4.3 — uprościć [start.cmd](C:/Users/Andrzej/Downloads/sdlc/cronova/start.cmd)
+### Zadanie 4.3 — uprościć [start.cmd](../start.cmd)
 **Cel:** lokalny start nie sugeruje zależności od Git Bash.
 
 **Do zrobienia:**
@@ -587,7 +587,7 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 **Cel:** uprościć model konfiguracyjny.
 
 **Do zrobienia:**
-- usunąć pole z [config.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova/config.go),
+- usunąć pole z [config.go](../cmd/cronova/config.go),
 - usunąć obsługę env `CRONOVA_BASH_PATH`,
 - poprawić przykładowe YAML i testy.
 
@@ -610,13 +610,13 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 
 ## Etap 5. Dokumentacja i AI Wiki
 
-### Zadanie 5.1 — naprawić [DEPLOY.md](C:/Users/Andrzej/Downloads/sdlc/cronova/docs/DEPLOY.md)
+### Zadanie 5.1 — naprawić [DEPLOY.md](../docs/DEPLOY.md)
 **Cel:** dokument ma odpowiadać rzeczywistemu interfejsowi instalatora.
 
 **Do zrobienia:**
 - usunąć nieobsługiwaną opcję `-BashPath`,
 - opisać realne parametry i kroki instalacji,
-- zsynchronizować z aktualnym [install.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/deploy/install.ps1).
+- zsynchronizować z aktualnym [install.ps1](../deploy/install.ps1).
 
 **Wynik:** poprawna instrukcja wdrożenia Windows.
 
@@ -624,12 +624,12 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 **Cel:** usunąć przekaz sprzeczny z kierunkiem produktu.
 
 **Do zrobienia:**
-- przejrzeć [docs/](C:/Users/Andrzej/Downloads/sdlc/cronova/docs), README i powiązane strony,
+- przejrzeć [docs/](../docs), README i powiązane strony,
 - poprawić opisy `sh -c`, `curl | sudo bash`, `systemd`, `launchd`, jeśli nie są już wspierane.
 
 **Wynik:** dokumentacja nie sugeruje nieistniejącej ścieżki produktu.
 
-### Zadanie 5.3 — odbudować [knowledge-base.json](C:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki/knowledge-base.json)
+### Zadanie 5.3 — odbudować [knowledge-base.json](../internal/aiwiki/knowledge-base.json)
 **Cel:** AI Wiki ma bazować na aktualnych źródłach.
 
 **Do zrobienia:**
@@ -655,7 +655,7 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 **Cel:** oddzielić kod historyczny od nadal potrzebnego.
 
 **Do zrobienia:**
-- przejrzeć [internal/executor/runner_unix.go](C:/Users/Andrzej/Downloads/sdlc/cronova/internal/executor/runner_unix.go), [cmd/cronova-executor/endpoint_unix.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova-executor/endpoint_unix.go), [cmd/cronova/service.go](C:/Users/Andrzej/Downloads/sdlc/cronova/cmd/cronova/service.go) oraz pliki w [deploy/](C:/Users/Andrzej/Downloads/sdlc/cronova/deploy),
+- przejrzeć [internal/executor/runner_unix.go](../internal/executor/runner_unix.go), [cmd/cronova-executor/endpoint_unix.go](../cmd/cronova-executor/endpoint_unix.go), [cmd/cronova/service.go](../cmd/cronova/service.go) oraz pliki w [deploy/](../deploy),
 - opisać, które elementy mają zostać, a które usunąć po decyzji `Windows-only`.
 
 **Wynik:** bezpieczna lista porządków platformowych.
@@ -676,7 +676,7 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 **Cel:** każdy DAG w aktywnej ścieżce ma poprawne typy i ścieżki.
 
 **Do zrobienia:**
-- sprawdzić parsowanie wszystkich plików z [dags/](C:/Users/Andrzej/Downloads/sdlc/cronova/dags),
+- sprawdzić parsowanie wszystkich plików z [dags/](../dags),
 - wykrywać nieobsługiwane typy i brakujące pliki runtime.
 
 **Wynik:** szybka walidacja spójności DAG-ów.
@@ -685,7 +685,7 @@ Ten sprint daje mały, praktyczny pakiet: instalator mniej ryzykowny, UI nie psu
 **Cel:** wcześnie wykrywać błędy składni `.ps1`.
 
 **Do zrobienia:**
-- uruchamiać walidację składni dla aktywnych skryptów w [internal/scripts/](C:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts).
+- uruchamiać walidację składni dla aktywnych skryptów w [internal/scripts/](../internal/scripts).
 
 **Wynik:** mniej awarii runtime przez błędny skrypt.
 

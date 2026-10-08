@@ -141,7 +141,7 @@ Set under a task's `http:` key when `type: http`:
 | Type | Runs as | `command` holds | Needs on host |
 |---|---|---|---|
 | `powershell` | OS subprocess (`powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command`) | any PowerShell command | the tools the command invokes |
-| `python` | OS subprocess (`python3`) | Python code | `python3` on the service `PATH` |
+| `python` | OS subprocess (`python -c`) | Python code | `python` on the service `PATH` (or `CRONOVA_PYTHON`) |
 | `sql` | in-process (native driver) | the SQL query; `conn` selects the connection | nothing extra |
 | `jar` | OS subprocess (`java`) | a `java -jar …` command | a JRE/JDK on the `PATH` |
 | `http` | in-process HTTP client | — (use the `http:` spec) | nothing extra |

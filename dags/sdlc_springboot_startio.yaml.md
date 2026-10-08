@@ -15,16 +15,16 @@ Pobiera scaffold z Initializr, kompiluje szkielet, generuje prosty CRUD z prompt
 
 ## Jakich klocków używa
 
-- [internal/scripts/fetch-springboot-project.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/fetch-springboot-project.ps1)
-- [internal/scripts/maven-compile.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-compile.ps1)
-- [internal/scripts/ai-java-mvn-generate-feature.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/ai-java-mvn-generate-feature.ps1)
-- [internal/scripts/java-maven-compile-fix-loop.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/java-maven-compile-fix-loop.ps1)
-- [internal/scripts/maven-test.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-test.ps1)
+- [internal/scripts/fetch-springboot-project.ps1](../internal/scripts/fetch-springboot-project.ps1)
+- [internal/scripts/maven-compile.ps1](../internal/scripts/maven-compile.ps1)
+- [internal/scripts/ai-java-mvn-generate-feature.ps1](../internal/scripts/ai-java-mvn-generate-feature.ps1)
+- [internal/scripts/java-maven-compile-fix-loop.ps1](../internal/scripts/java-maven-compile-fix-loop.ps1)
+- [internal/scripts/maven-test.ps1](../internal/scripts/maven-test.ps1)
 
 ## Wejścia
 
 - scaffold z `start.spring.io`
-- prompt [prompts/springboot_crud.txt](c:/Users/Andrzej/Downloads/sdlc/cronova/prompts/springboot_crud.txt)
+- prompt [prompts/springboot_crud.txt](../prompts/springboot_crud.txt)
 - workspace `workspaces/springboot-startio/app`
 
 ## Wynik

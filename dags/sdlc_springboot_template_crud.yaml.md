@@ -15,16 +15,16 @@ Kopiuje template, kompiluje szkielet, generuje prosty CRUD z promptu, domyka kom
 
 ## Jakich klocków używa
 
-- [internal/scripts/copy-template-to-workspace.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/copy-template-to-workspace.ps1)
-- [internal/scripts/maven-compile.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-compile.ps1)
-- [internal/scripts/ai-java-mvn-generate-feature.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/ai-java-mvn-generate-feature.ps1)
-- [internal/scripts/java-maven-compile-fix-loop.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/java-maven-compile-fix-loop.ps1)
-- [internal/scripts/maven-test.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/maven-test.ps1)
+- [internal/scripts/copy-template-to-workspace.ps1](../internal/scripts/copy-template-to-workspace.ps1)
+- [internal/scripts/maven-compile.ps1](../internal/scripts/maven-compile.ps1)
+- [internal/scripts/ai-java-mvn-generate-feature.ps1](../internal/scripts/ai-java-mvn-generate-feature.ps1)
+- [internal/scripts/java-maven-compile-fix-loop.ps1](../internal/scripts/java-maven-compile-fix-loop.ps1)
+- [internal/scripts/maven-test.ps1](../internal/scripts/maven-test.ps1)
 
 ## Wejścia
 
 - template `templates/springboot-simple`
-- prompt [prompts/springboot_crud.txt](c:/Users/Andrzej/Downloads/sdlc/cronova/prompts/springboot_crud.txt)
+- prompt [prompts/springboot_crud.txt](../prompts/springboot_crud.txt)
 - workspace `workspaces/springboot/app`
 
 ## Wynik

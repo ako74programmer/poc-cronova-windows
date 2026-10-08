@@ -124,7 +124,7 @@ Prześlij pojedynczy skrypt, cały folder projektu lub `.zip` w konsoli (edytor 
 tasks:
   - id: run_main
     type: shell
-    command: python3 main.py     # uruchamia się z cwd = czysta kopia projektu
+    command: python main.py     # uruchamia się z cwd = czysta kopia projektu
     project: my_app
 ```
 
@@ -194,7 +194,7 @@ cron uruchamia izolowane polecenia zgodnie z zegarem. cronova uruchamia **DAG-i*
 Tak. Dostarcza wbudowany **serwer MCP** (`cronova mcp`) i zdalne JSON CLI, więc agenci AI mogą zarządzać workflowami przez to samo uwierzytelnione, chronione rolami API co ludzie.
 
 **Jakie platformy są obsługiwane?**
-Ten projekt jest przeznaczony dla **Windows amd64**. Instalator wymaga PowerShell z uprawnieniami administratora oraz Git for Windows Bash. Linux i macOS należą do projektu oryginalnego i nie są celami tego repozytorium.
+Ten projekt jest przeznaczony dla **Windows amd64**. Instalator wymaga PowerShell z uprawnieniami administratora. Obsługiwany jest wyłącznie Windows.
 
 **Czy jest gotowe na produkcję / odporne na awarie?**
 Zarządzane instalacje używają rozdzielonego executora gRPC, ale Job Objects Windows oraz pełny test instalacji na czystym systemie pozostają elementami roadmapu. Przed wdrożeniem produkcyjnym przeczytaj [ROADMAP.md](ROADMAP.md).

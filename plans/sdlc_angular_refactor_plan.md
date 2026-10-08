@@ -12,14 +12,14 @@ Dalszy krok dla `sdlc_angular` nie dotyczy już migracji shell → PowerShell, b
 
 ## Stan obecny
 
-- DAG: [dags/sdlc_angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_angular.yaml)
-- config: [configs/sdlc-angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-angular.yaml)
+- DAG: [dags/sdlc_angular.yaml](../dags/sdlc_angular.yaml)
+- config: [configs/sdlc-angular.yaml](../configs/sdlc-angular.yaml)
 - wykonanie: `internal/scripts/angular-*.ps1`
-- opis techniczny: [docs/SDLC_ANGULAR_TECHNICAL.md](c:/Users/Andrzej/Downloads/sdlc/cronova/docs/SDLC_ANGULAR_TECHNICAL.md)
+- opis techniczny: [docs/SDLC_ANGULAR_TECHNICAL.md](../docs/SDLC_ANGULAR_TECHNICAL.md)
 
 ## Co jest już zrobione
 
-- [dags/sdlc_angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_angular.yaml) działa na `type: powershell`,
+- [dags/sdlc_angular.yaml](../dags/sdlc_angular.yaml) działa na `type: powershell`,
 - istnieje rodzina klocków `internal/scripts/angular-*.ps1`,
 - task IDs są samoopisujące się i odpowiadają uruchamianym klockom,
 - pełny run DAG-a zakończył się sukcesem,
@@ -29,7 +29,7 @@ Dalszy krok dla `sdlc_angular` nie dotyczy już migracji shell → PowerShell, b
 
 - frontend nadal jest głównie pipeline'em scaffold + jakość techniczna,
 - workflow nie jest jeszcze przestawiony na model „frontend z kontraktu OpenAPI”,
-- nie ma jeszcze opisanego i wdrożonego docelowego sposobu generowania klienta API z [contracts/openapi.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/contracts/openapi.yaml),
+- nie ma jeszcze opisanego i wdrożonego docelowego sposobu generowania klienta API z [contracts/openapi.yaml](../contracts/openapi.yaml),
 - nie ma jeszcze decyzji, jak głęboko `sdlc_angular` ma wejść w generowanie CRUD/UI z kontraktu bez mieszania odpowiedzialności z DAG-iem fullstack.
 
 ## Zasady dalszych prac
@@ -45,7 +45,7 @@ Dalszy krok dla `sdlc_angular` nie dotyczy już migracji shell → PowerShell, b
 
 ### Etap 1. Potwierdzenie docelowego kontraktu frontendowego
 
-- ustalić, które zasoby z [contracts/openapi.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/contracts/openapi.yaml) mają być podstawą dla Angulara,
+- ustalić, które zasoby z [contracts/openapi.yaml](../contracts/openapi.yaml) mają być podstawą dla Angulara,
 - zdecydować, czy klient API ma być generowany automatycznie, czy tylko częściowo wspierany generacją,
 - opisać granicę między odpowiedzialnością DAG-a Angular a DAG-a fullstack.
 
@@ -59,24 +59,24 @@ Dalszy krok dla `sdlc_angular` nie dotyczy już migracji shell → PowerShell, b
 ### Etap 3. Walidacja wykonania po zmianie zakresu
 
 - uruchomić lokalną walidację krok po kroku dla zmienionych klocków,
-- wykonać pełny run [dags/sdlc_angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_angular.yaml) przez Cronova,
+- wykonać pełny run [dags/sdlc_angular.yaml](../dags/sdlc_angular.yaml) przez Cronova,
 - potwierdzić, że wynik dalej jest zgodny z rolą DAG-a komponentowego.
 
 ### Etap 4. Dokumentacja końcowa
 
-- zaktualizować [docs/SDLC_ANGULAR_TECHNICAL.md](c:/Users/Andrzej/Downloads/sdlc/cronova/docs/SDLC_ANGULAR_TECHNICAL.md),
-- zaktualizować [dags/sdlc_angular.yaml.md](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_angular.yaml.md), jeśli zajdzie potrzeba,
+- zaktualizować [docs/SDLC_ANGULAR_TECHNICAL.md](../docs/SDLC_ANGULAR_TECHNICAL.md),
+- zaktualizować [dags/sdlc_angular.yaml.md](../dags/sdlc_angular.yaml.md), jeśli zajdzie potrzeba,
 - uzupełnić README i indeksy dopiero po potwierdzeniu docelowego kontraktu frontendowego.
 
 ## Hipoteza lokalna
 
-Najtańsza dalsza ścieżka nie wymaga przebudowy samego DAG-a od zera, bo [configs/sdlc-angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-angular.yaml) i PowerShellowa warstwa wykonawcza już działają. Główny brak to nie runtime, tylko docelowy model kontraktowy frontendu oparty o OpenAPI.
+Najtańsza dalsza ścieżka nie wymaga przebudowy samego DAG-a od zera, bo [configs/sdlc-angular.yaml](../configs/sdlc-angular.yaml) i PowerShellowa warstwa wykonawcza już działają. Główny brak to nie runtime, tylko docelowy model kontraktowy frontendu oparty o OpenAPI.
 
 ## Stan po iteracji udrożnienia
 
 Zrealizowane:
 
-- helper configu Angular: [scripts/sdlc/common/AngularConfig.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/scripts/sdlc/common/AngularConfig.ps1),
+- helper configu Angular: [scripts/sdlc/common/AngularConfig.ps1](../scripts/sdlc/common/AngularConfig.ps1),
 - klocki PowerShell:
 	- `angular-validate-config.ps1`
 	- `angular-scaffold-from-config.ps1`
@@ -85,7 +85,7 @@ Zrealizowane:
 	- `angular-test-from-config.ps1`
 	- `angular-build-from-config.ps1`
 	- `angular-smoke-test-from-config.ps1`,
-- przepięcie [dags/sdlc_angular.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_angular.yaml) na `type: powershell` i samoopisujące się task IDs,
+- przepięcie [dags/sdlc_angular.yaml](../dags/sdlc_angular.yaml) na `type: powershell` i samoopisujące się task IDs,
 - pełny run DAG-a przez Cronova zakończony sukcesem:
 	- run id: `sdlc_angular__manual_1791137650769022600`
 	- wynik: `success`

@@ -28,5 +28,5 @@
 
 ## Gdzie używany
 
-- [dags/sdlc_springboot_rest.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_rest.yaml)
-- [dags/sdlc_springboot_variant.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_variant.yaml)
+- [dags/sdlc_springboot_rest.yaml](../../dags/sdlc_springboot_rest.yaml)
+- [dags/sdlc_springboot_variant.yaml](../../dags/sdlc_springboot_variant.yaml)

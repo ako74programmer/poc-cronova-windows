@@ -471,7 +471,7 @@ func (s *Scheduler) TriggerManualPriority(ctx context.Context, dagID string, par
 	}
 	priority = min(100, max(-100, priority))
 
-	now := time.Now().UTC()
+	now := uniqueRunTime()
 	run := &model.DagRun{
 		RunID:       fmt.Sprintf("%s__manual_%d", dagID, now.UnixNano()),
 		DagID:       dagID,

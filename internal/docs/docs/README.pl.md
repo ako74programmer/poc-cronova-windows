@@ -7,7 +7,7 @@
 [![Release](https://img.shields.io/github/v/release/zoyluoblue/cronova?sort=semver&logo=github)](https://github.com/zoyluoblue/cronova/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Go](https://img.shields.io/github/go-mod/go-version/zoyluoblue/cronova?logo=go)](go.mod)
-[![Platforms](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%C2%B7%20amd64%20%7C%20arm64-informational)](docs/DEPLOY.md)
+[![Platforms](https://img.shields.io/badge/platform-windows%20%C2%B7%20amd64-informational)](docs/DEPLOY.md)
 [![GitHub stars](https://img.shields.io/github/stars/zoyluoblue/cronova?logo=github&color=1f6feb)](https://github.com/zoyluoblue/cronova/stargazers)
 
 **Polski** · [English](README.md)
@@ -16,21 +16,21 @@
 
 </div>
 
-cronova to **scheduler workflowów i orkiestrator zadań** w duchu Airflow i Azkabana, zbudowany dla zespołów, które chcą planowania opartego na DAG **bez operacyjnego ciężaru**. Dostarczany jest jako **jeden statyczny plik binarny Go** z **wbudowaną bazą SQLite** — bez JVM, bez środowiska uruchomieniowego Python, bez zewnętrznej bazy danych, bez brokera wiadomości, bez wymaganych kontenerów. Zainstaluj go na dowolnym komputerze z Linuxem lub macOS jednym poleceniem, zdefiniuj swoje pipeline’y i otwórz wbudowaną konsolę webową.
+cronova to **scheduler workflowów i orkiestrator zadań** w duchu Airflow i Azkabana, zbudowany dla zespołów, które chcą planowania opartego na DAG **bez operacyjnego ciężaru**. Dostarczany jest jako **jeden statyczny plik binarny Go** z **wbudowaną bazą SQLite** — bez JVM, bez środowiska uruchomieniowego Python, bez zewnętrznej bazy danych, bez brokera wiadomości, bez wymaganych kontenerów. Zainstaluj go na Windows jednym skryptem PowerShell, zdefiniuj swoje pipeline’y i otwórz wbudowaną konsolę webową.
 
 <div align="center">
   <img src="docs/img/task-editor.png" alt="Konsola webowa cronova — wizualny edytor zadań z klikanymi i przeciąganymi pigułkami zmiennych szablonowych dla wielojęzycznego scheduler workflowów" width="900">
   <br><em>Edytor zadań w konsoli: buduj polecenia za pomocą kliknięcia lub przeciągnięcia pigułek zmiennych (wbudowane, zmienne, połączenia, parametry).</em>
 </div>
 
-```bash
-# Zainstaluj scheduler + konsolę webową + natywną usługę na Linuxie lub macOS w jednej linii:
-curl -fsSL https://raw.githubusercontent.com/zoyluoblue/cronova/main/deploy/bootstrap.sh | sudo bash
+```powershell
+# Pobierz i rozpakuj ZIP wydania, a następnie w PowerShell z uprawnieniami administratora:
+powershell -ExecutionPolicy Bypass -File deploy\install.ps1
 ```
 
 ## Dlaczego cronova?
 
-- 🟢 **Mała natywna instalacja, zero zależności usługowych.** Scheduler napisany w czystym Go, bez CGO + samodzielny executor z wbudowaną SQLite (PostgreSQL opcjonalnie dla konfiguracji wieloinstancyjnych). `curl | bash` do instalacji, `cronova update` do aktualizacji, `cronova uninstall` do usunięcia — bez stosu w stylu Airflow, którym trzeba się opiekować. Dołączone obrazy Docker i stos compose.
+- 🟢 **Mała natywna instalacja, zero zależności usługowych.** Scheduler napisany w czystym Go, bez CGO + samodzielny executor z wbudowaną SQLite (PostgreSQL opcjonalnie dla konfiguracji wieloinstancyjnych). `deploy\install.ps1` do instalacji, `deploy\update.ps1` do aktualizacji, `deploy\uninstall.ps1` do usunięcia — bez stosu w stylu Airflow, którym trzeba się opiekować. Dołączone obrazy Docker i stos compose.
 - 🗂️ **DAG-i w stylu Airflow / Azkaban.** Deklaratywne DAG-i YAML z krawędziami zależności, harmonogramami cron / `@every`, wyzwalaczami i oczekiwaniami między DAG-ami (`trigger_after`, `depends_on_dag`), pod-workflowami, catchup / backfill, ponawianiami i limitami czasu na poziomie zadania, pulami zasobów, priorytetami uruchomień i polisami szeregowego wykonania oraz regułami wyzwalania — prymitywy orkiestracyjne, które już znasz.
 - 📡 **Skaluj w poziomie, gdy potrzebujesz — workerzy dial-in.** Zdalni workerzy dołączają za pomocą jednorazowego tokena przez mTLS i **nawiązują połączenie wychodzące** (brak portu przychodzącego, brak współdzielonego systemu plików, przyjazne NAT); zadania są kierowane według `worker_group:`, logi strumieniowane są na żywo z powrotem, a restart workera ponownie przyjmuje jego uruchomione zadania zamiast uruchamiać je ponownie. Zero skonfigurowanych workerów = ten sam pojedynczy plik binarny co zawsze.
 - 🌐 **Wielojęzyczne zadania + przesyłanie projektów.** Każde zadanie działa jako podproces systemu operacyjnego, więc pisz zadania w **shellu, Pythonie, SQL, JAR lub HTTP** — dowolnym języku dostępnym na hoście. Przeciągnij i upuść skrypt, cały folder projektu lub `.zip` w konsoli, a cronova uruchomi go w izolowanej kopii roboczej.
@@ -122,7 +122,7 @@ Prześlij pojedynczy skrypt, cały folder projektu lub `.zip` w konsoli (edytor 
 tasks:
   - id: run_main
     type: powershell
-    command: python3 main.py     # uruchamia się z cwd = czysta kopia projektu
+    command: python main.py     # uruchamia się z cwd = czysta kopia projektu
     project: my_app
 ```
 
@@ -169,7 +169,7 @@ Instalator jednoliniowy uruchamia interaktywny kreator konfiguracji (port, zakre
 | [Dokumentacja DAG](docs/DAG_REFERENCE.pl.md) | Każde pole DAG/zadania, typy zadań, wyzwalacze, pule |
 | [Dokumentacja CLI](docs/CLI.md) | Każde polecenie i flaga `cronova` |
 | [Agenci AI (MCP)](docs/AGENTS.md) | Serwer MCP, zdalne CLI, tokeny, bezpieczeństwo |
-| [Wdrażanie](docs/DEPLOY.md) | systemd/launchd, aktualizacje, executor odporny na awarie |
+| [Wdrażanie](docs/DEPLOY.md) | usługi Windows, aktualizacje, executor odporny na awarie |
 | [Architektura](docs/ARCHITECTURE.md) | Uzasadnienie projektu, model wykonania, diagramy |
 | [cronova vs Airflow](docs/COMPARISON.md) | Kiedy wybrać cronova, funkcja po funkcji |
 | [FAQ](docs/FAQ.pl.md) | Najczęstsze pytania, odpowiedzi |
@@ -192,7 +192,7 @@ cron uruchamia izolowane polecenia zgodnie z zegarem. cronova uruchamia **DAG-i*
 Tak. Dostarcza wbudowany **serwer MCP** (`cronova mcp`) i zdalne JSON CLI, więc agenci AI mogą zarządzać workflowami przez to samo uwierzytelnione, chronione rolami API co ludzie.
 
 **Jakie platformy są obsługiwane?**
-Linux i macOS, zarówno amd64, jak i arm64. Wstępnie zbudowane binaria znajdują się na stronie [Releases](https://github.com/zoyluoblue/cronova/releases).
+Wyłącznie Windows amd64. Archiwa ZIP wydań znajdują się na stronie [Releases](https://github.com/zoyluoblue/cronova/releases).
 
 **Czy jest gotowe na produkcję / odporne na awarie?**
 Zarządzane instalacje domyślnie używają rozdzielonego executora gRPC, więc scheduler może się restartować lub aktualizować bez zabijania działających zadań; po odzyskaniu ponownie podłącza się do zadań w locie bez podwójnego wykonania.

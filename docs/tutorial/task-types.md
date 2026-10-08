@@ -32,7 +32,7 @@ A PowerShell task can invoke anything installed on the host: a Python script, a 
 
 ## `python` — inline Python code
 
-A `python` task puts Python **code** in `command` and runs it with `python3` (falling back to `python`) from the service `PATH`. Use a YAML block scalar (`|`) for multiple lines. The code is passed to the interpreter as an argument — not through a shell — so you never have to escape quotes.
+A `python` task puts Python **code** in `command` and runs it with `python -c` using `python` from the service `PATH` (or `CRONOVA_PYTHON`). Use a YAML block scalar (`|`) for multiple lines. The code is passed to the interpreter as an argument — not through a shell — so you never have to escape quotes.
 
 Create `dags/type_python.yaml`:
 
@@ -56,7 +56,7 @@ cronova trigger type_python
 cronova runs type_python
 ```
 
-The task log shows the interpreter version and the logical date. The task's result is the interpreter's exit code, so an uncaught exception fails the task — and triggers retries, if you configure them. If there is no interpreter on the service `PATH`, the log says `python: no python3/python interpreter on PATH` and the task fails.
+The task log shows the interpreter version and the logical date. The task's result is the interpreter's exit code, so an uncaught exception fails the task — and triggers retries, if you configure them. If no interpreter is found, the log says `python: no Python interpreter found (set CRONOVA_PYTHON or put python.exe on PATH)` and the task fails.
 
 ## `sql` — query a database, no client tools
 
@@ -155,7 +155,7 @@ The five types split cleanly into two groups:
 | Type | Runs as | `command` holds | Needs on the host |
 |---|---|---|---|
 | `powershell` | OS subprocess (`powershell.exe -Command`) | any PowerShell command | the tools the command invokes |
-| `python` | OS subprocess (`python3`) | Python code | `python3` on the service `PATH` |
+| `python` | OS subprocess (`python -c`) | Python code | `python` on the service `PATH` |
 | `sql` | in-process (native driver) | the SQL query; `conn` selects the connection | nothing extra |
 | `jar` | OS subprocess (`java`) | a `java -jar …` command | a JRE/JDK on the `PATH` |
 | `http` | in-process HTTP client | — (use the `http:` spec) | nothing extra |
@@ -170,7 +170,7 @@ The full field-by-field schema for every type is in the [DAG Reference](../DAG_R
 ## What you learned
 
 - Every task has a `type`; `powershell` is the default and runs `command` through `powershell.exe -Command`.
-- `python` runs inline code with `python3`, and `jar` runs a `java -jar` command with PowerShell semantics — both need their runtime on the service `PATH`.
+- `python` runs inline code with `python -c`, and `jar` runs a `java -jar` command with PowerShell semantics — both need their runtime on the service `PATH`.
 - `sql` (a `conn` id plus a query) and `http` (an `http:` spec with `method`, `url`, `headers`, `body`, `expected_status`) are self-contained in the binary, with templates available in queries, URLs, headers, and bodies.
 
 Next: make tasks resilient with [Retries, timeouts & pools](retries-timeouts-pools.md).

@@ -27,7 +27,7 @@ How cronova compares to popular workflow schedulers and orchestrators — and wh
 ## When to choose cronova
 
 - **You want DAGs without the stack.** You need dependencies, retries, catchup, pools, a web UI, and an API — but not a Python scheduler, a Postgres/MySQL, and a Redis/Celery broker to run and patch.
-- **You self-host on a VM or box.** A static scheduler + executor install under systemd/launchd in one command, upgrade with `cronova update`, and remove cleanly with `cronova uninstall`.
+- **You self-host on a VM or box.** A static scheduler + executor install as Windows services (`Cronova`, `CronovaExecutor`) with `deploy\install.ps1`, upgrade with `deploy\update.ps1`, and remove cleanly with `deploy\uninstall.ps1`.
 - **Your tasks are polyglot.** Tasks run as subprocesses with the host's own interpreters, so shell, Python, SQL, a JAR, or an HTTP call all work without operator plugins.
 - **You want AI agents in the loop.** A built-in MCP server and remote JSON CLI let agents manage workflows through the same authenticated, role-gated API as humans — no other scheduler here ships this.
 - **You're outgrowing cron.** You started with a `crontab` and keep hand-rolling dependencies, retries, backfill, and logging around it.

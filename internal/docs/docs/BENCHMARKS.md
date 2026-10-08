@@ -21,7 +21,7 @@ each a chain of `CRONOVA_BENCH_TASKS` (3) trivial PowerShell tasks.
 
 ## Results (2026-08-08)
 
-Apple Silicon MacBook Pro, macOS 25.4; scheduler tick 10 ms, 200 active runs /
+historical development laptop (not a supported cronova platform; cronova targets Windows amd64); scheduler tick 10 ms, 200 active runs /
 64 concurrent tasks; PostgreSQL 17.5 in Docker on the same machine. Workload:
 20 DAGs × 25 runs = **500 runs / 1500 task executions**, drained from a cold
 queue.

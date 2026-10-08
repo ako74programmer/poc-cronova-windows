@@ -31,4 +31,4 @@ To klocek scaffoldingu dla przepływów, które startują z gotowego szablonu re
 
 ## Gdzie używany
 
-- [dags/sdlc_springboot.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot.yaml)
+- [dags/sdlc_springboot.yaml](../../dags/sdlc_springboot.yaml)

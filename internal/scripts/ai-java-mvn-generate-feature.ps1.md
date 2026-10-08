@@ -35,6 +35,6 @@ Czyta istniejący `pom.xml`, buduje pełny prompt dla modelu AI i zapisuje wygen
 
 ## Gdzie używany
 
-- [dags/sdlc_maven_luhn.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_maven_luhn.yaml)
-- [dags/sdlc_springboot_startio.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_startio.yaml)
-- [dags/sdlc_springboot.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot.yaml)
+- [dags/sdlc_maven_luhn.yaml](../../dags/sdlc_maven_luhn.yaml)
+- [dags/sdlc_springboot_startio.yaml](../../dags/sdlc_springboot_startio.yaml)
+- [dags/sdlc_springboot.yaml](../../dags/sdlc_springboot.yaml)

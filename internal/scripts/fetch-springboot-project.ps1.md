@@ -41,4 +41,4 @@ To klocek scaffoldingu dla przepływów opartych o Spring Initializr.
 
 ## Gdzie używany
 
-- [dags/sdlc_springboot_startio.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_startio.yaml)
+- [dags/sdlc_springboot_startio.yaml](../../dags/sdlc_springboot_startio.yaml)

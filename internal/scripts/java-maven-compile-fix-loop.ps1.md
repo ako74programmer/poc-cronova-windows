@@ -34,6 +34,6 @@ Uruchamia `mvn test-compile`, a gdy kompilacja się nie powiedzie, buduje prompt
 
 ## Gdzie używany
 
-- [dags/sdlc_maven_luhn.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_maven_luhn.yaml)
-- [dags/sdlc_springboot_startio.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_startio.yaml)
-- [dags/sdlc_springboot.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot.yaml)
+- [dags/sdlc_maven_luhn.yaml](../../dags/sdlc_maven_luhn.yaml)
+- [dags/sdlc_springboot_startio.yaml](../../dags/sdlc_springboot_startio.yaml)
+- [dags/sdlc_springboot.yaml](../../dags/sdlc_springboot.yaml)

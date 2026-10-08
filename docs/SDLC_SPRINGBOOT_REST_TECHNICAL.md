@@ -58,8 +58,8 @@ springboot_package_from_config
 ```
 
 Każdy task ma typ `powershell`.
-W `sdlc_springboot_rest` config jest wskazany na stałe jako [configs/sdlc-springboot.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot.yaml).
-W `sdlc_springboot_variant` config jest wybierany per-run przez `CRONOVA_PARAM_VARIANT` i resolver [internal/scripts/resolve-springboot-variant-config.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/resolve-springboot-variant-config.ps1).
+W `sdlc_springboot_rest` config jest wskazany na stałe jako [configs/sdlc-springboot.yaml](../configs/sdlc-springboot.yaml).
+W `sdlc_springboot_variant` config jest wybierany per-run przez `CRONOVA_PARAM_VARIANT` i resolver [internal/scripts/resolve-springboot-variant-config.ps1](../internal/scripts/resolve-springboot-variant-config.ps1).
 
 Obsługiwane warianty:
 
@@ -70,12 +70,12 @@ Obsługiwane warianty:
 
 Mapowanie wariantów prowadzi do workflow configów:
 
-- [configs/sdlc-springboot.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot.yaml)
-- [configs/sdlc-springboot-crud.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot-crud.yaml)
-- [configs/sdlc-springboot-h2.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot-h2.yaml)
-- [configs/sdlc-springboot-security.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot-security.yaml)
+- [configs/sdlc-springboot.yaml](../configs/sdlc-springboot.yaml)
+- [configs/sdlc-springboot-crud.yaml](../configs/sdlc-springboot-crud.yaml)
+- [configs/sdlc-springboot-h2.yaml](../configs/sdlc-springboot-h2.yaml)
+- [configs/sdlc-springboot-security.yaml](../configs/sdlc-springboot-security.yaml)
 
-Każdy z tych configów wskazuje standard wariantu dziedziczący po [configs/standards/springboot-base.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/standards/springboot-base.yaml).
+Każdy z tych configów wskazuje standard wariantu dziedziczący po [configs/standards/springboot-base.yaml](../configs/standards/springboot-base.yaml).
 
 Potwierdzony test DAG-a wariantowego:
 

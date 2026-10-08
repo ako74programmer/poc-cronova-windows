@@ -249,7 +249,7 @@ Plik `internal/scripts/common_toolchain.sh` jest współdzielonym helperem toolc
 - dodawanie katalogów wykonywalnych Pythona, Node i npm do `PATH`;
 - ustawienie `JAVA_HOME` i `MAVEN_HOME` z `CRONOVA_JAVA_HOME`/`CRONOVA_MAVEN_HOME` lub standardowych zmiennych;
 - dodanie katalogów `bin` do `PATH`;
-- autodetekcję Pythona jako `python3` albo `python`;
+- autodetekcję Pythona jako `python` (lub `CRONOVA_PYTHON`);
 - preferowanie jawnie skonfigurowanego `CRONOVA_PYTHON` przy ogólnym selektorze `-y python`;
 - walidację dostępności `java` i `mvn`;
 - zapis diagnostyki wersji i ścieżek do `toolchain-runtime.txt`.

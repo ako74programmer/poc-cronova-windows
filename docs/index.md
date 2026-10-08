@@ -15,9 +15,9 @@ hide:
 
 cronova schedules **DAGs** — tasks with dependencies, retries, catchup and pools — and ships as a **static scheduler + executor** with an **embedded SQLite** database. No JVM, no Python runtime, no external database, no message broker.
 
-```bash
-# Install the scheduler + web console + native service on Linux or macOS:
-curl -fsSL https://raw.githubusercontent.com/zoyluoblue/cronova/main/deploy/bootstrap.sh | sudo bash
+```powershell
+# Download and extract the release ZIP, then in an elevated PowerShell:
+powershell -ExecutionPolicy Bypass -File deploy\install.ps1
 ```
 
 [Start the Tutorial](tutorial/index.md){ .md-button .md-button--primary }
@@ -83,7 +83,7 @@ go build -o cronova ./cmd/cronova   # or grab a prebuilt release
 - **[Tutorial](tutorial/index.md)** — the step-by-step path: install → first DAG → scheduling → variables → projects → cross-DAG.
 - **[Console guide](console/index.md)** — every page of the web UI: dashboard, DAG editor, visual task editor, runs & live logs, pools, variables, audit, API tokens.
 - **[Quick start](GETTING_STARTED.md)** — the single-page fast path.
-- **[Deployment](DEPLOY.md)** — systemd / launchd services, updates, the crash-recoverable executor.
+- **[Deployment](DEPLOY.md)** — Windows services (`Cronova`, `CronovaExecutor`), updates, the crash-recoverable executor.
 - **[Comparison](COMPARISON.md)** — cronova vs. Airflow, Azkaban, Dagster, Prefect & cron.
 - **[FAQ](FAQ.md)** — common questions, answered.
 - **[GitHub](https://github.com/zoyluoblue/cronova)** — source, releases, issues. ⭐ Stars welcome!

@@ -90,7 +90,7 @@ Details in the [CLI Reference](CLI.md).
 
 ### Quick start with `app.ps1` (Windows)
 
-On Windows the repository includes [app.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/scripts/windows/app.ps1), a PowerShell helper that builds the
+On Windows the repository includes [app.ps1](../scripts/windows/app.ps1), a PowerShell helper that builds the
 binary if needed, kills any leftover `cronova.exe` process, and starts the
 server in the foreground. It has two modes:
 

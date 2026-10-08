@@ -36,4 +36,4 @@ Nie uruchamia Mavena i nie robi pętli retry. Dostaje gotowy prompt, wywołuje m
 
 ## Gdzie używany
 
-- [internal/scripts/java-maven-compile-fix-loop.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/java-maven-compile-fix-loop.ps1)
+- [internal/scripts/java-maven-compile-fix-loop.ps1](../../internal/scripts/java-maven-compile-fix-loop.ps1)

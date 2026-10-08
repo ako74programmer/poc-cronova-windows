@@ -83,9 +83,9 @@ Other docs fall back to English until translated.
 
 W repo istnieją już kluczowe elementy tej inicjatywy:
 
-- frontend AI wiki przekazuje `lang` do `POST /api/ask` w [aiwiki.js](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/web/static/aiwiki.js),
-- akcja `open_docs` respektuje język UI w [aiwiki.js](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/web/static/aiwiki.js),
-- backend AI wiki przyjmuje parametr `lang` w [aiwiki.go](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki/aiwiki.go),
+- frontend AI wiki przekazuje `lang` do `POST /api/ask` w [aiwiki.js](../internal/web/static/aiwiki.js),
+- akcja `open_docs` respektuje język UI w [aiwiki.js](../internal/web/static/aiwiki.js),
+- backend AI wiki przyjmuje parametr `lang` w [aiwiki.go](../internal/aiwiki/aiwiki.go),
 - repo zawiera ścieżkę dokumentacji PL/EN i mechanizm przełączania języka powiązany z AI wiki.
 
 Plan nie jest już aktywną listą prac. Dalsze zmiany lokalizacyjne powinny trafiać do kolejnych planów iteracyjnych lub bezpośrednio do dokumentacji produktowej.

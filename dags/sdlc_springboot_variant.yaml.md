@@ -16,23 +16,23 @@ Wariant jest wybierany per-run przez `params.variant`, a sam DAG używa wspólne
 
 ## Jakich klocków używa
 
-- [internal/scripts/springboot-validate-config.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/springboot-validate-config.ps1)
-- [internal/scripts/springboot-validate-openapi.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/springboot-validate-openapi.ps1)
-- [internal/scripts/springboot-scaffold-from-config.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/springboot-scaffold-from-config.ps1)
-- [internal/scripts/springboot-maven-compile-from-config.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/springboot-maven-compile-from-config.ps1)
-- [internal/scripts/springboot-maven-test-from-config.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/springboot-maven-test-from-config.ps1)
-- [internal/scripts/springboot-package-from-config.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/springboot-package-from-config.ps1)
+- [internal/scripts/springboot-validate-config.ps1](../internal/scripts/springboot-validate-config.ps1)
+- [internal/scripts/springboot-validate-openapi.ps1](../internal/scripts/springboot-validate-openapi.ps1)
+- [internal/scripts/springboot-scaffold-from-config.ps1](../internal/scripts/springboot-scaffold-from-config.ps1)
+- [internal/scripts/springboot-maven-compile-from-config.ps1](../internal/scripts/springboot-maven-compile-from-config.ps1)
+- [internal/scripts/springboot-maven-test-from-config.ps1](../internal/scripts/springboot-maven-test-from-config.ps1)
+- [internal/scripts/springboot-package-from-config.ps1](../internal/scripts/springboot-package-from-config.ps1)
 
 ## Wejścia
 
 - parametr uruchomienia `variant` przekazywany jako `{{ params.variant }}` lub `CRONOVA_PARAM_VARIANT`
-- resolver [internal/scripts/resolve-springboot-variant-config.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/resolve-springboot-variant-config.ps1)
+- resolver [internal/scripts/resolve-springboot-variant-config.ps1](../internal/scripts/resolve-springboot-variant-config.ps1)
 - workflow config wariantu:
-	- [configs/sdlc-springboot.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot.yaml)
-	- [configs/sdlc-springboot-crud.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot-crud.yaml)
-	- [configs/sdlc-springboot-h2.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot-h2.yaml)
-	- [configs/sdlc-springboot-security.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/sdlc-springboot-security.yaml)
-- standardy wariantów dziedziczące po [configs/standards/springboot-base.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/configs/standards/springboot-base.yaml)
+	- [configs/sdlc-springboot.yaml](../configs/sdlc-springboot.yaml)
+	- [configs/sdlc-springboot-crud.yaml](../configs/sdlc-springboot-crud.yaml)
+	- [configs/sdlc-springboot-h2.yaml](../configs/sdlc-springboot-h2.yaml)
+	- [configs/sdlc-springboot-security.yaml](../configs/sdlc-springboot-security.yaml)
+- standardy wariantów dziedziczące po [configs/standards/springboot-base.yaml](../configs/standards/springboot-base.yaml)
 
 ## Wynik
 

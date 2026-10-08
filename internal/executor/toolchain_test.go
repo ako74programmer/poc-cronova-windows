@@ -126,3 +126,11 @@ func pathListContains(path, directory string) bool {
 	}
 	return false
 }
+
+func TestWithoutWindowsAppsDropsStoreAliases(t *testing.T) {
+	sep := string(filepath.ListSeparator)
+	got := withoutWindowsApps(`C:\Py` + sep + `C:\Users\u\AppData\Local\Microsoft\WindowsApps` + sep + `C:\Tools`)
+	if want := `C:\Py` + sep + `C:\Tools`; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}

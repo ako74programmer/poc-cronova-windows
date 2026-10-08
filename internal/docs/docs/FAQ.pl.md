@@ -32,17 +32,17 @@ Tak. cronova dostarcza wbudowany **serwer Model Context Protocol (MCP)** (`crono
 
 ## Jakie platformy są obsługiwane i jak zainstalować cronova?
 
-cronova działa na **Linux i macOS**, zarówno na **amd64, jak i arm64**. Najszybsza ścieżka to instalator jednoliniowy, który pobiera pasujące wydanie prebuilt, weryfikuje jego SHA256, instaluje natywną usługę (systemd na Linux, launchd na macOS) i uruchamia interaktywny kreator konfiguracji:
+cronova działa wyłącznie na **Windows amd64**. Pobierz i rozpakuj ZIP wydania, a następnie uruchom instalator w PowerShell z uprawnieniami administratora. Instaluje on usługi Windows `Cronova` i `CronovaExecutor` (binaria w `C:\Program Files\Cronova`, dane w `C:\ProgramData\Cronova`); konsola webowa jest pod http://127.0.0.1:8090:
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/zoyluoblue/cronova/main/deploy/bootstrap.sh | sudo bash
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy\install.ps1
 ```
 
 Wolisz budować ze źródeł? Z Go 1.26.5+:
 
-```bash
-go build -o cronova ./cmd/cronova
-./cronova serve                 # konsola pod http://localhost:8090
+```powershell
+go build -o cronova.exe .\cmd\cronova
+.\cronova.exe serve                 # konsola pod http://localhost:8090
 ```
 
 Prebuilt binarki są na stronie [Releases](https://github.com/ako74programmer/poc-cronova-windows/releases). Pełny przewodnik wdrożeniowy: [Wdrożenie](DEPLOY.md).
@@ -75,14 +75,14 @@ cronova jest zaprojektowany do niezawodnej pracy. Zarządzane instalacje domyśl
 
 Stan żyje w **wbudowanej bazie SQLite** plus na dysku: YAML-e DAG-ów, logi zadań i przesłane projekty. Dla `cronova serve` uruchomionego z katalogu roboczego domyślne ścieżki są względne: `data/cronova.db` (DB), `dags/` (DAG-i) i `logs/` (logi zadań). Przesłane projekty domyślnie trafiają do `~/.cronova/projects`. Po zainstalowaniu jako natywna usługa ścieżki są absolutne:
 
-| Cel | Linux (systemd) | macOS (launchd) |
-|---|---|---|
-| SQLite DB | `/var/lib/cronova/cronova.db` | `/usr/local/var/cronova/cronova.db` |
-| YAML DAG-ów | `/var/lib/cronova/dags/` | `/usr/local/var/cronova/dags/` |
-| logi zadań | `/var/log/cronova/` | `/usr/local/var/log/cronova/` |
-| konfiguracja | `/etc/cronova/cronova.yaml` | `/usr/local/etc/cronova/cronova.yaml` |
-| przesłane projekty | `/var/lib/cronova/projects/` | `/usr/local/var/cronova/projects/` |
-| katalogi workspace'ów prób | `/var/lib/cronova/workspaces/` | `/usr/local/var/cronova/workspaces/` |
+| Cel | Usługa Windows |
+|---|---|
+| SQLite DB | `C:\ProgramData\Cronova\cronova.db` |
+| YAML DAG-ów | `C:\ProgramData\Cronova\dags\` |
+| logi zadań | `C:\ProgramData\Cronova\logs\` |
+| konfiguracja | `C:\ProgramData\Cronova\cronova.yaml` |
+| przesłane projekty | `C:\ProgramData\Cronova\projects\` |
+| katalogi workspace'ów prób | `C:\ProgramData\Cronova\workspaces\` |
 
 Nadpisz je za pomocą odpowiednich flag `-db` / `-dags` / `-logs` / `-projects` /
 `-workspaces`, zmiennych środowiskowych `CRONOVA_*` lub `cronova.yaml`.
@@ -113,7 +113,7 @@ Przypnij cronova do localhost i zakończ TLS na swoim proxy (nginx, Caddy, Traef
 
 ## Czy potrzebuję Docker lub Kubernetes?
 
-Nie. cronova to scheduler podprocesów, który uruchamia zadania za pomocą **własnych interpreterów hosta**, więc wdraża się jako dwie małe statyczne binarki pod systemd (Linux) lub launchd (macOS) — bez obrazu kontenera do zbudowania, bez runtime do spakowania. Skonteneryzowanie wielojęzycznego schedulera zmusiłoby cię do wbudowania każdego runtime zadania w obraz; natywne usługi tego unikają. Jeśli mimo wszystko skonteneryzujesz harmonogram, zostaw samodzielnego executor na hoście i wskaż harmonogramowi na niego przez prywatne gniazdo Unix. Zobacz [Wdrożenie](DEPLOY.md).
+Nie. cronova to scheduler podprocesów, który uruchamia zadania za pomocą **własnych interpreterów hosta**, więc wdraża się jako dwie małe statyczne binarki jako usługi Windows (`Cronova`, `CronovaExecutor`) — bez obrazu kontenera do zbudowania, bez runtime do spakowania. Skonteneryzowanie wielojęzycznego schedulera zmusiłoby cię do wbudowania każdego runtime zadania w obraz; natywne usługi tego unikają. Jeśli mimo wszystko skonteneryzujesz harmonogram, zostaw samodzielnego executor na hoście i wskaż harmonogramowi na niego przez prywatny adres loopback (np. `tcp://127.0.0.1:19090`). Zobacz [Wdrożenie](DEPLOY.md).
 
 ## Jak odinstalować cronova?
 
@@ -138,6 +138,6 @@ cronova jest wydany na **[Licencji MIT](https://github.com/zoyluoblue/cronova/bl
 - [Dokumentacja DAG-ów](DAG_REFERENCE.pl.md) — każde pole DAG-a/zadania, typy zadań, wyzwalacze, pule
 - [Dokumentacja CLI](CLI.md) — każda komenda i flaga `cronova`
 - [Agenci AI (MCP)](AGENTS.md) — serwer MCP, zdalne CLI, tokeny, bezpieczeństwo
-- [Wdrożenie](DEPLOY.md) — systemd/launchd, aktualizacje, odporny na awarie executor
+- [Wdrożenie](DEPLOY.md) — usługi Windows (Service Control Manager), aktualizacje, odporny na awarie executor
 - [Architektura](ARCHITECTURE.md) — uzasadnienie projektowe, model wykonawczy, diagramy
 - [cronova vs Airflow](COMPARISON.md) — kiedy wybrać cronova, porównanie funkcja po funkcji

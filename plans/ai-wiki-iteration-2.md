@@ -74,11 +74,11 @@ Tak, ale jako **opcjonalna funkcja**. Domyślnie chat działa offline (RAG + sza
 
 W repo istnieją już kluczowe elementy iteracji 2:
 
-- retrieval BM25 w [bm25.go](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki/bm25.go),
-- integracja LLM w [llm.go](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki/llm.go),
-- logika `answer + sources + actions` w [aiwiki.go](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/aiwiki/aiwiki.go),
-- endpoint `POST /api/ask` w [server.go](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/api/server.go),
-- decyzja architektoniczna BM25 w [003- aiwiki-retrieval-bm25.md](c:/Users/Andrzej/Downloads/sdlc/cronova/docs/ADR/003-%20aiwiki-retrieval-bm25.md).
+- retrieval BM25 w [bm25.go](../internal/aiwiki/bm25.go),
+- integracja LLM w [llm.go](../internal/aiwiki/llm.go),
+- logika `answer + sources + actions` w [aiwiki.go](../internal/aiwiki/aiwiki.go),
+- endpoint `POST /api/ask` w [server.go](../internal/api/server.go),
+- decyzja architektoniczna BM25 w [003- aiwiki-retrieval-bm25.md](../docs/ADR/003-%20aiwiki-retrieval-bm25.md).
 
 Plan nie jest już aktywną listą prac. Dalsze usprawnienia AI wiki powinny trafiać do kolejnych planów iteracyjnych.
 

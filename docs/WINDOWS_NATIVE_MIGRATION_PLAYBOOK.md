@@ -189,7 +189,7 @@ git status --short
 .\scripts\windows\app.ps1 start
 ```
 
-Na Windows nie ustawiaj `CRONOVA_TASK_ENV_ALLOWLIST`. [app.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/scripts/windows/app.ps1) wykrywa toolchain, a `buildEnv()` automatycznie przekazuje bezpieczne zmienne Java/Maven/Python/PATH do tasków.
+Na Windows nie ustawiaj `CRONOVA_TASK_ENV_ALLOWLIST`. [app.ps1](../scripts/windows/app.ps1) wykrywa toolchain, a `buildEnv()` automatycznie przekazuje bezpieczne zmienne Java/Maven/Python/PATH do tasków.
 
 Agent nie wykonuje `switch`, `reset`, nie wybiera pojedynczego commita, nie poprawia kodu i zatrzymuje test na pierwszym błędzie.
 

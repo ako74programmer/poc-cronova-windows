@@ -57,7 +57,7 @@ Each task type renders its own fields (full details in [Task types](../tutorial/
 | Type | Fields |
 |---|---|
 | `powershell` | **Command** pill editor + **Will run:** preview, plus the **Project** section below. |
-| `python` | **Python code** pill editor. The code runs inline via `python3 -c`; `CRONOVA_*` variables are readable from the environment, and a non-zero exit means failure. |
+| `python` | **Python code** pill editor. The code runs inline via `python -c`; `CRONOVA_*` variables are readable from the environment, and a non-zero exit means failure. |
 | `sql` | **Connection** — the id of a configured connection (its type picks the driver: postgres/mysql/sqlite) — and the **SQL query** pill editor. |
 | `jar` | A structured form: **Jar path**, **Main class** (optional), **Arguments**. The form composes `java -jar app.jar …` (or `java -cp jar main …`) and shows it in the **Will run:** preview. An **edit raw command** link is the escape hatch to free-form editing; **use form** switches back, but only if the raw command still parses into the form's shape. |
 | `http` | **Method** (GET/POST/PUT/PATCH/DELETE/HEAD), **URL**, **Headers** (one per line, `Key: Value`), **Body**, and **Expected status** (comma-separated, e.g. `200,201`; empty accepts any 2xx). URL, headers, and body are all pill editors, so `{{ var. }}` and `{{ conn. }}` work in each. |

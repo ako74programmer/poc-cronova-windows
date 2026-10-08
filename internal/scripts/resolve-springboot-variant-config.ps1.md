@@ -28,4 +28,4 @@ To cienki klocek pomocniczy używany przez DAG wariantowy.
 
 ## Gdzie używany
 
-- [dags/sdlc_springboot_variant.yaml](c:/Users/Andrzej/Downloads/sdlc/cronova/dags/sdlc_springboot_variant.yaml)
+- [dags/sdlc_springboot_variant.yaml](../../dags/sdlc_springboot_variant.yaml)

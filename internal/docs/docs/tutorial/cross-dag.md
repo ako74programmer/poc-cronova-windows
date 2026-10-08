@@ -145,7 +145,7 @@ If you set `sla` or `dagrun_timeout` on a DAG, breaches report through the same 
 
 That's the whole tutorial — you've gone from a single `echo` task to a scheduled, dependency-aware, retry-hardened, cross-DAG pipeline with alerting, all on a compact native install with embedded SQLite. From here:
 
-- **[Deployment](../DEPLOY.md)** — install cronova as a systemd/launchd service, switch to the crash-recoverable gRPC executor so running tasks survive a scheduler restart or upgrade, and keep it updated with `cronova update`.
+- **[Deployment](../DEPLOY.md)** — install cronova as Windows services (`Cronova`, `CronovaExecutor`), switch to the crash-recoverable gRPC executor so running tasks survive a scheduler restart or upgrade, and keep it updated with `deploy\update.ps1`.
 - **[AI Agents (MCP)](../AGENTS.md)** — let AI agents list, create, validate, and trigger DAGs through the built-in MCP server and the remote JSON CLI.
 - **[DAG & Task Reference](../DAG_REFERENCE.md)** — the exhaustive schema: every DAG and task field, all five task types, trigger rules, and pools.
 - **[CLI Reference](../CLI.md)** — every command and flag, from `serve` to `tokens create`.
