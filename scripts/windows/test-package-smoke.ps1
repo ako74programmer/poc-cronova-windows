@@ -64,6 +64,8 @@ try {
         throw "Package smoke test failed for $($missing.Count) missing file(s)."
     }
 
+    & (Join-Path $ExtractDir 'internal\scripts\cronova-verify-dag-paths.ps1') -Root $ExtractDir
+
     Write-Host "Validated package contents in $ZipPath"
 } finally {
     if (Test-Path $ExtractDir) {

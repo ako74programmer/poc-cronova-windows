@@ -31,7 +31,13 @@ func main() {
 	tlsKey := flag.String("tls-key", "", "PEM private key for -listen-tcp (required with it)")
 	tlsCA := flag.String("tls-ca", "", "PEM CA that signed the SCHEDULER's client certificate (required with -listen-tcp)")
 	stateDir := flag.String("state-dir", "", "persist attempt state here so restarts re-adopt running tasks (default: <socket dir>/state; \"none\" disables)")
+	workDir := flag.String("workdir", "", "change to this directory before serving; tasks with relative paths (e.g. .\\internal\\scripts\\...) resolve against it")
 	flag.Parse()
+	if *workDir != "" {
+		if err := os.Chdir(*workDir); err != nil {
+			log.Fatalf("cronova-executor: -workdir: %v", err)
+		}
+	}
 	if err := runWindowsService("CronovaExecutor", func() error {
 		return run(*sock, *listenTCP, *tlsCert, *tlsKey, *tlsCA, *stateDir)
 	}); err != nil {

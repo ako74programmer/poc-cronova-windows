@@ -69,13 +69,25 @@ try {
 
     Copy-Item (Join-Path $sourceRoot 'dags\*.yaml') "$data\dags" -Force -ErrorAction SilentlyContinue
 
+    # DAG tasks use paths relative to the executor working dir (= $data).
+    foreach ($dir in @('internal\scripts', 'scripts\sdlc', 'prompts', 'templates', 'configs', 'contracts', 'e2e\playwright')) {
+        $src = Join-Path $sourceRoot $dir
+        if (-not (Test-Path $src)) { continue }
+        $dst = Join-Path $data $dir
+        New-Item -ItemType Directory -Force -Path $dst | Out-Null
+        Copy-Item (Join-Path $src '*') $dst -Recurse -Force
+    }
+    & (Join-Path $data 'internal\scripts\cronova-verify-dag-paths.ps1') -Root $data
+
     $exec = Join-Path $install 'cronova-executor.exe'
     $sched = Join-Path $install 'cronova.exe'
-    $execBin = ('"{0}" -sock 127.0.0.1:19090 -state-dir "{1}"' -f $exec, (Join-Path $data 'state'))
+    $execBin = ('"{0}" -sock 127.0.0.1:19090 -state-dir "{1}" -workdir "{2}"' -f $exec, (Join-Path $data 'state'), $data)
     $schedBin = ('"{0}" serve -config "{1}" -db "{2}" -dags "{3}" -logs "{4}" -projects "{5}" -workspaces "{6}" -executor tcp://127.0.0.1:19090' -f $sched, $config, $dbPath, (Join-Path $data 'dags'), (Join-Path $data 'logs'), (Join-Path $data 'projects'), (Join-Path $data 'workspaces'))
 
     if (-not (Get-Service -Name 'CronovaExecutor' -ErrorAction SilentlyContinue)) {
         New-Service -Name 'CronovaExecutor' -BinaryPathName $execBin -StartupType Automatic | Out-Null
+    } else {
+        Invoke-CronovaSc -Arguments @('config', 'CronovaExecutor', 'binPath=', $execBin) -Action 'Updating CronovaExecutor command line' | Out-Null
     }
 
     if (-not (Get-Service -Name 'Cronova' -ErrorAction SilentlyContinue)) {

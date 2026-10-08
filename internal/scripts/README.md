@@ -39,6 +39,10 @@ Aktywne entrypointy workflow w tym katalogu są PowerShellowe (`.ps1`). Historyc
 - [internal/scripts/cronova-resolve-package-source.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/cronova-resolve-package-source.ps1)
   Dokumentacja: [internal/scripts/cronova-resolve-package-source.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/cronova-resolve-package-source.ps1.md)
 - [internal/scripts/cronova-install-from-source.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/cronova-install-from-source.ps1)
+  Kopiuje zasoby DAG-ów (`internal\scripts`, `scripts\sdlc`, `prompts`, `templates`, `configs`, `contracts`, `e2e\playwright`) do `C:\ProgramData\Cronova` i uruchamia executor z `-workdir C:\ProgramData\Cronova`, więc względne ścieżki w DAG-ach działają po instalacji.
+- [internal/scripts/cronova-verify-dag-paths.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/cronova-verify-dag-paths.ps1)
+  Sprawdza, czy każda względna ścieżka (skrypty, prompty, template'y, configi) użyta w `dags\*.yaml` istnieje pod wskazanym katalogiem. Używany przez smoke test paczki i instalator.
+  Przykład: `.\internal\scripts\cronova-verify-dag-paths.ps1 -Root C:\ProgramData\Cronova`
 - [internal/scripts/seed-cronova-admin.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/seed-cronova-admin.ps1)
   Dokumentacja: [internal/scripts/seed-cronova-admin.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/seed-cronova-admin.ps1.md)
 
