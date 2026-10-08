@@ -43,6 +43,9 @@ Aktywne entrypointy workflow w tym katalogu są PowerShellowe (`.ps1`). Historyc
 - [internal/scripts/cronova-verify-dag-paths.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/cronova-verify-dag-paths.ps1)
   Sprawdza, czy każda względna ścieżka (skrypty, prompty, template'y, configi) użyta w `dags\*.yaml` istnieje pod wskazanym katalogiem. Używany przez smoke test paczki i instalator.
   Przykład: `.\internal\scripts\cronova-verify-dag-paths.ps1 -Root C:\ProgramData\Cronova`
+- [internal/scripts/cronova-configure-service-env.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/cronova-configure-service-env.ps1)
+  Wykrywa toolchain (JDK, Maven, Python, Node/npm, Git) i zapisuje `JAVA_HOME`, `MAVEN_HOME`, `CRONOVA_*` oraz `PATH` jako środowisko usługi (`LocalSystem` nie widzi zmiennych użytkownika). Wywoływany przez instalator.
+  Przykład: `.\internal\scripts\cronova-configure-service-env.ps1 -ServiceName CronovaExecutor -Extra 'CRONOVA_DB=C:\ProgramData\Cronova\cronova.db'`
 - [internal/scripts/seed-cronova-admin.ps1](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/seed-cronova-admin.ps1)
   Dokumentacja: [internal/scripts/seed-cronova-admin.ps1.md](c:/Users/Andrzej/Downloads/sdlc/cronova/internal/scripts/seed-cronova-admin.ps1.md)
 

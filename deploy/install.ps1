@@ -4,7 +4,9 @@ param(
   [switch]$Start,
   [switch]$FreePort,
   [string]$AdminUser,
-  [string]$AdminPassword
+  [string]$AdminPassword,
+  [string]$AiBaseUrl,
+  [string]$AiModel
 )
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest

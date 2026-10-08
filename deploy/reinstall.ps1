@@ -5,7 +5,9 @@ param(
     [switch]$FreePort,
     [string]$AdminUser = 'admin',
     [string]$AdminPassword = 'admin123',
-    [switch]$PurgeData
+    [switch]$PurgeData,
+    [string]$AiBaseUrl,
+    [string]$AiModel
 )
 
 $ErrorActionPreference = 'Stop'
@@ -21,4 +23,4 @@ if ($PurgeData) {
     Remove-Item (Join-Path $env:ProgramData 'Cronova') -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-& $installScript -Source $Source -AdminUser $AdminUser -AdminPassword $AdminPassword -Start:$Start -FreePort:$FreePort
+& $installScript -Source $Source -AdminUser $AdminUser -AdminPassword $AdminPassword -Start:$Start -FreePort:$FreePort -AiBaseUrl $AiBaseUrl -AiModel $AiModel

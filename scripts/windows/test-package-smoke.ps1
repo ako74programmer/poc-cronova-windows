@@ -16,6 +16,8 @@ $requiredFiles = @(
     'deploy\install.ps1',
     'deploy\uninstall.ps1',
     'deploy\update.ps1',
+    'scripts\windows\detect-toolchain.ps1',
+    'internal\scripts\cronova-configure-service-env.ps1',
     'docs\DEPLOY.md',
     'configs\sdlc-angular.yaml',
     'configs\sdlc-fullstack.yaml',

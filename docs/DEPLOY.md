@@ -16,6 +16,16 @@ Extract `cronova_windows_amd64.zip`, open an elevated PowerShell in the extracte
 
 The installer installs binaries below `C:\Program Files\Cronova`, creates the data root `C:\ProgramData\Cronova`, and registers two Windows Services: `CronovaExecutor` and `Cronova`. The scheduler depends on the executor and both services have failure recovery configured.
 
+DAG runtime assets (`internal\scripts`, `scripts\sdlc`, `prompts`, `templates`, `configs`, `contracts`, `e2e\playwright`) are copied to `C:\ProgramData\Cronova`, and the executor runs tasks from that directory (`-workdir`), so relative paths in DAGs resolve. The installer verifies every DAG path with `internal\scripts\cronova-verify-dag-paths.ps1`.
+
+Services run as `LocalSystem`, which does not see the installing user's environment. The installer detects the toolchain (JDK, Maven, Python, Node/npm, Git) and stores `JAVA_HOME`, `MAVEN_HOME`, `CRONOVA_*` and `PATH` as the `CronovaExecutor` service environment. Re-run the installer after installing or moving tools.
+
+For AI DAG tasks on a fresh database either configure an AI provider in the web UI, or pass a default endpoint during install:
+
+```powershell
+.\deploy\install.ps1 -Start -AiBaseUrl http://127.0.0.1:4141/v1 -AiModel gpt-4o-mini
+```
+
 ## Data and configuration
 
 The default data root contains `cronova.yaml`, `cronova.db`, `dags`, `projects`, `workspaces`, `logs` and `executor-state`.

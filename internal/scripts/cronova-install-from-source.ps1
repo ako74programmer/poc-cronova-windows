@@ -4,7 +4,10 @@ param(
     [switch]$Start,
     [switch]$FreePort,
     [string]$AdminUser,
-    [string]$AdminPassword
+    [string]$AdminPassword,
+    # Optional default AI endpoint for AI DAG tasks (e.g. http://127.0.0.1:4141/v1). Tokens belong in the UI provider config.
+    [string]$AiBaseUrl,
+    [string]$AiModel
 )
 
 $ErrorActionPreference = 'Stop'
@@ -96,6 +99,13 @@ try {
 
     Invoke-CronovaSc -Arguments @('failure', 'CronovaExecutor', 'actions=', 'restart/60000/restart/60000//60000', 'reset=', '86400') -Action 'Configuring CronovaExecutor recovery' | Out-Null
     Invoke-CronovaSc -Arguments @('failure', 'Cronova', 'actions=', 'restart/60000/restart/60000//60000', 'reset=', '86400') -Action 'Configuring Cronova recovery' | Out-Null
+
+    $serviceEnv = @("CRONOVA_DB=$dbPath")
+    $allow = @('CRONOVA_DB')
+    if ($AiBaseUrl) { $serviceEnv += "CRONOVA_AI_BASE_URL=$AiBaseUrl"; $allow += 'CRONOVA_AI_BASE_URL' }
+    if ($AiModel) { $serviceEnv += "CRONOVA_AI_MODEL=$AiModel"; $allow += 'CRONOVA_AI_MODEL' }
+    $serviceEnv += "CRONOVA_TASK_ENV_ALLOWLIST=$($allow -join ',')"
+    & (Join-Path $PSScriptRoot 'cronova-configure-service-env.ps1') -ServiceName 'CronovaExecutor' -Extra $serviceEnv
 
     if ($PSBoundParameters.ContainsKey('AdminUser') -or $PSBoundParameters.ContainsKey('AdminPassword')) {
         if (-not ($PSBoundParameters.ContainsKey('AdminUser') -and $PSBoundParameters.ContainsKey('AdminPassword'))) {

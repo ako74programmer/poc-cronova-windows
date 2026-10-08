@@ -23,6 +23,8 @@ try {
   Copy-Item (Join-Path $Root "prompts/*") (Join-Path $Stage "prompts") -Recurse -ErrorAction SilentlyContinue
   Copy-Item (Join-Path $Root "templates/*") (Join-Path $Stage "templates") -Recurse -ErrorAction SilentlyContinue
   Copy-Item (Join-Path $Root "scripts/sdlc/*") (Join-Path $Stage "scripts\sdlc") -Recurse
+  New-Item -ItemType Directory -Force -Path (Join-Path $Stage "scripts\windows") | Out-Null
+  Copy-Item (Join-Path $Root "scripts/windows/detect-toolchain.ps1") (Join-Path $Stage "scripts\windows")
   Copy-Item (Join-Path $Root "e2e/playwright/*") (Join-Path $Stage "e2e\playwright") -Recurse
   Set-Content -NoNewline -Path (Join-Path $Stage "VERSION") -Value $Version
   $OutFile = Join-Path (Join-Path $Root $Output) "cronova_windows_amd64.zip"
