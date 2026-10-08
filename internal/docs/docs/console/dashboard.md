@@ -82,7 +82,7 @@ Click **+ New DAG** in the topbar. The modal keeps the happy path to two decisio
 | **Scheduled report** | `fetch → render`, preset with a `0 8 * * *` cron (daily at 08:00). |
 | **Fan-out / fan-in** | `start` → two parallel branches → `join`. |
 
-Templates create real, editable shell tasks — the ETL and report templates use `{{ logical_date }}` and `{{ run_id }}` so you can see [template variables](../tutorial/template-variables.md) in action. Picking *Scheduled report* auto-expands the schedule section so its preset cron stays visible and correctable.
+Templates create real, editable PowerShell tasks — the ETL and report templates use `{{ logical_date }}` and `{{ run_id }}` so you can see [template variables](../tutorial/template-variables.md) in action. Picking *Scheduled report* auto-expands the schedule section so its preset cron stays visible and correctable.
 
 ### 2. Name it
 

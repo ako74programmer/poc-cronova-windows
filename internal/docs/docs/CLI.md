@@ -152,8 +152,8 @@ cronova v0.3.0 windows/amd64
 
 Probe the server's readiness endpoint and exit non-zero if unhealthy — useful for Windows Services, load balancers, or scheduled checks.
 
-```bash
-cronova healthcheck -http 127.0.0.1:8090 && echo healthy
+```powershell
+cronova healthcheck -http 127.0.0.1:8090; if ($?) { echo healthy }
 ```
 
 | Flag | Default | Description |
@@ -302,13 +302,13 @@ Every operational command accepts these; set them once as environment variables 
 | `-token <token>` | `CRONOVA_TOKEN` | API token (mint with [`cronova tokens create`](#cronova-tokens)). |
 | `-o table\|json` | `CRONOVA_OUTPUT` | Output format; `json` for scripting and agents. |
 
-```bash
-export CRONOVA_SERVER=http://localhost:8090 CRONOVA_TOKEN=cnv_pat_…
+```powershell
+$env:CRONOVA_SERVER = 'http://localhost:8090'; $env:CRONOVA_TOKEN = 'cnv_pat_…'
 cronova dags -o json
 ```
 
 !!! tip "Exit codes for scripts"
-    Commands exit non-zero on API errors (the error body is printed first), so `cronova trigger etl && …` chains safely in CI.
+    Commands exit non-zero on API errors (the error body is printed first), so `cronova trigger etl; if ($?) { … }` chains safely in CI.
 
 ### `cronova api`
 
@@ -435,8 +435,8 @@ time=… msg="connected to hub" worker=wk_76417dbc51 addr=sched.example:9091 hea
 
 | Flag | Default | Description |
 |---|---|---|
-| `-server` | `$CRONOVA_SERVER` | Scheduler console URL (join only). |
-| `-join-token` | `$CRONOVA_JOIN_TOKEN` | One-time join token (mint with `cronova workers token`). Ignored once an identity exists — restarts are idempotent. |
+| `-server` | `$env:CRONOVA_SERVER` | Scheduler console URL (join only). |
+| `-join-token` | `$env:CRONOVA_JOIN_TOKEN` | One-time join token (mint with `cronova workers token`). Ignored once an identity exists — restarts are idempotent. |
 | `-name` | hostname | Display name. |
 | `-labels` | `group=default` | Comma-separated `key=value` routing labels; `group` is the worker group tasks target with `worker_group:`. |
 | `-hub` | server-advertised | Override the hub `host:port` (NAT / port-forward setups). |

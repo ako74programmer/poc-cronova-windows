@@ -225,7 +225,7 @@ Agent Windows jest tylko wykonawcą testu. Nie prowadzi diagnozy i nie szuka prz
 
 Zmienić wyłącznie:
 
-- `type: shell` → `type: powershell`;
+- `type: powershell` → `type: powershell`;
 - `bash path/to/script.sh` → odpowiedni `powershell path/to/script.ps1`;
 - separatory ścieżek i składnię argumentów.
 

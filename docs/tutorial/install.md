@@ -9,7 +9,7 @@ There are three ways to get the `cronova` binary. For this tutorial, use the pla
 Grab the latest release (currently **v0.2.1**) from the [Releases page](https://github.com/zoyluoblue/cronova/releases). Binaries are published for Linux and macOS, `amd64` and `arm64`, as `cronova_<os>_<arch>.tar.gz`:
 
 ```bash
-mkdir cronova-tutorial && cd cronova-tutorial
+mkdir cronova-tutorial; cd cronova-tutorial
 curl -fsSLO https://github.com/zoyluoblue/cronova/releases/latest/download/cronova_darwin_arm64.tar.gz
 tar -xzf cronova_darwin_arm64.tar.gz
 chmod +x cronova

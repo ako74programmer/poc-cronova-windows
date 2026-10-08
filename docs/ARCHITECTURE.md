@@ -398,8 +398,8 @@ Because tasks are subprocesses, the `type` field only affects how the command is
 
 | type | Launch |
 |---|---|
-| `powershell` | `powershell.exe -Command "<command>"` |
-| `shell` | legacy Windows alias for `powershell` |
+| `powershell` (default) | `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "<command>"` |
+| `shell` | not supported (rejected at parse time; use `powershell`) |
 | `python` | `python <script> <args>` |
 | `sql` | via CLI/driver (e.g. `psql -f`) |
 | `jar` | `java -jar <jar> <args>` |
@@ -652,7 +652,7 @@ service Executor {
 
 message LaunchRequest {
   string task_run_id = 1;          // run_id/task_id/try; idempotency key
-  string type = 2;                 // shell/python/sql/jar/http
+  string type = 2;                 // powershell/python/sql/jar/http
   string command = 3;
   map<string, string> env = 4;
   int64 timeout_seconds = 5;       // 0 = no timeout

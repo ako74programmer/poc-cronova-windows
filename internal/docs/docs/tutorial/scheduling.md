@@ -16,7 +16,7 @@ schedule: "0 2 * * *"        # every day at 02:00
 start_date: 2026-07-01
 tasks:
   - id: build
-    type: shell
+    type: powershell
     command: echo "reporting for {{ logical_date }}"
 ```
 
@@ -51,8 +51,8 @@ schedule: "@every 30s"
 start_date: 2026-06-01
 tasks:
   - id: heartbeat
-    type: shell
-    command: echo "tick at $CRONOVA_LOGICAL_DATETIME"
+    type: powershell
+    command: echo "tick at $env:CRONOVA_LOGICAL_DATETIME"
 ```
 
 Wait a minute, then check it:
@@ -93,11 +93,11 @@ The 02:00 run for July 6th has `logical_date = 2026-07-06`, even if the schedule
 ```yaml
 tasks:
   - id: build
-    type: shell
+    type: powershell
     command: python report.py --date {{ logical_date }}      # via template
   - id: notify
-    type: shell
-    command: echo "built report for $CRONOVA_LOGICAL_DATE"   # via env var
+    type: powershell
+    command: echo "built report for $env:CRONOVA_LOGICAL_DATE"   # via env var
     deps: [build]
 ```
 
@@ -121,7 +121,7 @@ start_date: 2026-07-01
 catchup: true
 tasks:
   - id: build
-    type: shell
+    type: powershell
     command: echo "reporting for {{ logical_date }}"
 ```
 
@@ -166,8 +166,8 @@ Check it: during a backfill, `./cronova runs daily_report` now shows up to three
 
 Pausing stops the scheduler from creating new runs without touching the YAML. Flip the pause toggle on the DAG in the console, or use the CLI — `pause` talks to the running server's REST API, so point the CLI at it first:
 
-```bash
-export CRONOVA_SERVER=http://localhost:8090
+```powershell
+$env:CRONOVA_SERVER = 'http://localhost:8090'
 ./cronova pause daily_report
 ```
 

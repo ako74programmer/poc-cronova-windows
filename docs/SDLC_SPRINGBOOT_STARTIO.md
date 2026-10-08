@@ -45,9 +45,9 @@ Migracja na branchu `feature/windows-cmd-runtime-sdlc-2026-09-26` zachowuje pię
 | `compile_loop` | `internal/scripts/ai-review-fix-loop` | `internal/scripts/ai-review-fix-loop.ps1` | `-w workspaces/springboot-startio -p app -k com.example.demo -r default -y python` |
 | `tests` | `internal/scripts/run-tests` | `internal/scripts/run-tests.ps1` | `-w workspaces/springboot-startio -p app` |
 
-Zmiana DAG-a ogranicza się do `type: shell` → `type: powershell` i wywołania odpowiadającego modułu `.ps1`. Dla trzech opcji scaffoldingu Bash rozróżnia wielkość liter (`-p`/`-P` i `-c`/`-C`), czego aliasy parametrów PowerShell nie mogą zrobić; dlatego mapują się na jednoznaczne parametry nazwane przy zachowaniu wartości i semantyki. Dla Maven, Python i pobierania PowerShell używa `Start-Process`, osobnych plików stdout/stderr oraz jawnego `ExitCode`. `curl.exe`/`wget.exe` są szukane zarówno przez PowerShell `PATH`, jak i odziedziczone `CRONOVA_WINDOWS_PATH`. Windows runner zachowuje zmienne środowiskowe bez względu na wielkość liter, w tym `PATH`, `PATHEXT`, `SystemRoot` i `ComSpec`; `PATHEXT` jest potrzebne zagnieżdżonemu `cmd.exe`, które Surefire wykorzystuje do uruchomienia `java` bez jawnego rozszerzenia `.exe`. Prompty CRUD/review zachowują wymagania Bash, w tym pojedyncze escapowanie nowych linii; helpery Python walidują POM XML przed zapisem.
+Zmiana DAG-a ogranicza się do `type: shell` → `type: powershell` (`type: shell` jest obecnie odrzucany przez parser) i wywołania odpowiadającego modułu `.ps1`. Dla trzech opcji scaffoldingu Bash rozróżnia wielkość liter (`-p`/`-P` i `-c`/`-C`), czego aliasy parametrów PowerShell nie mogą zrobić; dlatego mapują się na jednoznaczne parametry nazwane przy zachowaniu wartości i semantyki. Dla Maven, Python i pobierania PowerShell używa `Start-Process`, osobnych plików stdout/stderr oraz jawnego `ExitCode`. `curl.exe`/`wget.exe` są szukane zarówno przez PowerShell `PATH`, jak i odziedziczone `CRONOVA_WINDOWS_PATH`. Windows runner zachowuje zmienne środowiskowe bez względu na wielkość liter, w tym `PATH`, `PATHEXT`, `SystemRoot` i `ComSpec`; `PATHEXT` jest potrzebne zagnieżdżonemu `cmd.exe`, które Surefire wykorzystuje do uruchomienia `java` bez jawnego rozszerzenia `.exe`. Prompty CRUD/review zachowują wymagania Bash, w tym pojedyncze escapowanie nowych linii; helpery Python walidują POM XML przed zapisem.
 
-Walidacja sandboxowa (parser PowerShell, helper POM, składnia Python, kontrakt DAG-a i dostępne testy) nie zastępuje testu Windows. Runtime Windows został potwierdzony 2026-10-02: run `sdlc_springboot_startio__manual_1790952167446808200` na commicie `c041ee0a1e1cac91ce6b07ffb848d4658d9f0d9e` zakończył się sukcesem, wszystkie pięć tasków miało status `success`, a runtime wyniósł 46 s. Git Bash i WSL nie były użyte.
+Walidacja sandboxowa (parser PowerShell, helper POM, składnia Python, kontrakt DAG-a i dostępne testy) nie zastępuje testu Windows. Runtime Windows został potwierdzony 2026-10-02: run `sdlc_springboot_startio__manual_1790952167446808200` na commicie `c041ee0a1e1cac91ce6b07ffb848d4658d9f0d9e` zakończył się sukcesem, wszystkie pięć tasków miało status `success`, a runtime wyniósł 46 s. Bash i WSL nie były użyte.
 
 ## Przepływ krok po kroku
 
@@ -55,17 +55,13 @@ Walidacja sandboxowa (parser PowerShell, helper POM, składnia Python, kontrakt 
 
 **Wywołanie:**
 
-```bash
-bash internal/scripts/fetch-springboot-project \
-  -t maven-project -l java -b 4.0.8 \
-  -g com.example -a demo -n com.example.demo \
-  -p jar -c properties -j 21 -d web \
-  -w workspaces/springboot-startio -P app -C
+```powershell
+& .\internal\scripts\fetch-springboot-project.ps1 -t maven-project -l java -b 4.0.8 -g com.example -a demo -n com.example.demo -Packaging jar -c properties -j 21 -d web -w workspaces/springboot-startio -Project app -Clean
 ```
 
 **Co ma robić skrypt:** `internal/scripts/fetch-springboot-project` składa URL do `https://start.spring.io/starter.zip`, pobiera ZIP przez `curl` (lub `wget` jako fallback), a następnie rozpakowuje projekt do `workspaces/springboot-startio/app`. `-C` usuwa wcześniej istniejący katalog docelowy przed rozpakowaniem. Ustawienia generatora: Maven, Java, Spring Boot `4.0.8`, Java `21`, `jar`, konfiguracja `properties`, zależność `web`, grupa `com.example`, artefakt `demo`, pakiet `com.example.demo`.
 
-**Poprawka wprowadzona w tym branchu:** skrypt używa teraz `find_python` z `internal/scripts/common_toolchain.sh`, obsługuje `-y PYTHON`, preferuje jawne `CRONOVA_PYTHON` nad ogólnym wyborem `python`/`python3` przekazanym przez DAG i normalizuje ścieżkę Windows dla Git Bash. Przy braku interpretera albo błędnej jawnej ścieżce resolver kończy się czytelnym błędem przed pobieraniem. Zachowanie na Windows jest **do potwierdzenia przez test runtime**.
+**Poprawka wprowadzona w tym branchu:** skrypt używa teraz `find_python` z `internal/scripts/common_toolchain.sh`, obsługuje `-y PYTHON`, preferuje jawne `CRONOVA_PYTHON` nad ogólnym wyborem `python`/`python3` przekazanym przez DAG i normalizował ścieżkę Windows dla dawnego wariantu Bash (obecnie zastąpionego modułem `fetch-springboot-project.ps1`). Przy braku interpretera albo błędnej jawnej ścieżce resolver kończy się czytelnym błędem przed pobieraniem. Zachowanie na Windows jest **do potwierdzenia przez test runtime**.
 
 ### 2. `compile_skeleton` — kompilacja czystego projektu
 
@@ -111,7 +107,7 @@ Skrypt ładuje ten sam helper toolchain, zapisuje `toolchain-runtime.txt`, a nas
 - **Cache Maven:** `.m2/repository` (współdzielony pomiędzy przebiegami DAG-ów; ignorowany przez Git).
 - **Pliki tymczasowe:** `.tmp/` (ignorowany przez Git), m.in. ZIP ze Spring Initializr, prompty i odpowiedzi AI oraz `compile.log`.
 - **Konfiguracja AI:** `data/cronova.db` lub zmienne `CRONOVA_AI_*`; sekret tokenu nie jest częścią definicji DAG-a.
-- **Toolchain Windows:** Cronova uruchomiony przez `start.cmd` przekazuje `CRONOVA_WINDOWS_PATH` oraz ustawienia Java/Maven zgodnie z Windows test planem. Aktywna ścieżka PowerShell nie wymaga Git Bash ani `cygpath`.
+- **Toolchain Windows:** Cronova uruchomiony przez `start.cmd` przekazuje `CRONOVA_WINDOWS_PATH` oraz ustawienia Java/Maven zgodnie z Windows test planem. Aktywna ścieżka PowerShell nie wymaga Basha ani `cygpath`.
 
 Kilka skryptów zapisuje do stałych nazw plików w `.tmp/` (`springboot-project.zip`, `ai_prompt.txt`, `ai_request.json`, `ai_response.json`, `compile.log`, `ai_review_prompt.txt`, itd.). `max_active_runs: 1` chroni przed dwoma równoległymi przebiegami **tego DAG-a**, ale nie przed równoległym użyciem tych samych plików tymczasowych przez inne DAG-i. W razie równoległych workflowów może dojść do kolizji.
 

@@ -1,34 +1,34 @@
-# Task types: shell, python, sql, jar, http
+# Task types: powershell, python, sql, jar, http
 
-Every task in a cronova **DAG** has a `type` that tells the workflow scheduler *how* to execute it. This chapter walks through all five — `shell`, `python`, `sql`, `jar`, and `http` — with a minimal runnable example of each, and shows which ones need tools installed on the host and which are self-contained in the binary.
+Every task in a cronova **DAG** has a `type` that tells the workflow scheduler *how* to execute it. This chapter walks through all five — `powershell`, `python`, `sql`, `jar`, and `http` — with a minimal runnable example of each, and shows which ones need tools installed on the host and which are self-contained in the binary.
 
-## `shell` — run any command
+## `powershell` — run any command
 
-A `shell` task runs its `command` as an OS subprocess via `sh -c`, so pipes, redirection, `$(...)` substitution, and environment variables all work exactly as they do in your terminal.
+A `powershell` task runs its `command` as an OS subprocess via `powershell.exe -Command`, so pipelines, redirection, `$(...)` subexpressions, and environment variables (`$env:NAME`) work exactly as they do in a PowerShell console. Cronova is Windows-only; `type: shell` is not supported and is rejected when the DAG loads.
 
-Create `dags/type_shell.yaml` (no `schedule`, so it only runs when you trigger it):
+Create `dags/type_powershell.yaml` (no `schedule`, so it only runs when you trigger it):
 
 ```yaml
-dag_id: type_shell
+dag_id: type_powershell
 tasks:
   - id: hello
-    type: shell
-    command: echo "hello from $(uname -s) at $CRONOVA_LOGICAL_DATETIME"
+    type: powershell
+    command: Write-Output "hello from $env:COMPUTERNAME at $env:CRONOVA_LOGICAL_DATETIME"
 ```
 
 Trigger it and check the result:
 
 ```bash
-cronova trigger type_shell
-cronova runs type_shell
+cronova trigger type_powershell
+cronova runs type_powershell
 ```
 
 The `hello` task goes to **success**. Open the run in the console at [http://localhost:8090](http://localhost:8090) and click the task — the log shows something like `hello from Darwin at 2026-07-07T09:00:00Z`.
 
 !!! note
-    `shell` is the **default** type — every task you wrote in the earlier chapters was a shell task. You can omit `type: shell` entirely.
+    `powershell` is the **default** type — every task you wrote in the earlier chapters was a PowerShell task. You can omit `type: powershell` entirely.
 
-A shell task can invoke anything installed on the host: a Python script, a Node CLI, `psql`, a compiled binary. It is also the only type that accepts the `project` field from the [previous chapter](projects.md).
+A PowerShell task can invoke anything installed on the host: a Python script, a Node CLI, `psql`, a compiled binary. It is also the only type that accepts the `project` field from the [previous chapter](projects.md).
 
 ## `python` — inline Python code
 
@@ -47,7 +47,7 @@ tasks:
       print("processing", os.environ["CRONOVA_LOGICAL_DATE"])
 ```
 
-The `CRONOVA_*` run variables are in the environment, just like in a shell task.
+The `CRONOVA_*` run variables are in the environment, just like in a PowerShell task.
 
 Trigger and check:
 
@@ -86,7 +86,7 @@ The task log shows the result: a row-returning statement (`SELECT`, `WITH`, `SHO
 
 ## `jar` — run a Java program
 
-A `jar` task runs a `java -jar …` command line. It executes with the same shell semantics as a `shell` task — flags, quoting, env vars, and `{{ }}` templates all behave identically — the type documents that this task is a Java job. It needs a JRE/JDK on the service `PATH`.
+A `jar` task runs a `java -jar …` command line. It executes with the same PowerShell semantics as a `powershell` task — flags, quoting, env vars, and `{{ }}` templates all behave identically — the type documents that this task is a Java job. It needs a JRE/JDK on the service `PATH`.
 
 ```yaml
 dag_id: type_jar
@@ -154,23 +154,23 @@ The five types split cleanly into two groups:
 
 | Type | Runs as | `command` holds | Needs on the host |
 |---|---|---|---|
-| `shell` | OS subprocess (`sh -c`) | any shell command | the tools the command invokes |
+| `powershell` | OS subprocess (`powershell.exe -Command`) | any PowerShell command | the tools the command invokes |
 | `python` | OS subprocess (`python3`) | Python code | `python3` on the service `PATH` |
 | `sql` | in-process (native driver) | the SQL query; `conn` selects the connection | nothing extra |
 | `jar` | OS subprocess (`java`) | a `java -jar …` command | a JRE/JDK on the `PATH` |
 | `http` | in-process HTTP client | — (use the `http:` spec) | nothing extra |
 
-`sql` and `http` are built into the cronova binary and work on a bare host. `shell`, `python`, and `jar` — and anything a shell task invokes — need that tool installed where the scheduler runs.
+`sql` and `http` are built into the cronova binary and work on a bare host. `powershell`, `python`, and `jar` — and anything a PowerShell task invokes — need that tool installed where the scheduler runs.
 
 !!! warning
-    When cronova runs as a systemd or launchd service, tasks inherit the **service's** `PATH`, which is usually much shorter than your interactive shell's. A command that works in your terminal can still fail as `command not found` under the service — see [Deployment](../DEPLOY.md) for the fix.
+    When cronova runs as a Windows service, tasks inherit the **service's** `PATH`, which is usually much shorter than your interactive shell's. A command that works in your terminal can still fail as `command not found` under the service — see [Deployment](../DEPLOY.md) for the fix.
 
 The full field-by-field schema for every type is in the [DAG Reference](../DAG_REFERENCE.md).
 
 ## What you learned
 
-- Every task has a `type`; `shell` is the default and runs `command` through `sh -c`.
-- `python` runs inline code with `python3`, and `jar` runs a `java -jar` command with shell semantics — both need their runtime on the service `PATH`.
+- Every task has a `type`; `powershell` is the default and runs `command` through `powershell.exe -Command`.
+- `python` runs inline code with `python3`, and `jar` runs a `java -jar` command with PowerShell semantics — both need their runtime on the service `PATH`.
 - `sql` (a `conn` id plus a query) and `http` (an `http:` spec with `method`, `url`, `headers`, `body`, `expected_status`) are self-contained in the binary, with templates available in queries, URLs, headers, and bodies.
 
 Next: make tasks resilient with [Retries, timeouts & pools](retries-timeouts-pools.md).

@@ -124,11 +124,8 @@ Sekcja `server` opisuje host/port aplikacji, ale ten DAG nie uruchamia serwera H
 
 Wywołanie:
 
-```bash
-bash scripts/sdlc/angular/validate.sh \
-  --config configs/sdlc-angular.yaml \
-  --workspace .workspaces/angular \
-  --artifacts artifacts/angular
+```powershell
+& .\internal\scripts\angular-validate-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
 ```
 
 Używane skrypty:
@@ -163,11 +160,8 @@ Nie jest to pełny parser ani schema validator YAML. `config-value.sh` obsługuj
 
 Wywołanie:
 
-```bash
-bash scripts/sdlc/angular/scaffold.sh \
-  --config configs/sdlc-angular.yaml \
-  --workspace .workspaces/angular \
-  --artifacts artifacts/angular
+```powershell
+& .\internal\scripts\angular-scaffold-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
 ```
 
 Używany skrypt:
@@ -204,11 +198,8 @@ Skrypt korzysta z sieci npm, jeśli Angular CLI nie jest dostępne w cache npx. 
 
 Wywołanie:
 
-```bash
-bash scripts/sdlc/angular/install.sh \
-  --config configs/sdlc-angular.yaml \
-  --workspace .workspaces/angular \
-  --artifacts artifacts/angular
+```powershell
+& .\internal\scripts\angular-npm-install-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
 ```
 
 Używany skrypt:
@@ -242,11 +233,8 @@ artifacts/angular/logs/angular-npm-ci.log
 
 Wywołanie:
 
-```bash
-bash scripts/sdlc/angular/lint.sh \
-  --config configs/sdlc-angular.yaml \
-  --workspace .workspaces/angular \
-  --artifacts artifacts/angular
+```powershell
+& .\internal\scripts\angular-lint-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
 ```
 
 Używany skrypt:
@@ -273,11 +261,8 @@ DAG nie definiuje własnych reguł lintowania. Konkretne narzędzie i konfigurac
 
 Wywołanie:
 
-```bash
-bash scripts/sdlc/angular/test.sh \
-  --config configs/sdlc-angular.yaml \
-  --workspace .workspaces/angular \
-  --artifacts artifacts/angular
+```powershell
+& .\internal\scripts\angular-test-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
 ```
 
 Używany skrypt:
@@ -304,11 +289,8 @@ Komentarz w skrypcie wyraźnie pozostawia wybór runnera projektowi: może to by
 
 Wywołanie:
 
-```bash
-bash scripts/sdlc/angular/build.sh \
-  --config configs/sdlc-angular.yaml \
-  --workspace .workspaces/angular \
-  --artifacts artifacts/angular
+```powershell
+& .\internal\scripts\angular-build-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
 ```
 
 Używany skrypt:
@@ -372,11 +354,8 @@ Jeżeli skonfigurowany output path nie istnieje, skrypt ma fallback do `dist/ite
 
 Wywołanie:
 
-```bash
-bash scripts/sdlc/angular/smoke.sh \
-  --config configs/sdlc-angular.yaml \
-  --workspace .workspaces/angular \
-  --artifacts artifacts/angular
+```powershell
+& .\internal\scripts\angular-smoke-test-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
 ```
 
 Używany skrypt:
@@ -522,7 +501,7 @@ Ocena nie oznacza pełnej niezależności od stosu. Klocki są uniwersalne głó
 
 Przed uznaniem przepływu za zweryfikowany agent Windows powinien potwierdzić:
 
-- użycie wskazanego Git Bash, Node i npm;
+- użycie wskazanego PowerShell, Node i npm;
 - widoczność DAG-a i poprawną kolejność siedmiu tasków;
 - działanie Angular CLI przez `npx`;
 - powtarzalne `npm ci`;

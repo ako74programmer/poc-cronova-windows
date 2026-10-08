@@ -28,7 +28,7 @@ Everything runs locally: one `cronova` binary, an embedded SQLite database, and 
 5. **[Template variables](template-variables.md)** — inject `{{ logical_date }}`, `{{ run_id }}`, and friends into commands, or read them as `CRONOVA_*` environment variables.
 6. **[Variables, connections & params](variables-connections-params.md)** — keep secrets and settings out of YAML with `{{ var.KEY }}`, `{{ conn.ID.field }}`, and per-run `{{ params.KEY }}`.
 7. **[Projects: run your own code](projects.md)** — upload a script or a whole codebase and run it from a fresh, isolated working directory per attempt.
-8. **[Task types](task-types.md)** — beyond `shell`: `python`, `sql`, `jar`, and `http` tasks, and when to use each.
+8. **[Task types](task-types.md)** — beyond `powershell`: `python`, `sql`, `jar`, and `http` tasks, and when to use each.
 9. **[Retries, timeouts & pools](retries-timeouts-pools.md)** — make the pipeline resilient with `retries`, `retry_delay`, `timeout`, SLAs, and global concurrency pools.
 10. **[Cross-DAG dependencies](cross-dag.md)** — chain whole DAGs with `trigger_after` and get webhook notifications on success or failure.
 

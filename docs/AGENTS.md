@@ -70,8 +70,8 @@ the log of the failed task", "retry it", or "validate this DAG then create it".
 Point any command at a server with `-server`/`-token` (or `CRONOVA_SERVER` /
 `CRONOVA_TOKEN`) and ask for JSON with `-o json`:
 
-```bash
-export CRONOVA_SERVER=http://localhost:8090 CRONOVA_TOKEN=cnv_pat_…
+```powershell
+$env:CRONOVA_SERVER = 'http://localhost:8090'; $env:CRONOVA_TOKEN = 'cnv_pat_…'
 
 cronova dags -o json                          # list DAGs
 cronova get etl_daily -o json                 # one DAG definition
@@ -93,8 +93,8 @@ subcommand:
 
 ```bash
 cronova api GET  /api/dags
-cronova api POST /api/dags/validate '{"dag_id":"x","tasks":[{"id":"a","type":"shell","command":"echo hi"}]}'
-cronova api POST /api/dags/build    '{"dag_id":"x","tasks":[{"id":"a","type":"shell","command":"echo hi"}]}'
+cronova api POST /api/dags/validate '{"dag_id":"x","tasks":[{"id":"a","type":"powershell","command":"echo hi"}]}'
+cronova api POST /api/dags/build    '{"dag_id":"x","tasks":[{"id":"a","type":"powershell","command":"echo hi"}]}'
 ```
 
 A non-2xx prints the error body and exits non-zero. The machine-readable OpenAPI

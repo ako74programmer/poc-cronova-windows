@@ -4,7 +4,7 @@
 
 Dokument opisuje definicję [`dags/sdlc_springboot.yaml`](../dags/sdlc_springboot.yaml), skrypty wywoływane przez ten DAG oraz ich kontrakty wejścia/wyjścia. Analiza została wykonana na branchu `feature/windows-cmd-runtime-sdlc-2026-09-26`.
 
-To jest **analiza statyczna kodu**, a nie raport wykonania. DAG nie został uruchomiony w tym sandboxie na Windowsie. Weryfikacja runtime'u Windows, Git Bash, Javy, Mavena, Pythona i konfiguracji providera AI pozostaje zadaniem agenta działającego na Windowsie.
+To jest **analiza statyczna kodu**, a nie raport wykonania. DAG nie został uruchomiony w tym sandboxie na Windowsie. Weryfikacja runtime'u Windows (PowerShell), Javy, Mavena, Pythona i konfiguracji providera AI pozostaje zadaniem agenta działającego na Windowsie.
 
 ## 1. Cel przepływu
 
@@ -77,12 +77,8 @@ Suma timeoutów nie jest gwarantowanym czasem wykonania DAG-a. Jest to pięć ni
 
 Wywołanie z DAG-a:
 
-```bash
-bash internal/scripts/copy-template-to-workspace \
-  -t springboot-simple \
-  -w workspaces/springboot \
-  -p app \
-  -c
+```powershell
+& .\internal\scripts\copy-template-to-workspace.ps1 -t springboot-simple -w workspaces/springboot -p app -c
 ```
 
 Używany skrypt:
@@ -114,10 +110,8 @@ Ten krok nie wymaga Javy, Mavena ani Pythona. Jest operacją na plikach. Jest **
 
 Wywołanie:
 
-```bash
-bash internal/scripts/compile-project \
-  -w workspaces/springboot \
-  -p app
+```powershell
+& .\internal\scripts\maven-compile.ps1 -w workspaces/springboot -p app
 ```
 
 Używany skrypt:
@@ -148,13 +142,8 @@ Istotne rozróżnienie: `compile-project` używa systemowego polecenia `mvn`, a 
 
 Wywołanie:
 
-```bash
-bash internal/scripts/ai-generate-crud \
-  -w workspaces/springboot \
-  -p app \
-  -k com.example.demo \
-  -r default \
-  -y python
+```powershell
+& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/springboot_crud.txt -w workspaces/springboot -p app -k com.example.demo -r default -y python
 ```
 
 Używane pliki:
@@ -193,13 +182,8 @@ Ten task nie kompiluje zmian i nie tworzy testów CRUD. Weryfikacja poprawności
 
 Wywołanie:
 
-```bash
-bash internal/scripts/ai-review-fix-loop \
-  -w workspaces/springboot \
-  -p app \
-  -k com.example.demo \
-  -r default \
-  -y python
+```powershell
+& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/springboot -LoopProject app -LoopPackage com.example.demo -LoopProvider default -LoopPython python
 ```
 
 Używane pliki:
@@ -230,10 +214,8 @@ AI jest wywoływane tylko po nieudanej kompilacji. Jeśli kod wygenerowany w `ai
 
 Wywołanie:
 
-```bash
-bash internal/scripts/run-tests \
-  -w workspaces/springboot \
-  -p app
+```powershell
+& .\internal\scripts\maven-test.ps1 -w workspaces/springboot -p app
 ```
 
 Używany skrypt:
@@ -281,7 +263,7 @@ DAG nie zawiera tokena ani adresu providera. Provider `default` jest rozwiązywa
 1. `CRONOVA_AI_BASE_URL`, `CRONOVA_AI_MODEL` i opcjonalnie `CRONOVA_AI_TOKEN`;
 2. `data/cronova.db`, z tabeli `ai_providers` i wpisu domyślnego lub wskazanego przez `-r`.
 
-`-y python` w definicji DAG-a jest selektorem ogólnym. Wspólny resolver preferuje konkretną ścieżkę z `CRONOVA_PYTHON`, jeśli jest ustawiona, co ma znaczenie w Git Bash na Windowsie.
+`-y python` w definicji DAG-a jest selektorem ogólnym. Wspólny resolver preferuje konkretną ścieżkę z `CRONOVA_PYTHON`, jeśli jest ustawiona, co ma znaczenie dla zadań PowerShell na Windowsie.
 
 ### Katalogi robocze i efekty uboczne
 
@@ -325,7 +307,7 @@ config   = konfiguracja runtime/providera poza DAG-iem
 | `ai-generate-crud` | Dodanie standardowego CRUD Spring Boot | Średnia | Prompt i nazwy klas są wyspecjalizowane dla `Item` |
 | `ai-review-fix-loop` | Kompilacja i naprawa błędów przez AI | Średnia/wysoka | Założenia o projekcie Java/Maven i formacie odpowiedzi AI |
 | `run-tests` | Uruchomienie `mvn test` | Wysoka w obrębie Maven | Nie definiuje ani nie wykonuje testów endpointów |
-| `common_toolchain.sh` | Java/Maven/Python/PATH, w tym Windows/Git Bash | Wysoka | Zależny od poprawnego runtime'u hosta |
+| `common_toolchain.sh` | Java/Maven/Python/PATH (historyczny wariant Bash; obecnie zastąpiony modułami `.ps1`) | Wysoka | Zależny od poprawnego runtime'u hosta |
 | `internal/scripts/ai/add_crud.py` | HTTP request i zapis odpowiedzi CRUD | Średnia | Kontrakt `choices[0].message.content` i konkretny JSON |
 | `internal/scripts/ai/review_fix_v2.py` | HTTP request i zapis plików zwróconych przez AI | Średnia | Zakłada poprawne względne ścieżki w odpowiedzi AI |
 
@@ -383,7 +365,7 @@ DAG spełnia założenie reużywalnych klocków LEGO:
 
 Ocena nie oznacza pełnej uniwersalności każdego skryptu. Klocki są reużywalne w określonej domenie: Spring Boot/Maven/AI code generation. Przed uznaniem przepływu za zweryfikowany należy wykonać na Windowsie test runtime'u oraz pełny run DAG-a, szczególnie dla:
 
-- poprawnego uruchamiania `bash` i skryptów z katalogu repozytorium;
+- poprawnego uruchamiania `powershell.exe` i skryptów `.ps1` z katalogu repozytorium;
 - rozwiązywania `CRONOVA_JAVA_HOME`, `CRONOVA_MAVEN_HOME` i `CRONOVA_PYTHON`;
 - dostępności `java`, `mvn`, `python` i sieci do endpointu AI;
 - czyszczenia i odtworzenia `workspaces/springboot/app`;

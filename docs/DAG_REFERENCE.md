@@ -103,8 +103,8 @@ Each entry under `tasks:` describes one task.
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `id` | string | — (required) | Task identifier, unique within the DAG. |
-| `type` | string | `shell` | One of `powershell`, `shell`, `python`, `sql`, `jar`, `http`, `subdag`. On Windows, `shell` is a legacy alias for `powershell`. See [Task types](#task-types). |
-| `command` | string | — | The command (shell), code (python), or query (sql). Supports [template variables](#template-variables). Not used for `http`. |
+| `type` | string | `powershell` | One of `powershell`, `python`, `sql`, `jar`, `http`, `subdag`. `type: shell` is rejected at parse time (use `powershell`). See [Task types](#task-types). |
+| `command` | string | — | The command (powershell), code (python), or query (sql). Supports [template variables](#template-variables). Not used for `http`. |
 | `deps` | list of task ids | — | Upstream tasks that must satisfy this task's `trigger_rule` before it runs. Edges are cycle-checked. |
 | `pool` | string | `default` | The [resource pool](#resource-pools) this task consumes a slot from. |
 | `priority` | int | `0` | Higher runs first when tasks contend for the same pool. |
@@ -119,7 +119,7 @@ Each entry under `tasks:` describes one task.
 | `when` | string | — | Runtime condition template (e.g. `"{{ params.env }}"` or `"{{ ti.check.proceed }}"`), evaluated once the task is otherwise ready. A falsy render (`""`, `false`, `0`, `no`, or an unresolved placeholder) marks the task **skipped**. |
 | `foreach` | list of strings | — | Fans the task out into one task per item at definition time: ids become `<id>_<index>`, `{{ item }}` / `{{ item_index }}` are substituted in `command`/`when`, and downstream `deps` on the original id cover every shard. Each shard keeps its own retries, log, and state. |
 | `conn` | string | — | Connection id for a `sql` task (selects driver + builds the DSN). |
-| `project` | string | — | Name of an uploaded project directory to stage as the working directory (shell tasks; not combinable with `worker_group`). See [Getting Started → Projects](GETTING_STARTED.md). |
+| `project` | string | — | Name of an uploaded project directory to stage as the working directory (`powershell` tasks; not combinable with `worker_group`). See [Getting Started → Projects](GETTING_STARTED.md). |
 | `http` | object | — | HTTP request spec for `http` tasks (see below). |
 | `subdag` | string | — | For `type: subdag`: the DAG to run as a **sub-workflow**. The task launches a linked child run (visible in run history with trigger type `subdag` and a parent link) and mirrors its terminal state. Cancelling the parent cascades to the child; a task retry starts a fresh child run (the old one stays as history). Nesting is capped at 5 levels as a cycle backstop. |
 | `depends_on_dag` | object | — | Cross-DAG **wait**: hold this task until another DAG's matching period run has *succeeded*. Fields: `dag` (target id), `offset` (which period, in [date-expression](#date-expressions) offset grammar — `""`/`same`, `- 1d`, `.month_start`…), `timeout` (seconds from run start; 0 = wait until `dagrun_timeout`), `on_timeout` (`fail` default, or `skip`). A failed target run keeps the wait alive (it may be retried); only the timeout resolves the standoff. |
@@ -140,19 +140,19 @@ Set under a task's `http:` key when `type: http`:
 
 | Type | Runs as | `command` holds | Needs on host |
 |---|---|---|---|
-| `shell` | OS subprocess (`sh -c`) | any shell command | the tools the command invokes |
+| `powershell` | OS subprocess (`powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command`) | any PowerShell command | the tools the command invokes |
 | `python` | OS subprocess (`python3`) | Python code | `python3` on the service `PATH` |
 | `sql` | in-process (native driver) | the SQL query; `conn` selects the connection | nothing extra |
 | `jar` | OS subprocess (`java`) | a `java -jar …` command | a JRE/JDK on the `PATH` |
 | `http` | in-process HTTP client | — (use the `http:` spec) | nothing extra |
 | `subdag` | scheduler-internal (child run) | — (use the `subdag:` field) | nothing extra |
 
-`sql` and `http` tasks are self-contained in the binary. `shell`, `python`, and `jar` tasks (and anything a shell task invokes) require that tool installed and on the **service** `PATH` — see [Deployment](DEPLOY.md).
+`sql` and `http` tasks are self-contained in the binary. `powershell`, `python`, and `jar` tasks (and anything a PowerShell task invokes) require that tool installed and on the **service** `PATH` — see [Deployment](DEPLOY.md).
 
 ```yaml
 tasks:
-  - id: shell_task
-    type: shell
+  - id: powershell_task
+    type: powershell
     command: "echo running {{ logical_date }}"
   - id: python_task
     type: python
@@ -220,7 +220,7 @@ An expression that does not parse (unknown unit, bad `%` token, stray text) is
 left in the command verbatim — typos stay visible in the task log instead of
 silently rendering empty.
 
-Shell tasks do not inherit the scheduler's complete process environment. Cronova
+PowerShell tasks do not inherit the scheduler's complete process environment. Cronova
 passes a small runtime-safe set (`PATH`, locale, home/temp and certificate
 variables) plus the task-specific `CRONOVA_*` values above. This prevents server
 credentials such as `CRONOVA_ADMIN_PASSWORD` from reaching task code. Add a
@@ -238,12 +238,12 @@ Plus UI-managed references, resolved server-side (secrets never enter the blanke
 
 A task can hand small values (row counts, generated file paths, ids) to its
 downstream tasks by writing a **flat JSON string map** to the file named in
-`$CRONOVA_OUTPUT` (up to 64 KB):
+`$env:CRONOVA_OUTPUT` (up to 64 KB):
 
 ```yaml
 tasks:
   - id: produce
-    command: 'echo "{\"rows\":\"1234\"}" > "$CRONOVA_OUTPUT"'
+    command: 'Set-Content -LiteralPath $env:CRONOVA_OUTPUT -Value ''{"rows":"1234"}'''
   - id: consume
     command: 'echo upstream wrote {{ ti.produce.rows }} rows'
     deps: [produce]
@@ -257,7 +257,7 @@ move real datasets through external storage.
 ### Self-skipping tasks
 
 A task that exits with code **99** is recorded as `skipped` instead of failed —
-the shell-level way to say "nothing to do here today". Combine with downstream
+the script-level way to say "nothing to do here today". Combine with downstream
 `trigger_rule: none_failed` (skip passes through) or the default `all_success`
 (skip blocks) to shape what happens next; `when:` (see task fields) is the
 declarative alternative evaluated before the task even starts.

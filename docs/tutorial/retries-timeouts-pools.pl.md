@@ -13,16 +13,16 @@ dag_id: hello
 schedule: "@every 5m"
 tasks:
   - id: greet
-    type: shell
+    type: powershell
     command: echo "hello from cronova"
   - id: flaky
-    type: shell
+    type: powershell
     command: |
-      if [ "$CRONOVA_ATTEMPT" -lt 2 ]; then
-        echo "attempt $CRONOVA_ATTEMPT failed" >&2
+      if ([int]$env:CRONOVA_ATTEMPT -lt 2) {
+        [Console]::Error.WriteLine("attempt $env:CRONOVA_ATTEMPT failed")
         exit 1
-      fi
-      echo "attempt $CRONOVA_ATTEMPT succeeded"
+      }
+      echo "attempt $env:CRONOVA_ATTEMPT succeeded"
     deps: [greet]
     retry:
       count: 3
@@ -62,13 +62,13 @@ Zadanie, które utknie w nieskończonej pętli lub czeka na zewnętrzny zasób, 
 
 ```yaml
   - id: slow
-    type: shell
-    command: sleep 300
+    type: powershell
+    command: Start-Sleep 300
     deps: [greet]
     timeout: 5s
 ```
 
-Po 5 sekundach cronova zabija proces `sleep` i oznacza zadanie jako `failed`. Jeśli zdefiniowałeś `retry`, zadanie zostanie ponowione; w przeciwnym razie uruchomienie kończy się niepowodzeniem.
+Po 5 sekundach cronova zabija proces `powershell.exe` (`Start-Sleep`) i oznacza zadanie jako `failed`. Jeśli zdefiniowałeś `retry`, zadanie zostanie ponowione; w przeciwnym razie uruchomienie kończy się niepowodzeniem.
 
 !!! warning
 
@@ -92,16 +92,16 @@ pools:
     size: 2
 tasks:
   - id: query_1
-    type: shell
-    command: sleep 10 && echo "query 1 done"
+    type: powershell
+    command: Start-Sleep 10; Write-Output "query 1 done"
     pool: db_pool
   - id: query_2
-    type: shell
-    command: sleep 10 && echo "query 2 done"
+    type: powershell
+    command: Start-Sleep 10; Write-Output "query 2 done"
     pool: db_pool
   - id: query_3
-    type: shell
-    command: sleep 10 && echo "query 3 done"
+    type: powershell
+    command: Start-Sleep 10; Write-Output "query 3 done"
     pool: db_pool
 ```
 
@@ -129,7 +129,7 @@ Typowa konfiguracja produkcyjna wygląda tak:
 dag_id: etl
 tasks:
   - id: extract
-    type: shell
+    type: powershell
     command: python extract.py
     retry:
       count: 2
@@ -137,7 +137,7 @@ tasks:
     timeout: 5m
     pool: api_pool
   - id: transform
-    type: shell
+    type: powershell
     command: python transform.py
     deps: [extract]
     retry:
@@ -145,7 +145,7 @@ tasks:
       interval: 10s
     timeout: 10m
   - id: load
-    type: shell
+    type: powershell
     command: python load.py
     deps: [transform]
     timeout: 5m

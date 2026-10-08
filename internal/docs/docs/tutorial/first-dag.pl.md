@@ -1,10 +1,10 @@
 # Twój pierwszy DAG
 
-W tym rozdziale napiszesz swój pierwszy **DAG** — workflow dwóch zadań shell połączonych zależnością — a następnie uruchomisz go z harmonogramem cronova i obserwować jego sukces, zarówno z CLI, jak i z konsoli webowej.
+W tym rozdziale napiszesz swój pierwszy **DAG** — workflow dwóch zadań PowerShell połączonych zależnością — a następnie uruchomisz go z harmonogramem cronova i obserwować jego sukces, zarówno z CLI, jak i z konsoli webowej.
 
 ## Utwórz plik DAG-a
 
-DAG (skierowany graf acykliczny) to zbiór zadań połączonych krawędziami zależności, zdefiniowany jako pojedynczy plik YAML w katalogu `./dags/`. Każde zadanie shell działa jako podproces OS.
+DAG (skierowany graf acykliczny) to zbiór zadań połączonych krawędziami zależności, zdefiniowany jako pojedynczy plik YAML w katalogu `./dags/`. Każde zadanie PowerShell działa jako podproces OS.
 
 Utwórz `dags/hello.yaml`:
 
@@ -12,11 +12,11 @@ Utwórz `dags/hello.yaml`:
 dag_id: hello
 tasks:
   - id: greet
-    type: shell
+    type: powershell
     command: echo "hello from cronova"
   - id: report
-    type: shell
-    command: echo "run $CRONOVA_RUN_ID finished greeting"
+    type: powershell
+    command: echo "run $env:CRONOVA_RUN_ID finished greeting"
     deps: [greet]
 ```
 
@@ -42,23 +42,23 @@ Lista zadań — również wymagana. Każdy wpis dostaje `id`, które musi być 
 ### `type`
 
 ```yaml
-    type: shell
+    type: powershell
 ```
 
-Typ zadania. `shell` uruchamia `command` jako podproces OS przez `sh -c`, więc wszystko, co możesz wpisać w terminalu, działa tutaj. Jest jeszcze cztery inne typy — `python`, `sql`, `jar` i `http` — omówione dalej w tutorialu.
+Typ zadania. `powershell` uruchamia `command` jako podproces OS przez `powershell.exe -Command`, więc używaj składni PowerShell (`$env:NAZWA` dla zmiennych środowiskowych). Cronova działa tylko na Windows; `type: shell` jest odrzucany. Jest jeszcze cztery inne typy — `python`, `sql`, `jar` i `http` — omówione dalej w tutorialu.
 
 !!! tip
 
-    `shell` to domyślny `type`, więc możesz pominąć te dwie linie całkowicie.
+    `powershell` to domyślny `type`, więc możesz pominąć te dwie linie całkowicie.
     Wypisujemy je tutaj, by plik był jednoznaczny.
 
 ### `command`
 
 ```yaml
-    command: echo "run $CRONOVA_RUN_ID finished greeting"
+    command: echo "run $env:CRONOVA_RUN_ID finished greeting"
 ```
 
-To, co wykonuje zadanie. Zwróć uwagę na `$CRONOVA_RUN_ID`: cronova wstrzykuje informacje o uruchomieniu do środowiska każdego zadania jako zmienne `CRONOVA_*` — id uruchomienia, id DAG-a, id zadania, logiczna data i więcej. Twoje skrypty mogą z nich korzystać bez żadnego okablowania.
+To, co wykonuje zadanie. Zwróć uwagę na `$env:CRONOVA_RUN_ID`: cronova wstrzykuje informacje o uruchomieniu do środowiska każdego zadania jako zmienne `CRONOVA_*` — id uruchomienia, id DAG-a, id zadania, logiczna data i więcej. Twoje skrypty mogą z nich korzystać bez żadnego okablowania.
 
 ### `deps`
 

@@ -97,7 +97,7 @@ max_active_runs: 1
 default_retries: 2
 tasks:
   - id: extract
-    type: shell
+    type: powershell
     command: "python extract.py --date {{ logical_date }}"
     pool: default
   - id: transform
@@ -116,12 +116,12 @@ trigger_after:               # opcjonalnie: uruchom po sukcesie innego DAG-u
 
 ### Uruchamiaj własne skrypty i projekty
 
-Prześlij pojedynczy skrypt, cały folder projektu lub `.zip` w konsoli (edytor zadań → **Project**), a następnie wskaż go w zadaniu typu shell:
+Prześlij pojedynczy skrypt, cały folder projektu lub `.zip` w konsoli (edytor zadań → **Project**), a następnie wskaż go w zadaniu typu `powershell`:
 
 ```yaml
 tasks:
   - id: run_main
-    type: shell
+    type: powershell
     command: python3 main.py     # uruchamia się z cwd = czysta kopia projektu
     project: my_app
 ```
@@ -132,11 +132,11 @@ Każda próba otrzymuje **świeżą izolowaną kopię** projektu jako swój kata
 
 Pozwól AI orkiestrować cronova przez **to samo API uwierzytelniane tokenem i chronione rolami** — jako natywne **narzędzia MCP** lub przez **zdalne JSON CLI**:
 
-```bash
+```powershell
 cronova tokens create my-agent -role admin     # wygeneruj token (lokalnie, raz)
 cronova mcp                                     # serwer MCP przez stdio (Claude itp.)
 
-export CRONOVA_SERVER=http://localhost:8090 CRONOVA_TOKEN=cnv_pat_…
+$env:CRONOVA_SERVER = 'http://localhost:8090'; $env:CRONOVA_TOKEN = 'cnv_pat_…'
 cronova dags -o json                            # zdalne CLI, wyjście JSON
 cronova api POST /api/dags/validate '{"dag_id":"x","tasks":[…]}'   # walidacja dry-run
 ```
@@ -145,7 +145,7 @@ cronova api POST /api/dags/validate '{"dag_id":"x","tasks":[…]}'   # walidacja
 
 ## Wdrażanie na produkcję
 
-cronova to **scheduler, a nie runtime**: uruchamia każde zadanie przy użyciu **własnych interpreterów hosta** (`sh`, `python3`, `java`, `psql`, …), w stylu Azkabana. Zarządzane instalacje uruchamiają statyczny scheduler plus statyczny, samodzielny executor pod **systemd (Linux)** lub **launchd (macOS)**, bez kontenera ani dołączonego środowiska uruchomieniowego.
+cronova to **scheduler, a nie runtime**: uruchamia każde zadanie przy użyciu **własnych interpreterów hosta** (`powershell.exe`, `python`, `java`, `psql`, …), w stylu Azkabana. Zarządzane instalacje uruchamiają statyczny scheduler plus statyczny, samodzielny executor jako **usługi Windows**, bez kontenera ani dołączonego środowiska uruchomieniowego.
 
 ```bash
 cronova start | stop | restart | status   # zarządzaj usługą (automatycznie eskaluje przez sudo)
@@ -183,7 +183,7 @@ Tak — dla zespołów, które chcą planowania DAG (zależności, ponawiania, c
 Nie. Scheduler i konsola webowa używają **wbudowanej bazy SQLite**; zarządzana instalacja dodaje mały samodzielny executor, aby restarty schedulera nie zabijały zadań. Python/Java/psql są potrzebne na hoście tylko wtedy, gdy *Twoje zadania* je wywołują.
 
 **W jakich językach można pisać zadania?**
-W dowolnych. Zadania to `shell`, `python`, `sql`, `jar` lub `http`; zadanie typu shell może wywołać cokolwiek na hoście (Node, Go, binaria Rust, …). Framework (Go) jest w pełni rozdzielony od języka zadania.
+W dowolnych. Zadania to `powershell` (domyślny), `python`, `sql`, `jar` lub `http`; zadanie typu `powershell` może wywołać cokolwiek na hoście (Node, Go, binaria Rust, …). Framework (Go) jest w pełni rozdzielony od języka zadania.
 
 **Czym cronova różni się od cron?**
 cron uruchamia izolowane polecenia zgodnie z zegarem. cronova uruchamia **DAG-i**: zadania z zależnościami, ponawianiami, limitami czasu, backfill, pulami współbieżności, wyzwalaczami między DAG-ami, konsolą webową z logami i API — rzeczy, które w końcu ręcznie budujesz wokół cron.

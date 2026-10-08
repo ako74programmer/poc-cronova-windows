@@ -1,6 +1,6 @@
 # cronova FAQ — Najczęściej zadawane pytania
 
-> **Windows-only:** To repozytorium jest przeznaczone dla Windows amd64. Używaj `deploy\install.ps1`, Windows Services, Git for Windows Bash oraz `deploy\update.ps1`. Starsze przykłady wdrożeń Unix w historycznych sekcjach nie dotyczą tego repozytorium; nadrzędną instrukcją jest [Wdrożenie](DEPLOY.md).
+> **Windows-only:** To repozytorium jest przeznaczone dla Windows amd64. Używaj `deploy\install.ps1`, Windows Services oraz `deploy\update.ps1`; zadania są uruchamiane wyłącznie przez PowerShell. Starsze przykłady wdrożeń Unix w historycznych sekcjach nie dotyczą tego repozytorium; nadrzędną instrukcją jest [Wdrożenie](DEPLOY.md).
 
 Odpowiedzi na najczęstsze pytania o cronova, lekki, samodzielnie hostowany **harmonogram workflow** i otwartoźródłową alternatywę dla Airflow / Azkabana — czym jest, jak się instaluje, gdzie przechowuje dane i jak uruchomić go w produkcji.
 
@@ -20,7 +20,7 @@ Nie. Harmonogram i konsola webowa używają **wbudowanej SQLite** (czysto-Go `mo
 
 ## W jakich językach można pisać zadania?
 
-W dowolnym języku na hoście. Zadania mają `type` równy `shell`, `python`, `sql`, `jar` lub `http`, a zadanie `shell` może wywołać cokolwiek na maszynie — Node, binaria Go, Rust, CLI i więcej. Harmonogram (Go) jest w pełni rozdzielony od języka zadania: każde zadanie działa jako podproces OS z własnymi interpreterami hosta. Typy zadań `sql` i `http` działają w procesie (sterowniki/klient HTTP wbudowane w binarkę) i nie wymagają niczego dodatkowego. Zobacz [Dokumentację DAG-ów](DAG_REFERENCE.pl.md) dla każdego typu zadania.
+W dowolnym języku na hoście. Zadania mają `type` równy `powershell` (domyślny), `python`, `sql`, `jar` lub `http`, a zadanie `powershell` może wywołać cokolwiek na maszynie — Node, binaria Go, Rust, CLI i więcej. Harmonogram (Go) jest w pełni rozdzielony od języka zadania: każde zadanie działa jako podproces OS z własnymi interpreterami hosta. Typy zadań `sql` i `http` działają w procesie (sterowniki/klient HTTP wbudowane w binarkę) i nie wymagają niczego dodatkowego. Zobacz [Dokumentację DAG-ów](DAG_REFERENCE.pl.md) dla każdego typu zadania.
 
 ## Czym cronova różni się od cron?
 

@@ -22,7 +22,7 @@ Now reference it from a DAG. Create `dags/use_vars.yaml`:
 dag_id: use_vars
 tasks:
   - id: show
-    type: shell
+    type: powershell
     command: echo "{{ var.greeting }}"
 ```
 
@@ -52,14 +52,14 @@ Each connection has a fixed set of fields you can reference:
 | type | `{{ conn.api.type }}` |
 | any extra JSON field | `{{ conn.api.extra.KEY }}` |
 
-Use them anywhere a template works — a shell command, or an `http` task's URL, headers, and body:
+Use them anywhere a template works — a PowerShell command, or an `http` task's URL, headers, and body:
 
 ```yaml
 dag_id: call_api
 tasks:
   - id: fetch
-    type: shell
-    command: 'curl -s -u {{ conn.api.login }}:{{ conn.api.password }} "https://{{ conn.api.host }}/status"'
+    type: powershell
+    command: 'curl.exe -s -u {{ conn.api.login }}:{{ conn.api.password }} "https://{{ conn.api.host }}/status"'
   - id: ingest
     type: http
     deps: [fetch]
@@ -88,8 +88,8 @@ Create `dags/daily_report.yaml` (no `schedule`, so it's manual-only):
 dag_id: daily_report
 tasks:
   - id: build
-    type: shell
-    command: echo "building report for {{ params.day }} (env says $CRONOVA_PARAM_DAY)"
+    type: powershell
+    command: echo "building report for {{ params.day }} (env says $env:CRONOVA_PARAM_DAY)"
 ```
 
 Trigger it with params as a JSON object:

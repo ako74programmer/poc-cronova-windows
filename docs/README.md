@@ -12,7 +12,7 @@ New to cronova? Read the [project overview](../README.md) first, then [Getting S
 
 ## Reference
 
-- **[DAG & Task Reference](DAG_REFERENCE.md)** — every DAG and task field, the `shell` / `python` / `sql` / `jar` / `http` task types, triggers, trigger rules, and resource pools.
+- **[DAG & Task Reference](DAG_REFERENCE.md)** — every DAG and task field, the `powershell` / `python` / `sql` / `jar` / `http` task types, triggers, trigger rules, and resource pools.
 - **[CLI Reference](CLI.md)** — every `cronova` command, subcommand, and flag.
 - **[SDLC DAG Technical Guides](SDLC_DAGS.md)** — technical descriptions of all six project SDLC DAGs, their scripts, configuration, outputs, and reuse boundaries.
 - **HTTP API** — a machine-readable OpenAPI spec is served at `GET /openapi.json`; human-readable Redoc at `/docs` on a running console.

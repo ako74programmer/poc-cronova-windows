@@ -1,6 +1,6 @@
 # cronova FAQ — Frequently Asked Questions
 
-> **Windows-only:** This repository targets Windows amd64. Use `deploy\install.ps1`, Windows Services, Git for Windows Bash and `deploy\update.ps1`. Any older Unix deployment examples in historical sections are not supported here; the authoritative instructions are in [Deployment](DEPLOY.md).
+> **Windows-only:** This repository targets Windows amd64. Use `deploy\install.ps1`, Windows Services and `deploy\update.ps1`. Any older Unix deployment examples in historical sections are not supported here; the authoritative instructions are in [Deployment](DEPLOY.md).
 
 Answers to the most common questions about cronova, the lightweight, self-hosted **workflow scheduler** and open-source Airflow / Azkaban alternative — what it is, how it installs, where it stores data, and how to run it in production.
 
@@ -20,7 +20,7 @@ No. The scheduler and web console use an **embedded SQLite** database (pure-Go `
 
 ## What languages can tasks be written in?
 
-Any language on the host. Tasks have a `type` of `shell`, `python`, `sql`, `jar`, or `http`, and a `shell` task can invoke anything on the machine — Node, Go, Rust binaries, CLIs, and more. The scheduler (Go) is fully decoupled from the task language: each task runs as an OS subprocess with the host's own interpreters. The `sql` and `http` task types run in-process (drivers/HTTP client are built into the binary) and need nothing extra installed. See the [DAG Reference](DAG_REFERENCE.md) for every task type.
+Any language on the host. Tasks have a `type` of `powershell` (the default), `python`, `sql`, `jar`, or `http`, and a `powershell` task can invoke anything on the machine — Node, Go, Rust binaries, CLIs, and more. The scheduler (Go) is fully decoupled from the task language: each task runs as an OS subprocess with the host's own interpreters. The `sql` and `http` task types run in-process (drivers/HTTP client are built into the binary) and need nothing extra installed. See the [DAG Reference](DAG_REFERENCE.md) for every task type.
 
 ## How is cronova different from cron?
 
@@ -32,7 +32,7 @@ Yes. cronova ships a built-in **Model Context Protocol (MCP) server** (`cronova 
 
 ## Which platforms are supported, and how do I install cronova?
 
-This repository supports **Windows 10/11 and Windows Server on amd64**. Install Git for Windows, extract `cronova_windows_amd64.zip`, and run the elevated PowerShell installer:
+This repository supports **Windows 10/11 and Windows Server on amd64**. Extract `cronova_windows_amd64.zip`, and run the elevated PowerShell installer:
 
 ```powershell
 .\deploy\install.ps1
@@ -110,7 +110,7 @@ Bind cronova to localhost and terminate TLS at your proxy (nginx, Caddy, Traefik
 
 ## Do I need Docker or Kubernetes?
 
-No. cronova is a subprocess scheduler that runs tasks with the **host's own interpreters**, so it deploys as two small Windows binaries registered as Windows Services — no container image to build and no runtime to bundle. Shell tasks require Git for Windows Bash. See [Deployment](DEPLOY.md).
+No. cronova is a subprocess scheduler that runs tasks with the **host's own interpreters**, so it deploys as two small Windows binaries registered as Windows Services — no container image to build and no runtime to bundle. See [Deployment](DEPLOY.md).
 
 ## How do I uninstall cronova?
 
@@ -134,6 +134,6 @@ cronova is released under the **[MIT License](https://github.com/zoyluoblue/cron
 - [DAG Reference](DAG_REFERENCE.md) — every DAG/task field, task types, triggers, pools
 - [CLI Reference](CLI.md) — every `cronova` command and flag
 - [AI Agents (MCP)](AGENTS.md) — MCP server, remote CLI, tokens, security
-- [Deployment](DEPLOY.md) — Windows Services, Git Bash, Job Objects, updates and backup
+- [Deployment](DEPLOY.md) — Windows Services, PowerShell task execution, Job Objects, updates and backup
 - [Architecture](ARCHITECTURE.md) — design rationale, execution model, diagrams
 - [cronova vs Airflow](COMPARISON.md) — when to choose cronova, feature-by-feature

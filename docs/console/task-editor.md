@@ -11,11 +11,11 @@ You reach the task editor from a DAG's **Structure** tab (see [Working with a DA
 | Field | Behavior |
 |---|---|
 | **Task ID** | The rename applies when the input loses focus (blur), not on every keystroke. IDs must be non-empty, unique within the DAG, and match `[A-Za-z0-9][A-Za-z0-9_.-]*`. An invalid or duplicate ID shows a warning toast and the input snaps back to the old ID. A successful rename also rewrites every sibling task's dependency that pointed at the old ID. |
-| **Type** | One of `shell`, `python`, `sql`, `jar`, `http`. Switching the type immediately re-renders the form below it with that type's fields — the stored command is kept, so you can switch back without losing work. |
+| **Type** | One of `powershell`, `python`, `sql`, `jar`, `http`, `subdag`. Switching the type immediately re-renders the form below it with that type's fields — the stored command is kept, so you can switch back without losing work. |
 
 ## The visual command editor
 
-For `shell`, `python`, and `sql` tasks (and the URL/headers/body of `http` tasks), the command field is a visual template editor. Plain text stays plain text, but every `{{ name }}` template variable renders as a color-coded **pill** — an atomic token you can move around but not accidentally edit character-by-character. Pill colors follow the variable kind:
+For `powershell`, `python`, and `sql` tasks (and the URL/headers/body of `http` tasks), the command field is a visual template editor. Plain text stays plain text, but every `{{ name }}` template variable renders as a color-coded **pill** — an atomic token you can move around but not accidentally edit character-by-character. Pill colors follow the variable kind:
 
 | Pill kind | Pattern | Meaning |
 |---|---|---|
@@ -56,15 +56,15 @@ Each task type renders its own fields (full details in [Task types](../tutorial/
 
 | Type | Fields |
 |---|---|
-| `shell` | **Command** pill editor + **Will run:** preview, plus the **Project** section below. |
+| `powershell` | **Command** pill editor + **Will run:** preview, plus the **Project** section below. |
 | `python` | **Python code** pill editor. The code runs inline via `python3 -c`; `CRONOVA_*` variables are readable from the environment, and a non-zero exit means failure. |
 | `sql` | **Connection** — the id of a configured connection (its type picks the driver: postgres/mysql/sqlite) — and the **SQL query** pill editor. |
 | `jar` | A structured form: **Jar path**, **Main class** (optional), **Arguments**. The form composes `java -jar app.jar …` (or `java -cp jar main …`) and shows it in the **Will run:** preview. An **edit raw command** link is the escape hatch to free-form editing; **use form** switches back, but only if the raw command still parses into the form's shape. |
 | `http` | **Method** (GET/POST/PUT/PATCH/DELETE/HEAD), **URL**, **Headers** (one per line, `Key: Value`), **Body**, and **Expected status** (comma-separated, e.g. `200,201`; empty accepts any 2xx). URL, headers, and body are all pill editors, so `{{ var. }}` and `{{ conn. }}` work in each. |
 
-## Project (shell tasks)
+## Project (PowerShell tasks)
 
-A `shell` task can attach an uploaded **project** — a directory of your scripts and data files. The Project section lets you either pick an existing project from the dropdown or open the **Upload / new project** panel without leaving the editor:
+A `powershell` task can attach an uploaded **project** — a directory of your scripts and data files. The Project section lets you either pick an existing project from the dropdown or open the **Upload / new project** panel without leaving the editor:
 
 - **Upload files / folder** — choose files, choose a whole folder, or drag files/folders onto the drop zone. Dropping a `.zip` auto-extracts it.
 - **Write a script** — type a filename (e.g. `main.py`) and its content inline for quick one-file projects.

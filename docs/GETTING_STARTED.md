@@ -14,7 +14,7 @@ The recommended production path is the Windows release ZIP. Open an elevated Pow
 .\deploy\install.ps1
 ```
 
-For a non-standard Git installation, pass `-BashPath 'D:\Tools\Git\bin\bash.exe'`. The installer creates `C:\ProgramData\Cronova`, installs the scheduler and executor under `C:\Program Files\Cronova`, and registers both as Windows Services. See [Deployment](DEPLOY.md) for upgrades and recovery.
+The installer creates `C:\ProgramData\Cronova`, installs the scheduler and executor under `C:\Program Files\Cronova`, and registers both as Windows Services. See [Deployment](DEPLOY.md) for upgrades and recovery.
 
 ### Build from source
 
@@ -155,7 +155,7 @@ Now run it. With `serve` running, list and trigger the DAG:
 ./cronova trigger hello -params '{"day":"2026-01-01"}'
 ```
 
-Common task fields — `type` (`powershell`, `python`, `sql`, `jar`, `http`; `shell` remains a legacy Windows alias), `command`, `deps`, `pool`, `retries`, `retry_delay`, `timeout`, `trigger_rule`, `project` — and DAG-level fields like `schedule`, `catchup`, `max_active_runs`, `default_retries`, `trigger_after`, and `dagrun_timeout` are documented in full in the [DAG Reference](DAG_REFERENCE.md).
+Common task fields — `type` (`powershell` (default), `python`, `sql`, `jar`, `http`; `type: shell` is rejected), `command`, `deps`, `pool`, `retries`, `retry_delay`, `timeout`, `trigger_rule`, `project` — and DAG-level fields like `schedule`, `catchup`, `max_active_runs`, `default_retries`, `trigger_after`, and `dagrun_timeout` are documented in full in the [DAG Reference](DAG_REFERENCE.md).
 
 ## 4. Template variables
 
@@ -222,7 +222,7 @@ tasks:
 
 How project attach works:
 
-- The `project` field is honored for command-based tasks such as **`powershell`** and legacy **`shell`** (the `python`/`sql`/`http` task types run in-process, where a working directory is meaningless).
+- The `project` field is honored for command-based tasks such as **`powershell`** (the `python`/`sql`/`http` task types run in-process, where a working directory is meaningless).
 - Each attempt gets a **fresh isolated copy** of the uploaded project as its `cwd`. Attempts never interfere, and a re-upload takes effect on the next run.
 - The copy's path is exported as **`CRONOVA_PROJECT_DIR`**, so a script can locate its own bundled data files.
 - Project names allow letters, digits, and `. _ -`. Uploads are size-capped (per file and per project) and guarded against path traversal / zip-slip.
@@ -231,14 +231,14 @@ How project attach works:
 
 ### Common questions
 
-**Where does `python3 main.py` run from?**
+**Where does `python main.py` run from?**
 From a clean per-attempt copy of the uploaded project, so a relative path like `main.py` or `./main.py` resolves. The absolute path to that copy is also in `CRONOVA_PROJECT_DIR`.
 
 **Do I have to re-upload after editing my script?**
 Re-upload the changed file (uploads are additive/upsert). Because each attempt copies the current project, the next run picks up your change — running attempts keep the copy they started with.
 
 **Which languages can a task use?**
-Any on the host. A `shell` task can invoke Python, Node, Go/Rust binaries, `psql`, a JAR — anything installed. The scheduler is fully decoupled from the task language.
+Any on the host. A `powershell` task can invoke Python, Node, Go/Rust binaries, `psql`, a JAR — anything installed. The scheduler is fully decoupled from the task language.
 
 **Why did my project task fail immediately?**
 Most often the project isn't uploaded, or the server has no projects directory configured. Validate the DAG first; the response flags a `project` that references something missing.
@@ -247,9 +247,9 @@ Most often the project isn't uploaded, or the server has no projects directory c
 
 You now have a running scheduler, a first DAG, template variables, and a project-backed task. Where to go next:
 
-- [DAG Reference](DAG_REFERENCE.md) — every DAG and task field, all task types (`shell`, `python`, `sql`, `jar`, `http`), trigger rules, cross-DAG `trigger_after`, retries, timeouts, and resource pools.
+- [DAG Reference](DAG_REFERENCE.md) — every DAG and task field, all task types (`powershell`, `python`, `sql`, `jar`, `http`), trigger rules, cross-DAG `trigger_after`, retries, timeouts, and resource pools.
 - [CLI Reference](CLI.md) — every `cronova` command and flag: `serve`, `trigger`, `dags`, `runs`, `pools`, `users`, `init`, and the remote/agent verbs.
-- [Deployment](DEPLOY.md) — Windows ZIP installation, Windows Services, Git Bash, Job Objects, updates and backup.
+- [Deployment](DEPLOY.md) — Windows ZIP installation, Windows Services, PowerShell task execution, Job Objects, updates and backup.
 - [AI Agents (MCP)](AGENTS.md) — let AI agents list, create, validate, and trigger DAGs through the built-in MCP server and remote JSON CLI.
 - [Architecture](ARCHITECTURE.md) — the execution model and design rationale.
 - [FAQ](FAQ.md) — common questions, answered.

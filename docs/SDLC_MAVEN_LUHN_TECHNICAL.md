@@ -75,16 +75,8 @@ Timeouty są niezależnymi limitami tasków, a nie gwarantowanym łącznym czase
 
 Wywołanie z DAG-a:
 
-```bash
-bash internal/scripts/generate-maven-archetype \
-  -a maven-archetype-quickstart \
-  -g com.example \
-  -r luhn \
-  -k com.example.luhn \
-  -j 21 \
-  -w workspaces/sdlc_maven_luhn \
-  -p app \
-  -C
+```powershell
+& .\internal\scripts\generate-maven-archetype.ps1 -a maven-archetype-quickstart -g com.example -r luhn -k com.example.luhn -j 21 -w workspaces/sdlc_maven_luhn -p app -C
 ```
 
 Używany skrypt:
@@ -128,10 +120,8 @@ Archetyp dostarcza bazowo `App.java`, `AppTest.java` i `pom.xml`. Ten krok nie w
 
 Wywołanie:
 
-```bash
-bash internal/scripts/compile-project \
-  -w workspaces/sdlc_maven_luhn \
-  -p app
+```powershell
+& .\internal\scripts\maven-compile.ps1 -w workspaces/sdlc_maven_luhn -p app
 ```
 
 Używany skrypt:
@@ -162,14 +152,8 @@ Domyślnie testy są pomijane. Ten task jest bramką przed AI: potwierdza, że a
 
 Wywołanie:
 
-```bash
-bash internal/scripts/ai-generate-feature \
-  -f prompts/luhn.txt \
-  -w workspaces/sdlc_maven_luhn \
-  -p app \
-  -k com.example.luhn \
-  -r default \
-  -y python
+```powershell
+& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/luhn.txt -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -r default -y python
 ```
 
 Używane pliki:
@@ -231,7 +215,7 @@ Skrypt Python:
 8. jeśli istnieje klucz `pom_xml`, waliduje go jako XML przed zapisem; przy nieparsowalnym XML próbuje normalizować dosłowne sekwencje escaped whitespace (`\n`, `\r`, `\t`) i zapisuje je tylko wtedy, gdy wynik jest poprawnym XML-em;
 9. zapisuje każdy pozostały klucz jako ścieżkę względną względem katalogu projektu.
 
-Prompt PowerShell musi przekazywać tę samą instrukcję co Bash: znaki nowej linii w wartościach JSON są kodowane pojedynczą sekwencją `\n`. Podwójne escapowanie tej instrukcji prowadziło do literalnych znaków `\n` w `pom.xml`, których Maven nie potrafił parsować.
+Prompt PowerShell musi przekazywać tę samą instrukcję co dawny wariant Bash: znaki nowej linii w wartościach JSON są kodowane pojedynczą sekwencją `\n`. Podwójne escapowanie tej instrukcji prowadziło do literalnych znaków `\n` w `pom.xml`, których Maven nie potrafił parsować.
 
 Oczekiwane rezultaty dla tego DAG-a to co najmniej:
 
@@ -246,13 +230,8 @@ Skrypt nie kompiluje projektu po zapisaniu odpowiedzi. Następny task ma zweryfi
 
 Wywołanie z DAG-a:
 
-```bash
-bash internal/scripts/ai-review-fix-loop \
-  -w workspaces/sdlc_maven_luhn \
-  -p app \
-  -k com.example.luhn \
-  -m kimi-k2.7-code \
-  -y python
+```powershell
+& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/sdlc_maven_luhn -LoopProject app -LoopPackage com.example.luhn -LoopModel kimi-k2.7-code -LoopPython python
 ```
 
 Używane pliki:
@@ -293,10 +272,8 @@ To założenie pochodzi z przepływu Spring Boot CRUD i nie pasuje do domeny Luh
 
 Wywołanie:
 
-```bash
-bash internal/scripts/run-tests \
-  -w workspaces/sdlc_maven_luhn \
-  -p app
+```powershell
+& .\internal\scripts\maven-test.ps1 -w workspaces/sdlc_maven_luhn -p app
 ```
 
 Używany skrypt:
@@ -326,7 +303,7 @@ Sukces oznacza, że testy wygenerowane lub pozostawione w projekcie przechodzą.
 Wspólny helper `internal/scripts/common_toolchain.sh`:
 
 - normalizuje ścieżki Windows przez `cygpath`;
-- wykorzystuje `CRONOVA_WINDOWS_PATH` do przywrócenia systemowego Windows `PATH` w Git Bash;
+- wykorzystuje `CRONOVA_WINDOWS_PATH` do przywrócenia systemowego Windows `PATH` w procesie zadania PowerShell;
 - dodaje do `PATH` katalogi Pythona, Node i npm;
 - ustawia `JAVA_HOME` i `MAVEN_HOME` z `CRONOVA_JAVA_HOME`/`CRONOVA_MAVEN_HOME` albo standardowych zmiennych;
 - autodetekuje `python3` lub `python`;

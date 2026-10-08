@@ -19,8 +19,8 @@ start_date: 2026-06-01
 max_active_runs: 1
 tasks:
   - id: ingest
-    type: shell
-    command: "echo ingesting for $CRONOVA_LOGICAL_DATE && sleep 1"
+    type: powershell
+    command: "Write-Output \"ingesting for $env:CRONOVA_LOGICAL_DATE\"; Start-Sleep 1"
 ```
 
 It has no `schedule`, so it runs only when triggered — convenient for this walkthrough, but a cron schedule works exactly the same way.
@@ -39,8 +39,8 @@ trigger_after:
   - dag_id: upstream_ingest
 tasks:
   - id: build_report
-    type: shell
-    command: "echo building report from $CRONOVA_LOGICAL_DATE data"
+    type: powershell
+    command: "echo building report from $env:CRONOVA_LOGICAL_DATE data"
     pool: reports        # configure size with: cronova pools set reports <n>
     retries: 2
     timeout: 600

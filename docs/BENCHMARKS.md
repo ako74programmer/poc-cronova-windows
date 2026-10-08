@@ -3,21 +3,21 @@
 Reproducible scheduler-throughput numbers from the in-repo harness
 ([`internal/scheduler/bench_test.go`](https://github.com/zoyluoblue/cronova/blob/main/internal/scheduler/bench_test.go)).
 The harness drives the REAL scheduling path — store, admission, global
-priority dispatch, pool accounting, process execution (`sh -c true`),
+priority dispatch, pool accounting, process execution (a trivial `powershell` task),
 finalization — with no HTTP in the loop.
 
-```bash
+```powershell
 # SQLite (embedded, default)
-CRONOVA_BENCH=1 go test ./internal/scheduler/ -run TestThroughputBench -v
+$env:CRONOVA_BENCH = '1'; go test ./internal/scheduler/ -run TestThroughputBench -v
 
 # PostgreSQL
 docker run -d --name cronova-pg -e POSTGRES_PASSWORD=test -e POSTGRES_DB=cronova_test -p 55433:5432 postgres:17-alpine
-CRONOVA_BENCH=1 CRONOVA_TEST_PG_DSN='postgres://postgres:test@127.0.0.1:55433/cronova_test?sslmode=disable' \
+$env:CRONOVA_BENCH = '1'; $env:CRONOVA_TEST_PG_DSN = 'postgres://postgres:test@127.0.0.1:55433/cronova_test?sslmode=disable' \
   go test ./internal/scheduler/ -run TestThroughputBench -v
 ```
 
 Knobs: `CRONOVA_BENCH_DAGS` (default 20) × `CRONOVA_BENCH_RUNS` (25) runs,
-each a chain of `CRONOVA_BENCH_TASKS` (3) trivial shell tasks.
+each a chain of `CRONOVA_BENCH_TASKS` (3) trivial PowerShell tasks.
 
 ## Results (2026-08-08)
 

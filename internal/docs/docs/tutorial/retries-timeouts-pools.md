@@ -12,13 +12,13 @@ Create `dags/flaky_pipeline.yaml`:
 dag_id: flaky_pipeline
 tasks:
   - id: fetch
-    type: shell
+    type: powershell
     command: |
-      if [ "$CRONOVA_TRY_NUMBER" -lt 3 ]; then
-        echo "attempt $CRONOVA_TRY_NUMBER: connection reset by peer" >&2
+      if ([int]$env:CRONOVA_TRY_NUMBER -lt 3) {
+        [Console]::Error.WriteLine("attempt $env:CRONOVA_TRY_NUMBER: connection reset by peer")
         exit 1
-      fi
-      echo "attempt $CRONOVA_TRY_NUMBER: fetched 1200 rows"
+      }
+      echo "attempt $env:CRONOVA_TRY_NUMBER: fetched 1200 rows"
     retries: 3
     retry_delay: 5
 ```
@@ -83,8 +83,8 @@ A retry only helps if the attempt actually *fails*. A hung process — a stuck c
 
 ```yaml
   - id: transform
-    type: shell
-    command: "sleep 120"
+    type: powershell
+    command: "Start-Sleep 120"
     deps: [fetch]
     timeout: 5
 ```
@@ -152,7 +152,7 @@ Then point tasks at it with `pool:`, and rank them with `priority:`:
 
 ```yaml
   - id: build_report
-    type: shell
+    type: powershell
     command: "python report.py --date {{ logical_date }}"
     deps: [transform]
     pool: reports

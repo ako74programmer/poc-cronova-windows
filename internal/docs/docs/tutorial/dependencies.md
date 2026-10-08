@@ -12,14 +12,14 @@ Create `dags/daily_etl.yaml`, a classic extract → transform → load chain. Le
 dag_id: daily_etl
 tasks:
   - id: extract
-    type: shell
+    type: powershell
     command: echo "extracting rows"
   - id: transform
-    type: shell
+    type: powershell
     command: echo "transforming"
     deps: [extract]
   - id: load
-    type: shell
+    type: powershell
     command: echo "loading"
     deps: [transform]
 ```
@@ -48,7 +48,7 @@ What happens to `load` if `transform` fails? Try it. Change the `transform` comm
 
 ```yaml
   - id: transform
-    type: shell
+    type: powershell
     command: exit 1
     deps: [extract]
 ```
@@ -86,13 +86,13 @@ Two of these solve everyday problems. A **cleanup** task should run whether the 
 
 ```yaml
   - id: cleanup
-    type: shell
+    type: powershell
     command: echo "removing temp files"
     deps: [extract, transform, load]
     trigger_rule: all_done
   - id: alert
-    type: shell
-    command: echo "ALERT daily_etl failed"   # curl your pager here
+    type: powershell
+    command: echo "ALERT daily_etl failed"   # curl.exe your pager here
     deps: [transform, load]
     trigger_rule: one_failed
 ```
@@ -129,7 +129,7 @@ Now fix the bug — restore `transform` to a working command:
 
 ```yaml
   - id: transform
-    type: shell
+    type: powershell
     command: echo "transforming"
     deps: [extract]
 ```

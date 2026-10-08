@@ -1,12 +1,12 @@
 # Pierwsze kroki z cronova
 
-Zainstaluj cronova na Windows, uruchom harmonogram i konsolę webową, napisz i wyzwól swój pierwszy DAG, a następnie podłącz własne skrypty do workflow. To repozytorium jest przeznaczone dla Windows amd64 i używa Git for Windows Bash dla zadań `shell`.
+Zainstaluj cronova na Windows, uruchom harmonogram i konsolę webową, napisz i wyzwól swój pierwszy DAG, a następnie podłącz własne skrypty do workflow. To repozytorium jest przeznaczone dla Windows amd64 i uruchamia zadania wyłącznie przez PowerShell (`type: powershell`, typ domyślny).
 
 Ten przewodnik jest zorientowany na zadania. Pełną specyfikację pól DAG-a znajdziesz w [Dokumentacji DAG-ów](DAG_REFERENCE.pl.md); wszystkie komendy i flagi w [Dokumentacji CLI](CLI.md); instrukcję produkcyjnej instalacji w [Wdrożeniu](DEPLOY.md). Nowy w cronova? Zacznij od [README](https://github.com/zoyluoblue/cronova#readme).
 
 ## 1. Zainstaluj cronova
 
-Zalecaną ścieżką produkcyjną jest ZIP dla Windows. Najpierw zainstaluj Git for Windows, a następnie otwórz podniesiony PowerShell w rozpakowanym katalogu.
+Zalecaną ścieżką produkcyjną jest ZIP dla Windows. Otwórz podniesiony PowerShell w rozpakowanym katalogu.
 
 ### Instalacja ZIP
 
@@ -14,7 +14,7 @@ Zalecaną ścieżką produkcyjną jest ZIP dla Windows. Najpierw zainstaluj Git 
 .\deploy\install.ps1
 ```
 
-Dla niestandardowej instalacji Git użyj `-BashPath 'D:\Tools\Git\bin\bash.exe'`. Instalator tworzy `C:\ProgramData\Cronova`, instaluje scheduler i executor w `C:\Program Files\Cronova` oraz rejestruje obie usługi Windows. Zobacz [Wdrożenie](DEPLOY.md) po szczegóły aktualizacji i odzyskiwania.
+Instalator tworzy `C:\ProgramData\Cronova`, instaluje scheduler i executor w `C:\Program Files\Cronova` oraz rejestruje obie usługi Windows. Zobacz [Wdrożenie](DEPLOY.md) po szczegóły aktualizacji i odzyskiwania.
 
 ### Budowanie ze źródeł
 
@@ -100,11 +100,11 @@ max_active_runs: 1
 default_retries: 0
 tasks:
   - id: greet
-    type: shell
-    command: echo "hello from cronova at $CRONOVA_LOGICAL_DATETIME"
+    type: powershell
+    command: echo "hello from cronova at $env:CRONOVA_LOGICAL_DATETIME"
   - id: report
-    type: shell
-    command: echo "run $CRONOVA_RUN_ID finished greeting"
+    type: powershell
+    command: echo "run $env:CRONOVA_RUN_ID finished greeting"
     deps: [greet]            # działa po sukcesie greet
 ```
 
@@ -124,7 +124,7 @@ Teraz uruchom to. Przy działającym `serve` wylistuj i wyzwól DAG:
 ./cronova trigger hello -params '{"day":"2026-01-01"}'
 ```
 
-Typowe pola zadań — `type` (`shell`, `python`, `sql`, `jar`, `http`), `command`, `deps`, `pool`, `retries`, `retry_delay`, `timeout`, `trigger_rule`, `project` — oraz pola na poziomie DAG-a, takie jak `schedule`, `catchup`, `max_active_runs`, `default_retries`, `trigger_after` i `dagrun_timeout`, są w pełni udokumentowane w [Dokumentacji DAG-ów](DAG_REFERENCE.pl.md).
+Typowe pola zadań — `type` (`powershell` (domyślny), `python`, `sql`, `jar`, `http`; `type: shell` jest odrzucany), `command`, `deps`, `pool`, `retries`, `retry_delay`, `timeout`, `trigger_rule`, `project` — oraz pola na poziomie DAG-a, takie jak `schedule`, `catchup`, `max_active_runs`, `default_retries`, `trigger_after` i `dagrun_timeout`, są w pełni udokumentowane w [Dokumentacji DAG-ów](DAG_REFERENCE.pl.md).
 
 ## 4. Zmienne szablonowe
 
@@ -148,11 +148,11 @@ Są zawsze dostępne, a te same wartości są również wstrzykiwane jako zmienn
 ```yaml
 tasks:
   - id: extract
-    type: shell
+    type: powershell
     command: python extract.py --date {{ logical_date }}     # przez szablon
   - id: load
-    type: shell
-    command: echo "loading for $CRONOVA_LOGICAL_DATE"        # przez zmienną środowiskową
+    type: powershell
+    command: echo "loading for $env:CRONOVA_LOGICAL_DATE"        # przez zmienną środowiskową
     deps: [extract]
 ```
 
@@ -167,8 +167,8 @@ Trzy dodatkowe przestrzenie nazw rozwiązują się leniwie ze stanu zarządzaneg
 ```yaml
 tasks:
   - id: notify
-    type: shell
-    command: curl -u {{ conn.api.login }}:{{ conn.api.password }} {{ var.webhook_url }}?day={{ params.day }}
+    type: powershell
+    command: curl.exe -u {{ conn.api.login }}:{{ conn.api.password }} {{ var.webhook_url }}?day={{ params.day }}
 ```
 
 > Zmienne i połączenia **nie są** masowo wstrzykiwane do środowiska każdego zadania — trafiają do niego tylko przez jawne referencje `{{ var.X }}` / `{{ conn.Y.Z }}`, więc sekrety nie wyciekają do env niepowiązanych zadań. Tylko zmienne `run` i `params` stają się zmiennymi `CRONOVA_*`.
@@ -177,21 +177,21 @@ W konsoli nie wpisujesz nawiasów `{{ }}`: wizualny edytor zadań renderuje każ
 
 ## 5. Uruchamiaj własne skrypty i projekty
 
-Aby uruchomić prawdziwy skrypt lub całą bazę kodu, prześlij go jako **projekt** i wskaż w zadaniu shell. cronova przygotowuje świeżą, izolowaną kopię projektu jako katalog roboczy każdej próby.
+Aby uruchomić prawdziwy skrypt lub całą bazę kodu, prześlij go jako **projekt** i wskaż go w zadaniu PowerShell. cronova przygotowuje świeżą, izolowaną kopię projektu jako katalog roboczy każdej próby.
 
 Prześlij z konsoli (edytor zadań → **Project**). Możesz przesłać pojedynczy skrypt, cały folder lub `.zip` (automatycznie rozpakowywany). Następnie odwołaj się do projektu po nazwie:
 
 ```yaml
 tasks:
   - id: run_main
-    type: shell
-    command: python3 main.py     # cwd to czysta kopia projektu, więc to się rozwiązuje
+    type: powershell
+    command: python main.py      # cwd to czysta kopia projektu, więc to się rozwiązuje
     project: my_app
 ```
 
 Jak działa podpięcie projektu:
 
-- Pole `project` jest honorowane tylko dla zadań **shell** (typy `python`/`sql`/`http` działają w procesie, gdzie katalog roboczy nie ma znaczenia).
+- Pole `project` jest honorowane tylko dla zadań **`powershell`** (typy `python`/`sql`/`http` działają w procesie, gdzie katalog roboczy nie ma znaczenia).
 - Każda próba otrzymuje **świeżą izolowaną kopię** przesłanego projektu jako swój `cwd`. Próby nigdy nie zakłócają się nawzajem, a ponowne przesłanie zaczyna obowiązywać przy następnym uruchomieniu.
 - Ścieżka kopii jest eksportowana jako **`CRONOVA_PROJECT_DIR`**, więc skrypt może zlokalizować własne dołączone pliki danych.
 - Nazwy projektów mogą zawierać litery, cyfry oraz `. _ -`. Przesyłane pliki są ograniczone rozmiarem (na plik i na projekt) i chronione przed path traversal / zip-slip.
@@ -200,14 +200,14 @@ Jak działa podpięcie projektu:
 
 ### Częste pytania
 
-**Skąd uruchamia się `python3 main.py`?**
+**Skąd uruchamia się `python main.py`?**
 Z czystej per-attempt kopii przesłanego projektu, więc ścieżka względna jak `main.py` lub `./main.py` się rozwiązuje. Absolutna ścieżka do tej kopii jest również w `CRONOVA_PROJECT_DIR`.
 
 **Czy muszę ponownie przesyłać po edycji skryptu?**
 Prześlij zmieniony plik ponownie (przesyłanie jest addytywne/upsert). Ponieważ każda próba kopiuje aktualny projekt, następne uruchomienie zobaczy zmianę — działające próby zachowują kopię, z którą zaczęły.
 
 **Jakich języków może używać zadanie?**
-Dowolnych na hoście. Zadanie `shell` może wywoływać Python, Node, binaria Go/Rust, `psql`, JAR — cokolwiek jest zainstalowane. Harmonogram jest w pełni rozdzielony od języka zadania.
+Dowolnych na hoście. Zadanie `powershell` może wywoływać Python, Node, binaria Go/Rust, `psql`, JAR — cokolwiek jest zainstalowane. Harmonogram jest w pełni rozdzielony od języka zadania.
 
 **Dlaczego moje zadanie z projektem zakończyło się natychmiastowym niepowodzeniem?**
 Najczęściej projekt nie został przesłany lub serwer nie ma skonfigurowanego katalogu projektów. Najpierw zwaliduj DAG; odpowiedź zaznacza `project`, który odwołuje się do czegoś brakującego.
@@ -216,9 +216,9 @@ Najczęściej projekt nie został przesłany lub serwer nie ma skonfigurowanego 
 
 Masz teraz działający harmonogram, pierwszy DAG, zmienne szablonowe i zadanie oparte na projekcie. Dokąd dalej:
 
-- [Dokumentacja DAG-ów](DAG_REFERENCE.pl.md) — każde pole DAG-a i zadania, wszystkie typy zadań (`shell`, `python`, `sql`, `jar`, `http`), reguły wyzwalania, `trigger_after` między DAG-ami, retries, timeouty i pule zasobów.
+- [Dokumentacja DAG-ów](DAG_REFERENCE.pl.md) — każde pole DAG-a i zadania, wszystkie typy zadań (`powershell`, `python`, `sql`, `jar`, `http`), reguły wyzwalania, `trigger_after` między DAG-ami, retries, timeouty i pule zasobów.
 - [Dokumentacja CLI](CLI.md) — każda komenda i flaga `cronova`: `serve`, `trigger`, `dags`, `runs`, `pools`, `users`, `init` oraz czasowniki remote/agent.
-- [Wdrożenie](DEPLOY.md) — instalacja jako usługa systemd/launchd, odporny na awarie executor gRPC, aktualizacje i pułapka service-`PATH`.
+- [Wdrożenie](DEPLOY.md) — instalacja ZIP dla Windows, usługi Windows, wykonywanie zadań przez PowerShell, Job Objects, aktualizacje i kopia zapasowa.
 - [Agenci AI (MCP)](AGENTS.md) — pozwól agentom AI listować, tworzyć, walidować i wyzwalać DAG-i przez wbudowany serwer MCP i zdalne JSON CLI.
 - [Architektura](ARCHITECTURE.md) — model wykonawczy i uzasadnienie projektowe.
 - [FAQ](FAQ.pl.md) — częste pytania, odpowiedzi.

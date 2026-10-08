@@ -1,6 +1,6 @@
 # Deploying cronova on Windows
 
-Cronova in this repository targets Windows 10/11 and Windows Server on `amd64`. It consists of `cronova.exe` (scheduler, REST API and web console) and `cronova-executor.exe` (task process owner). Repository workflows are being standardized on Windows-native execution, with PowerShell as the primary scripting path. On Windows, `shell` is treated only as a legacy alias for PowerShell and should not be used in new DAGs.
+Cronova in this repository targets Windows 10/11 and Windows Server on `amd64`. It consists of `cronova.exe` (scheduler, REST API and web console) and `cronova-executor.exe` (task process owner). Repository workflows are being standardized on Windows-native execution, with PowerShell as the primary scripting path. Command tasks run only through PowerShell (`powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command`); `powershell` is the default task type and `type: shell` is rejected when a DAG is parsed.
 
 ## Requirements
 
@@ -47,7 +47,7 @@ The CLI commands `cronova start`, `cronova stop`, `cronova restart` and `cronova
 
 ## Task execution and process containment
 
-Tasks are executed as Windows subprocesses using the configured runtime for the task type. The Windows runner creates a Job Object per task, enables `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, assigns the task process to it, and uses `TerminateJobObject` for timeout and cancellation. A controlled executor restart removes the kill-on-close flag before closing the local handle so persisted tasks can continue; a hard executor termination still requires native Windows recovery testing.
+Tasks are executed as Windows subprocesses using the runtime for the task type; command tasks (`powershell`) run via `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command`. The Windows runner creates a Job Object per task, enables `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, assigns the task process to it, and uses `TerminateJobObject` for timeout and cancellation. A controlled executor restart removes the kill-on-close flag before closing the local handle so persisted tasks can continue; a hard executor termination still requires native Windows recovery testing.
 
 When started with [app.ps1](C:/Users/Andrzej/Downloads/sdlc/cronova/scripts/windows/app.ps1), Cronova runs a Windows PowerShell discovery helper before launch and sets missing `CRONOVA_*` runtime paths in the child process environment. It searches per-user Python under `%LOCALAPPDATA%\Programs\Python\Python*`, Node.js under `%ProgramFiles%\nodejs`, JDKs under `%ProgramFiles%\Java\jdk-*` or Eclipse Adoptium/Microsoft directories, and Maven under `%ProgramFiles%\Apache\Maven` or `%SystemDrive%\apache-maven-*`. The task runner also has a Go-side discovery fallback. Explicit `CRONOVA_PYTHON`, `CRONOVA_NODE`, `CRONOVA_NPM`, `CRONOVA_JAVA_HOME`, `CRONOVA_MAVEN_HOME`, `JAVA_HOME`, and `MAVEN_HOME` values take precedence. Installations in other locations must be added to the Windows `PATH` or configured with those `CRONOVA_*` overrides before starting Cronova.
 

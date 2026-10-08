@@ -17,7 +17,7 @@ max_active_runs: 1
 default_retries: 2
 tasks:
   - id: extract
-    type: shell
+    type: powershell
     command: "python extract.py --date {{ logical_date }}"
     pool: default
   - id: transform
@@ -95,8 +95,8 @@ Każdy wpis pod `tasks:` opisuje jedno zadanie.
 | Pole | Typ | Domyślnie | Opis |
 |---|---|---|---|
 | `id` | string | — (wymagane) | Identyfikator zadania, unikalny w obrębie DAG-a. |
-| `type` | string | `shell` | Jedno z `shell`, `python`, `sql`, `jar`, `http`, `subdag`. Zobacz [Typy zadań](#typy-zadań). |
-| `command` | string | — | Komenda (shell), kod (python) lub zapytanie (sql). Obsługuje [zmienne szablonowe](#zmienne-szablonowe). Nie używane dla `http`. |
+| `type` | string | `powershell` | Jedno z `powershell`, `python`, `sql`, `jar`, `http`, `subdag`. `type: shell` jest odrzucany podczas parsowania (użyj `powershell`). Zobacz [Typy zadań](#typy-zadań). |
+| `command` | string | — | Komenda (powershell), kod (python) lub zapytanie (sql). Obsługuje [zmienne szablonowe](#zmienne-szablonowe). Nie używane dla `http`. |
 | `deps` | lista id zadań | — | Zadania upstream, które muszą spełnić regułę `trigger_rule` tego zadania zanim zostanie ono uruchomione. Krawędzie są sprawdzane pod kątem cykli. |
 | `pool` | string | `default` | [Pula zasobów](#pule-zasobów), z której to zadanie pobiera slot. |
 | `priority` | int | `0` | Wyższe wartości pierwsze, gdy zadania konkurują o tę samą pulę. |
@@ -111,7 +111,7 @@ Każdy wpis pod `tasks:` opisuje jedno zadanie.
 | `when` | string | — | Szablon warunku runtime (np. `"{{ params.env }}"` lub `"{{ ti.check.proceed }}"`), oceniany gdy zadanie jest już gotowe. Fałszywy wynik (`""`, `false`, `0`, `no` lub nierozwiązany placeholder) oznacza zadanie jako **skipped**. |
 | `foreach` | lista stringów | — | Rozwija zadanie na jedno zadanie na element w czasie definicji: identyfikatory stają się `<id>_<index>`, `{{ item }}` / `{{ item_index }}` są podstawiane w `command`/`when`, a zależności `deps` downstream od oryginalnego id obejmują każdy shard. Każdy shard ma własne retries, log i stan. |
 | `conn` | string | — | Identyfikator połączenia dla zadania `sql` (wybiera sterownik i buduje DSN). |
-| `project` | string | — | Nazwa przesłanego katalogu projektu do wystawienia jako katalog roboczy (zadania shell; nie można łączyć z `worker_group`). Zobacz [Pierwsze kroki → Projekty](GETTING_STARTED.pl.md). |
+| `project` | string | — | Nazwa przesłanego katalogu projektu do wystawienia jako katalog roboczy (zadania `powershell`; nie można łączyć z `worker_group`). Zobacz [Pierwsze kroki → Projekty](GETTING_STARTED.pl.md). |
 | `http` | obiekt | — | Specyfikacja żądania HTTP dla zadań `http` (patrz niżej). |
 | `subdag` | string | — | Dla `type: subdag`: DAG do uruchomienia jako **pod-workflow**. Zadanie uruchamia powiązane uruchomienie potomne (widoczne w historii z typem wyzwalania `subdag` i linkiem do rodzica) i odzwierciedla jego stan końcowy. Anulowanie rodzica kaskaduje się na potomka; ponowna próba zadania startuje nowe uruchomienie potomne (stare pozostaje w historii). Zagnieżdżanie jest ograniczone do 5 poziomów jako zabezpieczenie przed cyklami. |
 | `depends_on_dag` | obiekt | — | Oczekiwanie między DAG-ami: wstrzymaj to zadanie do momentu, gdy pasujące uruchomienie innego DAG-a zakończy się *sukcesem*. Pola: `dag` (docelowy id), `offset` (który okres, w gramatyce wyrażeń datowych [date-expression](#wyrażenia-datowe) — `""`/`same`, `- 1d`, `.month_start`…), `timeout` (sekundy od startu uruchomienia; 0 = czekaj do `dagrun_timeout`), `on_timeout` (`fail` domyślnie lub `skip`). Nieudane docelowe uruchomienie utrzymuje oczekiwanie (można je ponowić); tylko timeout rozwiązuje impas. |
@@ -132,19 +132,19 @@ Ustaw pod kluczem `http:` zadania, gdy `type: http`:
 
 | Typ | Uruchamiane jako | `command` zawiera | Wymaga na hoście |
 |---|---|---|---|
-| `shell` | podproces OS (`sh -c`) | dowolną komendę shell | narzędzia wywoływane przez komendę |
+| `powershell` | podproces OS (`powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command`) | dowolną komendę PowerShell | narzędzia wywoływane przez komendę |
 | `python` | podproces OS (`python3`) | kod Python | `python3` na `PATH` usługi |
 | `sql` | w procesie (natywny sterownik) | zapytanie SQL; `conn` wybiera połączenie | nic dodatkowego |
 | `jar` | podproces OS (`java`) | komendę `java -jar …` | JRE/JDK na `PATH` |
 | `http` | klient HTTP w procesie | — (użyj specyfikacji `http:`) | nic dodatkowego |
 | `subdag` | wewnętrznie w harmonogramie (uruchomienie potomne) | — (użyj pola `subdag:`) | nic dodatkowego |
 
-Zadania `sql` i `http` są samowystarczalne w binarce. Zadania `shell`, `python` i `jar` (oraz wszystko, co wywołuje zadanie shell) wymagają zainstalowania tych narzędzi na **PATH** usługi — zobacz [Wdrożenie](DEPLOY.md).
+Zadania `sql` i `http` są samowystarczalne w binarce. Zadania `powershell`, `python` i `jar` (oraz wszystko, co wywołuje zadanie PowerShell) wymagają zainstalowania tych narzędzi na **PATH** usługi — zobacz [Wdrożenie](DEPLOY.md).
 
 ```yaml
 tasks:
-  - id: shell_task
-    type: shell
+  - id: powershell_task
+    type: powershell
     command: "echo running {{ logical_date }}"
   - id: python_task
     type: python
@@ -208,7 +208,7 @@ command: "sync.sh --since {{ logical_datetime - 6h }}"
 
 Wyrażenie, które się nie parsuje (nieznana jednostka, zły token `%`, zbędny tekst), pozostaje w komendzie dosłownie — literówki pozostają widoczne w logu zadania zamiast cicho renderować się jako puste.
 
-Zadania shell nie dziedziczą pełnego środowiska procesu harmonogramu. Cronova przekazuje mały zestaw bezpieczny runtime (`PATH`, locale, home/temp i zmienne certyfikatów) plus powyższe wartości `CRONOVA_*`. Zapobiega to przedostawaniu się poświadczeń serwera, takich jak `CRONOVA_ADMIN_PASSWORD`, do kodu zadania. Dodaj zmienną rodzica jawnie przez `CRONOVA_TASK_ENV_ALLOWLIST=name1,name2`, lub umieść wartość w rozwiązanym środowisku zadania.
+Zadania PowerShell nie dziedziczą pełnego środowiska procesu harmonogramu. Cronova przekazuje mały zestaw bezpieczny runtime (`PATH`, locale, home/temp i zmienne certyfikatów) plus powyższe wartości `CRONOVA_*`. Zapobiega to przedostawaniu się poświadczeń serwera, takich jak `CRONOVA_ADMIN_PASSWORD`, do kodu zadania. Dodaj zmienną rodzica jawnie przez `CRONOVA_TASK_ENV_ALLOWLIST=name1,name2`, lub umieść wartość w rozwiązanym środowisku zadania.
 
 Oprócz tego referencje zarządzane w UI, rozwiązywane po stronie serwera (sekrety nigdy nie trafiają do ogólnego env):
 
@@ -219,12 +219,12 @@ Oprócz tego referencje zarządzane w UI, rozwiązywane po stronie serwera (sekr
 
 ### Przekazywanie danych między zadaniami
 
-Zadanie może przekazywać niewielkie wartości (liczby wierszy, wygenerowane ścieżki plików, id) do zadań downstream, zapisując **płaską mapę stringów JSON** do pliku o nazwie w `$CRONOVA_OUTPUT` (do 64 KB):
+Zadanie może przekazywać niewielkie wartości (liczby wierszy, wygenerowane ścieżki plików, id) do zadań downstream, zapisując **płaską mapę stringów JSON** do pliku o nazwie w `$env:CRONOVA_OUTPUT` (do 64 KB):
 
 ```yaml
 tasks:
   - id: produce
-    command: 'echo "{\"rows\":\"1234\"}" > "$CRONOVA_OUTPUT"'
+    command: 'Set-Content -LiteralPath $env:CRONOVA_OUTPUT -Value ''{"rows":"1234"}'''
   - id: consume
     command: 'echo upstream wrote {{ ti.produce.rows }} rows'
     deps: [produce]
@@ -234,7 +234,7 @@ Wyjście jest zbierane po zakończeniu zadania sukcesem i przechowywane per (uru
 
 ### Zadania samo-pomijające
 
-Zadanie, które kończy się kodem **99**, jest zapisane jako `skipped` zamiast `failed` — sposób na poziomie shella do powiedzenia „dziś tu nic do roboty". Połącz z downstream `trigger_rule: none_failed` (skip przechodzi) lub domyślnym `all_success` (skip blokuje), by kształtować dalszy przebieg; `when:` (patrz pola zadania) to deklaratywna alternatywa oceniana przed uruchomieniem zadania.
+Zadanie, które kończy się kodem **99**, jest zapisane jako `skipped` zamiast `failed` — sposób na poziomie skryptu do powiedzenia „dziś tu nic do roboty". Połącz z downstream `trigger_rule: none_failed` (skip przechodzi) lub domyślnym `all_success` (skip blokuje), by kształtować dalszy przebieg; `when:` (patrz pola zadania) to deklaratywna alternatywa oceniana przed uruchomieniem zadania.
 
 W edytorze zadań konsoli są one wstawiane jako klikalne/przeciągalne **pigułki** — nie wpisujesz `{{ }}`.
 

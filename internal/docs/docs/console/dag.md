@@ -89,7 +89,7 @@ Below the graph, each task gets a row:
 | Column | Contents |
 |---|---|
 | id | Task id (monospace) |
-| type | Task type (`shell`, `python`, `http`, …) |
+| type | Task type (`powershell`, `python`, `http`, …) |
 | command | Command excerpt (click to copy the full command) |
 | pool | The concurrency pool the task runs in |
 | trigger rule | When the task fires relative to upstreams (`all success`, `one failed`, …) |

@@ -29,15 +29,15 @@ start_date: 2026-06-01
 catchup: false
 tasks:
   - id: extract
-    type: shell
+    type: powershell
     command: echo "extracting data for {{ logical_date }}"
   - id: transform
-    type: shell
-    command: echo "transforming for $CRONOVA_LOGICAL_DATE (run $CRONOVA_RUN_ID, attempt $CRONOVA_TRY_NUMBER)"
+    type: powershell
+    command: echo "transforming for $env:CRONOVA_LOGICAL_DATE (run $env:CRONOVA_RUN_ID, attempt $env:CRONOVA_TRY_NUMBER)"
     deps: [extract]
 ```
 
-The `extract` task uses the **template form**: the workflow scheduler substitutes `{{ logical_date }}` into the command string when the task is dispatched, so the shell receives something like `echo "extracting data for 2026-07-07"`. Spaces inside the braces are optional — `{{logical_date}}` works too.
+The `extract` task uses the **template form**: the workflow scheduler substitutes `{{ logical_date }}` into the command string when the task is dispatched, so PowerShell receives something like `echo "extracting data for 2026-07-07"`. Spaces inside the braces are optional — `{{logical_date}}` works too.
 
 Trigger a run and watch it:
 
@@ -56,7 +56,7 @@ with today's date — a manual run's logical date is the moment you triggered it
 
 ## Or read the environment variable
 
-The `transform` task above uses the **env var form** instead: `$CRONOVA_LOGICAL_DATE` is plain shell syntax, expanded by the shell at run time from the injected environment. Its log shows all three values:
+The `transform` task above uses the **env var form** instead: `$env:CRONOVA_LOGICAL_DATE` is plain PowerShell syntax, expanded by PowerShell at run time from the injected environment. Its log shows all three values:
 
 ```
 transforming for 2026-07-07 (run daily_etl__manual_..., attempt 1)
@@ -75,7 +75,7 @@ Substitution only touches placeholders it recognizes. An unknown `{{ ... }}` is 
 
 ```yaml
   - id: braces_demo
-    type: shell
+    type: powershell
     command: echo "{{ logical_date }} is replaced, {{ not_a_variable }} is not"
 ```
 

@@ -20,7 +20,7 @@ No. The scheduler and web console use an **embedded SQLite** database (pure-Go `
 
 ## What languages can tasks be written in?
 
-Any language on the host. Tasks have a `type` of `shell`, `python`, `sql`, `jar`, or `http`, and a `shell` task can invoke anything on the machine — Node, Go, Rust binaries, CLIs, and more. The scheduler (Go) is fully decoupled from the task language: each task runs as an OS subprocess with the host's own interpreters. The `sql` and `http` task types run in-process (drivers/HTTP client are built into the binary) and need nothing extra installed. See the [DAG Reference](DAG_REFERENCE.md) for every task type.
+Any language on the host. Tasks have a `type` of `powershell` (the default), `python`, `sql`, `jar`, or `http`, and a `powershell` task can invoke anything on the machine — Node, Go, Rust binaries, CLIs, and more. The scheduler (Go) is fully decoupled from the task language: each task runs as an OS subprocess with the host's own interpreters. The `sql` and `http` task types run in-process (drivers/HTTP client are built into the binary) and need nothing extra installed. See the [DAG Reference](DAG_REFERENCE.md) for every task type.
 
 ## How is cronova different from cron?
 
@@ -32,7 +32,7 @@ Yes. cronova ships a built-in **Model Context Protocol (MCP) server** (`cronova 
 
 ## Which platforms are supported, and how do I install cronova?
 
-This repository supports **Windows 10/11 and Windows Server on amd64**. Install Git for Windows, extract `cronova_windows_amd64.zip`, and run the elevated PowerShell installer:
+This repository supports **Windows 10/11 and Windows Server on amd64**. Extract `cronova_windows_amd64.zip`, and run the elevated PowerShell installer:
 
 ```powershell
 .\deploy\install.ps1
