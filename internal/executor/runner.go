@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/zoyluo/cronova/internal/fsperm"
 )
 
 // Runner is the shared subprocess engine behind both LocalExecutor (in-process)
@@ -61,6 +63,9 @@ func NewRunner() *Runner {
 func NewRunnerWithState(dir string) (*Runner, error) {
 	if dir != "" {
 		if err := os.MkdirAll(dir, 0o700); err != nil {
+			return nil, fmt.Errorf("executor state dir: %w", err)
+		}
+		if err := fsperm.Private(dir, 0o700); err != nil {
 			return nil, fmt.Errorf("executor state dir: %w", err)
 		}
 	}
@@ -500,10 +505,18 @@ func openLog(path string) (*os.File, error) {
 	if err := os.MkdirAll(logDir, 0o700); err != nil {
 		return nil, err
 	}
-	if err := os.Chmod(logDir, 0o700); err != nil {
+	if err := fsperm.Private(logDir, 0o700); err != nil {
 		return nil, err
 	}
-	return os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
+	if err != nil {
+		return nil, err
+	}
+	if err := fsperm.Private(path, 0o600); err != nil {
+		_ = f.Close()
+		return nil, err
+	}
+	return f, nil
 }
 
 func buildEnv(extra map[string]string) []string {

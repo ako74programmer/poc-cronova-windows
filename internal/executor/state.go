@@ -152,5 +152,3 @@ func ReadExitCode(stateDir, ref string) (int, bool) {
 	}
 	return readExitFile(exitFile(stateDir, ref))
 }
-
-

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zoyluo/cronova/internal/fsperm"
 	"github.com/zoyluo/cronova/internal/model"
 	"github.com/zoyluo/cronova/internal/store"
 )
@@ -24,12 +25,8 @@ func TestNewSecuresDatabaseFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = s.Close() })
-	fi, err := os.Stat(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got := fi.Mode().Perm(); got != 0o600 {
-		t.Fatalf("database mode = %o, want 600", got)
+	if ok, err := fsperm.IsPrivate(path); err != nil || !ok {
+		t.Fatalf("database file is not private (err=%v)", err)
 	}
 }
 

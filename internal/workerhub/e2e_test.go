@@ -177,7 +177,7 @@ func TestE2ERemoteTask(t *testing.T) {
 	ref := "run1/t1/1"
 	_, err := exec.Launch(context.Background(), executor.Spec{
 		TaskRunID: ref,
-		Command:   `echo hello-from-worker && echo '{"rows":"42"}' > "$CRONOVA_OUTPUT"`,
+		Command:   `Write-Output hello-from-worker; Set-Content -LiteralPath $env:CRONOVA_OUTPUT -Value '{"rows":"42"}' -NoNewline`,
 		Env:       map[string]string{"CRONOVA_OUTPUT": outPath},
 		LogPath:   logPath,
 	})
@@ -222,7 +222,7 @@ func TestE2ECancel(t *testing.T) {
 	ref := "run2/sleepy/1"
 	logPath := filepath.Join(c.dir, "logs", "run2", "sleepy.log")
 	if _, err := exec.Launch(context.Background(), executor.Spec{
-		TaskRunID: ref, Command: "sleep 30", LogPath: logPath,
+		TaskRunID: ref, Command: "Start-Sleep -Seconds 30", LogPath: logPath,
 		Env: map[string]string{"CRONOVA_OUTPUT": executor.OutputPath(logPath, 1)},
 	}); err != nil {
 		t.Fatal(err)
@@ -250,7 +250,7 @@ func TestE2EWorkerLostFailover(t *testing.T) {
 	ref := "run3/doomed/1"
 	logPath := filepath.Join(c.dir, "logs", "run3", "doomed.log")
 	if _, err := exec.Launch(context.Background(), executor.Spec{
-		TaskRunID: ref, Command: "sleep 30", LogPath: logPath,
+		TaskRunID: ref, Command: "Start-Sleep -Seconds 30", LogPath: logPath,
 		Env: map[string]string{"CRONOVA_OUTPUT": executor.OutputPath(logPath, 1)},
 	}); err != nil {
 		t.Fatal(err)

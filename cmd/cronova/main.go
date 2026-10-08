@@ -39,6 +39,8 @@ import (
 	"github.com/zoyluo/cronova/internal/store/postgres"
 	"github.com/zoyluo/cronova/internal/store/sqlite"
 	"github.com/zoyluo/cronova/internal/web"
+
+	"github.com/zoyluo/cronova/internal/fsperm"
 )
 
 // version is the build's release version, injected at link time via
@@ -539,14 +541,14 @@ func cmdServe(args []string) error {
 		if err := os.MkdirAll(cfg.Projects, 0o700); err != nil {
 			return fmt.Errorf("create projects dir %s: %w", cfg.Projects, err)
 		}
-		if err := os.Chmod(cfg.Projects, 0o700); err != nil {
+		if err := fsperm.Private(cfg.Projects, 0o700); err != nil {
 			return fmt.Errorf("secure projects dir %s: %w", cfg.Projects, err)
 		}
 	}
 	if err := os.MkdirAll(cfg.Workspaces, 0o700); err != nil {
 		return fmt.Errorf("create workspaces dir %s: %w", cfg.Workspaces, err)
 	}
-	if err := os.Chmod(cfg.Workspaces, 0o700); err != nil {
+	if err := fsperm.Private(cfg.Workspaces, 0o700); err != nil {
 		return fmt.Errorf("secure workspaces dir %s: %w", cfg.Workspaces, err)
 	}
 

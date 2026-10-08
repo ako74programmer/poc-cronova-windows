@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -48,8 +49,8 @@ func TestStageProject(t *testing.T) {
 	if b, err := os.ReadFile(filepath.Join(ws, "pkg", "util.py")); err != nil || string(b) != "X = 1\n" {
 		t.Fatalf("pkg/util.py = %q, err=%v", b, err)
 	}
-	// executable bit preserved
-	if fi, err := os.Stat(filepath.Join(ws, "main.py")); err != nil || fi.Mode().Perm()&0o100 == 0 {
+	// executable bit preserved (no exec bit on Windows)
+	if fi, err := os.Stat(filepath.Join(ws, "main.py")); err != nil || runtime.GOOS != "windows" && fi.Mode().Perm()&0o100 == 0 {
 		t.Errorf("main.py should stay executable, mode=%v err=%v", fi.Mode(), err)
 	}
 	// workspace is under the temp workspace root, not the projects dir
@@ -139,10 +140,10 @@ func TestProjectAttachRunsInWorkspace(t *testing.T) {
 	ctx := context.Background()
 	dag := &model.DAG{
 		DagID: "proj", MaxActiveRuns: 1, StartDate: time.Now().UTC(),
-		// cat succeeds only if cwd is the staged copy; also assert the env var is set.
+		// Get-Content succeeds only if cwd is the staged copy; also assert the env var is set.
 		Tasks: []model.Task{{
 			ID:          "run",
-			Command:     `cat marker.txt && test -d "$CRONOVA_PROJECT_DIR"`,
+			Command:     `Get-Content marker.txt; if (-not (Test-Path -LiteralPath $env:CRONOVA_PROJECT_DIR -PathType Container)) { exit 1 }`,
 			Project:     "hello",
 			Pool:        model.DefaultPoolName,
 			TriggerRule: model.RuleAllSuccess,

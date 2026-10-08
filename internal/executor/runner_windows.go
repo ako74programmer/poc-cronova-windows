@@ -88,12 +88,16 @@ func preserveProcessGroup(cmd *exec.Cmd) {
 	}
 }
 
+// wrapCommandForState makes the task's exit code match the last native
+// program's exit code (powershell.exe -Command otherwise collapses any failure
+// to 1) and, with state persistence, records it in a sidecar exit file.
 func wrapCommandForState(taskType, command string, stateEnabled bool, exitFilePath string) string {
-	if !stateEnabled {
-		return command
+	record := ""
+	if stateEnabled {
+		path := strings.ReplaceAll(exitFilePath, "'", "''")
+		record = fmt.Sprintf("Set-Content -LiteralPath '%s' -Value $__cronova_ec -NoNewline\n", path)
 	}
-	path := strings.ReplaceAll(exitFilePath, "'", "''")
-	return fmt.Sprintf("$ErrorActionPreference = 'Stop'\n$__cronova_ec = 0\ntry { & {\n%s\n}; if ($LASTEXITCODE -ne $null) { $__cronova_ec = $LASTEXITCODE } } catch { Write-Error $_; $__cronova_ec = 1 }\nSet-Content -LiteralPath '%s' -Value $__cronova_ec -NoNewline\nexit $__cronova_ec", command, path)
+	return fmt.Sprintf("$ErrorActionPreference = 'Stop'\n$__cronova_ec = 0\ntry { & {\n%s\n}; if ($LASTEXITCODE -ne $null) { $__cronova_ec = $LASTEXITCODE } } catch { Write-Error $_; $__cronova_ec = 1 }\n%sexit $__cronova_ec", command, record)
 }
 
 func killGroup(cmd *exec.Cmd) {

@@ -8,7 +8,7 @@ import (
 	"github.com/zoyluo/cronova/internal/model"
 )
 
-// A task writes a JSON map to $CRONOVA_OUTPUT; the downstream command sees the
+// A task writes a JSON map to $env:CRONOVA_OUTPUT; the downstream command sees the
 // value via {{ ti.<task>.<key> }}; when: gates evaluate against params.
 func TestTaskOutputFlowsDownstreamAndWhenGates(t *testing.T) {
 	s := newTestScheduler(t)
@@ -18,8 +18,8 @@ func TestTaskOutputFlowsDownstreamAndWhenGates(t *testing.T) {
 	dag := &model.DAG{
 		DagID: "xcom", MaxActiveRuns: 1, StartDate: now,
 		Tasks: []model.Task{
-			{ID: "produce", Command: `printf '{"answer":"42"}' > "$CRONOVA_OUTPUT"`, Pool: model.DefaultPoolName},
-			{ID: "consume", Command: `test "{{ ti.produce.answer }}" = "42"`, Deps: []string{"produce"}, Pool: model.DefaultPoolName},
+			{ID: "produce", Command: `Set-Content -LiteralPath $env:CRONOVA_OUTPUT -Value '{"answer":"42"}' -NoNewline`, Pool: model.DefaultPoolName},
+			{ID: "consume", Command: `if ("{{ ti.produce.answer }}" -ne "42") { exit 1 }`, Deps: []string{"produce"}, Pool: model.DefaultPoolName},
 			{ID: "gated_off", Command: "echo never", When: "{{ params.go }}", Deps: []string{"produce"}, Pool: model.DefaultPoolName, TriggerRule: model.RuleAllSuccess},
 		},
 	}

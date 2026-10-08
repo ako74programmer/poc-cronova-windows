@@ -26,7 +26,7 @@ func TestCommandTemplating(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "out")
 	dag := &model.DAG{
 		DagID: "tmpl", MaxActiveRuns: 1, StartDate: time.Now().UTC(),
-		Tasks: []model.Task{{ID: "t", Command: "echo date={{ logical_date }} run={{ run_id }} > " + out, Pool: model.DefaultPoolName}},
+		Tasks: []model.Task{{ID: "t", Command: "Set-Content -Encoding ASCII -LiteralPath '" + out + "' -Value 'date={{ logical_date }} run={{ run_id }}'", Pool: model.DefaultPoolName}},
 	}
 	if err := s.registerDAG(ctx, dag); err != nil {
 		t.Fatal(err)
@@ -54,7 +54,7 @@ func TestCatchupBackfills(t *testing.T) {
 	start := time.Now().UTC().Add(-5 * time.Second)
 	dag := &model.DAG{
 		DagID: "cu", Schedule: "@every 1s", StartDate: start, Catchup: true, MaxActiveRuns: 10,
-		Tasks: []model.Task{{ID: "t", Command: "echo $CRONOVA_LOGICAL_DATETIME", Pool: model.DefaultPoolName}},
+		Tasks: []model.Task{{ID: "t", Command: "Write-Output $env:CRONOVA_LOGICAL_DATETIME", Pool: model.DefaultPoolName}},
 	}
 	if err := s.registerDAG(ctx, dag); err != nil {
 		t.Fatal(err)

@@ -56,7 +56,7 @@ func TestTemplateResolveEndToEnd(t *testing.T) {
 		DagID: "tvars", MaxActiveRuns: 1, StartDate: time.Now().UTC(),
 		Tasks: []model.Task{{
 			ID:      "t",
-			Command: "echo v={{ var.greeting }} h={{ conn.db.host }} pw={{ conn.db.password }} p={{ params.who }} > " + out,
+			Command: "Set-Content -Encoding ASCII -NoNewline -LiteralPath '" + out + "' -Value 'v={{ var.greeting }} h={{ conn.db.host }} pw={{ conn.db.password }} p={{ params.who }}'",
 			Pool:    model.DefaultPoolName,
 		}},
 	}
@@ -74,7 +74,7 @@ func TestTemplateResolveEndToEnd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := string(data), "v=hola h=dbhost pw=s3cret p=world\n"; got != want {
+	if got, want := string(data), "v=hola h=dbhost pw=s3cret p=world"; got != want {
 		t.Errorf("resolved command output = %q, want %q", got, want)
 	}
 	// and the run persisted its params

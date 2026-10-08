@@ -86,7 +86,7 @@ func TestGRPCExecutorProbeUnknownAndCancel(t *testing.T) {
 		t.Errorf("unknown ref phase = %v, want PhaseUnknown", st.Phase)
 	}
 
-	ref, err := c.Launch(ctx, Spec{TaskRunID: "r/c", Command: "sleep 30", LogPath: filepath.Join(t.TempDir(), "c.log")})
+	ref, err := c.Launch(ctx, Spec{TaskRunID: "r/c", Command: "Start-Sleep -Seconds 30", LogPath: filepath.Join(t.TempDir(), "c.log")})
 	if err != nil {
 		t.Fatal(err)
 	}

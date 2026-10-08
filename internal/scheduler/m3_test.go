@@ -277,7 +277,7 @@ func TestRetryThenSuccess(t *testing.T) {
 	ctx := context.Background()
 	marker := filepath.Join(t.TempDir(), "m")
 	// First attempt: no marker -> create it and fail. Second: marker exists -> ok.
-	cmd := "if [ -f " + marker + " ]; then echo ok; else touch " + marker + "; exit 1; fi"
+	cmd := "if (Test-Path -LiteralPath '" + marker + "') { Write-Output ok } else { New-Item -ItemType File -Path '" + marker + "' | Out-Null; exit 1 }"
 	dag := &model.DAG{
 		DagID: "flaky", MaxActiveRuns: 1, StartDate: time.Now().UTC(),
 		Tasks: []model.Task{{ID: "t", Command: cmd, Pool: model.DefaultPoolName, Retries: 1, RetryDelay: 0}},
@@ -301,7 +301,7 @@ func TestTimeoutFailsTask(t *testing.T) {
 	ctx := context.Background()
 	dag := &model.DAG{
 		DagID: "to", MaxActiveRuns: 1, StartDate: time.Now().UTC(),
-		Tasks: []model.Task{{ID: "t", Command: "sleep 30", Pool: model.DefaultPoolName, Timeout: 1, Retries: 0}},
+		Tasks: []model.Task{{ID: "t", Command: "Start-Sleep 30", Pool: model.DefaultPoolName, Timeout: 1, Retries: 0}},
 	}
 	if err := s.registerDAG(ctx, dag); err != nil {
 		t.Fatal(err)

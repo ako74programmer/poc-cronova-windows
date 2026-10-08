@@ -2228,7 +2228,7 @@ func (s *Scheduler) runTask(ctx context.Context, run *model.DagRun, t model.Task
 	// python/sql/http rewrite Command to an absolute-path `run-op`, where a cwd is
 	// meaningless, so staging there would just copy files nothing reads.
 	var workspace string
-	keepWorkspace := false                                                                // set when the process is launched but the row didn't flip to running
+	keepWorkspace := false                                           // set when the process is launched but the row didn't flip to running
 	if (t.Type == "powershell" || t.Type == "") && t.Project != "" { // "" == powershell (parser's default)
 		ws, err := s.stageProject(t.Project, ti.ExecutorRef)
 		if err != nil {

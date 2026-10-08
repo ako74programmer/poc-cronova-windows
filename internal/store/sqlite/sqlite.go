@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -30,6 +29,8 @@ import (
 	"github.com/zoyluo/cronova/internal/secrets"
 	"github.com/zoyluo/cronova/internal/store"
 	sqlitelib "modernc.org/sqlite"
+
+	"github.com/zoyluo/cronova/internal/fsperm"
 )
 
 //go:embed schema.sql
@@ -77,7 +78,7 @@ func New(path string) (*Store, error) {
 		return nil, fmt.Errorf("ping sqlite: %w", err)
 	}
 	if path != ":memory:" && !strings.HasPrefix(path, "file::memory:") {
-		if err := os.Chmod(path, 0o600); err != nil {
+		if err := fsperm.Private(path, 0o600); err != nil {
 			_ = db.Close()
 			return nil, fmt.Errorf("secure sqlite file: %w", err)
 		}

@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"github.com/zoyluo/cronova/internal/fsperm"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -53,12 +54,8 @@ func TestLocalSuccess(t *testing.T) {
 	if !strings.Contains(string(data), "hello") || !strings.Contains(string(data), "world") {
 		t.Errorf("log missing output:\n%s", data)
 	}
-	fi, err := os.Stat(logPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got := fi.Mode().Perm(); got != 0o600 {
-		t.Errorf("log mode = %o, want 600", got)
+	if ok, err := fsperm.IsPrivate(logPath); err != nil || !ok {
+		t.Errorf("log file is not private (err=%v)", err)
 	}
 }
 

@@ -57,7 +57,7 @@ func TestMarkRunningTaskSuccess(t *testing.T) {
 	ctx := context.Background()
 	dag := &model.DAG{
 		DagID: "mkr", MaxActiveRuns: 1, StartDate: time.Now().UTC(),
-		Tasks: []model.Task{{ID: "t", Command: "sleep 5", Pool: model.DefaultPoolName}},
+		Tasks: []model.Task{{ID: "t", Command: "Start-Sleep -Seconds 5", Pool: model.DefaultPoolName}},
 	}
 	if err := s.registerDAG(ctx, dag); err != nil {
 		t.Fatal(err)
@@ -168,7 +168,7 @@ func TestMarkRunRefusesActive(t *testing.T) {
 	ctx := context.Background()
 	dag := &model.DAG{
 		DagID: "ma", MaxActiveRuns: 1, StartDate: time.Now().UTC(),
-		Tasks: []model.Task{{ID: "t", Command: "sleep 5", Pool: model.DefaultPoolName}},
+		Tasks: []model.Task{{ID: "t", Command: "Start-Sleep -Seconds 5", Pool: model.DefaultPoolName}},
 	}
 	if err := s.registerDAG(ctx, dag); err != nil {
 		t.Fatal(err)

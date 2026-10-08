@@ -3,16 +3,14 @@ package operator
 import (
 	"bytes"
 	"context"
-	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 )
 
 func TestRunPython(t *testing.T) {
-	if _, err := exec.LookPath("python3"); err != nil {
-		if _, err := exec.LookPath("python"); err != nil {
-			t.Skip("no python interpreter on PATH")
-		}
+	if _, err := resolvePython(); err != nil {
+		t.Skip("no python interpreter available")
 	}
 	var out bytes.Buffer
 	if code := RunPython(context.Background(), "import os\nprint('hi', 2 + 2)", &out); code != 0 {
@@ -30,5 +28,15 @@ func TestRunPython(t *testing.T) {
 	out.Reset()
 	if code := RunPython(context.Background(), "raise ValueError('boom')", &out); code == 0 {
 		t.Fatalf("exit = %d, want non-zero for an exception; out:\n%s", code, out.String())
+	}
+}
+
+func TestResolvePythonSkipsWindowsAppsAlias(t *testing.T) {
+	alias := filepath.Join(t.TempDir(), "Microsoft", "WindowsApps")
+	if !isWindowsAppsAlias(alias) {
+		t.Fatalf("%s should be treated as the Store alias dir", alias)
+	}
+	if isWindowsAppsAlias(filepath.Join(t.TempDir(), "Python313")) {
+		t.Fatal("regular Python dir must not be skipped")
 	}
 }

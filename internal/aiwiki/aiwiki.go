@@ -56,10 +56,10 @@ type Action struct {
 
 // Wiki loads the embedded knowledge base.
 type Wiki struct {
-	kb     KnowledgeBase
-	index  *bm25Index
-	store  store.Store
-	llm    *LLMClient
+	kb    KnowledgeBase
+	index *bm25Index
+	store store.Store
+	llm   *LLMClient
 }
 
 // New loads the embedded knowledge base and builds the BM25 index.

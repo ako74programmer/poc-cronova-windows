@@ -40,7 +40,6 @@ func newEngineServer(t *testing.T, eng Engine) (http.Handler, *sqlite.Store, str
 	return srv.Handler(), st, dir
 }
 
-
 // schedStubEngine fixes NextSchedule so nextScheduleLabel's branches are testable.
 type schedStubEngine struct {
 	stubTrigger

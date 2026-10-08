@@ -143,7 +143,7 @@ func TestSubdagAutoRetryNewChild(t *testing.T) {
 	ctx := context.Background()
 	marker := filepath.Join(t.TempDir(), "second-try")
 	// Fails on the first pass, succeeds once the marker exists.
-	registerSimpleDAG(t, s, "sub_flaky", "test -f "+marker+" || { touch "+marker+"; exit 1; }")
+	registerSimpleDAG(t, s, "sub_flaky", "if (-not (Test-Path -LiteralPath '"+marker+"')) { New-Item -ItemType File -Path '"+marker+"' | Out-Null; exit 1 }")
 	registerParent(t, s, "sub_parent4", "sub_flaky", 1)
 	runID, _ := s.TriggerManual(ctx, "sub_parent4", nil)
 	run := s.driveToTerminal(t, ctx, runID, 120)

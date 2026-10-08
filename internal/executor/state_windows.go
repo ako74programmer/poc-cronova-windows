@@ -4,9 +4,6 @@
 package executor
 
 import (
-	"os"
-	"syscall"
-
 	"golang.org/x/sys/windows"
 )
 
@@ -14,18 +11,14 @@ func processGroupAlive(pgid int) bool {
 	if pgid <= 0 {
 		return false
 	}
-	p, err := os.FindProcess(pgid)
+	h, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION|windows.SYNCHRONIZE, false, uint32(pgid))
 	if err != nil {
 		return false
 	}
-	h, err := syscall.OpenProcess(syscall.SYNCHRONIZE, false, uint32(p.Pid))
-	if err != nil {
-		return false
-	}
-	defer syscall.CloseHandle(h)
+	defer windows.CloseHandle(h)
 	var code uint32
-	if err := windows.GetExitCodeProcess(windows.Handle(h), &code); err != nil {
+	if err := windows.GetExitCodeProcess(h, &code); err != nil {
 		return false
 	}
-	return code == 259
+	return code == 259 // STILL_ACTIVE
 }

@@ -15,6 +15,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/zoyluo/cronova/internal/fsperm"
 )
 
 const prefix = "enc:v1:"
@@ -96,7 +98,7 @@ func LoadOrCreateKeyFile(path string) (key []byte, created bool, err error) {
 		if err != nil {
 			return nil, err
 		}
-		if err := os.Chmod(path, 0o600); err != nil {
+		if err := fsperm.Private(path, 0o600); err != nil {
 			return nil, fmt.Errorf("secure key file %s: %w", path, err)
 		}
 		decoded, derr := hex.DecodeString(strings.TrimSpace(string(b)))
@@ -118,6 +120,9 @@ func LoadOrCreateKeyFile(path string) (key []byte, created bool, err error) {
 		if err := os.MkdirAll(dir, 0o700); err != nil {
 			return nil, false, err
 		}
+		if err := fsperm.Private(dir, 0o700); err != nil {
+			return nil, false, err
+		}
 	}
 	key = make([]byte, 32)
 	if _, err := rand.Read(key); err != nil {
@@ -129,7 +134,7 @@ func LoadOrCreateKeyFile(path string) (key []byte, created bool, err error) {
 	}
 	tmpName := tmp.Name()
 	defer os.Remove(tmpName)
-	if err := tmp.Chmod(0o600); err != nil {
+	if err := fsperm.Private(tmpName, 0o600); err != nil {
 		_ = tmp.Close()
 		return nil, false, err
 	}

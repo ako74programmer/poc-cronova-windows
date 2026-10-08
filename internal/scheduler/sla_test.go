@@ -53,7 +53,7 @@ func TestDagrunTimeout(t *testing.T) {
 	dag := &model.DAG{
 		DagID: "to", MaxActiveRuns: 1, StartDate: time.Now().UTC(), DagrunTimeout: 1,
 		NotifyURL: url, NotifyOn: []string{"failure"},
-		Tasks: []model.Task{{ID: "t", Command: "sleep 10", Pool: model.DefaultPoolName}},
+		Tasks: []model.Task{{ID: "t", Command: "Start-Sleep -Seconds 10", Pool: model.DefaultPoolName}},
 	}
 	if err := s.registerDAG(ctx, dag); err != nil {
 		t.Fatal(err)
@@ -79,7 +79,7 @@ func TestRetryRunTimedOut(t *testing.T) {
 	ctx := context.Background()
 	dag := &model.DAG{
 		DagID: "rto", MaxActiveRuns: 1, StartDate: time.Now().UTC(), DagrunTimeout: 1,
-		Tasks: []model.Task{{ID: "t", Command: "sleep 10", Pool: model.DefaultPoolName}},
+		Tasks: []model.Task{{ID: "t", Command: "Start-Sleep -Seconds 10", Pool: model.DefaultPoolName}},
 	}
 	if err := s.registerDAG(ctx, dag); err != nil {
 		t.Fatal(err)
@@ -109,7 +109,7 @@ func TestRetryTimedOutRunGetsFreshWindow(t *testing.T) {
 	ctx := context.Background()
 	dag := &model.DAG{
 		DagID: "rfw", MaxActiveRuns: 1, StartDate: time.Now().UTC(), DagrunTimeout: 1,
-		Tasks: []model.Task{{ID: "t", Command: "sleep 10", Pool: model.DefaultPoolName}},
+		Tasks: []model.Task{{ID: "t", Command: "Start-Sleep -Seconds 10", Pool: model.DefaultPoolName}},
 	}
 	if err := s.registerDAG(ctx, dag); err != nil {
 		t.Fatal(err)
@@ -143,7 +143,7 @@ func TestDagrunTimeoutAlertsWithoutNotifyOn(t *testing.T) {
 	dag := &model.DAG{
 		DagID: "toa", MaxActiveRuns: 1, StartDate: time.Now().UTC(), DagrunTimeout: 1,
 		NotifyURL: url, // NotifyOn intentionally empty
-		Tasks:     []model.Task{{ID: "t", Command: "sleep 10", Pool: model.DefaultPoolName}},
+		Tasks:     []model.Task{{ID: "t", Command: "Start-Sleep -Seconds 10", Pool: model.DefaultPoolName}},
 	}
 	if err := s.registerDAG(ctx, dag); err != nil {
 		t.Fatal(err)
@@ -167,7 +167,7 @@ func TestRunSLAAlert(t *testing.T) {
 	dag := &model.DAG{
 		DagID: "sla", MaxActiveRuns: 1, StartDate: time.Now().UTC(), SLA: 1,
 		NotifyURL: url, // SLA fires whenever a webhook is set (no notify_on needed)
-		Tasks:     []model.Task{{ID: "t", Command: "sleep 3", Pool: model.DefaultPoolName}},
+		Tasks:     []model.Task{{ID: "t", Command: "Start-Sleep -Seconds 3", Pool: model.DefaultPoolName}},
 	}
 	if err := s.registerDAG(ctx, dag); err != nil {
 		t.Fatal(err)
@@ -192,7 +192,7 @@ func TestTaskSLAAlert(t *testing.T) {
 	dag := &model.DAG{
 		DagID: "tsla", MaxActiveRuns: 1, StartDate: time.Now().UTC(),
 		NotifyURL: url,
-		Tasks:     []model.Task{{ID: "slow", Command: "sleep 3", Pool: model.DefaultPoolName, SLA: 1}},
+		Tasks:     []model.Task{{ID: "slow", Command: "Start-Sleep -Seconds 3", Pool: model.DefaultPoolName, SLA: 1}},
 	}
 	if err := s.registerDAG(ctx, dag); err != nil {
 		t.Fatal(err)

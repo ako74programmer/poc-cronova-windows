@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -81,8 +82,8 @@ func TestUploadSingleFile(t *testing.T) {
 	if err != nil || string(got) != "print('hi')\n" {
 		t.Fatalf("stored file = %q, err=%v", got, err)
 	}
-	// executable bit set so `./main.py` works too
-	if fi, _ := os.Stat(filepath.Join(projDir, "myproj", "main.py")); fi.Mode().Perm()&0o100 == 0 {
+	// executable bit set so `./main.py` works too (no exec bit on Windows)
+	if fi, _ := os.Stat(filepath.Join(projDir, "myproj", "main.py")); runtime.GOOS != "windows" && fi.Mode().Perm()&0o100 == 0 {
 		t.Errorf("uploaded file should be executable, mode=%v", fi.Mode())
 	}
 }

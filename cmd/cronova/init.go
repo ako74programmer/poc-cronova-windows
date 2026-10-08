@@ -13,6 +13,8 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
+
+	"github.com/zoyluo/cronova/internal/fsperm"
 )
 
 // cmdInit is the first-time setup wizard. Interactively (when stdin is a
@@ -308,7 +310,7 @@ func writeFileMode(path, body string, mode os.FileMode) error {
 	}
 	tmpName := tmp.Name()
 	defer os.Remove(tmpName)
-	if err := tmp.Chmod(mode); err != nil {
+	if err := fsperm.Private(tmpName, mode); err != nil {
 		_ = tmp.Close()
 		return err
 	}

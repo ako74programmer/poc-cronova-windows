@@ -34,7 +34,7 @@ func TestSerialWaitAdmitsOneRun(t *testing.T) {
 	d := &model.DAG{
 		DagID: "p_wait", MaxActiveRuns: 5, ExecutionPolicy: model.PolicySerialWait,
 		StartDate: time.Now().UTC(),
-		Tasks:     []model.Task{{ID: "work", Command: "sleep 0.3", Pool: model.DefaultPoolName}},
+		Tasks:     []model.Task{{ID: "work", Command: "Start-Sleep -Milliseconds 300", Pool: model.DefaultPoolName}},
 	}
 	if err := s.registerDAG(ctx, d); err != nil {
 		t.Fatal(err)
@@ -68,7 +68,7 @@ func TestSerialDiscardCancelsWhileBusy(t *testing.T) {
 	d := &model.DAG{
 		DagID: "p_disc", MaxActiveRuns: 1, ExecutionPolicy: model.PolicySerialDiscard,
 		StartDate: time.Now().UTC(),
-		Tasks:     []model.Task{{ID: "work", Command: "sleep 0.4", Pool: model.DefaultPoolName}},
+		Tasks:     []model.Task{{ID: "work", Command: "Start-Sleep -Milliseconds 400", Pool: model.DefaultPoolName}},
 	}
 	if err := s.registerDAG(ctx, d); err != nil {
 		t.Fatal(err)
@@ -95,7 +95,7 @@ func TestSerialPriorityDrainsHighestFirst(t *testing.T) {
 	d := &model.DAG{
 		DagID: "p_pri", MaxActiveRuns: 1, ExecutionPolicy: model.PolicySerialPriority,
 		StartDate: time.Now().UTC(),
-		Tasks:     []model.Task{{ID: "work", Command: "sleep 0.2", Pool: model.DefaultPoolName}},
+		Tasks:     []model.Task{{ID: "work", Command: "Start-Sleep -Milliseconds 200", Pool: model.DefaultPoolName}},
 	}
 	if err := s.registerDAG(ctx, d); err != nil {
 		t.Fatal(err)
@@ -130,11 +130,11 @@ func TestGlobalTaskPriorityAcrossRuns(t *testing.T) {
 	}
 	lo := &model.DAG{
 		DagID: "aa_lo", MaxActiveRuns: 1, StartDate: time.Now().UTC(),
-		Tasks: []model.Task{{ID: "t", Command: "sleep 0.3", Pool: "tight", Priority: 0}},
+		Tasks: []model.Task{{ID: "t", Command: "Start-Sleep -Milliseconds 300", Pool: "tight", Priority: 0}},
 	}
 	hi := &model.DAG{
 		DagID: "zz_hi", MaxActiveRuns: 1, StartDate: time.Now().UTC(),
-		Tasks: []model.Task{{ID: "t", Command: "sleep 0.3", Pool: "tight", Priority: 5}},
+		Tasks: []model.Task{{ID: "t", Command: "Start-Sleep -Milliseconds 300", Pool: "tight", Priority: 5}},
 	}
 	// Register/trigger the low-priority DAG FIRST: under the old per-run
 	// dispatch it would grab the slot by arrival order.
@@ -170,11 +170,11 @@ func TestRunPriorityBeatsTaskPriority(t *testing.T) {
 	}
 	a := &model.DAG{
 		DagID: "dag_a", MaxActiveRuns: 1, StartDate: time.Now().UTC(),
-		Tasks: []model.Task{{ID: "t", Command: "sleep 0.3", Pool: "tight2", Priority: 50}},
+		Tasks: []model.Task{{ID: "t", Command: "Start-Sleep -Milliseconds 300", Pool: "tight2", Priority: 50}},
 	}
 	b := &model.DAG{
 		DagID: "dag_b", MaxActiveRuns: 1, StartDate: time.Now().UTC(),
-		Tasks: []model.Task{{ID: "t", Command: "sleep 0.3", Pool: "tight2", Priority: 0}},
+		Tasks: []model.Task{{ID: "t", Command: "Start-Sleep -Milliseconds 300", Pool: "tight2", Priority: 0}},
 	}
 	if err := s.registerDAG(ctx, a); err != nil {
 		t.Fatal(err)

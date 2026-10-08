@@ -76,7 +76,7 @@ func TestCrashRecoveryReattaches(t *testing.T) {
 		DagID: "rec", MaxActiveRuns: 1, StartDate: time.Now().UTC(),
 		Tasks: []model.Task{
 			// Record one run, then sleep so the task is still alive at crash time.
-			{ID: "t", Command: "echo ran >> " + marker + " && sleep 2", Pool: model.DefaultPoolName},
+			{ID: "t", Command: "Add-Content -LiteralPath '" + marker + "' -Value ran; Start-Sleep -Seconds 2", Pool: model.DefaultPoolName},
 		},
 	}
 

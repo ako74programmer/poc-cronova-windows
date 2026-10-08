@@ -20,6 +20,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/zoyluo/cronova/internal/fsperm"
 )
 
 // CA is a loaded issuing authority.
@@ -49,6 +51,9 @@ func LoadOrCreateCA(dir string) (ca *CA, created bool, err error) {
 		return nil, false, err
 	}
 	if err := os.WriteFile(keyPath, pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: keyDER}), 0o600); err != nil {
+		return nil, false, err
+	}
+	if err := fsperm.Private(keyPath, 0o600); err != nil {
 		return nil, false, err
 	}
 	if err := os.WriteFile(certPath, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: ca.Cert.Raw}), 0o644); err != nil {

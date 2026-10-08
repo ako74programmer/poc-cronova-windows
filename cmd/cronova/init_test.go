@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/zoyluo/cronova/internal/auth"
+	"github.com/zoyluo/cronova/internal/fsperm"
 	"github.com/zoyluo/cronova/internal/model"
 	"github.com/zoyluo/cronova/internal/store"
 )
@@ -107,12 +108,8 @@ func TestInitSeedsAndRotatesAdminWithoutStoringPassword(t *testing.T) {
 	if !strings.Contains(string(envRaw), "CRONOVA_SECURE_COOKIE=true") || strings.Contains(string(envRaw), "legacy-secret") || strings.Contains(string(envRaw), "CRONOVA_ADMIN_USER=") {
 		t.Fatalf("re-run did not preserve safe overrides and scrub legacy credentials:\n%s", envRaw)
 	}
-	fi, err := os.Stat(envPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if fi.Mode().Perm() != 0o600 {
-		t.Fatalf("env mode = %v; want 0600", fi.Mode().Perm())
+	if ok, err := fsperm.IsPrivate(envPath); err != nil || !ok {
+		t.Fatalf("env file is not private (err=%v)", err)
 	}
 	st, err = openStore(dbPath)
 	if err != nil {
@@ -177,8 +174,7 @@ func TestWriteFileModeRepairsExistingPermissions(t *testing.T) {
 	if err := writeFileMode(path, "new", 0o600); err != nil {
 		t.Fatal(err)
 	}
-	fi, err := os.Stat(path)
-	if err != nil || fi.Mode().Perm() != 0o600 {
-		t.Fatalf("mode=%v err=%v, want 0600", fi.Mode().Perm(), err)
+	if ok, err := fsperm.IsPrivate(path); err != nil || !ok {
+		t.Fatalf("file is not private (err=%v)", err)
 	}
 }

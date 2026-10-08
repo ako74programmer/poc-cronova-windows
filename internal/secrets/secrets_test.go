@@ -2,10 +2,14 @@ package secrets
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/zoyluo/cronova/internal/fsperm"
 )
 
 func TestEncryptDecryptRoundTrip(t *testing.T) {
@@ -80,6 +84,9 @@ func TestLoadOrCreateKeyFileRejectsSymlink(t *testing.T) {
 	}
 	link := filepath.Join(dir, "cronova.key")
 	if err := os.Symlink(target, link); err != nil {
+		if runtime.GOOS == "windows" {
+			t.Skipf("creating symlinks requires Developer Mode or SeCreateSymbolicLinkPrivilege: %v", err)
+		}
 		t.Fatal(err)
 	}
 	if _, _, err := LoadOrCreateKeyFile(link); err == nil {
@@ -93,25 +100,38 @@ func TestLoadOrCreateKeyFile(t *testing.T) {
 	if err != nil || !created || len(k1) != 32 {
 		t.Fatalf("first load: created=%v len=%d err=%v", created, len(k1), err)
 	}
-	if fi, _ := os.Stat(path); fi.Mode().Perm() != 0o600 {
-		t.Fatalf("key file mode = %v, want 0600", fi.Mode().Perm())
+	if ok, _ := fsperm.IsPrivate(path); !ok {
+		t.Fatalf("key file is not private")
 	}
-	if fi, _ := os.Stat(filepath.Dir(path)); fi.Mode().Perm() != 0o700 {
-		t.Fatalf("key directory mode = %v, want 0700", fi.Mode().Perm())
+	if ok, _ := fsperm.IsPrivate(filepath.Dir(path)); !ok {
+		t.Fatalf("key directory is not private")
 	}
-	if err := os.Chmod(path, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	makePublic(t, path)
 	k2, created, err := LoadOrCreateKeyFile(path)
 	if err != nil || created || string(k2) != string(k1) {
 		t.Fatalf("second load must return the same key without creating")
 	}
-	if fi, _ := os.Stat(path); fi.Mode().Perm() != 0o600 {
-		t.Fatalf("existing key file mode was not repaired: %v", fi.Mode().Perm())
+	if ok, _ := fsperm.IsPrivate(path); !ok {
+		t.Fatalf("existing key file permissions were not repaired")
 	}
 	// corrupted file is an error, not a silent new key
 	os.WriteFile(path, []byte("nonsense"), 0o600)
 	if _, _, err := LoadOrCreateKeyFile(path); err == nil {
 		t.Fatal("corrupt key file must error")
+	}
+}
+
+// makePublic undoes Private: Unix mode 0644, or on Windows the inherited
+// (non-protected) ACL of the temp directory.
+func makePublic(t *testing.T, path string) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		if out, err := exec.Command("icacls", path, "/reset").CombinedOutput(); err != nil {
+			t.Fatalf("icacls /reset: %v %s", err, out)
+		}
+		return
+	}
+	if err := os.Chmod(path, 0o644); err != nil {
+		t.Fatal(err)
 	}
 }

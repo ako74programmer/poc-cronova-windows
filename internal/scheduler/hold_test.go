@@ -17,7 +17,7 @@ func TestHoldBlocksNewDispatch(t *testing.T) {
 	d := &model.DAG{
 		DagID: "holdme", MaxActiveRuns: 1, StartDate: time.Now().UTC().Add(-time.Hour),
 		Tasks: []model.Task{
-			{ID: "first", Command: "sleep 0.2", Pool: model.DefaultPoolName},
+			{ID: "first", Command: "Start-Sleep -Milliseconds 200", Pool: model.DefaultPoolName},
 			{ID: "second", Command: "echo done", Pool: model.DefaultPoolName, Deps: []string{"first"}},
 		},
 	}

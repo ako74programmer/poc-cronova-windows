@@ -510,7 +510,7 @@ func TestSwapBinary(t *testing.T) {
 		if b, _ := os.ReadFile(dst + ".bak"); string(b) != "OLD" {
 			t.Fatalf("backup = %q, want OLD", b)
 		}
-		if fi, _ := os.Stat(dst); fi.Mode().Perm() != 0o755 {
+		if fi, _ := os.Stat(dst); runtime.GOOS != "windows" && fi.Mode().Perm() != 0o755 {
 			t.Errorf("mode = %v, want 0755", fi.Mode().Perm())
 		}
 		if err := restore(); err != nil {
