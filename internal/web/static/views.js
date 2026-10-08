@@ -302,7 +302,7 @@ async function showDag(id, tab) {
       // conflicts loudly (409) instead of being silently overwritten.
       definition_hash: dag.definition_hash || "",
     }),
-    tasks: (dag.tasks || []).map((tk) => { const h = tk.http || {}, dd = tk.depends_on_dag || {}; return { id: tk.id, type: tk.type || "shell", command: tk.command || "", conn: tk.conn || "", project: tk.project || "", pool: tk.pool || "default", priority: tk.priority || 0, retries: tk.retries ?? "", retry_delay: tk.retry_delay ?? "", retry_backoff: tk.retry_backoff || "", retry_delay_max: tk.retry_delay_max || "", timeout: tk.timeout || "", sla: tk.sla || "", deps: (tk.deps || []).slice(), trigger_rule: tk.trigger_rule || "all_success",
+    tasks: (dag.tasks || []).map((tk) => { const h = tk.http || {}, dd = tk.depends_on_dag || {}; return { id: tk.id, type: tk.type || "powershell", command: tk.command || "", conn: tk.conn || "", project: tk.project || "", pool: tk.pool || "default", priority: tk.priority || 0, retries: tk.retries ?? "", retry_delay: tk.retry_delay ?? "", retry_backoff: tk.retry_backoff || "", retry_delay_max: tk.retry_delay_max || "", timeout: tk.timeout || "", sla: tk.sla || "", deps: (tk.deps || []).slice(), trigger_rule: tk.trigger_rule || "all_success",
       subdag: tk.subdag || "", worker_group: tk.worker_group || "",
       dodDag: dd.dag || "", dodOffset: dd.offset || "", dodTimeout: dd.timeout || "", dodOnTimeout: dd.on_timeout || "",
       httpMethod: h.method || "GET", httpUrl: h.url || "", httpHeaders: h.headers ? Object.entries(h.headers).map(([k, v]) => `${k}: ${v}`).join("\n") : "", httpBody: h.body || "", httpStatus: (h.expected_status || []).join(", ") }; }),
@@ -1847,10 +1847,10 @@ function renderTaskPage() {
     <div class="form-page">
       <div class="tc-grid">
         <div class="b-field"><label>${t("t_id")}</label><input class="tf" data-k="id" value="${esc(tk.id)}" placeholder="step_a"></div>
-        <div class="b-field"><label>${t("t_type")}</label><select class="tf" data-k="type">${["powershell", "python", "sql", "jar", "http", "subdag", ...(tk.type === "shell" ? ["shell"] : [])].map((o) => `<option ${tk.type === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
+        <div class="b-field"><label>${t("t_type")}</label><select class="tf" data-k="type">${["powershell", "python", "sql", "jar", "http", "subdag"].map((o) => `<option ${tk.type === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
       </div>
       ${commandFieldHtml(tk)}
-      ${tk.type === "shell" ? projectSectionHtml(tk) : ""}
+      ${tk.type === "powershell" ? projectSectionHtml(tk) : ""}
       <div class="section-h">${t("t_deps")}</div>
       <div class="b-deps">${siblings.length ? siblings.map((id) => `<span class="chip dep ${tk.deps.includes(id) ? "on" : ""}" role="checkbox" tabindex="0" aria-checked="${tk.deps.includes(id)}" data-dep="${esc(id)}">${esc(id)}</span>`).join("") : `<span class="chip empty-hint">${t("t_nodeps")}</span>`}</div>
       <div class="tc-grid" style="margin-top:14px">
@@ -1908,7 +1908,7 @@ function renderTaskPage() {
     c.setAttribute("aria-checked", c.classList.contains("on"));
     saveDag();
   });
-  if (tk.type === "shell") hydrateProjectSection(tk);
+  if (tk.type === "powershell") hydrateProjectSection(tk);
   reflectSaveState();
 }
 // ---- project attach (shell tasks) ----------------------------------------
@@ -2133,7 +2133,7 @@ function dagSpecFrom(st) {
       } else {
         o.command = tk.command;
         if (tk.type === "sql") o.conn = (tk.conn || "").trim();
-        if (tk.type === "shell" && tk.project) o.project = tk.project; // attached project dir
+        if (tk.type === "powershell" && tk.project) o.project = tk.project; // attached project dir
       }
       // worker_group has no console field yet but must round-trip, not vanish
       if ((tk.worker_group || "").trim()) o.worker_group = tk.worker_group.trim();

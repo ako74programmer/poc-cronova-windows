@@ -37,7 +37,7 @@ tasks:
 		t.Fatalf("got %d tasks", len(d.Tasks))
 	}
 	// defaults + overrides
-	if d.Tasks[0].Type != "shell" || d.Tasks[0].Pool != "default" {
+	if d.Tasks[0].Type != "powershell" || d.Tasks[0].Pool != "default" {
 		t.Errorf("task0 defaults wrong: %+v", d.Tasks[0])
 	}
 	if d.Tasks[0].Retries != 2 {
@@ -52,7 +52,7 @@ tasks:
 }
 
 func TestParseProjectField(t *testing.T) {
-	d, err := Parse([]byte("dag_id: p\ntasks:\n  - id: run\n    type: shell\n    command: \"python3 main.py\"\n    project: my_app\n"))
+	d, err := Parse([]byte("dag_id: p\ntasks:\n  - id: run\n    type: powershell\n    command: \"python3 main.py\"\n    project: my_app\n"))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
@@ -234,7 +234,7 @@ func TestParseRejectsBadHTTP(t *testing.T) {
 		t.Errorf("http task without url should error, got %v", err)
 	}
 	// a shell task still requires a command
-	noCmd := []byte("dag_id: c\ntasks:\n  - id: a\n    type: shell\n")
+	noCmd := []byte("dag_id: c\ntasks:\n  - id: a\n    type: powershell\n")
 	if _, err := Parse(noCmd); err == nil || !strings.Contains(err.Error(), "empty command") {
 		t.Errorf("shell task without command should error, got %v", err)
 	}
@@ -358,6 +358,13 @@ func TestParseAcceptsPowerShellTask(t *testing.T) {
 	}
 	if got := d.Tasks[0].Type; got != "powershell" {
 		t.Fatalf("task type = %q, want powershell", got)
+	}
+}
+
+func TestParseRejectsShellTaskType(t *testing.T) {
+	_, err := Parse([]byte("dag_id: legacy\ntasks:\n  - id: run\n    type: shell\n    command: echo ok\n"))
+	if err == nil || !strings.Contains(err.Error(), "use type: powershell") {
+		t.Fatalf("shell task type should be rejected with a powershell hint, got %v", err)
 	}
 }
 

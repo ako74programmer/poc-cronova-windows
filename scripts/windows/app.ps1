@@ -17,8 +17,14 @@ $Logs = Join-Path $RepoRoot 'logs'
 $Dags = Join-Path $RepoRoot 'dags'
 $ToolchainScript = Join-Path $PSScriptRoot 'detect-toolchain.ps1'
 
+function Get-RepoCronovaProcesses {
+    # Only processes started from this checkout; never the installed service binary.
+    @(Get-CimInstance Win32_Process -Filter "name = 'cronova.exe'" -ErrorAction SilentlyContinue |
+        Where-Object { $_.ExecutablePath -and ($_.ExecutablePath -ieq $Binary) })
+}
+
 function Stop-CronovaProcesses {
-    $processes = @(Get-CimInstance Win32_Process -Filter "name = 'cronova.exe'" -ErrorAction SilentlyContinue)
+    $processes = Get-RepoCronovaProcesses
     foreach ($process in $processes) {
         try {
             Stop-Process -Id $process.ProcessId -Force -ErrorAction Stop
@@ -27,7 +33,7 @@ function Stop-CronovaProcesses {
         }
     }
     Start-Sleep -Seconds 2
-    $remaining = @(Get-CimInstance Win32_Process -Filter "name = 'cronova.exe'" -ErrorAction SilentlyContinue)
+    $remaining = Get-RepoCronovaProcesses
     if ($remaining.Count -gt 0) {
         throw 'cronova.exe is still running after stop request.'
     }
@@ -35,7 +41,7 @@ function Stop-CronovaProcesses {
 }
 
 function Show-CronovaStatus {
-    $processes = @(Get-CimInstance Win32_Process -Filter "name = 'cronova.exe'" -ErrorAction SilentlyContinue)
+    $processes = Get-RepoCronovaProcesses
     if ($processes.Count -eq 0) {
         Write-Host '[app.ps1] No running cronova.exe processes.'
         return

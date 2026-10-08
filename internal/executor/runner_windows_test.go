@@ -9,7 +9,7 @@ import (
 )
 
 func TestWindowsTaskCommandUsesPowerShell(t *testing.T) {
-	for _, taskType := range []string{"", "shell", "powershell", "jar"} {
+	for _, taskType := range []string{"", "powershell", "jar"} {
 		t.Run(taskType, func(t *testing.T) {
 			cmd, err := taskCommand(taskType, "Write-Output ok")
 			if err != nil {
@@ -40,7 +40,7 @@ func TestWindowsOperatorTaskUsesPowerShellCallOperator(t *testing.T) {
 }
 
 func TestWindowsTaskCommandRejectsUnknownType(t *testing.T) {
-	if _, err := taskCommand("bash", "echo not supported"); err == nil {
+	if _, err := taskCommand("shell", "echo not supported"); err == nil {
 		t.Fatal("unknown task type should not fall back to a shell")
 	}
 }

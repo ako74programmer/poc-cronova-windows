@@ -22,9 +22,7 @@ func sysProcAttrForGroup() *syscall.SysProcAttr {
 
 func taskCommand(taskType, script string) (*exec.Cmd, error) {
 	switch taskType {
-	case "", "shell", "powershell", "jar":
-		// "shell" is retained as a deprecated YAML alias; on Windows its command
-		// is PowerShell, never Bash. New DAGs should say type: powershell.
+	case "", "powershell", "jar":
 	case "http", "python", "sql":
 		// The scheduler quotes the Cronova executable for the legacy shell
 		// command format. PowerShell's call operator is required to execute a

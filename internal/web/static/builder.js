@@ -3,7 +3,7 @@
 // Shared building blocks: blank task, trigger rules, cron data + the schedule
 // UI (used by both the DAG operation page and the minimal new-DAG modal).
 // ============================================================================
-const blankTask = () => ({ id: "", type: "shell", command: "", pool: "default", priority: 0, retries: "", retry_delay: "", timeout: "", deps: [], trigger_rule: "all_success" });
+const blankTask = () => ({ id: "", type: "powershell", command: "", pool: "default", priority: 0, retries: "", retry_delay: "", timeout: "", deps: [], trigger_rule: "all_success" });
 const TRIGGER_RULES = ["all_success", "all_done", "one_success", "one_failed", "all_failed", "none_failed"];
 
 const CRON_PRESETS = [
@@ -173,23 +173,23 @@ const DAG_TEMPLATES = [
   { key: "blank", name: "tpl_blank", desc: "tpl_blank_d", tasks: [] },
   {
     key: "etl", name: "tpl_etl", desc: "tpl_etl_d", tasks: [
-      { id: "extract", type: "shell", command: "echo extract {{ logical_date }} && sleep 1" },
-      { id: "transform", type: "shell", command: "echo transform && sleep 1", deps: ["extract"] },
-      { id: "load", type: "shell", command: "echo load run={{ run_id }} && sleep 1", deps: ["transform"] },
+      { id: "extract", type: "powershell", command: "Write-Output extract {{ logical_date }}; Start-Sleep 1" },
+      { id: "transform", type: "powershell", command: "Write-Output transform; Start-Sleep 1", deps: ["extract"] },
+      { id: "load", type: "powershell", command: "Write-Output load run={{ run_id }}; Start-Sleep 1", deps: ["transform"] },
     ],
   },
   {
     key: "report", name: "tpl_report", desc: "tpl_report_d", schedule: "0 8 * * *", tasks: [
-      { id: "fetch", type: "shell", command: "echo fetch data for {{ logical_date }} && sleep 1" },
-      { id: "render", type: "shell", command: "echo render report && sleep 1", deps: ["fetch"] },
+      { id: "fetch", type: "powershell", command: "Write-Output fetch data for {{ logical_date }}; Start-Sleep 1" },
+      { id: "render", type: "powershell", command: "Write-Output render report; Start-Sleep 1", deps: ["fetch"] },
     ],
   },
   {
     key: "fanout", name: "tpl_fanout", desc: "tpl_fanout_d", tasks: [
-      { id: "start", type: "shell", command: "echo start && sleep 1" },
-      { id: "branch_a", type: "shell", command: "echo branch A && sleep 1", deps: ["start"] },
-      { id: "branch_b", type: "shell", command: "echo branch B && sleep 1", deps: ["start"] },
-      { id: "join", type: "shell", command: "echo join && sleep 1", deps: ["branch_a", "branch_b"] },
+      { id: "start", type: "powershell", command: "Write-Output start; Start-Sleep 1" },
+      { id: "branch_a", type: "powershell", command: "Write-Output branch A; Start-Sleep 1", deps: ["start"] },
+      { id: "branch_b", type: "powershell", command: "Write-Output branch B; Start-Sleep 1", deps: ["start"] },
+      { id: "join", type: "powershell", command: "Write-Output join; Start-Sleep 1", deps: ["branch_a", "branch_b"] },
     ],
   },
 ];
@@ -292,7 +292,7 @@ async function submitNewDag() {
   const btn = $("nd-create"); btn.disabled = true; $("nd-srv").textContent = "";
   computeSchedule(ND);
   const tp = DAG_TEMPLATES.find((x) => x.key === ND.template) || DAG_TEMPLATES[0];
-  const tasks = (tp.tasks || []).map((tk) => ({ id: tk.id, type: tk.type || "shell", command: tk.command, deps: tk.deps || [], pool: "default", priority: 0, timeout: 0, trigger_rule: "all_success", retries: null, retry_delay: null }));
+  const tasks = (tp.tasks || []).map((tk) => ({ id: tk.id, type: tk.type || "powershell", command: tk.command, deps: tk.deps || [], pool: "default", priority: 0, timeout: 0, trigger_rule: "all_success", retries: null, retry_delay: null }));
   const spec = { dag_id: ND.dag.dag_id, schedule: ND.dag.schedule, start_date: ND.dag.start_date, catchup: !!(ND.dag.schedule && ND.dag.catchup), max_active_runs: 1, default_retries: 0, trigger_after: [], tasks };
   try { await api("/api/dags/build", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(spec) }); if (tasks.length) coachDag = ND.dag.dag_id; $("modal-root").innerHTML = ""; showDag(ND.dag.dag_id); }
   catch (e) { $("nd-srv").textContent = e.message; btn.disabled = false; }
@@ -300,23 +300,23 @@ async function submitNewDag() {
 // ============================================================================
 // Novice wizard (#/new): 3 steps — pick a scenario, confirm commands, schedule —
 // then create via /api/dags/build and jump straight into a trial run.
-// Templates deliberately use commands that SUCCEED out of the box (echo/sleep),
+// Templates deliberately use commands that SUCCEED out of the box (Write-Output/Start-Sleep),
 // so the promised "run once, watch it go green" actually happens; users swap in
 // their real scripts in step 2 or later from the detail page.
 // ============================================================================
 let W = null; // wizard state; survives navigating away mid-flow, cleared on create
 const NV_TEMPLATES = {
   etl: { defName: "my_daily_etl", steps: [
-    { id: "extract", cmd: "sleep 1 && echo extract" },
-    { id: "transform", cmd: "sleep 1 && echo transform", deps: ["extract"] },
-    { id: "load", cmd: "sleep 1 && echo load run={{ run_id }}", deps: ["transform"] },
+    { id: "extract", cmd: "Start-Sleep 1; Write-Output extract" },
+    { id: "transform", cmd: "Start-Sleep 1; Write-Output transform", deps: ["extract"] },
+    { id: "load", cmd: "Start-Sleep 1; Write-Output load run={{ run_id }}", deps: ["transform"] },
   ] },
   report: { defName: "daily_report", daily: "08:00", steps: [
-    { id: "fetch", cmd: "sleep 1 && echo fetch data" },
-    { id: "render", cmd: "sleep 1 && echo render report", deps: ["fetch"] },
+    { id: "fetch", cmd: "Start-Sleep 1; Write-Output fetch data" },
+    { id: "render", cmd: "Start-Sleep 1; Write-Output render report", deps: ["fetch"] },
   ] },
   blank: { defName: "my_first_flow", steps: [
-    { id: "step_1", cmd: "echo hello cronova" },
+    { id: "step_1", cmd: "Write-Output hello cronova" },
   ] },
 };
 function wzSteps() {
@@ -493,7 +493,7 @@ async function createAndRunWizard() {
   const name = W.name.trim(), steps = wzSteps();
   const schedule = W.schedMode === "daily" ? wzDailyCron(W.dailyTime)
     : W.schedMode === "interval" ? `@every ${Math.max(1, W.intervalN)}m` : "";
-  const tasks = steps.map((s) => ({ id: s.id, type: "shell", command: s.cmd, deps: s.deps || [], pool: "default", priority: 0, timeout: 0, trigger_rule: "all_success", retries: null, retry_delay: null }));
+  const tasks = steps.map((s) => ({ id: s.id, type: "powershell", command: s.cmd, deps: s.deps || [], pool: "default", priority: 0, timeout: 0, trigger_rule: "all_success", retries: null, retry_delay: null }));
   // default_retries: 2 — the novice copy promises automatic retries; expert
   // settings can dial it back any time.
   const spec = { dag_id: name, schedule, start_date: "", catchup: false, max_active_runs: 1, default_retries: 2, trigger_after: [], tasks };

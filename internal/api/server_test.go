@@ -284,7 +284,7 @@ func TestBuildDAG(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := `{"dag_id":"build_test","schedule":"@every 1m","catchup":true,"max_active_runs":2,
-	  "tasks":[{"id":"a","type":"shell","command":"echo a"},
+	  "tasks":[{"id":"a","type":"powershell","command":"echo a"},
 	           {"id":"b","command":"echo b","deps":["a"],"pool":"heavy"}],
 	  "trigger_after":["up"]}`
 	req := httptest.NewRequest("POST", "/api/dags/build", strings.NewReader(body))

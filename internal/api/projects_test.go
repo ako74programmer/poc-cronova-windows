@@ -315,7 +315,7 @@ func TestUploadFolderFailureLeavesExistingProjectUntouched(t *testing.T) {
 func TestSpecToYAMLCarriesProject(t *testing.T) {
 	yml, err := specToYAML(dagSpec{
 		DagID: "p", MaxActiveRuns: 1,
-		Tasks: []taskSpec{{ID: "run", Type: "shell", Command: "python3 main.py", Project: "my_app"}},
+		Tasks: []taskSpec{{ID: "run", Type: "powershell", Command: "python3 main.py", Project: "my_app"}},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -329,7 +329,7 @@ func TestSpecToYAMLCarriesProject(t *testing.T) {
 // the task's project so the console can show it selected.
 func TestGetDAGCarriesProject(t *testing.T) {
 	h, st, _, _ := setup(t)
-	yaml := "dag_id: pr\ntasks:\n  - id: run\n    type: shell\n    command: \"python3 main.py\"\n    project: my_app\n"
+	yaml := "dag_id: pr\ntasks:\n  - id: run\n    type: powershell\n    command: \"python3 main.py\"\n    project: my_app\n"
 	if err := st.UpsertDAG(context.Background(), &model.DAG{DagID: "pr", DefinitionYAML: yaml, MaxActiveRuns: 1, StartDate: time.Now().UTC()}); err != nil {
 		t.Fatal(err)
 	}
@@ -349,8 +349,8 @@ func TestValidateFlagsMissingProject(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := `{"dag_id":"d","start_date":"2026-01-01","tasks":[
-		{"id":"a","type":"shell","command":"echo hi","project":"real"},
-		{"id":"b","type":"shell","command":"echo hi","project":"ghost"}]}`
+		{"id":"a","type":"powershell","command":"echo hi","project":"real"},
+		{"id":"b","type":"powershell","command":"echo hi","project":"ghost"}]}`
 	req := httptest.NewRequest("POST", "/api/dags/validate", strings.NewReader(body))
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)

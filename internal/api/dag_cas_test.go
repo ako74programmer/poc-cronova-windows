@@ -20,7 +20,7 @@ func TestDagSaveCAS(t *testing.T) {
 	spec := func(cmd, expected string) string {
 		m := map[string]any{
 			"dag_id": "etl",
-			"tasks":  []any{map[string]any{"id": "t", "type": "shell", "command": cmd}},
+			"tasks":  []any{map[string]any{"id": "t", "type": "powershell", "command": cmd}},
 		}
 		if expected != "" {
 			m["expected_hash"] = expected

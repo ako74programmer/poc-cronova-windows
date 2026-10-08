@@ -70,9 +70,9 @@ func TestLinearDAGRunsToSuccess(t *testing.T) {
 		MaxActiveRuns: 1,
 		StartDate:     time.Now().UTC(),
 		Tasks: []model.Task{
-			{ID: "extract", Type: "shell", Command: "echo extracting", Pool: model.DefaultPoolName},
-			{ID: "transform", Type: "shell", Command: "echo transforming", Deps: []string{"extract"}, Pool: model.DefaultPoolName},
-			{ID: "load", Type: "shell", Command: "echo loading", Deps: []string{"transform"}, Pool: model.DefaultPoolName},
+			{ID: "extract", Type: "powershell", Command: "echo extracting", Pool: model.DefaultPoolName},
+			{ID: "transform", Type: "powershell", Command: "echo transforming", Deps: []string{"extract"}, Pool: model.DefaultPoolName},
+			{ID: "load", Type: "powershell", Command: "echo loading", Deps: []string{"transform"}, Pool: model.DefaultPoolName},
 		},
 	}
 	if err := s.registerDAG(ctx, dag); err != nil {

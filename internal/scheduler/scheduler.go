@@ -2229,7 +2229,7 @@ func (s *Scheduler) runTask(ctx context.Context, run *model.DagRun, t model.Task
 	// meaningless, so staging there would just copy files nothing reads.
 	var workspace string
 	keepWorkspace := false                                                                // set when the process is launched but the row didn't flip to running
-	if (t.Type == "shell" || t.Type == "powershell" || t.Type == "") && t.Project != "" { // "" == shell (parser's default)
+	if (t.Type == "powershell" || t.Type == "") && t.Project != "" { // "" == powershell (parser's default)
 		ws, err := s.stageProject(t.Project, ti.ExecutorRef)
 		if err != nil {
 			s.log.Error("stage project", "run", run.RunID, "task", t.ID, "project", t.Project, "err", err)
@@ -2257,8 +2257,7 @@ func (s *Scheduler) runTask(ctx context.Context, run *model.DagRun, t model.Task
 	// reusing the executor's normal launch/probe/cancel/log path. The spec (templates
 	// resolved) is passed by env, not interpolated into the shell string — no injection.
 	switch t.Type {
-	case "", "shell", "powershell", "jar":
-		// These task types execute their validated command directly.
+	case "", "powershell", "jar":
 	case "http":
 		if t.HTTP == nil {
 			now := time.Now().UTC()

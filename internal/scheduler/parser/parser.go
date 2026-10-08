@@ -338,9 +338,11 @@ func Parse(raw []byte) (*model.DAG, error) {
 		}
 		seen[t.ID] = true
 
-		taskType := orDefault(strings.TrimSpace(t.Type), "shell")
+		taskType := orDefault(strings.TrimSpace(t.Type), "powershell")
 		switch taskType {
-		case "shell", "powershell", "python", "sql", "jar", "http", "subdag":
+		case "powershell", "python", "sql", "jar", "http", "subdag":
+		case "shell":
+			return nil, fmt.Errorf("dag %q: task %q uses type \"shell\", which is not supported (Windows-only, PowerShell runtime); use type: powershell", y.DagID, t.ID)
 		default:
 			return nil, fmt.Errorf("dag %q: task %q has unsupported type %q", y.DagID, t.ID, taskType)
 		}

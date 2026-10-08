@@ -655,7 +655,7 @@ func TestValidateDAGSpec(t *testing.T) {
 		wantWarn  string // substring of a warning (valid specs)
 	}{
 		{name: "valid spec",
-			body:      `{"dag_id":"vd1","start_date":"2026-01-01","tasks":[{"id":"a","type":"shell","command":"echo hi"}]}`,
+			body:      `{"dag_id":"vd1","start_date":"2026-01-01","tasks":[{"id":"a","type":"powershell","command":"echo hi"}]}`,
 			wantValid: true},
 		{name: "malformed json",
 			body: `{"dag_id":`, wantValid: false, wantErrIn: "invalid spec"},
