@@ -5,14 +5,8 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
-
 	"golang.org/x/sys/windows/svc"
 )
-
-var serviceSignalRelay chan os.Signal
 
 func runWindowsService(name string, runConsole func() error) error {
 	isService, err := svc.IsWindowsService()
@@ -33,12 +27,6 @@ func (h *windowsServiceHandler) Execute(_ []string, requests <-chan svc.ChangeRe
 	const accepted = svc.AcceptStop | svc.AcceptShutdown
 	changes <- svc.Status{State: svc.StartPending}
 
-	cleanup, err := installServiceSignalRelay()
-	if err != nil {
-		return false, 1
-	}
-	defer cleanup()
-
 	changes <- svc.Status{State: svc.Running, Accepts: accepted}
 
 	errCh := make(chan error, 1)
@@ -57,7 +45,7 @@ func (h *windowsServiceHandler) Execute(_ []string, requests <-chan svc.ChangeRe
 				if !stopRequested {
 					stopRequested = true
 					changes <- svc.Status{State: svc.StopPending, Accepts: 0}
-					relayServiceStopSignal()
+					serviceStop()
 				}
 			case svc.Pause, svc.Continue:
 			default:
@@ -68,25 +56,5 @@ func (h *windowsServiceHandler) Execute(_ []string, requests <-chan svc.ChangeRe
 			}
 			return false, 0
 		}
-	}
-}
-
-func installServiceSignalRelay() (func(), error) {
-	serviceSignalRelay = make(chan os.Signal, 2)
-	signal.Notify(serviceSignalRelay, os.Interrupt, syscall.SIGTERM)
-	return func() {
-		signal.Stop(serviceSignalRelay)
-		close(serviceSignalRelay)
-		serviceSignalRelay = nil
-	}, nil
-}
-
-func relayServiceStopSignal() {
-	if serviceSignalRelay == nil {
-		return
-	}
-	select {
-	case serviceSignalRelay <- syscall.SIGTERM:
-	default:
 	}
 }

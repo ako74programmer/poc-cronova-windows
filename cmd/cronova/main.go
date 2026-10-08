@@ -439,7 +439,7 @@ func cmdServe(args []string) error {
 		// Active-standby: park until the active holder's lease expires (its
 		// heartbeat stops on crash/stop), then take over and start scheduling.
 		// Interruptible so a Ctrl-C during standby exits cleanly.
-		waitCtx, waitCancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		waitCtx, waitCancel := signal.NotifyContext(serviceStopCtx, os.Interrupt, syscall.SIGTERM)
 		log.Printf("cronova: standby — another scheduler holds the lease; waiting to take over (%v)", err)
 		for {
 			select {
@@ -576,7 +576,7 @@ func cmdServe(args []string) error {
 		Logger:         logger,
 	})
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(serviceStopCtx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	// Lease heartbeat: renew well inside the TTL. Losing the lease means another

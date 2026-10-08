@@ -301,6 +301,24 @@ function Resolve-CronovaPackageSource {
     $directExe = Join-Path $resolved 'cronova.exe'
     $zipPath = Join-Path $resolved 'cronova_windows_amd64.zip'
 
+    # Source checkout: rebuild so stale binaries are never installed as services.
+    if ((Test-Path (Join-Path $resolved 'go.mod')) -and (Test-Path (Join-Path $resolved 'cmd\cronova-executor'))) {
+        if (-not (Get-Command go -ErrorAction SilentlyContinue)) {
+            throw "Source is a Go checkout but 'go' is not on PATH; cannot rebuild cronova.exe/cronova-executor.exe: $resolved"
+        }
+        Push-Location $resolved
+        try {
+            $env:GOOS = 'windows'
+            foreach ($target in @(@{ Out = 'cronova.exe'; Pkg = './cmd/cronova' }, @{ Out = 'cronova-executor.exe'; Pkg = './cmd/cronova-executor' })) {
+                Write-Host "Building $($target.Out) from $($target.Pkg)..."
+                & go build -o $target.Out $target.Pkg
+                if ($LASTEXITCODE -ne 0) { throw "go build $($target.Pkg) failed with exit code $LASTEXITCODE." }
+            }
+        } finally {
+            Pop-Location
+        }
+    }
+
     if (Test-Path $directExe) {
         return @{ Root = $resolved; Cleanup = $null }
     }

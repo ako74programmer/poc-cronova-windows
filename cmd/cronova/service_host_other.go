@@ -6,7 +6,3 @@ package main
 func runWindowsService(_ string, runConsole func() error) error {
 	return runConsole()
 }
-
-func installServiceSignalRelay() (func(), error) {
-	return func() {}, nil
-}

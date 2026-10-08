@@ -5,7 +5,6 @@
 package main
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -69,7 +68,7 @@ func run(sock, listenTCP, tlsCert, tlsKey, tlsCA, stateDir string) error {
 	healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 	healthpb.RegisterHealthServer(srv, healthSrv)
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(serviceStopCtx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	go func() {
 		<-ctx.Done()
