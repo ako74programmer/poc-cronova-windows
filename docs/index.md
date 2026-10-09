@@ -9,9 +9,9 @@ hide:
 
 **A lightweight, self-hosted Go workflow scheduler — an open-source Airflow / Azkaban alternative you can install with one command.**
 
-[![Release](https://img.shields.io/github/v/release/zoyluoblue/cronova?sort=semver&logo=github)](https://github.com/zoyluoblue/cronova/releases/latest)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/zoyluoblue/cronova/blob/main/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/zoyluoblue/cronova?logo=github&color=1f6feb)](https://github.com/zoyluoblue/cronova/stargazers)
+[![Release](https://img.shields.io/github/v/release/ako74programmer/poc-cronova-windows?sort=semver&logo=github)](https://github.com/ako74programmer/poc-cronova-windows/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/ako74programmer/poc-cronova-windows/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/ako74programmer/poc-cronova-windows?logo=github&color=1f6feb)](https://github.com/ako74programmer/poc-cronova-windows/stargazers)
 
 cronova schedules **DAGs** — tasks with dependencies, retries, catchup and pools — and ships as a **static scheduler + executor** with an **embedded SQLite** database. No JVM, no Python runtime, no external database, no message broker.
 
@@ -31,7 +31,7 @@ powershell -ExecutionPolicy Bypass -File deploy\install.ps1
 
     ---
 
-    Pure-Go scheduler + executor, embedded database. `curl | bash` to install,
+    Pure-Go scheduler + executor, embedded database. one ZIP + `deploy\install.ps1` to install,
     `cronova update` to upgrade, `cronova uninstall` to remove.
 
     [:octicons-arrow-right-24: Quick start](GETTING_STARTED.md)
@@ -71,11 +71,11 @@ cronova is an **open-source, self-hosted workflow scheduler** (job scheduler / t
 
 ## 30 seconds to a running DAG
 
-```bash
-go build -o cronova ./cmd/cronova   # or grab a prebuilt release
-./cronova serve                     # console at http://localhost:8090
-./cronova trigger example_etl       # run a DAG now
-./cronova runs example_etl          # watch task states
+```powershell
+go build -o cronova.exe ./cmd/cronova   # or grab a prebuilt release
+.\cronova.exe serve                     # console at http://localhost:8090
+.\cronova.exe trigger example_etl       # run a DAG now
+.\cronova.exe runs example_etl          # watch task states
 ```
 
 ## Learn more
@@ -86,4 +86,4 @@ go build -o cronova ./cmd/cronova   # or grab a prebuilt release
 - **[Deployment](DEPLOY.md)** — Windows services (`Cronova`, `CronovaExecutor`), updates, the crash-recoverable executor.
 - **[Comparison](COMPARISON.md)** — cronova vs. Airflow, Azkaban, Dagster, Prefect & cron.
 - **[FAQ](FAQ.md)** — common questions, answered.
-- **[GitHub](https://github.com/zoyluoblue/cronova)** — source, releases, issues. ⭐ Stars welcome!
+- **[GitHub](https://github.com/ako74programmer/poc-cronova-windows)** — source, releases, issues. ⭐ Stars welcome!

@@ -40,8 +40,8 @@ Open the console at **http://localhost:8090**, edit a DAG, and open a task in th
 
 **Check it:** list the uploaded projects over the REST API:
 
-```bash
-./cronova api GET /api/projects -server http://localhost:8090
+```powershell
+.\cronova.exe api GET /api/projects -server http://localhost:8090
 ```
 
 ```json
@@ -63,9 +63,9 @@ tasks:
 
 Trigger it and watch:
 
-```bash
-./cronova trigger my_app_report
-./cronova runs my_app_report
+```powershell
+.\cronova.exe trigger my_app_report
+.\cronova.exe runs my_app_report
 ```
 
 **Check it:** in the console, open **my_app_report** → the latest run → **run_main**. The log shows the script ran from a fresh copy of your project — a per-attempt directory under the system temp dir (the exact path varies by OS):
@@ -107,9 +107,9 @@ Uploaded projects are plain directories under the server's projects dir — by d
 
 A DAG that references a project which was never uploaded parses fine — and then fails on its first run. Validate first; the dry-run endpoint flags exactly this:
 
-```bash
-./cronova api POST /api/dags/validate \
-  '{"dag_id":"my_app_report","tasks":[{"id":"run_main","type":"powershell","command":"python main.py","project":"ghost"}]}' \
+```powershell
+.\cronova.exe api POST /api/dags/validate `
+  '{\"dag_id\":\"my_app_report\",\"tasks\":[{\"id\":\"run_main\",\"type\":\"powershell\",\"command\":\"python main.py\",\"project\":\"ghost\"}]}' `
   -server http://localhost:8090
 ```
 

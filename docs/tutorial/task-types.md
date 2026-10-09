@@ -18,12 +18,12 @@ tasks:
 
 Trigger it and check the result:
 
-```bash
+```powershell
 cronova trigger type_powershell
 cronova runs type_powershell
 ```
 
-The `hello` task goes to **success**. Open the run in the console at [http://localhost:8090](http://localhost:8090) and click the task — the log shows something like `hello from Darwin at 2026-07-07T09:00:00Z`.
+The `hello` task goes to **success**. Open the run in the console at [http://localhost:8090](http://localhost:8090) and click the task — the log shows something like `hello from MYHOST at 2026-07-07T09:00:00Z`.
 
 !!! note
     `powershell` is the **default** type — every task you wrote in the earlier chapters was a PowerShell task. You can omit `type: powershell` entirely.
@@ -51,7 +51,7 @@ The `CRONOVA_*` run variables are in the environment, just like in a PowerShell 
 
 Trigger and check:
 
-```bash
+```powershell
 cronova trigger type_python
 cronova runs type_python
 ```

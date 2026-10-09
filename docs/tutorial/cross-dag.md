@@ -6,7 +6,7 @@ So far every dependency lived *inside* one DAG. In this final chapter you'll cha
 
 `deps` wires tasks within a single run of a single DAG. `trigger_after` works one level up: it runs an **entire downstream DAG** after another DAG succeeds. That's the natural shape when one pipeline ends where another begins — an ingest DAG owned by one team, a reporting DAG owned by another — without merging them into one giant workflow.
 
-cronova ships both halves of this pattern as runnable examples in the repo's [`dags/`](https://github.com/zoyluoblue/cronova/tree/main/dags) directory: `upstream_ingest.yaml` and `downstream_report.yaml`.
+cronova ships both halves of this pattern as runnable examples in the repo's [`dags/`](https://github.com/ako74programmer/poc-cronova-windows/tree/main/dags) directory: `upstream_ingest.yaml` and `downstream_report.yaml`.
 
 ## The upstream DAG
 
@@ -65,15 +65,15 @@ retried on later scheduler ticks. Once admitted, the downstream waits in
 
 With `cronova serve` running, fire the upstream:
 
-```bash
-./cronova trigger upstream_ingest
+```powershell
+.\cronova.exe trigger upstream_ingest
 ```
 
 Give it a few seconds (the ingest task sleeps for one, and the scheduler ticks every 2s), then check both DAGs:
 
-```bash
-./cronova runs upstream_ingest
-./cronova runs downstream_report
+```powershell
+.\cronova.exe runs upstream_ingest
+.\cronova.exe runs downstream_report
 ```
 
 The upstream shows a normal manual run:

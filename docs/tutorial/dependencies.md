@@ -30,7 +30,7 @@ Every DAG file is validated and **cycle-checked** on load. If you accidentally w
 
 **Check it** — trigger the DAG and watch the chain execute in order:
 
-```bash
+```powershell
 cronova trigger daily_etl
 cronova runs daily_etl
 ```
@@ -55,7 +55,7 @@ What happens to `load` if `transform` fails? Try it. Change the `transform` comm
 
 Save, trigger again, and check:
 
-```bash
+```powershell
 cronova trigger daily_etl
 cronova runs daily_etl -n 1
 ```
@@ -99,7 +99,7 @@ Two of these solve everyday problems. A **cleanup** task should run whether the 
 
 **Check it** — trigger once more:
 
-```bash
+```powershell
 cronova trigger daily_etl
 cronova runs daily_etl -n 1
 ```
@@ -136,7 +136,7 @@ Now fix the bug — restore `transform` to a working command:
 
 Saving the file doesn't rewrite history: the failed run stays failed. To re-run just the broken parts, use `cronova retry` with the run id from `cronova runs`:
 
-```bash
+```powershell
 cronova retry daily_etl__manual_1783473120123456000 -server http://localhost:8090
 ```
 
@@ -159,13 +159,13 @@ A retry re-queues every `failed`, `upstream_failed`, and `cancelled` task — pl
 
 You can also target a single task; its downstream tasks are cleared with it:
 
-```bash
+```powershell
 cronova retry daily_etl__manual_1783473120123456000 transform -server http://localhost:8090
 ```
 
 **Check it:**
 
-```bash
+```powershell
 cronova runs daily_etl -n 1
 ```
 
@@ -182,14 +182,14 @@ The run flips back to `running`, `transform` and `load` execute again, and the `
 
 Sometimes re-running is wrong — you already fixed the data by hand, or a task is stuck and you want the pipeline to move on. `cronova mark` is the operator override:
 
-```bash
+```powershell
 cronova mark <run_id> <state>              # run:  success | failed
 cronova mark <run_id> <task_id> <state>    # task: success | failed | skipped
 ```
 
 Say `transform` failed but you ran the transformation manually. Mark it done and let the run continue:
 
-```bash
+```powershell
 cronova mark daily_etl__manual_1783473120123456000 transform success -server http://localhost:8090
 ```
 
@@ -205,7 +205,7 @@ One subtlety: the default `all_success` rule treats a **skipped** upstream as bl
 
 Run-level `mark` corrects a *finished* run's recorded outcome — for example, declaring a run `success` after you've dealt with its failure out-of-band:
 
-```bash
+```powershell
 cronova mark daily_etl__manual_1783473120123456000 success -server http://localhost:8090
 ```
 

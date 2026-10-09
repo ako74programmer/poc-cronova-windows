@@ -43,7 +43,7 @@ Każde zadanie otrzymuje zmienną środowiskową `CRONOVA_ATTEMPT` zaczynającą
 
 Uruchom i obserwuj:
 
-```bash
+```powershell
 cronova trigger hello
 cronova runs hello
 ```

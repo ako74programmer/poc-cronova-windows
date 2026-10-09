@@ -30,13 +30,13 @@ Two new task fields:
 
 There's no `schedule`, so the DAG only runs when you trigger it. Do that now:
 
-```bash
+```powershell
 cronova trigger flaky_pipeline
 ```
 
 Then watch the run:
 
-```bash
+```powershell
 cronova runs flaky_pipeline
 ```
 
@@ -140,7 +140,7 @@ Retries and timeouts protect a single task. **Pools** protect shared resources â
 
 Create a pool from the CLI:
 
-```bash
+```powershell
 cronova pools set reports 4
 ```
 
@@ -163,7 +163,7 @@ No matter how many DAG runs are active, at most 4 tasks in the `reports` pool ex
 
 Every task that doesn't set `pool:` uses the built-in `default` pool, created with 16 slots. Check what exists and resize any pool at any time:
 
-```bash
+```powershell
 cronova pools
 ```
 

@@ -19,7 +19,7 @@ Both need a running `cronova serve` and an API token.
 Run this **on the cronova server host** (it writes to the local DB — the bootstrap
 path, since you need a token to reach the API):
 
-```bash
+```powershell
 cronova tokens create my-agent -role admin      # or -role viewer for read-only
 #   cnv_pat_XXXXXXXXXXXXXXXXXXXX     ← shown once; store it
 cronova tokens list
@@ -75,7 +75,7 @@ $env:CRONOVA_SERVER = 'http://localhost:8090'; $env:CRONOVA_TOKEN = 'cnv_pat_…
 
 cronova dags -o json                          # list DAGs
 cronova get etl_daily -o json                 # one DAG definition
-cronova trigger etl_daily -params '{"day":"2026-01-01"}' -o json
+cronova trigger etl_daily -params '{\"day\":\"2026-01-01\"}' -o json
 cronova runs etl_daily -o json                # recent runs
 cronova run <run_id>                          # a run + task states
 cronova logs <task_instance_id>               # a task's log (text)
@@ -91,10 +91,10 @@ cronova overview                              # dashboard summary
 Every endpoint is reachable directly — the full surface without a per-verb
 subcommand:
 
-```bash
+```powershell
 cronova api GET  /api/dags
-cronova api POST /api/dags/validate '{"dag_id":"x","tasks":[{"id":"a","type":"powershell","command":"echo hi"}]}'
-cronova api POST /api/dags/build    '{"dag_id":"x","tasks":[{"id":"a","type":"powershell","command":"echo hi"}]}'
+cronova api POST /api/dags/validate '{\"dag_id\":\"x\",\"tasks\":[{\"id\":\"a\",\"type\":\"powershell\",\"command\":\"echo hi\"}]}'
+cronova api POST /api/dags/build    '{\"dag_id\":\"x\",\"tasks\":[{\"id\":\"a\",\"type\":\"powershell\",\"command\":\"echo hi\"}]}'
 ```
 
 A non-2xx prints the error body and exits non-zero. The machine-readable OpenAPI
@@ -108,8 +108,8 @@ spec is at `GET /openapi.json` (human docs at `/docs`).
 cron / id checks as create but **persists nothing** and returns structured
 feedback — so an agent can iterate on a generated DAG before committing it:
 
-```bash
-cronova api POST /api/dags/validate '{"dag_id":"x","tasks":[…]}'
+```powershell
+cronova api POST /api/dags/validate '{\"dag_id\":\"x\",\"tasks\":[…]}'
 #  {"valid": false, "error": "dependency cycle detected: [a b a]", "canonical_yaml": "…"}
 ```
 

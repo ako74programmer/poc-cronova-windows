@@ -24,7 +24,7 @@ Pierwotne repozytorium jest źródłem inspiracji i punktem wyjścia. Rozwój, d
   <br><em>Edytor zadań w konsoli: buduj polecenia za pomocą kliknięcia lub przeciągnięcia pigułek zmiennych (wbudowane, zmienne, połączenia, parametry).</em>
 </div>
 
-```bash
+```powershell
 # Zainstaluj usługi Windows z rozpakowanego pakietu (PowerShell jako Administrator):
 .\deploy\install.ps1
 ```
@@ -51,12 +51,12 @@ $env:CGO_ENABLED = "0"
 go build -o cronova.exe ./cmd/cronova
 
 # 2. Uruchom scheduler + konsolę webową (executor w procesie)
-./cronova.exe serve             # konsola pod http://localhost:8090
+.\cronova.exe serve             # konsola pod http://localhost:8090
 
 # 3. Steruj z CLI (w innym terminalu)
-./cronova.exe dags              # lista DAG-ów z ./dags
-./cronova.exe trigger example_etl
-./cronova.exe runs example_etl
+.\cronova.exe dags              # lista DAG-ów z ./dags
+.\cronova.exe trigger example_etl
+.\cronova.exe runs example_etl
 ```
 
 Otwórz **http://localhost:8090**, aby przejść do konsoli — lista DAG-ów, historia uruchomień, stany zadań, logi na żywo i ręczne wyzwalacze jednym kliknięciem.
@@ -134,13 +134,13 @@ Każda próba otrzymuje **świeżą izolowaną kopię** projektu jako swój kata
 
 Pozwól AI orkiestrować cronova przez **to samo API uwierzytelniane tokenem i chronione rolami** — jako natywne **narzędzia MCP** lub przez **zdalne JSON CLI**:
 
-```bash
+```powershell
 cronova tokens create my-agent -role admin     # wygeneruj token (lokalnie, raz)
 cronova mcp                                     # serwer MCP przez stdio (Claude itp.)
 
-export CRONOVA_SERVER=http://localhost:8090 CRONOVA_TOKEN=cnv_pat_…
+$env:CRONOVA_SERVER = 'http://localhost:8090 CRONOVA_TOKEN=cnv_pat_…'
 cronova dags -o json                            # zdalne CLI, wyjście JSON
-cronova api POST /api/dags/validate '{"dag_id":"x","tasks":[…]}'   # walidacja dry-run
+cronova api POST /api/dags/validate '{\"dag_id\":\"x\",\"tasks\":[…]}'   # walidacja dry-run
 ```
 
 `cronova mcp` udostępnia około 30 narzędzi pochodzących z katalogu (`list_dags`, `create_dag`, `validate_dag`, `trigger_dag`, `get_task_log`, `retry_task`, …); `-read-only` udostępnia tylko operacje odczytu. Przewodnik + konfiguracja MCP: **[docs/AGENTS.md](docs/AGENTS.md)**.
@@ -201,14 +201,14 @@ Zarządzane instalacje używają rozdzielonego executora gRPC, ale Job Objects W
 
 ## Rozwój
 
-```bash
+```powershell
 go test -race ./...      # pełny zestaw testów
 
 # regeneruj kod gRPC po edycji proto/ (wymaga: buf + protoc-gen-go[-grpc])
 buf generate
 
 # UI dev: serwuj zasoby konsoli z dysku (edytuj + odświeżaj, bez przebudowy)
-CRONOVA_WEB_DIR=internal/web/static go run ./cmd/cronova serve
+$env:CRONOVA_WEB_DIR = 'internal\web\static'; go run ./cmd/cronova serve
 ```
 
 Wkład mile widziany — zobacz [docs/](docs/) dla notatek architektonicznych i projektowych.

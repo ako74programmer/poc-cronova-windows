@@ -2,7 +2,7 @@
 
 Install cronova on Windows, start the scheduler and web console, write and trigger your first DAG, and wire your own scripts into a workflow. This repository targets Windows amd64 and uses Windows-native runtimes, with PowerShell as the primary scripting path for repository workflows.
 
-This guide is task-oriented. For the full field-by-field DAG spec see the [DAG Reference](DAG_REFERENCE.md); for every command and flag see the [CLI Reference](CLI.md); for production install see [Deployment](DEPLOY.md). New to cronova? Start with the [README](https://github.com/zoyluoblue/cronova#readme).
+This guide is task-oriented. For the full field-by-field DAG spec see the [DAG Reference](DAG_REFERENCE.md); for every command and flag see the [CLI Reference](CLI.md); for production install see [Deployment](DEPLOY.md). New to cronova? Start with the [README](https://github.com/ako74programmer/poc-cronova-windows#readme).
 
 ## 1. Install cronova
 
@@ -21,7 +21,7 @@ The installer creates `C:\ProgramData\Cronova`, installs the scheduler and execu
 Build the scheduler, web console, and CLI into one static binary with Go 1.26.5+:
 
 ```powershell
-git clone https://github.com/zoyluo/cronova
+git clone https://github.com/ako74programmer/poc-cronova-windows
 cd cronova
 go build -o cronova.exe ./cmd/cronova
 go build -o cronova-executor.exe ./cmd/cronova-executor
@@ -41,8 +41,8 @@ Download `cronova_windows_amd64.zip` from the [Releases](https://github.com/ako7
 
 `cronova serve` runs the scheduling loop **and** the web console + REST API in one process:
 
-```bash
-./cronova serve
+```powershell
+.\cronova.exe serve
 ```
 
 Then open **http://localhost:8090** for the console — the DAG list, run history, task states, live log tailing, and one-click manual triggers.
@@ -68,19 +68,19 @@ Settings resolve in this precedence, highest first: **explicit flag → `CRONOVA
 
 Drive the same server from another terminal with the CLI:
 
-```bash
-./cronova dags                  # list DAGs loaded from ./dags
-./cronova trigger example_etl   # create a manual run
-./cronova runs example_etl      # run history + per-task states
+```powershell
+.\cronova.exe dags                  # list DAGs loaded from ./dags
+.\cronova.exe trigger example_etl   # create a manual run
+.\cronova.exe runs example_etl      # run history + per-task states
 ```
 
 ### Enabling login
 
 Authentication is off for a plain development `serve`, but the listener is loopback-only. Cronova refuses an unauthenticated non-loopback bind unless the explicit dangerous override is set. Enable login and seed an admin before exposing the console:
 
-```bash
-./cronova init                 # seeds the admin hash directly in SQLite
-./cronova serve -auth
+```powershell
+.\cronova.exe init                 # seeds the admin hash directly in SQLite
+.\cronova.exe serve -auth
 ```
 
 You can also manage accounts with `cronova users add|list|passwd|delete`.
@@ -90,7 +90,7 @@ Details in the [CLI Reference](CLI.md).
 
 ### Quick start with `app.ps1` (Windows)
 
-On Windows the repository includes [app.ps1](../../../scripts/windows/app.ps1), a PowerShell helper that builds the
+On Windows the repository includes [app.ps1](../scripts/windows/app.ps1), a PowerShell helper that builds the
 binary if needed, kills any leftover `cronova.exe` process, and starts the
 server in the foreground. It has two modes:
 
@@ -139,20 +139,20 @@ tasks:
     deps: [greet]            # runs after greet succeeds
 ```
 
-The scheduler loads `*.yaml` and `*.yml` files from the DAG directory. A malformed file is logged and skipped, not fatal. See the runnable examples in [`dags/`](https://github.com/zoyluoblue/cronova/tree/main/dags) — `example_etl.yaml`, `ticker.yaml`, `upstream_ingest.yaml`, and `downstream_report.yaml`.
+The scheduler loads `*.yaml` and `*.yml` files from the DAG directory. A malformed file is logged and skipped, not fatal. See the runnable examples in [`dags/`](https://github.com/ako74programmer/poc-cronova-windows/tree/main/dags) — `example_etl.yaml`, `ticker.yaml`, `upstream_ingest.yaml`, and `downstream_report.yaml`.
 
 Now run it. With `serve` running, list and trigger the DAG:
 
-```bash
-./cronova dags                # hello appears with SCHEDULE=@every 1m
-./cronova trigger hello       # create a manual run — serve picks it up next tick
-./cronova runs hello          # watch task states advance: greet, then report
+```powershell
+.\cronova.exe dags                # hello appears with SCHEDULE=@every 1m
+.\cronova.exe trigger hello       # create a manual run — serve picks it up next tick
+.\cronova.exe runs hello          # watch task states advance: greet, then report
 ```
 
 `cronova trigger` only creates the run row; a running `cronova serve` executes it on the next tick (default every `2s`). You can also trigger from the console with one click, or pass trigger params as JSON:
 
-```bash
-./cronova trigger hello -params '{"day":"2026-01-01"}'
+```powershell
+.\cronova.exe trigger hello -params '{\"day\":\"2026-01-01\"}'
 ```
 
 Common task fields — `type` (`powershell` (default), `python`, `sql`, `jar`, `http`; `type: shell` is rejected), `command`, `deps`, `pool`, `retries`, `retry_delay`, `timeout`, `trigger_rule`, `project` — and DAG-level fields like `schedule`, `catchup`, `max_active_runs`, `default_retries`, `trigger_after`, and `dagrun_timeout` are documented in full in the [DAG Reference](DAG_REFERENCE.md).

@@ -41,9 +41,9 @@ The `extract` task uses the **template form**: the workflow scheduler substitute
 
 Trigger a run and watch it:
 
-```bash
-./cronova trigger daily_etl
-./cronova runs daily_etl
+```powershell
+.\cronova.exe trigger daily_etl
+.\cronova.exe runs daily_etl
 ```
 
 **Check it:** `cronova runs` shows the new run with `extract` and then `transform` reaching `success`. Now open the console at **http://localhost:8090**, click **daily_etl** → the latest run → the **extract** task. Its log reads:

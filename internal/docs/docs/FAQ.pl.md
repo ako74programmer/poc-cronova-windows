@@ -4,7 +4,7 @@
 
 Odpowiedzi na najczęstsze pytania o cronova, lekki, samodzielnie hostowany **harmonogram workflow** i otwartoźródłową alternatywę dla Airflow / Azkabana — czym jest, jak się instaluje, gdzie przechowuje dane i jak uruchomić go w produkcji.
 
-Ta strona rozszerza krótkie FAQ z [README](https://github.com/zoyluoblue/cronova#readme). Przewodniki krok po kroku znajdziesz w [Pierwsze kroki](GETTING_STARTED.pl.md), [Dokumentacji DAG-ów](DAG_REFERENCE.pl.md), [Dokumentacji CLI](CLI.md), [Agentach AI (MCP)](AGENTS.md), [Wdrożeniu](DEPLOY.md) i [Architekturze](ARCHITECTURE.md).
+Ta strona rozszerza krótkie FAQ z [README](https://github.com/ako74programmer/poc-cronova-windows#readme). Przewodniki krok po kroku znajdziesz w [Pierwsze kroki](GETTING_STARTED.pl.md), [Dokumentacji DAG-ów](DAG_REFERENCE.pl.md), [Dokumentacji CLI](CLI.md), [Agentach AI (MCP)](AGENTS.md), [Wdrożeniu](DEPLOY.md) i [Architekturze](ARCHITECTURE.md).
 
 ## Czym jest cronova?
 
@@ -55,17 +55,17 @@ Konsola webowa i REST API domyślnie działają na **`127.0.0.1:8090`** (tylko l
 
 Uruchom `cronova update`. Pobiera najnowsze wydanie prebuilt dla twojego OS/arch z GitHub, weryfikuje je względem `SHA256SUMS`, atomowo zamienia obie binarki, zachowuje dostosowane definicje usług i restartuje harmonogram bez przerywania executor, który posiada trwające zadania:
 
-```bash
+```powershell
 cronova update                               # najnowsze wydanie, potem restart
 cronova update v0.2.1                         # przypnij lub zdegraduj do konkretnego tagu
 cronova update -proxy http://127.0.0.1:7890   # pobierz przez proxy
 ```
 
-Nieprzypięta aktualizacja, która jest już aktualna, to no-op. Wersja przypięta zawsze się aplikuje, więc zarówno ponowna instalacja, jak i downgrade działają. `update` wymaga roota i **automatycznie eskaluje przez `sudo`** — ustaw `CRONOVA_NO_SUDO=1`, by samodzielnie zarządzać uprawnieniami. **Nie dotyka** konfiguracji, bazy danych ani DAG-ów. Za ograniczoną siecią `-proxy` honoruje również `CRONOVA_UPDATE_PROXY`, `HTTPS_PROXY` i `ALL_PROXY`. Zobacz [Wdrożenie](DEPLOY.md).
+Nieprzypięta aktualizacja, która jest już aktualna, to no-op. Wersja przypięta zawsze się aplikuje, więc zarówno ponowna instalacja, jak i downgrade działają. `update` nie podnosi uprawnień samodzielnie — uruchom go w PowerShell z uprawnieniami administratora (Uruchom jako administrator). **Nie dotyka** konfiguracji, bazy danych ani DAG-ów. Za ograniczoną siecią `-proxy` honoruje również `CRONOVA_UPDATE_PROXY`, `HTTPS_PROXY`, `HTTP_PROXY` i `ALL_PROXY`. Zobacz [Wdrożenie](DEPLOY.md).
 
 ## Czy aktualizacja jest bezpieczna, jeśli przerwie się w połowie?
 
-Tak. `update` tworzy kopię zapasową starych binarek i zarządzanych definicji usług przed zamianą, następnie restartuje i **potwierdza, że harmonogram faktycznie pozostaje uruchomiony** (nie tylko że się załadował). Jeśli restart się nie powiedzie, automatycznie wycofuje zmiany i przywraca poprzednią wersję. Brakujące/niekompletne `SHA256SUMS`, niezgodność sumy kontrolnej, zbyt duży payload lub downgrade do redirectu cleartext są krytyczne. Dostosowany unit/plist nigdy nie jest cicho nadpisywany; nowy kandydat jest zapisywany jako `*.dist`.
+Tak. `cronova update` weryfikuje wydanie względem `SHA256SUMS`, zachowuje każdą zastępowaną binarkę jako `*.bak` i restartuje obie usługi Windows. Jeśli zamiana binarki lub restart usług się nie powiedzie, przywraca binarki `*.bak` i uruchamia usługi na poprzedniej wersji. Brakujące/niekompletne `SHA256SUMS`, niezgodność sumy kontrolnej, zbyt duży payload lub przekierowanie na nieszyfrowany HTTP są błędami krytycznymi. `update` nie modyfikuje definicji usług — do ich zmiany uruchom ponownie `deploy\install.ps1`.
 
 ## Czy cronova jest odporny na awarie / gotowy do produkcji?
 
@@ -97,7 +97,7 @@ Rekordy audytu mają niezależne domyślne okno jednego roku (`audit_retention: 
 
 Dla jednorazowego czyszczenia (lub wdrożenia działającego z wyłączoną retencją) użyj `cronova prune`:
 
-```bash
+```powershell
 cronova prune                    # usuń zakończone uruchomienia starsze niż 90 dni (pyta najpierw)
 cronova prune -older-than 720h   # niestandardowe okno
 cronova prune -yes               # pomiń potwierdzenie (skrypty / cron)
@@ -119,21 +119,21 @@ Nie. cronova to scheduler podprocesów, który uruchamia zadania za pomocą **w�
 
 Uruchom `cronova uninstall`. Zatrzymuje i usuwa natywną usługę oraz binarkę, ale **zachowuje twoje dane** (konfiguracja, DB, DAG-i, logi), więc zwykła deinstalacja jest odwracalna przez ponowną instalację. Dodaj `--purge`, by również usunąć dane:
 
-```bash
+```powershell
 cronova uninstall            # usuń usługę + binarkę, ZACHOWAJ dane
 cronova uninstall --purge    # usuń również konfigurację, DB, DAG-i, logi
 cronova uninstall -yes       # pomiń potwierdzenie (dla skryptów)
 ```
 
-Podobnie jak inne mutujące komendy, `uninstall` wymaga roota i automatycznie eskaluje przez `sudo`. Zobacz [Wdrożenie](DEPLOY.md).
+Podobnie jak inne mutujące komendy, `uninstall` wymaga PowerShell z uprawnieniami administratora (Uruchom jako administrator) i nie podnosi uprawnień samodzielnie. Zobacz [Wdrożenie](DEPLOY.md).
 
 ## Na jakiej licencji jest wydany cronova?
 
-cronova jest wydany na **[Licencji MIT](https://github.com/zoyluoblue/cronova/blob/main/LICENSE)** — licencji permisywnej, która zezwala na użycie komercyjne i prywatne, modyfikację i redystrybucję.
+cronova jest wydany na **[Licencji MIT](https://github.com/ako74programmer/poc-cronova-windows/blob/main/LICENSE)** — licencji permisywnej, która zezwala na użycie komercyjne i prywatne, modyfikację i redystrybucję.
 
 ## Zobacz też
 
-- [README](https://github.com/zoyluoblue/cronova#readme) — ogólny opis projektu i szybki start
+- [README](https://github.com/ako74programmer/poc-cronova-windows#readme) — ogólny opis projektu i szybki start
 - [Pierwsze kroki](GETTING_STARTED.pl.md) — instalacja, pierwszy DAG, projekty, zmienne szablonowe
 - [Dokumentacja DAG-ów](DAG_REFERENCE.pl.md) — każde pole DAG-a/zadania, typy zadań, wyzwalacze, pule
 - [Dokumentacja CLI](CLI.md) — każda komenda i flaga `cronova`

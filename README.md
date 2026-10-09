@@ -24,7 +24,7 @@ The original repository is the source of inspiration and the starting point for 
   <br><em>The console task editor: build commands with click/drag variable pills (built-in, variables, connections, params).</em>
 </div>
 
-```bash
+```powershell
 # Install the Windows services from an extracted release package (PowerShell as Administrator):
 .\deploy\install.ps1
 ```
@@ -45,18 +45,18 @@ The original repository is the source of inspiration and the starting point for 
 
 ## Quick start on Windows
 
-```bash
+```powershell
 # 1. Build with Go 1.26.5+ — or use the Windows release package
 $env:CGO_ENABLED = "0"
 go build -o cronova.exe ./cmd/cronova
 
 # 2. Start the scheduler + web console (in-process executor)
-./cronova.exe serve             # console at http://localhost:8090
+.\cronova.exe serve             # console at http://localhost:8090
 
 # 3. Drive it from the CLI (in another terminal)
-./cronova.exe dags              # list DAGs from ./dags
-./cronova.exe trigger example_etl
-./cronova.exe runs example_etl
+.\cronova.exe dags              # list DAGs from ./dags
+.\cronova.exe trigger example_etl
+.\cronova.exe runs example_etl
 ```
 
 On Windows use the included PowerShell helper [app.ps1](scripts/windows/app.ps1):
@@ -143,7 +143,7 @@ The repository now includes a config-driven Spring Boot SDLC DAG that selects th
 Example trigger:
 
 ```powershell
-.\cronova.exe trigger sdlc_springboot_variant -params '{"variant":"h2"}'
+.\cronova.exe trigger sdlc_springboot_variant -params '{\"variant\":\"h2\"}'
 ```
 
 Confirmed test run:
@@ -175,13 +175,13 @@ Each attempt gets a **fresh isolated copy** of the project as its working direct
 
 Let an AI orchestrate cronova through the **same token-authenticated, role-gated API** — as native **MCP tools** or via the **remote JSON CLI**:
 
-```bash
+```powershell
 cronova tokens create my-agent -role admin     # mint a token (local, once)
 cronova mcp                                     # MCP server over stdio (Claude, etc.)
 
-export CRONOVA_SERVER=http://localhost:8090 CRONOVA_TOKEN=cnv_pat_…
+$env:CRONOVA_SERVER = 'http://localhost:8090 CRONOVA_TOKEN=cnv_pat_…'
 cronova dags -o json                            # remote CLI, JSON output
-cronova api POST /api/dags/validate '{"dag_id":"x","tasks":[…]}'   # dry-run validate
+cronova api POST /api/dags/validate '{\"dag_id\":\"x\",\"tasks\":[…]}'   # dry-run validate
 ```
 
 `cronova mcp` exposes ~30 catalog-derived tools (`list_dags`, `create_dag`, `validate_dag`, `trigger_dag`, `get_task_log`, `retry_task`, …); `-read-only` exposes just the reads. Guide + MCP config: **[docs/AGENTS.md](docs/AGENTS.md)**.
@@ -242,14 +242,14 @@ Managed installs use a decoupled gRPC executor, but Windows Job Objects and a fu
 
 ## Development
 
-```bash
+```powershell
 go test -race ./...      # full test suite
 
 # regenerate gRPC code after editing proto/ (needs: buf + protoc-gen-go[-grpc])
 buf generate
 
 # UI dev: serve console assets from disk (edit + reload, no rebuild)
-CRONOVA_WEB_DIR=internal/web/static go run ./cmd/cronova serve
+$env:CRONOVA_WEB_DIR = 'internal\web\static'; go run ./cmd/cronova serve
 ```
 
 Contributions welcome — see the [docs/](docs/) for architecture and design notes.

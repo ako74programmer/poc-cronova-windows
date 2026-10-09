@@ -72,7 +72,7 @@ The dependency edge — this is what makes it a graph. `report` waits for `greet
 
 `cronova serve` runs the scheduling loop, the REST API, and the web console in one process:
 
-```bash
+```powershell
 cronova serve
 ```
 
@@ -80,7 +80,7 @@ It loads every `*.yaml` and `*.yml` file from `./dags`. A malformed file is logg
 
 **Check it** — from a second terminal:
 
-```bash
+```powershell
 cronova dags
 ```
 
@@ -93,7 +93,7 @@ hello   (manual)  false    false   1
 
 ## Trigger a run
 
-```bash
+```powershell
 cronova trigger hello
 ```
 
@@ -110,7 +110,7 @@ created run hello__manual_1783468804512345600 (a running `cronova serve` will ex
 
 ## Watch it run
 
-```bash
+```powershell
 cronova runs hello
 ```
 

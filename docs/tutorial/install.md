@@ -6,7 +6,7 @@ There are three ways to get the `cronova` binary. For this tutorial, use the pla
 
 ## Option 1: Prebuilt release (recommended for the tutorial)
 
-Grab the latest release (currently **v0.2.1**) from the [Releases page](https://github.com/zoyluoblue/cronova/releases). Releases are published for Windows amd64 as a ZIP archive. Download it, then extract it into a working directory:
+Grab the latest release (currently **v0.2.1**) from the [Releases page](https://github.com/ako74programmer/poc-cronova-windows/releases). Releases are published for Windows amd64 as a ZIP archive. Download it, then extract it into a working directory:
 
 ```powershell
 New-Item -ItemType Directory cronova-tutorial; Set-Location cronova-tutorial
@@ -16,14 +16,14 @@ Expand-Archive ..\cronova_windows_amd64.zip -DestinationPath .
 Each release attaches `SHA256SUMS`; verify the archive (for example with `Get-FileHash`) before extracting it.
 
 !!! tip
-    The ZIP is more than the binary: it also unpacks a `dags/` folder with runnable [example DAGs](https://github.com/zoyluoblue/cronova/tree/main/dags), a `cronova.yaml.example` config template, and the standalone `cronova-executor`. Starting from the release ZIP means the console won't be empty on first launch.
+    The ZIP is more than the binary: it also unpacks a `dags/` folder with runnable [example DAGs](https://github.com/ako74programmer/poc-cronova-windows/tree/main/dags), a `cronova.yaml.example` config template, and the standalone `cronova-executor`. Starting from the release ZIP means the console won't be empty on first launch.
 
 ## Option 2: Build from source
 
 With **Go 1.26.5+** installed:
 
 ```powershell
-git clone https://github.com/zoyluoblue/cronova
+git clone https://github.com/ako74programmer/poc-cronova-windows
 cd cronova
 go build -o cronova.exe .\cmd\cronova
 ```

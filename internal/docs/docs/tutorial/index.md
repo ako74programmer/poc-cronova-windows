@@ -33,7 +33,7 @@ Everything runs locally: one `cronova` binary, an embedded SQLite database, and 
 10. **[Cross-DAG dependencies](cross-dag.md)** — chain whole DAGs with `trigger_after` and get webhook notifications on success or failure.
 
 !!! note
-    The tutorial covers the fields and commands you'll use daily. The exhaustive schema lives in the [DAG Reference](../DAG_REFERENCE.md), and every command and flag in the [CLI Reference](../CLI.md). Runnable example DAGs are in the repo's [`dags/`](https://github.com/zoyluoblue/cronova/tree/main/dags) directory.
+    The tutorial covers the fields and commands you'll use daily. The exhaustive schema lives in the [DAG Reference](../DAG_REFERENCE.md), and every command and flag in the [CLI Reference](../CLI.md). Runnable example DAGs are in the repo's [`dags/`](https://github.com/ako74programmer/poc-cronova-windows/tree/main/dags) directory.
 
 ## How to read it
 

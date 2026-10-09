@@ -8,7 +8,7 @@ The cronova web console is the built-in UI for the cronova workflow scheduler: a
 
 The console ships inside the cronova binary — there is nothing extra to install, build, or configure. Start the scheduler and open the printed address:
 
-```bash
+```powershell
 cronova serve
 # console + REST API on http://localhost:8090
 ```

@@ -18,6 +18,9 @@ jobs:
         run: if ((gofmt -l .).Length -ne 0) { gofmt -l .; exit 1 }
       - name: verify modules
         run: go mod verify
+      - name: embedded docs mirror is in sync
+        shell: pwsh
+        run: ./internal/scripts/sync-embedded-docs.ps1 -Check
       - name: AI wiki knowledge base is fresh and clean
         shell: pwsh
         run: |

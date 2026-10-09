@@ -4,7 +4,7 @@
 
 Answers to the most common questions about cronova, the lightweight, self-hosted **workflow scheduler** and open-source Airflow / Azkaban alternative — what it is, how it installs, where it stores data, and how to run it in production.
 
-This page expands on the short FAQ in the [README](https://github.com/zoyluoblue/cronova#readme). For task-by-task guides see [Getting Started](GETTING_STARTED.md), [DAG Reference](DAG_REFERENCE.md), [CLI Reference](CLI.md), [AI Agents (MCP)](AGENTS.md), [Deployment](DEPLOY.md), and [Architecture](ARCHITECTURE.md).
+This page expands on the short FAQ in the [README](https://github.com/ako74programmer/poc-cronova-windows#readme). For task-by-task guides see [Getting Started](GETTING_STARTED.md), [DAG Reference](DAG_REFERENCE.md), [CLI Reference](CLI.md), [AI Agents (MCP)](AGENTS.md), [Deployment](DEPLOY.md), and [Architecture](ARCHITECTURE.md).
 
 ## What is cronova?
 
@@ -64,7 +64,7 @@ The script does not download releases or alter configuration, database, DAGs, pr
 
 ## Is the update safe if it fails halfway?
 
-`update.ps1` writes each new executable to a temporary file before replacing the installed binary. It stops both services first and starts them again after the replacement. Native rollback and service-recovery behavior must be validated on Windows.
+`cronova update` verifies the release against `SHA256SUMS`, keeps each replaced binary as `*.bak`, and restarts both Windows Services. If a binary swap or the service restart fails, the `*.bak` binaries are restored and the services restarted on the previous version. Service definitions are never modified by `update`. The `deploy\update.ps1` script (from an extracted release ZIP) stops both services, replaces the executables and starts them again.
 
 ## Is cronova crash-safe / production-ready?
 
@@ -94,7 +94,7 @@ retention does not erase the operations trail at the same time.
 
 For a one-off cleanup (or a deployment that runs with retention disabled), use `cronova prune`:
 
-```bash
+```powershell
 cronova prune                    # delete finished runs older than 90 days (asks first)
 cronova prune -older-than 720h   # custom window
 cronova prune -yes               # skip the confirmation prompt (scripts / cron)
@@ -125,11 +125,11 @@ Run it from an elevated PowerShell. See [Deployment](DEPLOY.md#upgrade-and-unins
 
 ## What license is cronova released under?
 
-cronova is released under the **[MIT License](https://github.com/zoyluoblue/cronova/blob/main/LICENSE)** — a permissive license that allows commercial and private use, modification, and redistribution.
+cronova is released under the **[MIT License](https://github.com/ako74programmer/poc-cronova-windows/blob/main/LICENSE)** — a permissive license that allows commercial and private use, modification, and redistribution.
 
 ## See also
 
-- [README](https://github.com/zoyluoblue/cronova#readme) — project overview and quick start
+- [README](https://github.com/ako74programmer/poc-cronova-windows#readme) — project overview and quick start
 - [Getting Started](GETTING_STARTED.md) — install, first DAG, projects, template variables
 - [DAG Reference](DAG_REFERENCE.md) — every DAG/task field, task types, triggers, pools
 - [CLI Reference](CLI.md) — every `cronova` command and flag

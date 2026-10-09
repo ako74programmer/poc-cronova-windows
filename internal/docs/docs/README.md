@@ -2,21 +2,22 @@
 
 # cronova
 
-**A lightweight, self-hosted workflow scheduler in a single Go binary — an open-source [Apache Airflow](https://airflow.apache.org/) / Azkaban alternative you can install with one command.**
+**A lightweight, self-hosted workflow scheduler for Windows — an open-source [Apache Airflow](https://airflow.apache.org/) / Azkaban alternative customized and developed as an independent project.**
 
-[![Release](https://img.shields.io/github/v/release/zoyluoblue/cronova?sort=semver&logo=github)](https://github.com/zoyluoblue/cronova/releases/latest)
+[![Repository](https://img.shields.io/badge/repository-ako74programmer%2Fpoc--cronova--windows-1f6feb?logo=github)](https://github.com/ako74programmer/poc-cronova-windows)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Go](https://img.shields.io/github/go-mod/go-version/zoyluoblue/cronova?logo=go)](go.mod)
-[![Platforms](https://img.shields.io/badge/platform-windows%20·%20amd64-informational)](docs/DEPLOY.md)
-[![GitHub stars](https://img.shields.io/github/stars/zoyluoblue/cronova?logo=github&color=1f6feb)](https://github.com/zoyluoblue/cronova/stargazers)
+[![Go](https://img.shields.io/github/go-mod/go-version/ako74programmer/poc-cronova-windows?logo=go)](go.mod)
+[![Platform](https://img.shields.io/badge/platform-Windows%20amd64-informational)](docs/DEPLOY.md)
 
 **English** · [Polski](README.pl.md)
 
-<sub>⭐ <b><a href="https://github.com/zoyluoblue/cronova">Star cronova on GitHub</a></b> if it's useful — it helps other people find a lighter way to run their workflows.</sub>
+<sub>This repository is maintained independently at <b><a href="https://github.com/ako74programmer/poc-cronova-windows">ako74programmer/poc-cronova-windows</a></b>.</sub>
 
 </div>
 
-cronova is a **workflow scheduler and job orchestrator** in the spirit of Airflow and Azkaban, built for teams who want DAG-based scheduling **without the operational weight**. It ships as **one static Go binary** with an **embedded SQLite** database — no JVM, no Python runtime, no external database, no message broker, no containers required. Install it on Windows with one PowerShell script, define your pipelines, and open the built-in web console.
+cronova is a **workflow scheduler and job orchestrator** in the spirit of Airflow and Azkaban, built for teams who want DAG-based scheduling **without the operational weight**. This repository is a customized, independently developed Windows-only project based on the ideas and source of the original [cronova repository](https://github.com/zoyluoblue/cronova). It ships as native Go services with an embedded SQLite database and a standalone executor that runs tasks through Windows-native runtimes, with PowerShell as the primary workflow scripting path in this repository.
+
+The original repository is the source of inspiration and the starting point for this project. Development, customization, Windows support, release packaging, and maintenance now take place in this repository and are not releases of the original project.
 
 <div align="center">
   <img src="docs/img/task-editor.png" alt="cronova web console — visual task editor with drag-and-drop template variable pills for a polyglot workflow scheduler" width="900">
@@ -24,13 +25,13 @@ cronova is a **workflow scheduler and job orchestrator** in the spirit of Airflo
 </div>
 
 ```powershell
-# Download and extract the release ZIP, then in an elevated PowerShell:
-powershell -ExecutionPolicy Bypass -File deploy\install.ps1
+# Install the Windows services from an extracted release package (PowerShell as Administrator):
+.\deploy\install.ps1
 ```
 
 ## Why cronova?
 
-- 🟢 **Small native install, zero service dependencies.** Pure-Go, CGO-free scheduler + standalone executor with embedded SQLite (PostgreSQL optional for multi-instance setups). `deploy\install.ps1` to install, `deploy\update.ps1` to upgrade, `deploy\uninstall.ps1` to remove — no Airflow-style stack to babysit. Docker images and a compose stack included.
+- 🟢 **Small native install, zero service dependencies.** Pure-Go, CGO-free scheduler plus standalone executor with embedded SQLite. The PowerShell installer registers Windows services; no Airflow-style stack or container runtime is required.
 - 🗂️ **Airflow / Azkaban-style DAGs.** Declarative YAML DAGs with dependency edges, cron / `@every` schedules, cross-DAG triggers and waits (`trigger_after`, `depends_on_dag`), sub-workflows, catchup / backfill, per-task retries & timeouts, resource pools, run priorities & serial execution policies, and trigger rules — the orchestration primitives you already know.
 - 📡 **Scale out when you need to — dial-in workers.** Remote workers join with a one-time token over mTLS and **dial in** (no inbound port, no shared filesystem, NAT-friendly); tasks route by `worker_group:`, logs stream back live, and a worker restart re-adopts its running tasks instead of re-running them. Zero workers configured = the same single binary as always.
 - 🌐 **Polyglot tasks + project upload.** Every task runs as an OS subprocess, so write tasks in **PowerShell, Python, SQL, a JAR, or HTTP** — any language on the host. Drag-and-drop a script, a whole project folder, or a `.zip` in the console and cronova runs it in an isolated working copy.
@@ -40,33 +41,34 @@ powershell -ExecutionPolicy Bypass -File deploy\install.ps1
 
 ## What is cronova?
 
-**cronova is an open-source, self-hosted workflow scheduler** (a.k.a. job scheduler / task orchestrator / DAG scheduler) written in Go. It schedules **DAGs** — directed acyclic graphs of tasks — on cron or interval triggers, runs each task as a subprocess using the host's own interpreters, and gives you a web console, a REST API, a CLI, and an MCP endpoint for AI agents. Think of it as a **cron replacement with dependencies, retries, backfill, and observability**, or a **lightweight Airflow alternative** shipped as a compact native service pair.
+**cronova is an open-source, self-hosted workflow scheduler** (a.k.a. job scheduler / task orchestrator / DAG scheduler) written in Go. It schedules **DAGs** — directed acyclic graphs of tasks — on cron or interval triggers, runs each task as a Windows subprocess, and gives you a web console, a REST API, a CLI, and an MCP endpoint for AI agents. Think of it as a **cron replacement with dependencies, retries, backfill, and observability**, or a **lightweight Airflow alternative** shipped as a compact native service pair.
 
-## Quick start
+## Quick start on Windows
 
-```bash
-# 1. Build (Go 1.26.5+) — or grab a prebuilt binary from Releases
-go build -o cronova ./cmd/cronova
+```powershell
+# 1. Build with Go 1.26.5+ — or use the Windows release package
+$env:CGO_ENABLED = "0"
+go build -o cronova.exe ./cmd/cronova
 
 # 2. Start the scheduler + web console (in-process executor)
-./cronova serve                 # console at http://localhost:8090
+.\cronova.exe serve             # console at http://localhost:8090
 
 # 3. Drive it from the CLI (in another terminal)
-./cronova dags                  # list DAGs from ./dags
-./cronova trigger example_etl   # run a DAG now
-./cronova runs example_etl      # run history + task states
+.\cronova.exe dags              # list DAGs from ./dags
+.\cronova.exe trigger example_etl
+.\cronova.exe runs example_etl
 ```
 
-On Windows use the included `app.cmd` helper:
+On Windows use the included PowerShell helper [app.ps1](scripts/windows/app.ps1):
 
 ```powershell
 # Development: clean temp DB, auth disabled
-.\app.cmd start-dev
+.\scripts\windows\app.ps1 start-dev
 
 # Production: persistent data/cronova.db, reads cronova.yaml
-.\app.cmd start
+.\scripts\windows\app.ps1 start
 
-.\app.cmd stop
+.\scripts\windows\app.ps1 stop
 ```
 
 Open **http://localhost:8090** for the console — DAG list, run history, task states, live logs, and one-click manual triggers.
@@ -84,14 +86,14 @@ new deployed instance; it enables authentication by default.
 
 | | **cronova** | Apache Airflow | Azkaban | plain cron |
 |---|:---:|:---:|:---:|:---:|
-| Install | **one archive / `curl \| bash`** | Python stack + DB + broker | JVM + MySQL | built-in |
+| Install | **PowerShell package / Windows services** | Python stack + DB + broker | JVM + MySQL | built-in |
 | Runtime deps | **none** (embedded SQLite) | Python, Postgres, Redis/Celery | Java, MySQL | none |
 | DAGs & dependencies | ✅ | ✅ | ✅ | ❌ |
 | Cron + interval + cross-DAG triggers | ✅ | ✅ | partial | cron only |
 | Catchup / backfill | ✅ | ✅ | ❌ | ❌ |
 | Retries, timeouts, pools | ✅ | ✅ | partial | ❌ |
 | Crash recovery (no double-run) | ✅ | ✅ | partial | ❌ |
-| Polyglot tasks (shell/Python/SQL/JAR/HTTP) | ✅ | ✅ (operators) | JVM-centric | any (no orchestration) |
+| Polyglot tasks (PowerShell/Python/SQL/JAR/HTTP) | ✅ | ✅ (operators) | JVM-centric | any (no orchestration) |
 | Web console + live logs | ✅ | ✅ | ✅ | ❌ |
 | REST API + OpenAPI | ✅ | ✅ | partial | ❌ |
 | AI agent / MCP integration | ✅ **built-in** | ❌ | ❌ | ❌ |
@@ -112,7 +114,7 @@ max_active_runs: 1
 default_retries: 2
 tasks:
   - id: extract
-    type: powershell
+    type: powershell        # default; may be omitted
     command: "python extract.py --date {{ logical_date }}"
     pool: default
   - id: transform
@@ -129,6 +131,31 @@ trigger_after:               # optional: run after another DAG succeeds
 
 **Template variables** work in any command, URL, header, body, or query:
 `{{ logical_date }}`, `{{ logical_datetime }}`, `{{ run_id }}`, `{{ dag_id }}`, `{{ task_id }}`, `{{ try_number }}` (also injected as `CRONOVA_*` env vars), plus UI-managed `{{ var.KEY }}`, `{{ conn.ID.host }}`, and `{{ params.KEY }}`. In the console you don't type the `{{ }}` — a **visual editor renders each variable as a color-coded pill** and a grouped palette inserts them by **click or drag**.
+
+## Spring Boot Variant DAG
+
+The repository now includes a config-driven Spring Boot SDLC DAG that selects the application variant per run:
+
+- DAG: [dags/sdlc_springboot_variant.yaml](dags/sdlc_springboot_variant.yaml)
+- supported variants: `rest`, `crud`, `h2`, `security`
+- variant selection: `{{ params.variant }}` / `CRONOVA_PARAM_VARIANT`
+
+Example trigger:
+
+```powershell
+.\cronova.exe trigger sdlc_springboot_variant -params '{\"variant\":\"h2\"}'
+```
+
+Confirmed test run:
+
+- UI: `http://127.0.0.1:8090/#/run/sdlc_springboot_variant__manual_1791107718627011000`
+- variant: `h2`
+- result: `success`
+
+Technical details:
+
+- [docs/SDLC_DAGS.md](docs/SDLC_DAGS.md)
+- [docs/SDLC_SPRINGBOOT_REST_TECHNICAL.md](docs/SDLC_SPRINGBOOT_REST_TECHNICAL.md)
 
 ### Run your own scripts and projects
 
@@ -152,25 +179,25 @@ Let an AI orchestrate cronova through the **same token-authenticated, role-gated
 cronova tokens create my-agent -role admin     # mint a token (local, once)
 cronova mcp                                     # MCP server over stdio (Claude, etc.)
 
-$env:CRONOVA_SERVER = 'http://localhost:8090'; $env:CRONOVA_TOKEN = 'cnv_pat_…'
+$env:CRONOVA_SERVER = 'http://localhost:8090 CRONOVA_TOKEN=cnv_pat_…'
 cronova dags -o json                            # remote CLI, JSON output
-cronova api POST /api/dags/validate '{"dag_id":"x","tasks":[…]}'   # dry-run validate
+cronova api POST /api/dags/validate '{\"dag_id\":\"x\",\"tasks\":[…]}'   # dry-run validate
 ```
 
 `cronova mcp` exposes ~30 catalog-derived tools (`list_dags`, `create_dag`, `validate_dag`, `trigger_dag`, `get_task_log`, `retry_task`, …); `-read-only` exposes just the reads. Guide + MCP config: **[docs/AGENTS.md](docs/AGENTS.md)**.
 
 ## Deploy in production
 
-cronova is a **scheduler, not a runtime**: it launches each task using the **host's own interpreters** (`powershell.exe`, `python`, `java`, `psql`, …), Azkaban-style. Managed installs run a static scheduler plus a static standalone executor as **Windows Services**, with no container or bundled runtime.
+cronova is a **scheduler, not a runtime**: it launches each task using interpreters available on the Windows host. Managed installs run the scheduler and standalone executor as **Windows services**. Python, Java, Node, PostgreSQL clients, and other tools must be installed separately when a task needs them.
 
-```bash
-cronova start | stop | restart | status   # manage the service (auto-elevates via sudo)
-cronova update                             # fetch + install the latest release, then restart
-cronova update v0.2.1                      # pin/downgrade a specific version
-cronova uninstall [--purge]                # remove service + binary (--purge also deletes data)
+```powershell
+.\deploy\install.ps1 -Start       # install and start both Windows services
+cronova.exe start | stop | restart | status
+.\deploy\uninstall.ps1          # remove services and binaries, retain data
+.\deploy\uninstall.ps1 -Purge     # remove services, binaries, and data
 ```
 
-The one-line installer runs an interactive setup wizard (port, bind scope, admin account, auth). Full guide, the service-`PATH` gotcha, and crash-recoverable executor setup: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+The PowerShell installer must run as Administrator. Full guide, service configuration, and executor setup: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
 <div align="center">
   <img src="docs/img/graph.png" alt="cronova DAG graph — cross-DAG trigger dependencies visualized in the web console" width="820">
@@ -185,7 +212,7 @@ The one-line installer runs an interactive setup wizard (port, bind scope, admin
 | [DAG Reference](docs/DAG_REFERENCE.md) | Every DAG/task field, task types, triggers, pools |
 | [CLI Reference](docs/CLI.md) | Every `cronova` command and flag |
 | [AI Agents (MCP)](docs/AGENTS.md) | MCP server, remote CLI, tokens, security |
-| [Deployment](docs/DEPLOY.md) | Windows services, updates, crash-recoverable executor |
+| [Deployment](docs/DEPLOY.md) | Windows services, PowerShell installation, updates, crash-recoverable executor |
 | [Architecture](docs/ARCHITECTURE.md) | Design rationale, execution model, diagrams |
 | [cronova vs Airflow](docs/COMPARISON.md) | When to choose cronova, feature-by-feature |
 | [FAQ](docs/FAQ.md) | Common questions, answered |
@@ -199,7 +226,7 @@ Yes — for teams who want DAG scheduling (dependencies, retries, catchup, pools
 No. The scheduler and web console use an **embedded SQLite** database; the managed install adds a small standalone executor so scheduler restarts do not kill tasks. Python/Java/psql are only needed on the host if *your tasks* invoke them.
 
 **What languages can tasks be written in?**
-Any. Tasks are `powershell` (the default), `python`, `sql`, `jar`, or `http`; a `powershell` task can invoke anything on the host (Node, Go, Rust binaries, …). The framework (Go) is fully decoupled from the task language.
+Any. Tasks are `powershell` (default), `python`, `sql`, `jar`, `http`, or `subdag`; a PowerShell task can invoke anything on the host (Node, Go, Rust binaries, …). The framework (Go) is fully decoupled from the task language.
 
 **How is cronova different from cron?**
 cron runs isolated commands on a clock. cronova runs **DAGs**: tasks with dependencies, retries, timeouts, backfill, concurrency pools, cross-DAG triggers, a web console with logs, and an API — the things you end up hand-rolling around cron.
@@ -208,21 +235,21 @@ cron runs isolated commands on a clock. cronova runs **DAGs**: tasks with depend
 Yes. It ships a built-in **MCP server** (`cronova mcp`) and a remote JSON CLI, so AI agents can manage workflows through the same authenticated, role-gated API as humans.
 
 **Which platforms are supported?**
-Windows amd64 only. Release ZIPs are on the [Releases](https://github.com/zoyluoblue/cronova/releases) page.
+This project targets **Windows amd64**. The installer requires PowerShell with administrator privileges. Only Windows is supported.
 
 **Is it production-ready / crash-safe?**
-Managed installs use the decoupled gRPC executor by default, so the scheduler can restart or upgrade without killing running jobs; on recovery it re-attaches to in-flight tasks with no double execution.
+Managed installs use a decoupled gRPC executor, but Windows Job Objects and a full clean-machine installation test remain roadmap items. Review [ROADMAP.md](ROADMAP.md) before production adoption.
 
 ## Development
 
-```bash
+```powershell
 go test -race ./...      # full test suite
 
 # regenerate gRPC code after editing proto/ (needs: buf + protoc-gen-go[-grpc])
 buf generate
 
 # UI dev: serve console assets from disk (edit + reload, no rebuild)
-CRONOVA_WEB_DIR=internal/web/static go run ./cmd/cronova serve
+$env:CRONOVA_WEB_DIR = 'internal\web\static'; go run ./cmd/cronova serve
 ```
 
 Contributions welcome — see the [docs/](docs/) for architecture and design notes.
@@ -237,7 +264,7 @@ Contributions welcome — see the [docs/](docs/) for architecture and design not
 
 ### ⭐ Found cronova useful?
 
-Give it a **[star on GitHub](https://github.com/zoyluoblue/cronova)** — it's the simplest way to support the project and helps others discover a lighter way to run workflows.
+Give this project a **[star on GitHub](https://github.com/ako74programmer/poc-cronova-windows)** — it helps others discover this independent Windows implementation.
 
 <sub>cronova — self-hosted <b>workflow scheduler</b> · <b>Airflow alternative</b> · DAG orchestration · single Go binary · MCP-ready for AI agents.</sub>
 

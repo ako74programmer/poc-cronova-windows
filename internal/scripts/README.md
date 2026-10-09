@@ -87,6 +87,17 @@ Te klocki zastępują stare bashowe entrypointy `compile-project` i `run-tests`,
 
 Te klocki zastępują stare bashowe entrypointy `ai-generate-crud`, `ai-generate-feature` i `ai-review-fix-loop`, które nie są już częścią aktywnej ścieżki Windows-only.
 
+## Narzędzia repozytorium
+
+- [internal/scripts/sync-embedded-docs.ps1](../../internal/scripts/sync-embedded-docs.ps1)
+  Kopiuje `docs\` oraz główne `README.md`/`README.pl.md` do `internal\docs\docs\` (dokumentacja wbudowana w `cronova.exe`). `-Check` tylko porównuje i kończy się kodem 1 przy rozjeździe (używane w CI).
+
+  ```powershell
+  .\internal\scripts\sync-embedded-docs.ps1          # po każdej zmianie w docs\ lub README
+  .\internal\scripts\sync-embedded-docs.ps1 -Check   # weryfikacja
+  ```
+
+
 ## Jak używać klocków lego
 
 Najprostszy wzorzec dla projektu Java + Maven wygląda tak:

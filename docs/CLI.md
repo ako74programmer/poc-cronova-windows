@@ -21,7 +21,7 @@ Commands fall into four groups:
 
 Run the scheduling loop plus the web console and REST API (default `http://localhost:8090`). With an empty `-executor`, tasks run in this process; installed Windows services pass a loopback TCP endpoint and dispatch tasks to the standalone executor.
 
-```bash
+```powershell
 cronova serve -db data/cronova.db -dags dags -http 127.0.0.1:8090
 ```
 
@@ -68,14 +68,14 @@ The local executor endpoint is intentionally loopback-only. Remote TCP endpoints
 
 These wrap Windows Service Control Manager, so you normally do not need to call `sc.exe` directly.
 
-!!! note "Auto-sudo"
-    Mutating commands require an elevated PowerShell/Windows service permission. For lifecycle scripts use `deploy\install.ps1`, `deploy\update.ps1` and `deploy\uninstall.ps1` from an elevated PowerShell.
+!!! note "Elevation"
+    `start`, `stop`, `restart`, `update` and `uninstall` call `sc.exe` and do not self-elevate: run them from an elevated PowerShell (Run as administrator), otherwise Service Control Manager returns "access denied". For lifecycle scripts use `deploy\install.ps1`, `deploy\update.ps1` and `deploy\uninstall.ps1` from an elevated PowerShell.
 
 ### `cronova start` / `stop` / `restart`
 
 Control the installed service pair. `start` starts the executor before the scheduler; `stop` stops both. `restart` restarts only the scheduler so in-flight tasks remain owned by the running executor. Startup is reported successful only after both required daemons remain healthy.
 
-```bash
+```powershell
 cronova restart
 ```
 
@@ -85,7 +85,7 @@ No flags. On a host without an installed service, use `cronova serve` directly.
 
 Show scheduler and executor status through Windows Service Control Manager. The command is read-only.
 
-```bash
+```powershell
 cronova status
 ```
 
@@ -93,7 +93,7 @@ cronova status
 
 First-time setup wizard: HTTP port, bind scope (all interfaces vs. `127.0.0.1`), admin account, and auth on/off — each with an Enter-to-accept default. It writes the complete server config, seeds or rotates the admin hash directly in SQLite, and writes a credential-free `0600` environment-override template. Re-running with a blank password keeps the current credential.
 
-```bash
+```powershell
 cronova init          # interactive
 cronova init -yes     # accept defaults / CRONOVA_* env, no prompts
 ```
@@ -108,9 +108,9 @@ Non-interactive installs preset values with `CRONOVA_ADMIN_USER`, `CRONOVA_ADMIN
 
 ### `cronova update`
 
-Download a prebuilt release from GitHub, require and verify its SHA256 checksum, and atomically swap both binaries. Managed service definitions are refreshed only when unchanged since installation; customized files are preserved and the new candidates are written as `*.dist`. The scheduler is restarted and checked, while an already-running executor is left alive for in-flight tasks. Missing checksum metadata aborts the update.
+Download the prebuilt Windows ZIP release from GitHub, require and verify its SHA256 checksum, and swap `cronova.exe` (and `cronova-executor.exe` when the release ships it and it is already installed); each old binary is kept as `*.bak` until the update succeeds. When the Windows Services are installed, both are then restarted through `sc.exe` (scheduler and executor stopped, executor and scheduler started) — tasks running at that moment are interrupted. Service definitions are not modified; re-run `deploy\install.ps1` to change them. Missing checksum metadata aborts the update.
 
-```bash
+```powershell
 cronova update                               # latest release
 cronova update v0.2.0                        # pin a tag (re-install / downgrade)
 cronova update -proxy http://127.0.0.1:7890  # download through a proxy
@@ -119,16 +119,16 @@ cronova update -proxy http://127.0.0.1:7890  # download through a proxy
 | Flag / Env | Description |
 |---|---|
 | `-proxy <url>` | Proxy for the download: `http(s)://host:port` or `socks5://host:port`. |
-| `CRONOVA_UPDATE_PROXY` | Same as `-proxy`; also honors `HTTPS_PROXY` / `ALL_PROXY`. All survive the sudo escalation. |
+| `CRONOVA_UPDATE_PROXY` | Same as `-proxy`; also honors `HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY` when neither is set. |
 | `CRONOVA_BASE_URL` | Override the download origin (private mirror / testing). |
 
-If the restarted service does not stay up on the new binary, `update` **rolls back automatically**: the previous binaries and service definition are restored and the old version is restarted — the box is never left on a half-applied update. An unpinned `update` that is already current short-circuits with `already up to date`; a pinned version is always applied. See [Deployment → Updating](DEPLOY.md#updating).
+If replacing a binary or restarting the services fails, `update` **rolls back automatically**: the `*.bak` binaries are restored and the services are restarted on the previous version. A successful `sc.exe start` only means Service Control Manager accepted the start; check `cronova status` and `cronova healthcheck` afterwards. An unpinned `update` that is already current short-circuits with `already up to date`; a pinned version is always applied. See [Deployment → Updating](DEPLOY.md#updating).
 
 ### `cronova uninstall`
 
 Remove the service and binaries. Config, database, DAGs, and logs are kept by default — re-installing brings the deployment back.
 
-```bash
+```powershell
 cronova uninstall            # keeps data (asks for confirmation)
 cronova uninstall --purge    # also delete config, DB, DAGs, and logs
 cronova uninstall -yes       # skip the confirmation prompt (scripts)
@@ -153,7 +153,7 @@ cronova v0.3.0 windows/amd64
 Probe the server's readiness endpoint and exit non-zero if unhealthy — useful for Windows Services, load balancers, or scheduled checks.
 
 ```powershell
-cronova healthcheck -http 127.0.0.1:8090; if ($?) { echo healthy }
+cronova healthcheck -http 127.0.0.1:8090; if ($?) { Write-Output healthy }
 ```
 
 | Flag | Default | Description |
@@ -238,7 +238,7 @@ The DAG must have a `schedule` — backfill enumerates schedule periods. Local-o
 
 Delete finished runs — DB rows plus their log directories — older than a retention window. The manual counterpart of [`serve -retention`](#cronova-serve), for one-off cleanups or deployments that run with retention disabled. Local-only; asks for confirmation unless `-yes`.
 
-```bash
+```powershell
 cronova prune                    # finished runs older than 90 days (asks first)
 cronova prune -older-than 720h   # custom window (30 days)
 cronova prune -yes               # no confirmation (scripts / cron)
@@ -272,7 +272,7 @@ pool "reports" set to 8 slots
 
 Manage web console accounts. Local-only — account admin is a server-host operation.
 
-```bash
+```powershell
 cronova users list
 cronova users add alice -role viewer -password s3cret
 cronova users passwd alice          # prompts for the new password
@@ -314,9 +314,9 @@ cronova dags -o json
 
 Raw passthrough to any REST endpoint — the escape hatch that exposes the full API surface without a per-endpoint subcommand. JSON responses are pretty-printed.
 
-```bash
+```powershell
 cronova api GET  /api/dags
-cronova api POST /api/dags/etl/trigger '{"params":{"day":"2026-01-01"}}'
+cronova api POST /api/dags/etl/trigger '{\"params\":{\"day\":\"2026-01-01\"}}'
 ```
 
 Usage: `cronova api <METHOD> <path> [json-body]`.
@@ -325,7 +325,7 @@ Usage: `cronova api <METHOD> <path> [json-body]`.
 
 Show a DAG definition (`GET /api/dags/{id}`).
 
-```bash
+```powershell
 cronova get example_etl
 ```
 
@@ -333,7 +333,7 @@ cronova get example_etl
 
 Show one run and its task states (`GET /api/runs/{runID}`) — the remote counterpart to `runs`' per-task detail.
 
-```bash
+```powershell
 cronova run example_etl__manual_1783442227904284000
 ```
 
@@ -341,7 +341,7 @@ cronova run example_etl__manual_1783442227904284000
 
 Fetch a task instance's log as plain text. Get the task instance ID from `cronova run` or the run detail page in the web console.
 
-```bash
+```powershell
 cronova logs 42
 ```
 
@@ -349,7 +349,7 @@ cronova logs 42
 
 Cancel an active run.
 
-```bash
+```powershell
 cronova cancel example_etl__manual_1783442227904284000
 ```
 
@@ -357,7 +357,7 @@ cronova cancel example_etl__manual_1783442227904284000
 
 Retry a run's failed tasks, or a single task.
 
-```bash
+```powershell
 cronova retry example_etl__manual_1783442227904284000            # all failed tasks
 cronova retry example_etl__manual_1783442227904284000 transform  # one task
 ```
@@ -366,7 +366,7 @@ cronova retry example_etl__manual_1783442227904284000 transform  # one task
 
 Operator override of a run or task state — skip a known-bad task, force a run green after a manual fix.
 
-```bash
+```powershell
 cronova mark <run_id> success                # mark the run:  success | failed
 cronova mark <run_id> <task_id> skipped      # mark one task: success | failed | skipped
 ```
@@ -380,7 +380,7 @@ cronova mark <run_id> <task_id> skipped      # mark one task: success | failed |
 
 Pause a DAG's scheduling, or resume it with `-off`. Paused DAGs skip their cron schedule but can still be triggered manually.
 
-```bash
+```powershell
 cronova pause ticker
 cronova pause ticker -off   # resume
 ```
@@ -389,7 +389,7 @@ cronova pause ticker -off   # resume
 
 Dashboard summary — DAG counts, active runs, and pool usage in one call (`GET /api/overview`). Pair with `-o json` for monitoring scripts.
 
-```bash
+```powershell
 cronova overview -o json
 ```
 
@@ -468,7 +468,7 @@ wk_76417dbc51  gpu-1            gpu        online   2      2026-08-08T03:20:41Z
 
 Run a [Model Context Protocol](https://modelcontextprotocol.io/) server over stdio, exposing cronova's operations as tools for AI clients (Claude Code, Claude Desktop, any MCP host). It talks to a running server through the REST API, so the AI's reach is exactly its token's role. Stdout carries the protocol; logs go to stderr.
 
-```bash
+```powershell
 CRONOVA_TOKEN=cnv_pat_… cronova mcp -read-only
 ```
 

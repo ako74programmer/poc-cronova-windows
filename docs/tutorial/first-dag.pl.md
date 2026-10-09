@@ -72,7 +72,7 @@ Krawędź zależności — to właśnie czyni to grafem. `report` czeka na `gree
 
 `cronova serve` uruchamia pętlę harmonogramu, REST API i konsolę webową w jednym procesie:
 
-```bash
+```powershell
 cronova serve
 ```
 
@@ -80,7 +80,7 @@ cronova serve
 
 **Sprawdź to** — z drugiego terminala:
 
-```bash
+```powershell
 cronova dags
 ```
 
@@ -93,7 +93,7 @@ hello   (manual)  false    false   1
 
 ## Wyzwól uruchomienie
 
-```bash
+```powershell
 cronova trigger hello
 ```
 
@@ -110,7 +110,7 @@ created run hello__manual_1783468804512345600 (a running `cronova serve` will ex
 
 ## Obserwuj wykonanie
 
-```bash
+```powershell
 cronova runs hello
 ```
 

@@ -24,8 +24,8 @@ The scheduler evaluates every DAG's schedule on each tick (default every `2s`, t
 
 Check it — list your DAGs:
 
-```bash
-./cronova dags
+```powershell
+.\cronova.exe dags
 ```
 
 ```text
@@ -57,8 +57,8 @@ tasks:
 
 Wait a minute, then check it:
 
-```bash
-./cronova runs ticker -n 3
+```powershell
+.\cronova.exe runs ticker -n 3
 ```
 
 ```text
@@ -68,7 +68,7 @@ ticker__20260707T091500Z   2026-07-07T09:15:00Z  success  schedule  heartbeat=su
 ticker__20260707T091430Z   2026-07-07T09:14:30Z  success  schedule  heartbeat=success
 ```
 
-New runs arrive every 30 seconds, each with `TRIGGER` = `schedule`. A runnable version of this DAG ships in the repo: [`dags/ticker.yaml`](https://github.com/zoyluoblue/cronova/blob/main/dags/ticker.yaml).
+New runs arrive every 30 seconds, each with `TRIGGER` = `schedule`. A runnable version of this DAG ships in the repo: [`dags/ticker.yaml`](https://github.com/ako74programmer/poc-cronova-windows/blob/main/dags/ticker.yaml).
 
 ### No schedule = manual only
 
@@ -127,8 +127,8 @@ tasks:
 
 Check it — within a few seconds of saving the file:
 
-```bash
-./cronova runs daily_report -n 10
+```powershell
+.\cronova.exe runs daily_report -n 10
 ```
 
 ```text
@@ -160,7 +160,7 @@ If your periods are independent and you want a faster backfill, raise it:
 max_active_runs: 3
 ```
 
-Check it: during a backfill, `./cronova runs daily_report` now shows up to three runs in `running` state simultaneously.
+Check it: during a backfill, `.\cronova.exe runs daily_report` now shows up to three runs in `running` state simultaneously.
 
 ## Pausing a DAG
 
@@ -168,13 +168,13 @@ Pausing stops the scheduler from creating new runs without touching the YAML. Fl
 
 ```powershell
 $env:CRONOVA_SERVER = 'http://localhost:8090'
-./cronova pause daily_report
+.\cronova.exe pause daily_report
 ```
 
 Check it:
 
-```bash
-./cronova dags
+```powershell
+.\cronova.exe dags
 ```
 
 ```text
@@ -184,8 +184,8 @@ daily_report  0 2 * * *  true     true    1
 
 `PAUSED` is now `true`, and no new scheduled runs appear. Resume with:
 
-```bash
-./cronova pause daily_report -off
+```powershell
+.\cronova.exe pause daily_report -off
 ```
 
 If you enabled authentication, also set `CRONOVA_TOKEN` (mint one with `cronova tokens create` — see the [CLI Reference](../CLI.md)).

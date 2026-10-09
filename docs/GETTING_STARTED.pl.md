@@ -2,7 +2,7 @@
 
 Zainstaluj cronova na Windows, uruchom harmonogram i konsolę webową, napisz i wyzwól swój pierwszy DAG, a następnie podłącz własne skrypty do workflow. To repozytorium jest przeznaczone dla Windows amd64 i uruchamia zadania wyłącznie przez PowerShell (`type: powershell`, typ domyślny).
 
-Ten przewodnik jest zorientowany na zadania. Pełną specyfikację pól DAG-a znajdziesz w [Dokumentacji DAG-ów](DAG_REFERENCE.pl.md); wszystkie komendy i flagi w [Dokumentacji CLI](CLI.md); instrukcję produkcyjnej instalacji w [Wdrożeniu](DEPLOY.md). Nowy w cronova? Zacznij od [README](https://github.com/zoyluoblue/cronova#readme).
+Ten przewodnik jest zorientowany na zadania. Pełną specyfikację pól DAG-a znajdziesz w [Dokumentacji DAG-ów](DAG_REFERENCE.pl.md); wszystkie komendy i flagi w [Dokumentacji CLI](CLI.md); instrukcję produkcyjnej instalacji w [Wdrożeniu](DEPLOY.md). Nowy w cronova? Zacznij od [README](https://github.com/ako74programmer/poc-cronova-windows#readme).
 
 ## 1. Zainstaluj cronova
 
@@ -21,7 +21,7 @@ Instalator tworzy `C:\ProgramData\Cronova`, instaluje scheduler i executor w `C:
 Zbuduj harmonogram, konsolę webową i CLI w jednej statycznej binarce z Go 1.26.5+:
 
 ```powershell
-git clone https://github.com/zoyluo/cronova
+git clone https://github.com/ako74programmer/poc-cronova-windows
 cd cronova
 go build -o cronova.exe ./cmd/cronova
 go build -o cronova-executor.exe ./cmd/cronova-executor
@@ -41,8 +41,8 @@ Pobierz `cronova_windows_amd64.zip` ze strony [Releases](https://github.com/ako7
 
 `cronova serve` uruchamia pętlę harmonogramu **oraz** konsolę webową + REST API w jednym procesie:
 
-```bash
-./cronova serve
+```powershell
+.\cronova.exe serve
 ```
 
 Następnie otwórz **http://localhost:8090** — lista DAG-ów, historia uruchomień, stany zadań, podgląd logów na żywo i jednoklikowe wyzwalacze ręczne.
@@ -68,19 +68,19 @@ Ustawienia rozwiązywane są w kolejności ważności, od najwyższej: **jawna f
 
 Steruj tym samym serwerem z innego terminala za pomocą CLI:
 
-```bash
-./cronova dags                  # listuj DAG-i załadowane z ./dags
-./cronova trigger example_etl   # utwórz ręczne uruchomienie
-./cronova runs example_etl      # historia uruchomień + stany zadań
+```powershell
+.\cronova.exe dags                  # listuj DAG-i załadowane z ./dags
+.\cronova.exe trigger example_etl   # utwórz ręczne uruchomienie
+.\cronova.exe runs example_etl      # historia uruchomień + stany zadań
 ```
 
 ### Włączanie logowania
 
 Uwierzytelnianie jest wyłączone dla zwykłego deweloperskiego `serve`, ale listener jest tylko na loopback. Cronova odmawia nieuwierzytelnionego bindu nie-loopback, chyba że ustawiono jawną niebezpieczną opcję nadpisania. Włącz logowanie i zasiej admina przed wystawieniem konsoli:
 
-```bash
-./cronova init                 # zapisuje hash admina bezpośrednio w SQLite
-./cronova serve -auth
+```powershell
+.\cronova.exe init                 # zapisuje hash admina bezpośrednio w SQLite
+.\cronova.exe serve -auth
 ```
 
 Kontami zarządzasz też za pomocą `cronova users add|list|passwd|delete`.
@@ -108,20 +108,20 @@ tasks:
     deps: [greet]            # działa po sukcesie greet
 ```
 
-Harmonogram ładuje pliki `*.yaml` i `*.yml` z katalogu DAG-ów. Nieprawidłowy plik jest logowany i pomijany, a nie fatalny. Zobacz uruchamialne przykłady w [`dags/`](https://github.com/zoyluoblue/cronova/tree/main/dags) — `example_etl.yaml`, `ticker.yaml`, `upstream_ingest.yaml` i `downstream_report.yaml`.
+Harmonogram ładuje pliki `*.yaml` i `*.yml` z katalogu DAG-ów. Nieprawidłowy plik jest logowany i pomijany, a nie fatalny. Zobacz uruchamialne przykłady w [`dags/`](https://github.com/ako74programmer/poc-cronova-windows/tree/main/dags) — `example_etl.yaml`, `ticker.yaml`, `upstream_ingest.yaml` i `downstream_report.yaml`.
 
 Teraz uruchom to. Przy działającym `serve` wylistuj i wyzwól DAG:
 
-```bash
-./cronova dags                # hello pojawia się z SCHEDULE=@every 1m
-./cronova trigger hello       # utwórz ręczne uruchomienie — serve wykona je przy następnym ticku
-./cronova runs hello          # obserwuj stany zadań: greet, potem report
+```powershell
+.\cronova.exe dags                # hello pojawia się z SCHEDULE=@every 1m
+.\cronova.exe trigger hello       # utwórz ręczne uruchomienie — serve wykona je przy następnym ticku
+.\cronova.exe runs hello          # obserwuj stany zadań: greet, potem report
 ```
 
 `cronova trigger` tworzy tylko wiersz uruchomienia; działający `cronova serve` wykonuje je przy następnym ticku (domyślnie co `2s`). Możesz też wyzwolić z konsoli jednym kliknięciem lub przekazać parametry wyzwalania jako JSON:
 
-```bash
-./cronova trigger hello -params '{"day":"2026-01-01"}'
+```powershell
+.\cronova.exe trigger hello -params '{\"day\":\"2026-01-01\"}'
 ```
 
 Typowe pola zadań — `type` (`powershell` (domyślny), `python`, `sql`, `jar`, `http`; `type: shell` jest odrzucany), `command`, `deps`, `pool`, `retries`, `retry_delay`, `timeout`, `trigger_rule`, `project` — oraz pola na poziomie DAG-a, takie jak `schedule`, `catchup`, `max_active_runs`, `default_retries`, `trigger_after` i `dagrun_timeout`, są w pełni udokumentowane w [Dokumentacji DAG-ów](DAG_REFERENCE.pl.md).

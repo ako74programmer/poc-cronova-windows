@@ -1,8 +1,8 @@
 # DAG & Task Reference
 
-The complete YAML schema for a cronova **DAG** (directed acyclic graph of tasks) — every DAG-level and task-level field, the five task types, trigger rules, and resource pools. For a hands-on introduction see [Getting Started](GETTING_STARTED.md); for the project overview see the [README](https://github.com/zoyluoblue/cronova#readme).
+The complete YAML schema for a cronova **DAG** (directed acyclic graph of tasks) — every DAG-level and task-level field, the five task types, trigger rules, and resource pools. For a hands-on introduction see [Getting Started](GETTING_STARTED.md); for the project overview see the [README](https://github.com/ako74programmer/poc-cronova-windows#readme).
 
-A DAG is a single YAML file in the `dags/` directory (default `./dags`, or the service's data dir). cronova validates and cycle-checks every DAG on load; runnable examples live in [`dags/`](https://github.com/zoyluoblue/cronova/tree/main/dags). Parsing is strict: unknown fields, unsupported task types, trailing YAML documents, invalid negative values, and out-of-range settings are rejected instead of ignored.
+A DAG is a single YAML file in the `dags/` directory (default `./dags`, or the service's data dir). cronova validates and cycle-checks every DAG on load; runnable examples live in [`dags/`](https://github.com/ako74programmer/poc-cronova-windows/tree/main/dags). Parsing is strict: unknown fields, unsupported task types, trailing YAML documents, invalid negative values, and out-of-range settings are rejected instead of ignored.
 
 Safety limits are enforced before a definition can enter the scheduler: 1 MiB
 per YAML document, 1,000 tasks, 10,000 dependency edges, 256 dependencies per
@@ -281,7 +281,7 @@ In the console task editor these are inserted as click/drag **pills** — you do
 
 A **pool** is a named set of global concurrency slots; a task consumes one slot of its `pool` while running, and higher-`priority` tasks win contended slots. Pools are global resources configured out-of-band (not in DAG YAML):
 
-```bash
+```powershell
 cronova pools                    # list pools and usage
 cronova pools set reports 4      # create/resize the "reports" pool to 4 slots
 ```

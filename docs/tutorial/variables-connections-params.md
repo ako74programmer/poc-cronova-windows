@@ -28,9 +28,9 @@ tasks:
 
 Trigger it and check the result:
 
-```bash
-./cronova trigger use_vars
-./cronova runs use_vars
+```powershell
+.\cronova.exe trigger use_vars
+.\cronova.exe runs use_vars
 ```
 
 In the console, click into the run and open the `show` task's log — it prints `hello from a shared variable`. The `{{ var.greeting }}` placeholder was substituted at dispatch, fetched from the store at that moment.
@@ -94,8 +94,8 @@ tasks:
 
 Trigger it with params as a JSON object:
 
-```bash
-./cronova trigger daily_report -params '{"day":"2026-01-01"}'
+```powershell
+.\cronova.exe trigger daily_report -params '{\"day\":\"2026-01-01\"}'
 ```
 
 Check the `build` task's log in the console: both forms print `2026-01-01`. Every param is available two ways — as the `{{ params.KEY }}` template *and* as a `CRONOVA_PARAM_<KEY>` environment variable (key uppercased), so scripts that only read the environment work too.

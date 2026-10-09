@@ -124,7 +124,7 @@ Attaching a worker takes two steps:
 1. Click **New join token** (admin), pick an expiry (1 hour / 24 hours / 7 days), and mint. The one-time token is shown **exactly once** — copy it now; only its hash is stored.
 2. On the worker host, run the join command shown next to the token:
 
-```bash
+```powershell
 cronova worker -server <console-url> -join-token <token>
 ```
 

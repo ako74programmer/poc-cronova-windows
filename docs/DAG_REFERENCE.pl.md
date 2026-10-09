@@ -1,8 +1,8 @@
 # Dokumentacja DAG-ów i zadań
 
-Pełny schemat YAML dla **DAG-a** (skierowanego grafu acyklicznego zadań) w cronova — wszystkie pola na poziomie DAG-a i zadania, pięć typów zadań, reguły wyzwalania i pule zasobów. Praktyczne wprowadzenie znajdziesz w [Pierwsze kroki](GETTING_STARTED.pl.md); ogólny opis projektu w [README](https://github.com/zoyluoblue/cronova#readme).
+Pełny schemat YAML dla **DAG-a** (skierowanego grafu acyklicznego zadań) w cronova — wszystkie pola na poziomie DAG-a i zadania, pięć typów zadań, reguły wyzwalania i pule zasobów. Praktyczne wprowadzenie znajdziesz w [Pierwsze kroki](GETTING_STARTED.pl.md); ogólny opis projektu w [README](https://github.com/ako74programmer/poc-cronova-windows#readme).
 
-DAG to pojedynczy plik YAML w katalogu `dags/` (domyślnie `./dags` lub katalog danych usługi). cronova waliduje i sprawdza cykle każdego DAG-a przy ładowaniu; uruchamialne przykłady znajdują się w [`dags/`](https://github.com/zoyluoblue/cronova/tree/main/dags). Parsowanie jest rygorystyczne: nieznane pola, nieobsługiwane typy zadań, kończące się dokumenty YAML, nieprawidłowe wartości ujemne i ustawienia spoza zakresu są odrzucane, a nie ignorowane.
+DAG to pojedynczy plik YAML w katalogu `dags/` (domyślnie `./dags` lub katalog danych usługi). cronova waliduje i sprawdza cykle każdego DAG-a przy ładowaniu; uruchamialne przykłady znajdują się w [`dags/`](https://github.com/ako74programmer/poc-cronova-windows/tree/main/dags). Parsowanie jest rygorystyczne: nieznane pola, nieobsługiwane typy zadań, kończące się dokumenty YAML, nieprawidłowe wartości ujemne i ustawienia spoza zakresu są odrzucane, a nie ignorowane.
 
 Limity bezpieczeństwa są egzekwowane zanim definicja trafi do harmonogramu: 1 MiB
 na dokument YAML, 1000 zadań, 10 000 krawędzi zależności, 256 zależności na
@@ -255,7 +255,7 @@ W edytorze zadań konsoli są one wstawiane jako klikalne/przeciągalne **piguł
 
 **Pula** to nazwany zbiór globalnych slotów współbieżności; zadanie zużywa jeden slot swojej `pool` podczas działania, a zadania o wyższym `priority` wygrywają w konkurencji o sloty. Pule to globalne zasoby konfigurowane poza pasmem (nie w YAML-u DAG-a):
 
-```bash
+```powershell
 cronova pools                    # listuj pule i użycie
 cronova pools set reports 4      # utwórz/zmień rozmiar puli "reports" na 4 sloty
 ```

@@ -215,7 +215,7 @@ usage:
   cronova apply <dir> [-dry-run]              GitOps push: validate, diff, and apply DAG YAML to a running server
   cronova export <dir> | import <dir>         portable bundle: DAG YAML + pools + variables (+conns, sans passwords)
 
-  cronova start|stop|restart control the installed service (auto-elevates via sudo)
+  cronova start|stop|restart control the installed Windows Services (run as Administrator)
   cronova status             show the installed service's status
   cronova update [version] [-proxy URL]   download + install the latest (or given) release, then restart
   cronova uninstall [--purge] remove the service + binary (--purge also deletes data)
