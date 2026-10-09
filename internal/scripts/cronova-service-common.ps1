@@ -26,6 +26,26 @@ function Invoke-CronovaSc {
     return ,$output
 }
 
+function Set-CronovaServiceCommandLine {
+    # sc.exe config binPath= "<quoted exe> args" is unreliable from PowerShell 5.1
+    # (native-arg quoting yields ERROR_INVALID_COMMAND_LINE 1639), so write the
+    # SCM registry values directly and verify them.
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$BinaryPath,
+        [string[]]$DependsOn
+    )
+
+    $key = "HKLM:\SYSTEM\CurrentControlSet\Services\$Name"
+    if (-not (Test-Path $key)) { throw "Service $Name is not registered; cannot update its command line." }
+    Set-ItemProperty -Path $key -Name ImagePath -Value $BinaryPath -Type ExpandString
+    if ($PSBoundParameters.ContainsKey('DependsOn')) {
+        Set-ItemProperty -Path $key -Name DependOnService -Value ([string[]]$DependsOn) -Type MultiString
+    }
+    $actual = (Get-ItemProperty -Path $key -Name ImagePath).ImagePath
+    if ($actual -ne $BinaryPath) { throw "Updating $Name command line failed: ImagePath is '$actual'." }
+}
+
 function Get-CronovaServiceState {
     param(
         [Parameter(Mandatory = $true)][string]$Name,

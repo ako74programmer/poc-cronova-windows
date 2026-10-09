@@ -94,8 +94,8 @@ try {
         throw 'Direct source resolution should not require cleanup.'
     }
 
-    Copy-Item -LiteralPath (Join-Path $sourceDir '*') -Destination $extractSeed -Recurse
-    Copy-Item -LiteralPath (Join-Path $sourceDir '*') -Destination $zipStage -Recurse
+    Copy-Item -Path (Join-Path $sourceDir '*') -Destination $extractSeed -Recurse
+    Copy-Item -Path (Join-Path $sourceDir '*') -Destination $zipStage -Recurse
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $zipPath = Join-Path $tempRoot 'cronova_windows_amd64.zip'
     if (Test-Path $zipPath) {
@@ -122,6 +122,25 @@ try {
 }
 finally {
     Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+# Real sc.exe: a failing call (non-existent service) must throw, not pass silently.
+$threw = $false
+try {
+    Invoke-CronovaSc -Arguments @('qc', 'CronovaNoSuchService_Test') -Action 'Query missing service' 6>$null | Out-Null
+}
+catch {
+    $threw = $_.Exception.Message -match 'Query missing service failed with exit code \d+'
+}
+if (-not $threw) { throw 'Invoke-CronovaSc did not throw on a non-zero sc.exe exit code.' }
+Invoke-CronovaSc -Arguments @('qc', 'CronovaNoSuchService_Test') -Action 'Ignored' -IgnoreExitCode | Out-Null
+if ($null -ne (Get-CronovaServiceState -Name 'CronovaNoSuchService_Test')) { throw 'Missing service must report no state.' }
+
+# Installer/updater must not call sc.exe directly (bypassing exit-code checks).
+$repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+foreach ($f in 'deploy\install.ps1', 'deploy\update.ps1', 'deploy\uninstall.ps1', 'internal\scripts\cronova-install-from-source.ps1', 'internal\scripts\cronova-update.ps1', 'internal\scripts\cronova-uninstall.ps1') {
+    $raw = Get-Content -Raw (Join-Path $repoRoot $f)
+    if ($raw -match '(?m)^(?!\s*#).*\bsc\.exe\b') { throw "$f calls sc.exe directly; use Invoke-CronovaSc / service helpers." }
 }
 
 Write-Host 'Service helper simulations passed.'

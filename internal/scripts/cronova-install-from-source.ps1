@@ -90,11 +90,13 @@ try {
     if (-not (Get-Service -Name 'CronovaExecutor' -ErrorAction SilentlyContinue)) {
         New-Service -Name 'CronovaExecutor' -BinaryPathName $execBin -StartupType Automatic | Out-Null
     } else {
-        Invoke-CronovaSc -Arguments @('config', 'CronovaExecutor', 'binPath=', $execBin) -Action 'Updating CronovaExecutor command line' | Out-Null
+        Set-CronovaServiceCommandLine -Name 'CronovaExecutor' -BinaryPath $execBin
     }
 
     if (-not (Get-Service -Name 'Cronova' -ErrorAction SilentlyContinue)) {
         New-Service -Name 'Cronova' -BinaryPathName $schedBin -StartupType Automatic -DependsOn 'CronovaExecutor' | Out-Null
+    } else {
+        Set-CronovaServiceCommandLine -Name 'Cronova' -BinaryPath $schedBin -DependsOn 'CronovaExecutor'
     }
 
     Invoke-CronovaSc -Arguments @('failure', 'CronovaExecutor', 'actions=', 'restart/60000/restart/60000//60000', 'reset=', '86400') -Action 'Configuring CronovaExecutor recovery' | Out-Null
@@ -123,8 +125,12 @@ try {
         Start-CronovaService -Name 'Cronova'
     }
 
-    Get-Service -Name 'CronovaExecutor'
-    Get-Service -Name 'Cronova'
+    foreach ($name in 'CronovaExecutor', 'Cronova') {
+        $state = Get-CronovaServiceState -Name $name
+        if (-not $state) { throw "Service $name is not registered after installation." }
+        if ($Start -and $state -ne 'RUNNING') { throw "Service $name is $state after installation; expected RUNNING." }
+        Get-Service -Name $name
+    }
 }
 finally {
     if ($sourceCleanup) {

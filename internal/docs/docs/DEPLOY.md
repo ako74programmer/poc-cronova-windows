@@ -53,7 +53,7 @@ When started with [app.ps1](../scripts/windows/app.ps1), Cronova runs a Windows 
 
 ## Upgrade and uninstall
 
-Run the update script from an elevated PowerShell. It stops both services, copies each new executable through a temporary file, replaces the installed binary, and starts the services again without modifying `ProgramData`:
+Run the update script from an elevated PowerShell. It stops both services, replaces each executable (keeping the previous one as `*.bak`), starts both services and verifies they are `RUNNING`. If any step fails, the previous binaries are restored and restarted and the script exits with an error. `ProgramData` is not modified:
 
 ```powershell
 .\deploy\update.ps1

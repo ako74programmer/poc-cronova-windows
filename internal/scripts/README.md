@@ -89,6 +89,9 @@ Te klocki zastępują stare bashowe entrypointy `ai-generate-crud`, `ai-generate
 
 ## Narzędzia repozytorium
 
+- [internal/scripts/cronova-update.ps1](../../internal/scripts/cronova-update.ps1)
+  Logika `deploy\update.ps1`: zatrzymuje obie usługi, podmienia binarki (stare jako `*.bak`), uruchamia usługi i sprawdza stan `RUNNING`; przy błędzie przywraca poprzednie binarki. Każda operacja na usługach sprawdza kod wyjścia (`Invoke-CronovaSc` / helpery z `cronova-service-common.ps1`).
+
 - [internal/scripts/sync-embedded-docs.ps1](../../internal/scripts/sync-embedded-docs.ps1)
   Kopiuje `docs\` oraz główne `README.md`/`README.pl.md` do `internal\docs\docs\` (dokumentacja wbudowana w `cronova.exe`). `-Check` tylko porównuje i kończy się kodem 1 przy rozjeździe (używane w CI).
 
