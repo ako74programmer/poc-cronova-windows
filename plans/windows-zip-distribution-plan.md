@@ -1,6 +1,6 @@
 # Plan: dystrybucja Cronova jako ZIP dla innego developera (Windows)
 
-Status: **DRAFT** — nic nie zostało jeszcze zakodowane.
+Status: **ZAIMPLEMENTOWANE** — `setup.cmd`/`setup.ps1`, tryb per-user (`cronova-user*.ps1`), `scripts/release.ps1`; przetestowane: user, service (UAC), MOTW, zajęty port, reinstalacja, restart po awarii, uninstall -Purge.
 
 ## Cel
 

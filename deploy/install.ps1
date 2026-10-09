@@ -1,8 +1,9 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
   [string]$Source = (Split-Path $PSScriptRoot -Parent),
   [switch]$Start,
   [switch]$FreePort,
+  [int]$Port,
   [string]$AdminUser,
   [string]$AdminPassword,
   [string]$AiBaseUrl,

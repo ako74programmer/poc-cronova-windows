@@ -3,6 +3,8 @@ param(
     [Parameter(Mandatory = $true)][string]$Source,
     [switch]$Start,
     [switch]$FreePort,
+    # Optional HTTP port for the console; rewrites 'http:' in the installed cronova.yaml.
+    [int]$Port,
     [string]$AdminUser,
     [string]$AdminPassword,
     # Optional default AI endpoint for AI DAG tasks (e.g. http://127.0.0.1:4141/v1). Tokens belong in the UI provider config.
@@ -68,6 +70,10 @@ try {
     $config = Join-Path $data 'cronova.yaml'
     if (-not (Test-Path $config)) {
         Copy-Item (Join-Path $sourceRoot 'cronova.yaml') $config
+    }
+    if ($Port) {
+        $cfgText = [IO.File]::ReadAllText($config)
+        [IO.File]::WriteAllText($config, [regex]::Replace($cfgText, '(?m)^http:\s*\S+', "http: 127.0.0.1:$Port"), [Text.UTF8Encoding]::new($false))
     }
 
     Copy-Item (Join-Path $sourceRoot 'dags\*.yaml') "$data\dags" -Force -ErrorAction SilentlyContinue

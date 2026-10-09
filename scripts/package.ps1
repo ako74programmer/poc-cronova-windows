@@ -2,6 +2,7 @@
 param([string]$Version = "", [string]$Output = "dist")
 $ErrorActionPreference = "Stop"
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+if (-not $Version -and $env:CRONOVA_RELEASE_VERSION) { $Version = $env:CRONOVA_RELEASE_VERSION }
 if (-not $Version) { $Version = (git -C $Root describe --tags --always --dirty 2>$null); if (-not $Version) { $Version = "dev" } }
 $Stage = Join-Path ([IO.Path]::GetTempPath()) ("cronova-package-" + [guid]::NewGuid())
 New-Item -ItemType Directory -Force -Path $Stage, (Join-Path $Root $Output) | Out-Null
@@ -14,6 +15,9 @@ try {
   Copy-Item (Join-Path $Root "deploy/install.ps1") (Join-Path $Stage "deploy")
   Copy-Item (Join-Path $Root "deploy/uninstall.ps1") (Join-Path $Stage "deploy")
   Copy-Item (Join-Path $Root "deploy/update.ps1") (Join-Path $Stage "deploy")
+  Copy-Item (Join-Path $Root "deploy/reinstall.ps1") (Join-Path $Stage "deploy")
+  # Recipient entry points at the ZIP root: double-click setup.cmd.
+  foreach ($f in "setup.cmd", "setup.ps1", "README-INSTALL.md") { Copy-Item (Join-Path $Root "deploy/$f") $Stage }
   Copy-Item (Join-Path $Root "cronova.yaml") (Join-Path $Stage "cronova.yaml")
   Copy-Item (Join-Path $Root "dags/*.yaml") (Join-Path $Stage "dags")
   Copy-Item (Join-Path $Root "docs/DEPLOY.md") (Join-Path $Stage "docs")

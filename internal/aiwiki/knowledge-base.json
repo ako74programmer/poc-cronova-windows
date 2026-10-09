@@ -1834,6 +1834,31 @@
       "id": "doc-deploy-143",
       "type": "doc",
       "source": "docs/DEPLOY.md",
+      "section": "Quick install for recipients (setup.cmd)",
+      "text": "The ZIP root contains `setup.cmd`, `setup.ps1` and `README-INSTALL.md`. Double-click `setup.cmd`:\n\n- it removes the \"downloaded from the internet\" mark (`Unblock-File`) from all extracted files;\n- a member of Administrators is asked whether to install Windows Services (UAC prompt), which runs `deploy\\install.ps1 -Start`;\n- otherwise (or when UAC is declined) Cronova is installed **per user, without admin rights**: binaries in `%LOCALAPPDATA%\\Programs\\Cronova`, data in `%LOCALAPPDATA%\\Cronova`, autostart through the logon scheduled task `Cronova (user)`. The supervisor `internal\\scripts\\cronova-user-run.ps1` restarts executor and scheduler after a crash (gives up after 5 crashes in 5 minutes);\n- without `-AdminPassword` a random password is generated and printed once.\n\nOptions: `setup.ps1 -Mode auto|service|user -Port 8091 -AdminUser admin -AdminPassword ... -AiBaseUrl ... -AiModel ...`. A busy port fails before anything is installed. Service setup is logged to `%TEMP%\\cronova-setup.log`.\n\nPer-user management:\n\n```powershell\npowershell -ExecutionPolicy Bypass -File \"$env:LOCALAPPDATA\\Cronova\\internal\\scripts\\cronova-user.ps1\" status   # start|stop|restart|uninstall [-Purge]\n```",
+      "topics": [
+        "schedule",
+        "project",
+        "ai",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-deploy-144",
+      "type": "doc",
+      "source": "docs/DEPLOY.md",
+      "section": "Quick install for recipients (setup.cmd)",
+      "text": "Authors build the ZIP with `scripts\\release.ps1 [-Version x.y.z]` (check-all, package, smoke test, SHA-256).",
+      "topics": [
+        "project",
+        "test",
+        "install"
+      ]
+    },
+    {
+      "id": "doc-deploy-145",
+      "type": "doc",
+      "source": "docs/DEPLOY.md",
       "section": "Install from a release ZIP",
       "text": "Extract `cronova_windows_amd64.zip`, open an elevated PowerShell in the extracted directory, and run:\n\n```powershell\n.\\deploy\\install.ps1\n```\n\nThe installer installs binaries below `C:\\Program Files\\Cronova`, creates the data root `C:\\ProgramData\\Cronova`, and registers two Windows Services: `CronovaExecutor` and `Cronova`. The scheduler depends on the executor and both services have failure recovery configured.\n\nDAG runtime assets (`internal\\scripts`, `scripts\\sdlc`, `prompts`, `templates`, `configs`, `contracts`, `e2e\\playwright`) are copied to `C:\\ProgramData\\Cronova`, and the executor runs tasks from that directory (`-workdir`), so relative paths in DAGs resolve. The installer verifies every DAG path with `internal\\scripts\\cronova-verify-dag-paths.ps1`.\n\nServices run as `LocalSystem`, which does not see the installing user's environment. The installer detects the toolchain (JDK, Maven, Python, Node/npm, Git) and stores `JAVA_HOME`, `MAVEN_HOME`, `CRONOVA_*` and `PATH` as the `CronovaExecutor` service environment. Re-run the installer after installing or moving tools.",
       "topics": [
@@ -1847,11 +1872,11 @@
       ]
     },
     {
-      "id": "doc-deploy-144",
+      "id": "doc-deploy-146",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Install from a release ZIP",
-      "text": "For AI DAG tasks on a fresh database either configure an AI provider in the web UI, or pass a default endpoint during install:\n\n```powershell\n.\\deploy\\install.ps1 -Start -AiBaseUrl http://127.0.0.1:4141/v1 -AiModel gpt-4o-mini\n```",
+      "text": "For AI DAG tasks on a fresh database either configure an AI provider in the web UI, or pass a default endpoint during install:\n\n```powershell\n.\\deploy\\install.ps1 -Start -Port 8095 -AiBaseUrl http://127.0.0.1:4141/v1 -AiModel gpt-4o-mini\n```",
       "topics": [
         "dag",
         "project",
@@ -1860,7 +1885,7 @@
       ]
     },
     {
-      "id": "doc-deploy-145",
+      "id": "doc-deploy-147",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Data and configuration",
@@ -1875,7 +1900,7 @@
       ]
     },
     {
-      "id": "doc-deploy-146",
+      "id": "doc-deploy-148",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Service operations",
@@ -1886,7 +1911,7 @@
       ]
     },
     {
-      "id": "doc-deploy-147",
+      "id": "doc-deploy-149",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Task execution and process containment",
@@ -1900,7 +1925,7 @@
       ]
     },
     {
-      "id": "doc-deploy-148",
+      "id": "doc-deploy-150",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Task execution and process containment",
@@ -1913,7 +1938,7 @@
       ]
     },
     {
-      "id": "doc-deploy-149",
+      "id": "doc-deploy-151",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Upgrade and uninstall",
@@ -1925,7 +1950,7 @@
       ]
     },
     {
-      "id": "doc-deploy-150",
+      "id": "doc-deploy-152",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Build and package from source",
@@ -1939,7 +1964,7 @@
       ]
     },
     {
-      "id": "doc-deploy-151",
+      "id": "doc-deploy-153",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Verification status",
@@ -1953,7 +1978,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_angular-152",
+      "id": "dag-sdlc_angular-154",
       "type": "dag",
       "source": "dags/sdlc_angular.yaml",
       "section": "DAG sdlc_angular",
@@ -1968,7 +1993,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_fullstack-153",
+      "id": "dag-sdlc_fullstack-155",
       "type": "dag",
       "source": "dags/sdlc_fullstack.yaml",
       "section": "DAG sdlc_fullstack",
@@ -1982,7 +2007,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_maven_luhn-154",
+      "id": "dag-sdlc_maven_luhn-156",
       "type": "dag",
       "source": "dags/sdlc_maven_luhn.yaml",
       "section": "DAG sdlc_maven_luhn",
@@ -1999,7 +2024,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_rest-155",
+      "id": "dag-sdlc_springboot_rest-157",
       "type": "dag",
       "source": "dags/sdlc_springboot_rest.yaml",
       "section": "DAG sdlc_springboot_rest",
@@ -2015,7 +2040,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_startio-156",
+      "id": "dag-sdlc_springboot_startio-158",
       "type": "dag",
       "source": "dags/sdlc_springboot_startio.yaml",
       "section": "DAG sdlc_springboot_startio",
@@ -2032,7 +2057,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_template_crud-157",
+      "id": "dag-sdlc_springboot_template_crud-159",
       "type": "dag",
       "source": "dags/sdlc_springboot_template_crud.yaml",
       "section": "DAG sdlc_springboot_template_crud",
@@ -2050,7 +2075,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_variant-158",
+      "id": "dag-sdlc_springboot_variant-160",
       "type": "dag",
       "source": "dags/sdlc_springboot_variant.yaml",
       "section": "DAG sdlc_springboot_variant",
@@ -2066,7 +2091,7 @@
       ]
     },
     {
-      "id": "script-copy-template-to-workspace-ps1-159",
+      "id": "script-copy-template-to-workspace-ps1-161",
       "type": "script",
       "source": "internal/scripts/copy-template-to-workspace.ps1",
       "section": "Script copy-template-to-workspace.ps1",
@@ -2079,7 +2104,7 @@
       ]
     },
     {
-      "id": "script-fetch-springboot-project-ps1-160",
+      "id": "script-fetch-springboot-project-ps1-162",
       "type": "script",
       "source": "internal/scripts/fetch-springboot-project.ps1",
       "section": "Script fetch-springboot-project.ps1",
@@ -2094,7 +2119,7 @@
       ]
     },
     {
-      "id": "script-generate-maven-archetype-ps1-161",
+      "id": "script-generate-maven-archetype-ps1-163",
       "type": "script",
       "source": "internal/scripts/generate-maven-archetype.ps1",
       "section": "Script generate-maven-archetype.ps1",
@@ -2107,7 +2132,7 @@
       ]
     },
     {
-      "id": "script-maven-compile-ps1-162",
+      "id": "script-maven-compile-ps1-164",
       "type": "script",
       "source": "internal/scripts/maven-compile.ps1",
       "section": "Script maven-compile.ps1",
@@ -2120,7 +2145,7 @@
       ]
     },
     {
-      "id": "script-maven-test-ps1-163",
+      "id": "script-maven-test-ps1-165",
       "type": "script",
       "source": "internal/scripts/maven-test.ps1",
       "section": "Script maven-test.ps1",
@@ -2133,7 +2158,7 @@
       ]
     },
     {
-      "id": "script-ai-java-mvn-generate-feature-ps1-164",
+      "id": "script-ai-java-mvn-generate-feature-ps1-166",
       "type": "script",
       "source": "internal/scripts/ai-java-mvn-generate-feature.ps1",
       "section": "Script ai-java-mvn-generate-feature.ps1",
@@ -2148,7 +2173,7 @@
       ]
     },
     {
-      "id": "script-java-maven-compile-fix-loop-ps1-165",
+      "id": "script-java-maven-compile-fix-loop-ps1-167",
       "type": "script",
       "source": "internal/scripts/java-maven-compile-fix-loop.ps1",
       "section": "Script java-maven-compile-fix-loop.ps1",
@@ -2165,7 +2190,7 @@
       ]
     },
     {
-      "id": "script-angular-validate-config-ps1-166",
+      "id": "script-angular-validate-config-ps1-168",
       "type": "script",
       "source": "internal/scripts/angular-validate-config.ps1",
       "section": "Script angular-validate-config.ps1",
@@ -2176,7 +2201,7 @@
       ]
     },
     {
-      "id": "script-angular-scaffold-from-config-ps1-167",
+      "id": "script-angular-scaffold-from-config-ps1-169",
       "type": "script",
       "source": "internal/scripts/angular-scaffold-from-config.ps1",
       "section": "Script angular-scaffold-from-config.ps1",
@@ -2189,7 +2214,7 @@
       ]
     },
     {
-      "id": "script-fullstack-run-stack-e2e-ps1-168",
+      "id": "script-fullstack-run-stack-e2e-ps1-170",
       "type": "script",
       "source": "internal/scripts/fullstack-run-stack-e2e.ps1",
       "section": "Script fullstack-run-stack-e2e.ps1",
@@ -2199,7 +2224,7 @@
       ]
     },
     {
-      "id": "script-springboot-validate-config-ps1-169",
+      "id": "script-springboot-validate-config-ps1-171",
       "type": "script",
       "source": "internal/scripts/springboot-validate-config.ps1",
       "section": "Script springboot-validate-config.ps1",
@@ -2212,11 +2237,11 @@
       ]
     },
     {
-      "id": "script-readme-md-170",
+      "id": "script-readme-md-172",
       "type": "script",
       "source": "internal/scripts/README.md",
       "section": "Script README.md",
-      "text": "# Reuzywalne klocki SDLC\n\nKatalog `internal/scripts/` zawiera techniczne klocki używane przez DAG-i Cronova.\nKażdy klocek ma własny plik `.md` w tym samym katalogu z opisem celu, parametrów i przykładowego użycia.\n\nAktywne entrypointy workflow w tym katalogu są PowerShellowe (`.ps1`). Historyczne odpowiedniki bashowe są usuwane z głównej ścieżki Windows-only.\n\n## Jak czytać ten katalog\n\n- skrypt `.ps1` to wykonywalny klocek,\n- odpowiadający mu plik `.ps1.md` to dokumentacja tego klocka,\n- DAG w katalogu `dags/` pokazuje, jak te klocki są składane w przepływ.\n\n## Klocki scaffoldingu\n\n- [internal/scripts/copy-template-to-workspace.ps1](../../internal/scripts/copy-template-to-workspace.ps1)\n  Dokumentacja: [internal/scripts/copy-template-to-workspace.ps1.md](../../internal/scripts/copy-template-to-workspace.ps1.md)\n- [internal/scripts/fetch-springboot-project.ps1](../../internal/scripts/fetch-springboot-project.ps1)\n  Dokumentacja: [internal/scripts/fetch-springboot-project.ps1.md](../../internal/scripts/fetch-springboot-project.ps1.md)\n- [internal/scripts/generate-maven-archetype.ps1](../../internal/scripts/generate-maven-archetype.ps1)\n  Dokumentacja: [internal/scripts/generate-maven-archetype.ps1.md](../../internal/scripts/generate-maven-archetype.ps1.md)\n- [internal/scripts/resolve-springboot-variant-config.ps1](../../internal/scripts/resolve-springboot-variant-config.ps1)\n- [internal/scripts/cronova-service-common.ps1](../../internal/scripts/cronova-service-common.ps1)\n  Dokumentacja: [internal/scripts/cronova-service-common.ps1.md](../../internal/scripts/cronova-service-common.ps1.md)\n- [internal/scripts/cronova-uninstall.ps1](../../internal/scripts/cronova-uninstall.ps1)\n  Dokumentacja: [internal/scripts/cronova-uninstall.ps1.md](../../internal/scripts/cronova-uninstall.ps1.md)\n- [internal/scripts/cronova-get-service-state.ps1](../../internal/scripts/cronova-get-service-state.ps1)\n  Dokumentacja: [internal/scripts/cronova-get-service-state.ps1.md](../../internal/scripts/cronova-get-service-state.ps1.md)\n- [internal/scripts/cronova-get-service-pid.ps1](../../internal/scripts/cronova-get-service-pid.ps1)\n  Dokumentacja: [internal/scripts/cronova-get-service-pid.ps1.md](../../internal/scripts/cronova-get-service-pid.ps1.md)\n- [internal/scripts/cronova-stop-service.ps1](../../internal/scripts/cronova-stop-service.ps1)\n  Dokumentacja: [internal/scripts/cronova-stop-service.ps1.md](../../internal/scripts/cronova-stop-service.ps1.md)\n- [internal/scripts/cronova-force-kill-pid.ps1](../../internal/scripts/cronova-force-kill-pid.ps1)\n  Dokumentacja: [internal/scripts/cronova-force-kill-pid.ps1.md](../../internal/scripts/cronova-force-kill-pid.ps1.md)\n- [internal/scripts/cronova-force-clean-services.ps1](../../internal/scripts/cronova-force-clean-services.ps1)\n  Dokumentacja: [internal/scripts/cronova-force-clean-services.ps1.md](../../internal/scripts/cronova-force-clean-services.ps1.md)\n- [internal/scripts/cronova-remove-service.ps1](../../internal/scripts/cronova-remove-service.ps1)\n  Dokumentacja: [internal/scripts/cronova-remove-service.ps1.md](../../internal/scripts/cronova-remove-service.ps1.md)\n- [internal/scripts/cronova-resolve-package-source.ps1](../../internal/scripts/cronova-resolve-package-source.ps1)\n  Dokumentacja: [internal/scripts/cronova-resolve-package-source.ps1.md](../../internal/scripts/cronova-resolve-package-source.ps1.md)\n- [internal/scripts/cronova-install-from-source.ps1](../../internal/scripts/cronova-install-from-source.ps1)\n  Kopiuje zasoby DAG-ów (`internal\\scripts`, `scripts\\sdlc`, `prompts`, `templates`, `configs`, `contracts`, `e2e\\playwright`) do `C:\\ProgramData\\Cronova` i uruchamia executor z `-workdir C:\\ProgramData\\Cronova`, więc względne ścieżki w DAG-ach działają po instalacji.\n- [internal/scripts/cronova-verify-dag-paths.ps1](../../internal/scripts/cronova-verify-dag-paths.ps1)\n  Sprawdza, czy każda względna ścieżka (skrypty, prompty, template'y, configi) użyta w `dags\\*.yaml` istnieje pod wskazanym katalogiem. Używany przez smoke test paczki i instalator.\n  Przykład: `.\\internal\\scripts\\cronova-verify-dag-paths.ps1 -Root C:\\ProgramData\\Cronova`\n- [internal/scripts/cronova-configure-service-env.ps1](../../internal/scripts/cronova-configure-service-env.ps1)\n  Wykrywa toolchain (JDK, Maven, Python, Node/npm, Git) i zapisuje `JAVA_HOME`, `MAVEN_HOME`, `CRONOVA_*` oraz `PATH` jako środowisko usługi (`LocalSystem` nie widzi zmiennych użytkownika). Wywoływany przez instalator.\n  Przykład: `.\\internal\\scripts\\cronova-configure-service-env.ps1 -ServiceName CronovaExecutor -Extra 'CRONOVA_DB=C:\\ProgramData\\Cronova\\cronova.db'`\n- [internal/scripts/seed-cronova-admin.ps1](../../internal/scripts/seed-cronova-admin.ps1)\n  Dokumentacja: [internal/scripts/seed-cronova-admin.ps1.md](../../internal/scripts/seed-cronova-admin.ps1.md)\n\n## Klocki Spring Boot config-driven\n\n- [internal/scripts/springboot-validate-config.ps1](../../internal/scripts/springboot-validate-config.ps1)\n- [internal/scripts/springboot-validate-openapi.ps1](../../internal/scripts/springboot-validate-openapi.ps1)\n- [internal/scripts/springboot-scaffold-from-config.ps1](../../internal/scripts/springboot-scaffold-from-config.ps1)\n- [internal/scripts/springboot-maven-compile-from-config.ps1](../../internal/scripts/springboot-maven-compile-from-config.ps1)\n- [internal/scripts/springboot-maven-test-from-config.ps1](../../internal/scripts/springboot-maven-test-from-config.ps1)\n- [internal/scripts/springboot-package-from-config.ps1](../../internal/scripts/springboot-package-from-config.ps1)\n\nTe klocki są używane przez:\n\n- [dags/sdlc_springboot_rest.yaml](../../dags/sdlc_springboot_rest.yaml)\n- [dags/sdlc_springboot_variant.yaml](../../dags/sdlc_springboot_variant.yaml)\n\nW przypadku DAG-a wariantowego config jest wybierany per-run przez `CRONOVA_PARAM_VARIANT` i resolver [internal/scripts/resolve-springboot-variant-config.ps1](../../internal/scripts/resolve-springboot-variant-config.ps1).\n\n## Klocki walidacji Maven\n\n- [internal/scripts/maven-compile.ps1](../../internal/scripts/maven-compile.ps1)\n  Dokumentacja: [internal/scripts/maven-compile.ps1.md](../../internal/scripts/maven-compile.ps1.md)\n- [internal/scripts/maven-test-compile.ps1](../../internal/scripts/maven-test-compile.ps1)\n  Dokumentacja: [internal/scripts/maven-test-compile.ps1.md](../../internal/scripts/maven-test-compile.ps1.md)\n- [internal/scripts/maven-test.ps1](../../internal/scripts/maven-test.ps1)\n  Dokumentacja: [internal/scripts/maven-test.ps1.md](../../internal/scripts/maven-test.ps1.md)\n\nTe klocki zastępują stare bashowe entrypointy `compile-project` i `run-tests`, które nie są już częścią aktywnej ścieżki Windows-only.\n\n## Klocki AI dla Java + Maven\n\n- [internal/scripts/ai-java-mvn-generate-feature.ps1](../../internal/scripts/ai-java-mvn-generate-feature.ps1)\n  Dokumentacja: [internal/scripts/ai-java-mvn-generate-feature.ps1.md](../../internal/scripts/ai-java-mvn-generate-feature.ps1.md)\n- [internal/scripts/ai-review-java-maven-errors.ps1](../../internal/scripts/ai-review-java-maven-errors.ps1)\n  Dokumentacja: [internal/scripts/ai-review-java-maven-errors.ps1.md](../../internal/scripts/ai-review-java-maven-errors.ps1.md)\n- [internal/scripts/java-maven-compile-fix-loop.ps1](../../internal/scripts/java-maven-compile-fix-loop.ps1)\n  Dokumentacja: [internal/scripts/java-maven-compile-fix-loop.ps1.md](../../internal/scripts/java-maven-compile-fix-loop.ps1.md)\n\nTe klocki zastępują stare bashowe entrypointy `ai-generate-crud`, `ai-generate-feature` i `ai-review-fix-loop`, które nie są już częścią aktywnej ścieżki Windows-only.\n\n## Narzędzia repozytorium\n\n- [internal/scripts/cronova-update.ps1](../../internal/scripts/cronova-update.ps1)\n  Logika `deploy\\update.ps1`: zatrzymuje obie usługi, podmienia binarki (stare jako `*.bak`), uruchamia usługi i sprawdza stan `RUNNING`; przy błędzie przywraca poprzednie binarki. Każda operacja na usługach sprawdza kod wyjścia (`Invoke-CronovaSc` / helpery z `cronova-service-common.ps1`).\n\n- [internal/scripts/sync-embedded-docs.ps1](../../internal/scripts/sync-embedded-docs.ps1)\n  Kopiuje `docs\\` oraz główne `README.md`/`README.pl.md` do `internal\\docs\\docs\\` (dokumentacja wbudowana w `cronova.exe`). `-Check` tylko porównuje i kończy się kodem 1 przy rozjeździe (używane w CI).\n\n  ```powershell\n  .\\internal\\scripts\\sync-embedded-docs.ps1          # po każdej zmianie w docs\\ lub README\n  .\\internal\\scripts\\sync-embedded-docs.ps1 -Check   # weryfikacja\n  ```\n\n\n## Jak używać klocków lego\n\nNajprostszy wzorzec dla projektu Java + Maven wygląda tak:\n\n1. scaffold projektu,\n2. kompilacja szkieletu,\n3. wygenerowanie feature'a z promptu,\n4. compile-fix loop,\n5. testy.\n\n### Template Spring Boot\n\n1. [internal/scripts/copy-template-to-workspace.ps1](../../internal/scripts/copy-template-to-workspace.ps1)\n2. [internal/scripts/maven-compile.ps1](../../internal/scripts/maven-compile.ps1)\n3. [internal/scripts/ai-java-mvn-generate-feature.ps1](../../internal/scripts/ai-java-mvn-generate-feature.ps1)\n4. [internal/scripts/java-maven-compile-fix-loop.ps1](../../internal/scripts/java-maven-compile-fix-loop.ps1)\n5. [internal/scripts/maven-test.ps1](../../internal/scripts/maven-test.ps1)\n\nZobacz DAG: [dags/sdlc_springboot_template_crud.yaml](../../dags/sdlc_springboot_template_crud.yaml)\nDokumentacja DAG-a: [dags/sdlc_springboot_template_crud.yaml.md](../../dags/sdlc_springboot_template_crud.yaml.md)\n\n### Spring Initializr\n\n1. [internal/scripts/fetch-springboot-project.ps1](../../internal/scripts/fetch-springboot-project.ps1)\n2. [internal/scripts/maven-compile.ps1](../../internal/scripts/maven-compile.ps1)\n3. [internal/scripts/ai-java-mvn-generate-feature.ps1](../../internal/scripts/ai-java-mvn-generate-feature.ps1)\n4. [internal/scripts/java-maven-compile-fix-loop.ps1](../../internal/scripts/java-maven-compile-fix-loop.ps1)\n5. [internal/scripts/maven-test.ps1](../../internal/scripts/maven-test.ps1)\n\nZobacz DAG: [dags/sdlc_springboot_startio.yaml](../../dags/sdlc_springboot_startio.yaml)\nDokumentacja DAG-a: [dags/sdlc_springboot_startio.yaml.md](../../dags/sdlc_springboot_startio.yaml.md)\n\n### Maven archetype\n\n1. [internal/scripts/generate-maven-archetype.ps1](../../internal/scripts/generate-maven-archetype.ps1)\n2. [internal/scripts/maven-compile.ps1](../../internal/scripts/maven-compile.ps1)\n3. [internal/scripts/ai-java-mvn-generate-feature.ps1](../../internal/scripts/ai-java-mvn-generate-feature.ps1)\n4. [internal/scripts/java-maven-compile-fix-loop.ps1](../../internal/scripts/java-maven-compile-fix-loop.ps1)\n5. [internal/scripts/maven-test.ps1](../../internal/scripts/maven-test.ps1)\n\nZobacz DAG: [dags/sdlc_maven_luhn.yaml](../../dags/sdlc_maven_luhn.yaml)\nDokumentacja DAG-a: [dags/sdlc_maven_luhn.yaml.md](../../dags/sdlc_maven_luhn.yaml.md)\n\n## Referencje do DAG-ów\n\n- [dags/sdlc_maven_luhn.yaml](../../dags/sdlc_maven_luhn.yaml)\n- [dags/sdlc_springboot_template_crud.yaml](../../dags/sdlc_springboot_template_crud.yaml)\n- [dags/sdlc_springboot_startio.yaml](../../dags/sdlc_springboot_startio.yaml)\n- [dags/sdlc_springboot_rest.yaml](../../dags/sdlc_springboot_rest.yaml)\n- [dags/sdlc_springboot_variant.yaml](../../dags/sdlc_springboot_variant.yaml)\n- [dags/sdlc_maven_luhn.yaml.md](../../dags/sdlc_maven_luhn.yaml.md)\n- [dags/sdlc_springboot_template_crud.yaml.md](../../dags/sdlc_springboot_template_crud.yaml.md)\n- [dags/sdlc_springboot_startio.yaml.md](../../dags/sdlc_springboot_startio.yaml.md)\n- [dags/sdlc_springboot_variant.yaml.md](../../dags/sdlc_springboot_variant.yaml.md)\n\nKażdy aktywny DAG `.yaml` opisany w tym README ma teraz własny plik `.md` w katalogu `dags/`.",
+      "text": "# Reuzywalne klocki SDLC\n\nKatalog `internal/scripts/` zawiera techniczne klocki używane przez DAG-i Cronova.\nKażdy klocek ma własny plik `.md` w tym samym katalogu z opisem celu, parametrów i przykładowego użycia.\n\nAktywne entrypointy workflow w tym katalogu są PowerShellowe (`.ps1`). Historyczne odpowiedniki bashowe są usuwane z głównej ścieżki Windows-only.\n\n## Jak czytać ten katalog\n\n- skrypt `.ps1` to wykonywalny klocek,\n- odpowiadający mu plik `.ps1.md` to dokumentacja tego klocka,\n- DAG w katalogu `dags/` pokazuje, jak te klocki są składane w przepływ.\n\n## Instalacja per-user (bez admina)\n\n- [internal/scripts/cronova-user-install.ps1](../../internal/scripts/cronova-user-install.ps1): instaluje do `%LOCALAPPDATA%`, rejestruje zadanie logowania `Cronova (user)`. Przykład: `cronova-user-install.ps1 -Source C:\\cronova -Port 8091 -AdminPassword ...`\n- [internal/scripts/cronova-user-run.ps1](../../internal/scripts/cronova-user-run.ps1): supervisor executora i schedulera (restart po awarii).\n- [internal/scripts/cronova-user.ps1](../../internal/scripts/cronova-user.ps1): `start|stop|restart|status|uninstall [-Purge]`.\n- [internal/scripts/cronova-user-common.ps1](../../internal/scripts/cronova-user-common.ps1): funkcje wspólne (zadanie, port, procesy).\n## Klocki scaffoldingu\n\n- [internal/scripts/copy-template-to-workspace.ps1](../../internal/scripts/copy-template-to-workspace.ps1)\n  Dokumentacja: [internal/scripts/copy-template-to-workspace.ps1.md](../../internal/scripts/copy-template-to-workspace.ps1.md)\n- [internal/scripts/fetch-springboot-project.ps1](../../internal/scripts/fetch-springboot-project.ps1)\n  Dokumentacja: [internal/scripts/fetch-springboot-project.ps1.md](../../internal/scripts/fetch-springboot-project.ps1.md)\n- [internal/scripts/generate-maven-archetype.ps1](../../internal/scripts/generate-maven-archetype.ps1)\n  Dokumentacja: [internal/scripts/generate-maven-archetype.ps1.md](../../internal/scripts/generate-maven-archetype.ps1.md)\n- [internal/scripts/resolve-springboot-variant-config.ps1](../../internal/scripts/resolve-springboot-variant-config.ps1)\n- [internal/scripts/cronova-service-common.ps1](../../internal/scripts/cronova-service-common.ps1)\n  Dokumentacja: [internal/scripts/cronova-service-common.ps1.md](../../internal/scripts/cronova-service-common.ps1.md)\n- [internal/scripts/cronova-uninstall.ps1](../../internal/scripts/cronova-uninstall.ps1)\n  Dokumentacja: [internal/scripts/cronova-uninstall.ps1.md](../../internal/scripts/cronova-uninstall.ps1.md)\n- [internal/scripts/cronova-get-service-state.ps1](../../internal/scripts/cronova-get-service-state.ps1)\n  Dokumentacja: [internal/scripts/cronova-get-service-state.ps1.md](../../internal/scripts/cronova-get-service-state.ps1.md)\n- [internal/scripts/cronova-get-service-pid.ps1](../../internal/scripts/cronova-get-service-pid.ps1)\n  Dokumentacja: [internal/scripts/cronova-get-service-pid.ps1.md](../../internal/scripts/cronova-get-service-pid.ps1.md)\n- [internal/scripts/cronova-stop-service.ps1](../../internal/scripts/cronova-stop-service.ps1)\n  Dokumentacja: [internal/scripts/cronova-stop-service.ps1.md](../../internal/scripts/cronova-stop-service.ps1.md)\n- [internal/scripts/cronova-force-kill-pid.ps1](../../internal/scripts/cronova-force-kill-pid.ps1)\n  Dokumentacja: [internal/scripts/cronova-force-kill-pid.ps1.md](../../internal/scripts/cronova-force-kill-pid.ps1.md)\n- [internal/scripts/cronova-force-clean-services.ps1](../../internal/scripts/cronova-force-clean-services.ps1)\n  Dokumentacja: [internal/scripts/cronova-force-clean-services.ps1.md](../../internal/scripts/cronova-force-clean-services.ps1.md)\n- [internal/scripts/cronova-remove-service.ps1](../../internal/scripts/cronova-remove-service.ps1)\n  Dokumentacja: [internal/scripts/cronova-remove-service.ps1.md](../../internal/scripts/cronova-remove-service.ps1.md)\n- [internal/scripts/cronova-resolve-package-source.ps1](../../internal/scripts/cronova-resolve-package-source.ps1)\n  Dokumentacja: [internal/scripts/cronova-resolve-package-source.ps1.md](../../internal/scripts/cronova-resolve-package-source.ps1.md)\n- [internal/scripts/cronova-install-from-source.ps1](../../internal/scripts/cronova-install-from-source.ps1)\n  Kopiuje zasoby DAG-ów (`internal\\scripts`, `scripts\\sdlc`, `prompts`, `templates`, `configs`, `contracts`, `e2e\\playwright`) do `C:\\ProgramData\\Cronova` i uruchamia executor z `-workdir C:\\ProgramData\\Cronova`, więc względne ścieżki w DAG-ach działają po instalacji.\n- [internal/scripts/cronova-verify-dag-paths.ps1](../../internal/scripts/cronova-verify-dag-paths.ps1)\n  Sprawdza, czy każda względna ścieżka (skrypty, prompty, template'y, configi) użyta w `dags\\*.yaml` istnieje pod wskazanym katalogiem. Używany przez smoke test paczki i instalator.\n  Przykład: `.\\internal\\scripts\\cronova-verify-dag-paths.ps1 -Root C:\\ProgramData\\Cronova`\n- [internal/scripts/cronova-configure-service-env.ps1](../../internal/scripts/cronova-configure-service-env.ps1)\n  Wykrywa toolchain (JDK, Maven, Python, Node/npm, Git) i zapisuje `JAVA_HOME`, `MAVEN_HOME`, `CRONOVA_*` oraz `PATH` jako środowisko usługi (`LocalSystem` nie widzi zmiennych użytkownika). Wywoływany przez instalator.\n  Przykład: `.\\internal\\scripts\\cronova-configure-service-env.ps1 -ServiceName CronovaExecutor -Extra 'CRONOVA_DB=C:\\ProgramData\\Cronova\\cronova.db'`\n- [internal/scripts/seed-cronova-admin.ps1](../../internal/scripts/seed-cronova-admin.ps1)\n  Dokumentacja: [internal/scripts/seed-cronova-admin.ps1.md](../../internal/scripts/seed-cronova-admin.ps1.md)\n\n## Klocki Spring Boot config-driven\n\n- [internal/scripts/springboot-validate-config.ps1](../../internal/scripts/springboot-validate-config.ps1)\n- [internal/scripts/springboot-validate-openapi.ps1](../../internal/scripts/springboot-validate-openapi.ps1)\n- [internal/scripts/springboot-scaffold-from-config.ps1](../../internal/scripts/springboot-scaffold-from-config.ps1)\n- [internal/scripts/springboot-maven-compile-from-config.ps1](../../internal/scripts/springboot-maven-compile-from-config.ps1)\n- [internal/scripts/springboot-maven-test-from-config.ps1](../../internal/scripts/springboot-maven-test-from-config.ps1)\n- [internal/scripts/springboot-package-from-config.ps1](../../internal/scripts/springboot-package-from-config.ps1)\n\nTe klocki są używane przez:\n\n- [dags/sdlc_springboot_rest.yaml](../../dags/sdlc_springboot_rest.yaml)\n- [dags/sdlc_springboot_variant.yaml](../../dags/sdlc_springboot_variant.yaml)\n\nW przypadku DAG-a wariantowego config jest wybierany per-run przez `CRONOVA_PARAM_VARIANT` i resolver [internal/scripts/resolve-springboot-variant-config.ps1](../../internal/scripts/resolve-springboot-variant-config.ps1).\n\n## Klocki walidacji Maven\n\n- [internal/scripts/maven-compile.ps1](../../internal/scripts/maven-compile.ps1)\n  Dokumentacja: [internal/scripts/maven-compile.ps1.md](../../internal/scripts/maven-compile.ps1.md)\n- [internal/scripts/maven-test-compile.ps1](../../internal/scripts/maven-test-compile.ps1)\n  Dokumentacja: [internal/scripts/maven-test-compile.ps1.md](../../internal/scripts/maven-test-compile.ps1.md)\n- [internal/scripts/maven-test.ps1](../../internal/scripts/maven-test.ps1)\n  Dokumentacja: [internal/scripts/maven-test.ps1.md](../../internal/scripts/maven-test.ps1.md)\n\nTe klocki zastępują stare bashowe entrypointy `compile-project` i `run-tests`, które nie są już częścią aktywnej ścieżki Windows-only.\n\n## Klocki AI dla Java + Maven\n\n- [internal/scripts/ai-java-mvn-generate-feature.ps1](../../internal/scripts/ai-java-mvn-generate-feature.ps1)\n  Dokumentacja: [internal/scripts/ai-java-mvn-generate-feature.ps1.md](../../internal/scripts/ai-java-mvn-generate-feature.ps1.md)\n- [internal/scripts/ai-review-java-maven-errors.ps1](../../internal/scripts/ai-review-java-maven-errors.ps1)\n  Dokumentacja: [internal/scripts/ai-review-java-maven-errors.ps1.md](../../internal/scripts/ai-review-java-maven-errors.ps1.md)\n- [internal/scripts/java-maven-compile-fix-loop.ps1](../../internal/scripts/java-maven-compile-fix-loop.ps1)\n  Dokumentacja: [internal/scripts/java-maven-compile-fix-loop.ps1.md](../../internal/scripts/java-maven-compile-fix-loop.ps1.md)\n\nTe klocki zastępują stare bashowe entrypointy `ai-generate-crud`, `ai-generate-feature` i `ai-review-fix-loop`, które nie są już częścią aktywnej ścieżki Windows-only.\n\n## Narzędzia repozytorium\n\n- [internal/scripts/cronova-update.ps1](../../internal/scripts/cronova-update.ps1)\n  Logika `deploy\\update.ps1`: zatrzymuje obie usługi, podmienia binarki (stare jako `*.bak`), uruchamia usługi i sprawdza stan `RUNNING`; przy błędzie przywraca poprzednie binarki. Każda operacja na usługach sprawdza kod wyjścia (`Invoke-CronovaSc` / helpery z `cronova-service-common.ps1`).\n\n- [internal/scripts/sync-embedded-docs.ps1](../../internal/scripts/sync-embedded-docs.ps1)\n  Kopiuje `docs\\` oraz główne `README.md`/`README.pl.md` do `internal\\docs\\docs\\` (dokumentacja wbudowana w `cronova.exe`). `-Check` tylko porównuje i kończy się kodem 1 przy rozjeździe (używane w CI).\n\n  ```powershell\n  .\\internal\\scripts\\sync-embedded-docs.ps1          # po każdej zmianie w docs\\ lub README\n  .\\internal\\scripts\\sync-embedded-docs.ps1 -Check   # weryfikacja\n  ```\n\n\n## Jak używać klocków lego\n\nNajprostszy wzorzec dla projektu Java + Maven wygląda tak:\n\n1. scaffold projektu,\n2. kompilacja szkieletu,\n3. wygenerowanie feature'a z promptu,\n4. compile-fix loop,\n5. testy.\n\n### Template Spring Boot\n\n1. [internal/scripts/copy-template-to-workspace.ps1](../../internal/scripts/copy-template-to-workspace.ps1)\n2. [internal/scripts/maven-compile.ps1](../../internal/scripts/maven-compile.ps1)\n3. [internal/scripts/ai-java-mvn-generate-feature.ps1](../../internal/scripts/ai-java-mvn-generate-feature.ps1)\n4. [internal/scripts/java-maven-compile-fix-loop.ps1](../../internal/scripts/java-maven-compile-fix-loop.ps1)\n5. [internal/scripts/maven-test.ps1](../../internal/scripts/maven-test.ps1)\n\nZobacz DAG: [dags/sdlc_springboot_template_crud.yaml](../../dags/sdlc_springboot_template_crud.yaml)\nDokumentacja DAG-a: [dags/sdlc_springboot_template_crud.yaml.md](../../dags/sdlc_springboot_template_crud.yaml.md)\n\n### Spring Initializr\n\n1. [internal/scripts/fetch-springboot-project.ps1](../../internal/scripts/fetch-springboot-project.ps1)\n2. [internal/scripts/maven-compile.ps1](../../internal/scripts/maven-compile.ps1)\n3. [internal/scripts/ai-java-mvn-generate-feature.ps1](../../internal/scripts/ai-java-mvn-generate-feature.ps1)\n4. [internal/scripts/java-maven-compile-fix-loop.ps1](../../internal/scripts/java-maven-compile-fix-loop.ps1)\n5. [internal/scripts/maven-test.ps1](../../internal/scripts/maven-test.ps1)\n\nZobacz DAG: [dags/sdlc_springboot_startio.yaml](../../dags/sdlc_springboot_startio.yaml)\nDokumentacja DAG-a: [dags/sdlc_springboot_startio.yaml.md](../../dags/sdlc_springboot_startio.yaml.md)\n\n### Maven archetype\n\n1. [internal/scripts/generate-maven-archetype.ps1](../../internal/scripts/generate-maven-archetype.ps1)\n2. [internal/scripts/maven-compile.ps1](../../internal/scripts/maven-compile.ps1)\n3. [internal/scripts/ai-java-mvn-generate-feature.ps1](../../internal/scripts/ai-java-mvn-generate-feature.ps1)\n4. [internal/scripts/java-maven-compile-fix-loop.ps1](../../internal/scripts/java-maven-compile-fix-loop.ps1)\n5. [internal/scripts/maven-test.ps1](../../internal/scripts/maven-test.ps1)\n\nZobacz DAG: [dags/sdlc_maven_luhn.yaml](../../dags/sdlc_maven_luhn.yaml)\nDokumentacja DAG-a: [dags/sdlc_maven_luhn.yaml.md](../../dags/sdlc_maven_luhn.yaml.md)\n\n## Referencje do DAG-ów\n\n- [dags/sdlc_maven_luhn.yaml](../../dags/sdlc_maven_luhn.yaml)\n- [dags/sdlc_springboot_template_crud.yaml](../../dags/sdlc_springboot_template_crud.yaml)\n- [dags/sdlc_springboot_startio.yaml](../../dags/sdlc_springboot_startio.yaml)\n- [dags/sdlc_springboot_rest.yaml](../../dags/sdlc_springboot_rest.yaml)\n- [dags/sdlc_springboot_variant.yaml](../../dags/sdlc_springboot_variant.yaml)\n- [dags/sdlc_maven_luhn.yaml.md](../../dags/sdlc_maven_luhn.yaml.md)\n- [dags/sdlc_springboot_template_crud.yaml.md](../../dags/sdlc_springboot_template_crud.yaml.md)\n- [dags/sdlc_springboot_startio.yaml.md](../../dags/sdlc_springboot_startio.yaml.md)\n- [dags/sdlc_springboot_variant.yaml.md](../../dags/sdlc_springboot_variant.yaml.md)\n\nKażdy aktywny DAG `.yaml` opisany w tym README ma teraz własny plik `.md` w katalogu `dags/`.",
       "topics": [
         "dag",
         "schedule",

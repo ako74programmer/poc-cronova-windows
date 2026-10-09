@@ -6,6 +6,25 @@ Cronova in this repository targets Windows 10/11 and Windows Server on `amd64`. 
 
 Run installation from an elevated PowerShell.
 
+## Quick install for recipients (setup.cmd)
+
+The ZIP root contains `setup.cmd`, `setup.ps1` and `README-INSTALL.md`. Double-click `setup.cmd`:
+
+- it removes the "downloaded from the internet" mark (`Unblock-File`) from all extracted files;
+- a member of Administrators is asked whether to install Windows Services (UAC prompt), which runs `deploy\install.ps1 -Start`;
+- otherwise (or when UAC is declined) Cronova is installed **per user, without admin rights**: binaries in `%LOCALAPPDATA%\Programs\Cronova`, data in `%LOCALAPPDATA%\Cronova`, autostart through the logon scheduled task `Cronova (user)`. The supervisor `internal\scripts\cronova-user-run.ps1` restarts executor and scheduler after a crash (gives up after 5 crashes in 5 minutes);
+- without `-AdminPassword` a random password is generated and printed once.
+
+Options: `setup.ps1 -Mode auto|service|user -Port 8091 -AdminUser admin -AdminPassword ... -AiBaseUrl ... -AiModel ...`. A busy port fails before anything is installed. Service setup is logged to `%TEMP%\cronova-setup.log`.
+
+Per-user management:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\Cronova\internal\scripts\cronova-user.ps1" status   # start|stop|restart|uninstall [-Purge]
+```
+
+Authors build the ZIP with `scripts\release.ps1 [-Version x.y.z]` (check-all, package, smoke test, SHA-256).
+
 ## Install from a release ZIP
 
 Extract `cronova_windows_amd64.zip`, open an elevated PowerShell in the extracted directory, and run:
@@ -23,7 +42,7 @@ Services run as `LocalSystem`, which does not see the installing user's environm
 For AI DAG tasks on a fresh database either configure an AI provider in the web UI, or pass a default endpoint during install:
 
 ```powershell
-.\deploy\install.ps1 -Start -AiBaseUrl http://127.0.0.1:4141/v1 -AiModel gpt-4o-mini
+.\deploy\install.ps1 -Start -Port 8095 -AiBaseUrl http://127.0.0.1:4141/v1 -AiModel gpt-4o-mini
 ```
 
 ## Data and configuration

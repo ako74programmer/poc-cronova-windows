@@ -11,6 +11,12 @@ Aktywne entrypointy workflow w tym katalogu są PowerShellowe (`.ps1`). Historyc
 - odpowiadający mu plik `.ps1.md` to dokumentacja tego klocka,
 - DAG w katalogu `dags/` pokazuje, jak te klocki są składane w przepływ.
 
+## Instalacja per-user (bez admina)
+
+- [internal/scripts/cronova-user-install.ps1](../../internal/scripts/cronova-user-install.ps1): instaluje do `%LOCALAPPDATA%`, rejestruje zadanie logowania `Cronova (user)`. Przykład: `cronova-user-install.ps1 -Source C:\cronova -Port 8091 -AdminPassword ...`
+- [internal/scripts/cronova-user-run.ps1](../../internal/scripts/cronova-user-run.ps1): supervisor executora i schedulera (restart po awarii).
+- [internal/scripts/cronova-user.ps1](../../internal/scripts/cronova-user.ps1): `start|stop|restart|status|uninstall [-Purge]`.
+- [internal/scripts/cronova-user-common.ps1](../../internal/scripts/cronova-user-common.ps1): funkcje wspólne (zadanie, port, procesy).
 ## Klocki scaffoldingu
 
 - [internal/scripts/copy-template-to-workspace.ps1](../../internal/scripts/copy-template-to-workspace.ps1)
