@@ -272,6 +272,13 @@ function renderDagsNovice() {
 // DAG operation page (view='dag') — integrated: info + structure (editable
 // graph + task list) + schedule + run history. Edits persist immediately.
 // ============================================================================
+// API task -> editor model. Inverse of the per-task mapping in dagSpecFrom.
+function editorTaskFrom(tk) {
+  const h = tk.http || {}, dd = tk.depends_on_dag || {}; return { id: tk.id, type: tk.type || "powershell", command: tk.command || "", conn: tk.conn || "", project: tk.project || "", pool: tk.pool || "default", priority: tk.priority || 0, retries: tk.retries ?? "", retry_delay: tk.retry_delay ?? "", retry_backoff: tk.retry_backoff || "", retry_delay_max: tk.retry_delay_max || "", timeout: tk.timeout || "", sla: tk.sla || "", deps: (tk.deps || []).slice(), trigger_rule: tk.trigger_rule || "all_success",
+      subdag: tk.subdag || "", worker_group: tk.worker_group || "",
+      dodDag: dd.dag || "", dodOffset: dd.offset || "", dodTimeout: dd.timeout || "", dodOnTimeout: dd.on_timeout || "",
+      httpMethod: h.method || "GET", httpUrl: h.url || "", httpHeaders: h.headers ? Object.entries(h.headers).map(([k, v]) => `${k}: ${v}`).join("\n") : "", httpBody: h.body || "", httpStatus: (h.expected_status || []).join(", ") };
+}
 async function showDag(id, tab) {
   closeLog(); stopDagRunsPoll(); // tear down the outgoing DAG's live poll before the async refetch
   setHash("#/dag/" + encodeURIComponent(id) + (tab && tab !== "runs" ? "/" + tab : ""));
@@ -302,10 +309,7 @@ async function showDag(id, tab) {
       // conflicts loudly (409) instead of being silently overwritten.
       definition_hash: dag.definition_hash || "",
     }),
-    tasks: (dag.tasks || []).map((tk) => { const h = tk.http || {}, dd = tk.depends_on_dag || {}; return { id: tk.id, type: tk.type || "powershell", command: tk.command || "", conn: tk.conn || "", project: tk.project || "", pool: tk.pool || "default", priority: tk.priority || 0, retries: tk.retries ?? "", retry_delay: tk.retry_delay ?? "", retry_backoff: tk.retry_backoff || "", retry_delay_max: tk.retry_delay_max || "", timeout: tk.timeout || "", sla: tk.sla || "", deps: (tk.deps || []).slice(), trigger_rule: tk.trigger_rule || "all_success",
-      subdag: tk.subdag || "", worker_group: tk.worker_group || "",
-      dodDag: dd.dag || "", dodOffset: dd.offset || "", dodTimeout: dd.timeout || "", dodOnTimeout: dd.on_timeout || "",
-      httpMethod: h.method || "GET", httpUrl: h.url || "", httpHeaders: h.headers ? Object.entries(h.headers).map(([k, v]) => `${k}: ${v}`).join("\n") : "", httpBody: h.body || "", httpStatus: (h.expected_status || []).join(", ") }; }),
+    tasks: (dag.tasks || []).map(editorTaskFrom),
     runs: runs || [], allDags, graphPending: null, activeTaskId: null,
     // graph structural-editing session: pending (unsaved) changes accumulate in
     // D.tasks; graphBase snapshots the last-saved model for discard/diff.
@@ -578,7 +582,7 @@ function nvAddStep() {
   let n = D.tasks.length + 1, id;
   do { id = "step_" + n; n++; } while (D.tasks.some((x) => x.id === id));
   const ordered = topoOrder(D.tasks.filter((x) => x.id));
-  const tk = blankTask(); tk.id = id; tk.command = "echo hello cronova";
+  const tk = blankTask(); tk.id = id; tk.command = "Write-Output 'hello cronova'";
   if (ordered.length) tk.deps = [ordered[ordered.length - 1].id];
   D.tasks.push(tk);
   saveDag();
@@ -1122,7 +1126,7 @@ function graphDiscardSession() {
   toast(t("diff_discarded"), "info");
   renderDagPage();
 }
-// add a node straight from the graph toolbar: inline id prompt, shell + echo TODO
+// add a node straight from the graph toolbar: inline id prompt, powershell + Write-Output TODO
 async function addTaskFromGraph() {
   let n = D.tasks.length + 1, def;
   do { def = "task_" + n; n++; } while (D.tasks.some((x) => x.id === def));
@@ -1130,7 +1134,7 @@ async function addTaskFromGraph() {
   if (!id) return;
   if (!ID_RE.test(id)) { toast(t("err_taskid"), "warn"); return; }
   if (D.tasks.some((x) => x.id === id)) { toast(t("err_dup"), "warn"); return; }
-  const tk = blankTask(); tk.id = id; tk.command = "echo TODO";
+  const tk = blankTask(); tk.id = id; tk.command = "Write-Output TODO";
   graphMutate(() => D.tasks.push(tk));
 }
 function wireGraphEditor() {
@@ -1341,7 +1345,7 @@ function showTask(dagID, taskID) {
 }
 
 // ---- typed command builder ------------------------------------------------
-// The `type` selector drives a small structured form that COMPOSES the shell
+// The `type` selector drives a small structured form that COMPOSES the PowerShell
 // command; the raw textarea is the escape hatch AND the stored source of truth
 // (no backend change — we still persist `command`). Best-effort parse on load;
 // fall back to raw when a command doesn't fit the type's shape.
@@ -1647,6 +1651,15 @@ function varPaletteHtml() {
     ${group("params", t("vg_params"), `<input class="vp-keyin" data-kind="params" placeholder="params.key" spellcheck="false" aria-label="${esc(t("vg_params"))}">`)}
   </div>`;
 }
+const TASK_TYPES = ["powershell", "python", "sql", "jar", "http", "subdag"];
+// Always mark the task's current type as selected. A type the console does not
+// support (e.g. legacy "shell") is shown as a disabled option instead of the
+// browser silently selecting the first entry.
+function taskTypeOptionsHtml(cur) {
+  const opts = TASK_TYPES.map((o) => `<option value="${o}" ${cur === o ? "selected" : ""}>${o}</option>`);
+  if (cur && !TASK_TYPES.includes(cur)) opts.unshift(`<option value="${esc(cur)}" selected disabled>${esc(cur)} (unsupported)</option>`);
+  return opts.join("");
+}
 function commandFieldHtml(tk) {
   const chips = varPaletteHtml();
   if (tk.type === "subdag") {
@@ -1687,7 +1700,7 @@ function commandFieldHtml(tk) {
   if (cmdRaw || !b) {
     const toForm = b ? ` <a class="raw-toggle" id="cmd-toform">${t("cmd_use_form")}</a>` : "";
     return `<div class="b-field full"><label>${t("t_command")}${toForm}</label>${chips}
-      ${pillEditorHtml("command", "echo running {{ logical_date }}")}
+      ${pillEditorHtml("command", "Write-Output \"running {{ logical_date }}\"")}
       <div class="cmd-preview"><span class="cp-label">${t("cmd_will_run")}</span> <code id="cmd-preview">${hlVars(tk.command || "")}</code></div></div>`;
   }
   const f = b.parse(tk.command) || {};
@@ -1847,7 +1860,7 @@ function renderTaskPage() {
     <div class="form-page">
       <div class="tc-grid">
         <div class="b-field"><label>${t("t_id")}</label><input class="tf" data-k="id" value="${esc(tk.id)}" placeholder="step_a"></div>
-        <div class="b-field"><label>${t("t_type")}</label><select class="tf" data-k="type">${["powershell", "python", "sql", "jar", "http", "subdag"].map((o) => `<option ${tk.type === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
+        <div class="b-field"><label>${t("t_type")}</label><select class="tf" data-k="type">${taskTypeOptionsHtml(tk.type)}</select></div>
       </div>
       ${commandFieldHtml(tk)}
       ${tk.type === "powershell" ? projectSectionHtml(tk) : ""}
@@ -1911,8 +1924,8 @@ function renderTaskPage() {
   if (tk.type === "powershell") hydrateProjectSection(tk);
   reflectSaveState();
 }
-// ---- project attach (shell tasks) ----------------------------------------
-// A shell task can name an uploaded project directory; the scheduler stages a
+// ---- project attach (powershell tasks) ----------------------------------------
+// A powershell task can name an uploaded project directory; the scheduler stages a
 // clean copy and runs the command there. This section lets the user pick an
 // existing project or upload files/folder/zip/inline without leaving the editor.
 let PROJECTS = null; // cache: [{name, files, size}] or null (unloaded)
