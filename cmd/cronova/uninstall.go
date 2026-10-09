@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"runtime"
 	"strings"
 )
 
@@ -35,7 +34,7 @@ func cmdUninstall(args []string) error {
 	}
 
 	if !serviceInstalled() && !binaryInstalled() {
-		return errors.New("cronova does not appear to be installed (no service definition and no /usr/local/bin/cronova)")
+		return errors.New("cronova does not appear to be installed (no Cronova service and no " + binDst + ")")
 	}
 
 	if !assumeYes {
@@ -48,16 +47,7 @@ func cmdUninstall(args []string) error {
 		}
 	}
 
-	switch runtime.GOOS {
-	case "darwin":
-		return uninstallDarwin(purge)
-	case "linux":
-		return uninstallLinux(purge)
-	case "windows":
-		return uninstallWindows(purge)
-	default:
-		return fmt.Errorf("uninstall is only supported on Windows (this is %s)", runtime.GOOS)
-	}
+	return uninstallWindows(purge)
 }
 
 func binaryInstalled() bool {
@@ -99,62 +89,6 @@ func removePath(kind, p string) {
 		return
 	}
 	fmt.Printf("==> removed %s %s\n", kind, p)
-}
-
-func uninstallDarwin(purge bool) error {
-	// 1. stop + unload the daemon (ignore errors — it may not be loaded).
-	if launchdLoaded() {
-		fmt.Println("==> stopping launchd daemon")
-		_ = run("launchctl", "bootout", "system/"+launchdLabel)
-	}
-	if launchdJobLoaded(launchdExecutorLabel) {
-		fmt.Println("==> stopping launchd executor")
-		_ = run("launchctl", "bootout", "system/"+launchdExecutorLabel)
-	}
-	// 2. service definition + binaries.
-	removePath("plist", launchdPlist)
-	removePath("plist", launchdExecutorPlist)
-	removePath("binary", binExecutor)
-	removePath("binary", binDst)
-
-	// 3. data (opt-in).
-	if purge {
-		removePath("config", "/usr/local/etc/cronova")
-		removePath("state", "/usr/local/var/cronova")
-		removePath("logs", "/usr/local/var/log/cronova")
-	}
-	printUninstallSummary(purge, "/usr/local/etc/cronova, /usr/local/var/cronova, /usr/local/var/log/cronova")
-	return nil
-}
-
-func uninstallLinux(purge bool) error {
-	// 1. stop + disable the unit (ignore errors — may be stopped/absent).
-	fmt.Println("==> stopping systemd unit")
-	_ = run("systemctl", "disable", "--now", systemdUnit)
-	_ = run("systemctl", "disable", "--now", systemdExecutorUnit)
-	// 2. unit file + reload so systemd forgets it.
-	removePath("unit", systemdUnitPath)
-	removePath("unit", systemdExecutorUnitPath)
-	_ = run("systemctl", "daemon-reload")
-	_ = run("systemctl", "reset-failed", systemdUnit)
-	_ = run("systemctl", "reset-failed", systemdExecutorUnit)
-	// 3. binaries.
-	removePath("binary", binExecutor)
-	removePath("binary", binDst)
-
-	// 4. data + dedicated user (opt-in).
-	if purge {
-		removePath("config", "/etc/cronova")
-		removePath("state", "/var/lib/cronova")
-		removePath("logs", "/var/log/cronova")
-		if err := run("userdel", "cronova"); err != nil {
-			fmt.Fprintln(os.Stderr, "cronova: note — could not remove the 'cronova' system user (may not exist)")
-		} else {
-			fmt.Println("==> removed system user cronova")
-		}
-	}
-	printUninstallSummary(purge, "/etc/cronova, /var/lib/cronova, /var/log/cronova")
-	return nil
 }
 
 func printUninstallSummary(purged bool, dataDirs string) {

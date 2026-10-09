@@ -25,7 +25,7 @@ Wykonać testy na wspieranej wersji Windows z uprawnieniami administratora. Zakr
 
 ### 3. Rozszerzyć testy Windows
 
-Dodać do `windows-latest` testy Git Bash, ścieżek zawierających spacje i znaki Unicode, quoting-u poleceń, anulowania zadań, timeoutów, procesów potomnych oraz lokalnego endpointu loopback TCP.
+Dodać do `windows-latest` testy ścieżek zawierających spacje i znaki Unicode, quoting-u poleceń, anulowania zadań, timeoutów, procesów potomnych oraz lokalnego endpointu loopback TCP.
 
 ### 4. Uporządkować dokumentację wdrożeniową
 

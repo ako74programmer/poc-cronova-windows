@@ -1,12 +1,8 @@
-//go:build !windows
-// +build !windows
-
 package executor
 
 import (
 	"context"
 	"net"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -17,25 +13,11 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-// shortSocketDir returns a temp dir under /tmp. Unix socket paths have a ~104
-// byte limit on macOS, and t.TempDir() embeds the (long) test name, so we use a
-// short path instead.
-func shortSocketDir(t *testing.T) string {
-	t.Helper()
-	dir, err := os.MkdirTemp("/tmp", "cnv")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.RemoveAll(dir) })
-	return dir
-}
-
-// startTestServer runs a gRPC executor on a temp unix socket, returning the
+// startTestServer runs a gRPC executor on a loopback TCP port, returning the
 // dial target and a stop func.
 func startTestServer(t *testing.T) (string, func()) {
 	t.Helper()
-	sock := filepath.Join(shortSocketDir(t), "e.sock")
-	lis, err := net.Listen("unix", sock)
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatalf("listen: %v", err)
 	}
@@ -43,7 +25,7 @@ func startTestServer(t *testing.T) (string, func()) {
 	pb.RegisterExecutorServer(srv, NewGRPCServer(NewRunner()))
 	healthpb.RegisterHealthServer(srv, health.NewServer())
 	go func() { _ = srv.Serve(lis) }()
-	return "unix://" + sock, srv.Stop
+	return "tcp://" + lis.Addr().String(), srv.Stop
 }
 
 func TestGRPCExecutorSuccess(t *testing.T) {
@@ -58,7 +40,7 @@ func TestGRPCExecutorSuccess(t *testing.T) {
 
 	ref, err := c.Launch(context.Background(), Spec{
 		TaskRunID: "run1/task1",
-		Command:   "echo over-grpc",
+		Command:   "Write-Output over-grpc",
 		LogPath:   filepath.Join(t.TempDir(), "g.log"),
 	})
 	if err != nil {
@@ -99,11 +81,12 @@ func TestGRPCExecutorProbeUnknownAndCancel(t *testing.T) {
 	}
 }
 
-func TestDialRejectsNonUnixTargets(t *testing.T) {
-	for _, target := range []string{"localhost:9091", "dns:///executor.internal:9091", "unix://relative.sock", "unix:///tmp/e.sock?x=1"} {
+func TestDialRejectsUnsupportedTargets(t *testing.T) {
+	t.Setenv("CRONOVA_EXEC_TLS_CERT", "")
+	for _, target := range []string{"localhost:9091", "dns:///executor.internal:9091", "unix:///tmp/e.sock", "tcp://"} {
 		if c, err := Dial(target); err == nil {
 			_ = c.Close()
-			t.Errorf("Dial(%q) accepted a target outside the Unix-socket trust boundary", target)
+			t.Errorf("Dial(%q) accepted an unsupported target", target)
 		}
 	}
 }

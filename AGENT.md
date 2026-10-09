@@ -90,10 +90,7 @@ Najpierw działający przepływ, potem porządki opisowe.
 
 ### Nadal otwarte
 
-1. `deploy/install.ps1` nadal wymaga Git Bash i zapisuje `bash_path` do konfiguracji.
-To jest osobny, realny blocker pełnego domknięcia Windows-only.
-
-2. Runtime fullstack wymaga dalszej walidacji.
+1. Runtime fullstack wymaga dalszej walidacji.
 Wcześniej aktywny problem dotyczył finalizacji `playwright_e2e` w live runtime.
 Przed kolejną serią zmian trzeba to jutro przetestować na czystym stanie.
 
@@ -171,7 +168,6 @@ czy to jest potrzebne w aktywnej ścieżce Windows-only?
 2. Uruchamiać przez `scripts/windows/app.ps1 start`.
 3. Zweryfikować end-to-end `sdlc_fullstack` jak użytkownik.
 4. Jeśli problem z `playwright_e2e` wróci, wejść bezpośrednio w ścieżkę finalizacji runtime, a nie wracać do szerokiej architektury.
-5. Po stabilizacji runtime wrócić do migracji `deploy/install.ps1` z zależności od Git Bash.
 
 ## Krótkie podsumowanie intencji
 

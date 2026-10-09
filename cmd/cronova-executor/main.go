@@ -1,5 +1,5 @@
 // Command cronova-executor is the long-lived task executor. The scheduler
-// dispatches tasks to it over a local gRPC socket; because it is a separate
+// dispatches tasks to it over loopback gRPC (127.0.0.1); because it is a separate
 // process, a scheduler restart does not kill running tasks — the scheduler
 // re-attaches by probing them (see docs/ARCHITECTURE.md §8–§9).
 package main
@@ -25,12 +25,12 @@ import (
 )
 
 func main() {
-	sock := flag.String("sock", defaultSocketPath(), "local executor endpoint (Unix socket on non-Windows; 127.0.0.1:port on Windows)")
+	sock := flag.String("sock", defaultSocketPath(), "local executor endpoint, loopback only: 127.0.0.1:port")
 	listenTCP := flag.String("listen-tcp", "", "additionally serve on this TCP address (host:port) under MANDATORY mutual TLS — for a scheduler on another machine")
 	tlsCert := flag.String("tls-cert", "", "PEM certificate for -listen-tcp (required with it)")
 	tlsKey := flag.String("tls-key", "", "PEM private key for -listen-tcp (required with it)")
 	tlsCA := flag.String("tls-ca", "", "PEM CA that signed the SCHEDULER's client certificate (required with -listen-tcp)")
-	stateDir := flag.String("state-dir", "", "persist attempt state here so restarts re-adopt running tasks (default: <socket dir>/state; \"none\" disables)")
+	stateDir := flag.String("state-dir", "", "persist attempt state here so restarts re-adopt running tasks (default: .\\state under the working directory; \"none\" disables)")
 	workDir := flag.String("workdir", "", "change to this directory before serving; tasks with relative paths (e.g. .\\internal\\scripts\\...) resolve against it")
 	flag.Parse()
 	if *workDir != "" {

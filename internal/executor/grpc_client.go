@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"path/filepath"
 	"time"
 
 	pb "github.com/zoyluo/cronova/proto/cronova/executor/v1"
@@ -29,8 +28,8 @@ type GRPCClient struct {
 
 var _ Executor = (*GRPCClient)(nil)
 
-// Dial connects to an executor: an absolute unix:///path socket on non-Windows,
-// loopback tcp://host:port for the Windows local executor, or tcp://host:port
+// Dial connects to an executor: loopback tcp://127.0.0.1:port for the local
+// executor service, or tcp://host:port
 // under mandatory mutual TLS for non-loopback targets. The mTLS material comes
 // from CRONOVA_EXEC_TLS_CERT / _KEY / _CA
 // (PEM file paths) so the target string stays a plain address.
@@ -45,8 +44,6 @@ func Dial(target string) (*GRPCClient, error) {
 	}
 	var creds grpc.DialOption
 	switch {
-	case u.Scheme == "unix" && filepath.IsAbs(u.Path) && u.Host == "" && u.RawQuery == "" && u.Fragment == "":
-		creds = grpc.WithTransportCredentials(insecure.NewCredentials())
 	case u.Scheme == "tcp" && u.Host != "":
 		host, _, splitErr := net.SplitHostPort(u.Host)
 		if splitErr != nil {
@@ -63,7 +60,7 @@ func Dial(target string) (*GRPCClient, error) {
 		}
 		target = u.Host // grpc dials host:port with the default resolver
 	default:
-		return nil, fmt.Errorf("executor target must be unix:///abs/path or tcp://host:port, got %q", target)
+		return nil, fmt.Errorf("executor target must be tcp://host:port, got %q", target)
 	}
 	conn, err := grpc.NewClient(target, creds)
 	if err != nil {

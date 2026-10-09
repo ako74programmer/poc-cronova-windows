@@ -71,8 +71,8 @@ Trigger it and watch:
 **Check it:** in the console, open **my_app_report** → the latest run → **run_main**. The log shows the script ran from a fresh copy of your project — a per-attempt directory under the system temp dir (the exact path varies by OS):
 
 ```
-cwd: /tmp/cronova-ws-9f8a3c21d4e5/my_app_report__manual_...-run_main
-project dir: /tmp/cronova-ws-9f8a3c21d4e5/my_app_report__manual_...-run_main
+cwd: C:\ProgramData\Cronova\workspaces\cronova-ws-9f8a3c21d4e5\my_app_report__manual_...-run_main
+project dir: C:\ProgramData\Cronova\workspaces\cronova-ws-9f8a3c21d4e5\my_app_report__manual_...-run_main
 hello from my_app on 2026-07-07
 ```
 

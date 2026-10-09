@@ -1,6 +1,3 @@
-//go:build !windows
-// +build !windows
-
 package scheduler
 
 import (
@@ -21,19 +18,11 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-// startExecutorServer runs a gRPC executor on a temp socket. It survives the
+// startExecutorServer runs a gRPC executor on a loopback TCP port. It survives the
 // scheduler instances created below, mimicking the long-lived executor process.
 func startExecutorServer(t *testing.T) (string, func()) {
 	t.Helper()
-	// Unix socket paths are length-limited (~104 bytes on macOS); t.TempDir()
-	// embeds the long test name, so use a short /tmp path.
-	dir, err := os.MkdirTemp("/tmp", "cnv")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.RemoveAll(dir) })
-	sock := filepath.Join(dir, "exec.sock")
-	lis, err := net.Listen("unix", sock)
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +30,7 @@ func startExecutorServer(t *testing.T) (string, func()) {
 	pb.RegisterExecutorServer(srv, executor.NewGRPCServer(executor.NewRunner()))
 	healthpb.RegisterHealthServer(srv, health.NewServer())
 	go func() { _ = srv.Serve(lis) }()
-	return "unix://" + sock, srv.Stop
+	return "tcp://" + lis.Addr().String(), srv.Stop
 }
 
 func waitTaskState(t *testing.T, st *sqlite.Store, runID, taskID string, want model.TaskState, within time.Duration) {

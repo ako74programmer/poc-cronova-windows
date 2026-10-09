@@ -318,15 +318,16 @@ Uwagi:
 
 ### Etap 6. Porządki platformowe
 
-- [ ] **6.1 Zinwentaryzować aktywny kod unixowy**
-  - [ ] przejrzeć [runner_unix.go](../internal/executor/runner_unix.go)
-  - [ ] przejrzeć [endpoint_unix.go](../cmd/cronova-executor/endpoint_unix.go)
-  - [ ] przejrzeć [service.go](../cmd/cronova/service.go)
-  - [ ] przejrzeć pliki w [deploy/](../deploy)
-  - [ ] opisać, które elementy mają zostać, a które usunąć po decyzji `Windows-only`
+- [x] **6.1 Zinwentaryzować aktywny kod unixowy**
+  - [x] `runner_unix.go`, `state_unix.go`, `endpoint_unix.go`, `service.go` (systemd/launchd), `service_host_other.go`, `fsperm_other.go`
+  - [x] `deploy/*.service`, `deploy/*.plist`
+  - [x] decyzja: produkt wyłącznie Windows — wszystko powyżej do usunięcia
 
-- [ ] **6.2 Usunąć lub wyłączyć niewspierane ścieżki platformowe**
-  - [ ] po decyzji architektonicznej usunąć lub wyłączyć nieużywane implementacje i assety deploy
+- [x] **6.2 Usunąć lub wyłączyć niewspierane ścieżki platformowe**
+  - [x] usunięto implementacje Unix, `unix://` w `Dial`, aktualizację z tar.gz i definicje systemd/launchd
+  - [x] build na nie-Windows celowo kończy się błędem (`windows_only.go`)
+  - [x] testy gRPC i crash-recovery przeniesione na loopback TCP (Windows)
+  - [x] CI i release wyłącznie na `windows-latest`
   - [ ] zweryfikować, że repo odzwierciedla realny zakres wsparcia
 
 ### Etap 7. Testy i bramki jakości

@@ -337,7 +337,7 @@ func cmdServe(args []string) error {
 	workspacesDir := fs.String("workspaces", "", "shared per-attempt project workspace directory")
 	tick := fs.Duration("tick", 2*time.Second, "scheduling loop interval")
 	reload := fs.Duration("reload", 0, "re-scan the dags dir for changed YAML this often (0 = off)")
-	executorAddr := fs.String("executor", "", "executor target (absolute unix:///path socket only); empty = in-process executor")
+	executorAddr := fs.String("executor", "", "executor target tcp://127.0.0.1:port (or tcp://host:port with mTLS); empty = in-process executor")
 	httpAddr := fs.String("http", "127.0.0.1:8090", "HTTP address for the console API + web UI (empty to disable)")
 	authFlag := fs.Bool("auth", false, "require login for the console/API (overrides config)")
 	standby := fs.Bool("standby", false, "if another scheduler holds the lease, wait and take over when it dies (active-standby HA) instead of exiting")

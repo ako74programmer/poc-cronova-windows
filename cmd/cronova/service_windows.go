@@ -1,6 +1,3 @@
-//go:build windows
-// +build windows
-
 package main
 
 import (
@@ -15,16 +12,6 @@ const (
 	serviceExecutorName = "CronovaExecutor"
 	binDst              = `C:\Program Files\Cronova\cronova.exe`
 	binExecutor         = `C:\Program Files\Cronova\cronova-executor.exe`
-	// Kept only so legacy, unreachable non-Windows uninstall helpers still
-	// compile in the package; no Windows command uses these values.
-	systemdUnit             = ""
-	systemdExecutorUnit     = ""
-	systemdUnitPath         = ""
-	systemdExecutorUnitPath = ""
-	launchdLabel            = ""
-	launchdExecutorLabel    = ""
-	launchdPlist            = ""
-	launchdExecutorPlist    = ""
 )
 
 func cmdService(action string) error {
@@ -108,6 +95,3 @@ func windowsDataDir() string {
 	return filepath.Join(`C:\ProgramData`, "Cronova")
 }
 
-func run(name string, args ...string) error { return exec.Command(name, args...).Run() }
-func launchdLoaded() bool                   { return false }
-func launchdJobLoaded(string) bool          { return false }

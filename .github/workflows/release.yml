@@ -25,7 +25,7 @@ jobs:
           path: dist/cronova_windows_amd64.zip
   release:
     needs: verify
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
       contents: write
       id-token: write
@@ -37,8 +37,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with: { name: windows-release, path: dist }
       - name: Generate checksum
-        shell: bash
-        run: sha256sum dist/cronova_windows_amd64.zip > dist/SHA256SUMS
+        shell: pwsh
+        run: |
+          $h = (Get-FileHash dist/cronova_windows_amd64.zip -Algorithm SHA256).Hash.ToLower()
+          [IO.File]::WriteAllText("dist/SHA256SUMS", "$h  cronova_windows_amd64.zip`n")
       - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           generate_release_notes: true

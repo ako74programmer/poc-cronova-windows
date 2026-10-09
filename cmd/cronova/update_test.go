@@ -1,10 +1,8 @@
 package main
 
 import (
-	"archive/tar"
 	"archive/zip"
 	"bytes"
-	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -18,32 +16,6 @@ import (
 	"sync/atomic"
 	"testing"
 )
-
-// makeTarGz builds an in-memory release tarball mirroring scripts/package.sh:
-// entries are prefixed "./" as `tar -C stage .` emits them.
-func makeTarGz(t *testing.T, files map[string][]byte) []byte {
-	t.Helper()
-	var buf bytes.Buffer
-	gz := gzip.NewWriter(&buf)
-	tw := tar.NewWriter(gz)
-	for name, data := range files {
-		if err := tw.WriteHeader(&tar.Header{
-			Name: "./" + name, Typeflag: tar.TypeReg, Mode: 0o755, Size: int64(len(data)),
-		}); err != nil {
-			t.Fatal(err)
-		}
-		if _, err := tw.Write(data); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if err := tw.Close(); err != nil {
-		t.Fatal(err)
-	}
-	if err := gz.Close(); err != nil {
-		t.Fatal(err)
-	}
-	return buf.Bytes()
-}
 
 func makeZip(t *testing.T, files map[string][]byte) []byte {
 	t.Helper()
@@ -64,20 +36,8 @@ func makeZip(t *testing.T, files map[string][]byte) []byte {
 	return buf.Bytes()
 }
 
-func makeReleaseArchive(t *testing.T, files map[string][]byte) []byte {
-	t.Helper()
-	if runtime.GOOS == "windows" {
-		return makeZip(t, files)
-	}
-	return makeTarGz(t, files)
-}
-
 func TestReleaseAsset(t *testing.T) {
-	ext := ".tar.gz"
-	if runtime.GOOS == "windows" {
-		ext = ".zip"
-	}
-	want := fmt.Sprintf("cronova_%s_%s%s", runtime.GOOS, runtime.GOARCH, ext)
+	want := fmt.Sprintf("cronova_windows_%s.zip", runtime.GOARCH)
 	if got := releaseAsset(); got != want {
 		t.Fatalf("releaseAsset() = %q, want %q", got, want)
 	}
@@ -169,10 +129,7 @@ func TestConfirmFrom(t *testing.T) {
 // proxy: a local forward-proxy counts every request, and fetchRelease's traffic
 // to the mirror must pass through it.
 func TestFetchReleaseThroughProxy(t *testing.T) {
-	tb := makeReleaseArchive(t, map[string][]byte{"cronova.exe": []byte("hi"), "VERSION": []byte("v1")})
-	if runtime.GOOS != "windows" {
-		tb = makeTarGz(t, map[string][]byte{"cronova": []byte("hi"), "VERSION": []byte("v1")})
-	}
+	tb := makeZip(t, map[string][]byte{"cronova.exe": []byte("hi"), "VERSION": []byte("v1")})
 	sum := fmt.Sprintf("%x", sha256.Sum256(tb))
 	asset := releaseAsset()
 
@@ -247,39 +204,17 @@ func TestHTTPClientProxyWiring(t *testing.T) {
 }
 
 func TestSumFor(t *testing.T) {
-	sums := "abc123  cronova_linux_amd64.tar.gz\n" +
-		"def456 *cronova_darwin_arm64.tar.gz\n" +
+	sums := "abc123  cronova_windows_amd64.zip\n" +
+		"def456 *cronova_windows_arm64.zip\n" +
 		"# a comment line\n"
-	if got, ok := sumFor(sums, "cronova_linux_amd64.tar.gz"); !ok || got != "abc123" {
+	if got, ok := sumFor(sums, "cronova_windows_amd64.zip"); !ok || got != "abc123" {
 		t.Errorf("space form: got %q ok=%v", got, ok)
 	}
-	if got, ok := sumFor(sums, "cronova_darwin_arm64.tar.gz"); !ok || got != "def456" {
+	if got, ok := sumFor(sums, "cronova_windows_arm64.zip"); !ok || got != "def456" {
 		t.Errorf("binary-mode(*) form: got %q ok=%v", got, ok)
 	}
-	if _, ok := sumFor(sums, "cronova_windows_amd64.zip"); ok {
+	if _, ok := sumFor(sums, "cronova_windows_386.zip"); ok {
 		t.Error("expected miss for an unlisted asset")
-	}
-}
-
-func TestExtractReleaseBinaries(t *testing.T) {
-	tb := makeTarGz(t, map[string][]byte{
-		"cronova":              []byte("BINARY-A"),
-		"cronova-executor":     []byte("BINARY-B"),
-		"VERSION":              []byte("v9.9.9\n"),
-		"cronova.yaml.example": []byte("ignored"),
-	})
-	bins, ver, err := extractReleaseBinaries(bytes.NewReader(tb))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(bins["cronova"]) != "BINARY-A" || string(bins["cronova-executor"]) != "BINARY-B" {
-		t.Fatalf("wrong binaries: %q / %q", bins["cronova"], bins["cronova-executor"])
-	}
-	if ver != "v9.9.9" {
-		t.Fatalf("version = %q, want v9.9.9", ver)
-	}
-	if _, ok := bins["cronova.yaml.example"]; ok {
-		t.Error("non-binary files should not be extracted")
 	}
 }
 
@@ -303,10 +238,7 @@ func TestExtractReleaseZipBinaries(t *testing.T) {
 }
 
 func TestFetchRelease(t *testing.T) {
-	tb := makeReleaseArchive(t, map[string][]byte{"cronova.exe": []byte("hello"), "VERSION": []byte("v1.2.3")})
-	if runtime.GOOS != "windows" {
-		tb = makeTarGz(t, map[string][]byte{"cronova": []byte("hello"), "VERSION": []byte("v1.2.3")})
-	}
+	tb := makeZip(t, map[string][]byte{"cronova.exe": []byte("hello"), "VERSION": []byte("v1.2.3")})
 	sum := fmt.Sprintf("%x", sha256.Sum256(tb))
 	asset := releaseAsset()
 
@@ -356,7 +288,7 @@ func TestFetchRelease(t *testing.T) {
 	})
 
 	t.Run("asset missing from SHA256SUMS is fatal", func(t *testing.T) {
-		srv := newServer(sum+"  some-other-asset.tar.gz\n", true)
+		srv := newServer(sum+"  some-other-asset.zip\n", true)
 		defer srv.Close()
 		if _, _, err := fetchRelease(srv.URL, asset, ""); err == nil {
 			t.Fatal("unlisted asset must prevent an unverified update")
@@ -366,7 +298,7 @@ func TestFetchRelease(t *testing.T) {
 	t.Run("404 asset errors", func(t *testing.T) {
 		srv := newServer("", true)
 		defer srv.Close()
-		if _, _, err := fetchRelease(srv.URL, "cronova_nope_nope.tar.gz", ""); err == nil {
+		if _, _, err := fetchRelease(srv.URL, "cronova_nope_nope.zip", ""); err == nil {
 			t.Fatal("expected a download error for a missing asset")
 		}
 	})
@@ -379,117 +311,6 @@ func TestHTTPGetRejectsOversizedResponse(t *testing.T) {
 	defer srv.Close()
 	if _, err := httpGet(srv.URL, "", 64); err == nil || (!strings.Contains(err.Error(), "large") && !strings.Contains(err.Error(), "exceeds")) {
 		t.Fatalf("oversized response error = %v", err)
-	}
-}
-
-func TestExtractCapturesServiceDef(t *testing.T) {
-	tb := makeTarGz(t, map[string][]byte{
-		"cronova":                  []byte("BIN"),
-		"deploy/com.cronova.plist": []byte("<plist>__USER__</plist>"),
-		"deploy/cronova.service":   []byte("[Service]\nUser=cronova\n"),
-		"VERSION":                  []byte("v1"),
-	})
-	bins, _, err := extractReleaseBinaries(bytes.NewReader(tb))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(bins["com.cronova.plist"]) != "<plist>__USER__</plist>" {
-		t.Errorf("plist not captured from the tarball: %q", bins["com.cronova.plist"])
-	}
-	if !bytes.Contains(bins["cronova.service"], []byte("User=cronova")) {
-		t.Errorf("unit not captured from the tarball: %q", bins["cronova.service"])
-	}
-}
-
-func TestSwapFileBackupRestoreAndAfter(t *testing.T) {
-	dir := t.TempDir()
-	dst := filepath.Join(dir, "svc.conf")
-	if err := os.WriteFile(dst, []byte("OLD"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	afters := 0
-	restore, err := swapFile(dst, []byte("NEW"), 0o644, func() error { afters++; return nil })
-	if err != nil {
-		t.Fatal(err)
-	}
-	if b, _ := os.ReadFile(dst); string(b) != "NEW" {
-		t.Fatalf("after swap = %q, want NEW", b)
-	}
-	if b, _ := os.ReadFile(dst + ".bak"); string(b) != "OLD" {
-		t.Fatalf("backup = %q, want OLD", b)
-	}
-	if afters != 1 {
-		t.Errorf("after() should run once on swap, got %d", afters)
-	}
-	if err := restore(); err != nil {
-		t.Fatal(err)
-	}
-	if b, _ := os.ReadFile(dst); string(b) != "OLD" {
-		t.Fatalf("after restore = %q, want OLD", b)
-	}
-	if afters != 2 {
-		t.Errorf("after() should re-run on restore (daemon-reload), got %d", afters)
-	}
-}
-
-// TestSwapFileRejectsBadDefinition: if the validation step (daemon-reload) fails,
-// swapFile must undo the swap, restore the old file, and return an error — never
-// leave a rejected definition on disk with its backup gone.
-func TestSwapFileRejectsBadDefinition(t *testing.T) {
-	dir := t.TempDir()
-	dst := filepath.Join(dir, "unit.service")
-	if err := os.WriteFile(dst, []byte("GOOD"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	_, err := swapFile(dst, []byte("BAD"), 0o644, func() error { return fmt.Errorf("daemon-reload: invalid unit") })
-	if err == nil {
-		t.Fatal("swapFile should return an error when validation fails")
-	}
-	if b, _ := os.ReadFile(dst); string(b) != "GOOD" {
-		t.Fatalf("the good definition must be restored, got %q", b)
-	}
-	if _, statErr := os.Stat(dst + ".new"); !os.IsNotExist(statErr) {
-		t.Error("the .new temp file should be cleaned up")
-	}
-}
-
-func TestReadPlistUserGroup(t *testing.T) {
-	p := filepath.Join(t.TempDir(), "com.cronova.plist")
-	os.WriteFile(p, []byte("<plist><dict>\n  <key>UserName</key>\n  <string>alice</string>\n  <key>GroupName</key>\n  <string>staff</string>\n</dict></plist>"), 0o644)
-	u, g, err := readPlistUserGroup(p)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if u != "alice" || g != "staff" {
-		t.Fatalf("user=%q group=%q, want alice/staff", u, g)
-	}
-	if _, _, err := readPlistUserGroup(filepath.Join(t.TempDir(), "missing.plist")); err == nil {
-		t.Error("reading a missing plist should error")
-	}
-}
-
-func TestServiceDefinitionManifestDetectsLocalChanges(t *testing.T) {
-	dir := t.TempDir()
-	a := filepath.Join(dir, "cronova.service")
-	b := filepath.Join(dir, "cronova-executor.service")
-	files := []serviceFile{{path: a, data: []byte("scheduler-v1")}, {path: b, data: []byte("executor-v1")}}
-	for _, f := range files {
-		if err := os.WriteFile(f.path, f.data, 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	manifest := filepath.Join(dir, "service-def.sha256")
-	if err := os.WriteFile(manifest, serviceManifest(files), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if ok, err := serviceFilesMatchManifest(files, manifest); err != nil || !ok {
-		t.Fatalf("managed files = %v, %v; want true", ok, err)
-	}
-	if err := os.WriteFile(a, []byte("local override"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if ok, err := serviceFilesMatchManifest(files, manifest); err != nil || ok {
-		t.Fatalf("modified files = %v, %v; want false", ok, err)
 	}
 }
 
@@ -510,8 +331,8 @@ func TestSwapBinary(t *testing.T) {
 		if b, _ := os.ReadFile(dst + ".bak"); string(b) != "OLD" {
 			t.Fatalf("backup = %q, want OLD", b)
 		}
-		if fi, _ := os.Stat(dst); runtime.GOOS != "windows" && fi.Mode().Perm() != 0o755 {
-			t.Errorf("mode = %v, want 0755", fi.Mode().Perm())
+		if fi, err := os.Stat(dst); err != nil || fi.IsDir() {
+			t.Errorf("swapped binary missing: %v", err)
 		}
 		if err := restore(); err != nil {
 			t.Fatal(err)

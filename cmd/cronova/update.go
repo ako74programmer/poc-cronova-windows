@@ -1,10 +1,8 @@
 package main
 
 import (
-	"archive/tar"
 	"archive/zip"
 	"bytes"
-	"compress/gzip"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/hex"
@@ -17,7 +15,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -115,18 +112,6 @@ func cmdUpdate(args []string) error {
 		}
 	}
 
-	// Refresh the service definition (plist/unit) from the release too, so a
-	// format change in a new version actually takes effect — a binary-only swap
-	// would pin the host to its bootstrap-era plist forever. Best-effort: a
-	// failure here warns but does not abort the (already-swapped) binary update.
-	if serviceInstalled() {
-		if r3, err := refreshServiceDef(bins); err != nil {
-			fmt.Fprintf(os.Stderr, "cronova: warning — could not refresh the service definition: %v\n", err)
-		} else if r3 != nil {
-			restores = append(restores, r3)
-		}
-	}
-
 	// Restart the service so the new binary actually runs. On failure, roll the
 	// binaries back and bring the previous version back up — never leave the box
 	// on a half-applied update.
@@ -145,9 +130,6 @@ func cmdUpdate(args []string) error {
 	// Success — drop the .bak backups.
 	commitSwap(binDst)
 	commitSwap(binExecutor)
-	for _, p := range serviceDefPaths() {
-		commitSwap(p)
-	}
 
 	from := version
 	if from == "" || from == "dev" {
@@ -159,17 +141,14 @@ func cmdUpdate(args []string) error {
 	}
 	fmt.Printf("cronova: updated %s -> %s\n", from, to)
 	if !serviceInstalled() {
-		fmt.Println("cronova: binary replaced (no managed service to restart — start with `sudo cronova start` once installed).")
+		fmt.Println("cronova: binary replaced (no managed service to restart — install it with deploy\\install.ps1).")
 	}
 	return nil
 }
 
 // releaseAsset is the platform archive name emitted by the release packagers.
 func releaseAsset() string {
-	if runtime.GOOS == "windows" {
-		return fmt.Sprintf("cronova_%s_%s.zip", runtime.GOOS, runtime.GOARCH)
-	}
-	return fmt.Sprintf("cronova_%s_%s.tar.gz", runtime.GOOS, runtime.GOARCH)
+	return fmt.Sprintf("cronova_windows_%s.zip", runtime.GOARCH)
 }
 
 // releaseBaseURL is the directory holding <asset> and SHA256SUMS.
@@ -296,11 +275,7 @@ func fetchRelease(base, asset, proxy string) (bins map[string][]byte, version st
 	}
 	fmt.Println("cronova: checksum OK")
 
-	if strings.HasSuffix(strings.ToLower(asset), ".zip") {
-		bins, version, err = extractReleaseZipBinaries(archiveData)
-	} else {
-		bins, version, err = extractReleaseBinaries(bytes.NewReader(archiveData))
-	}
+	bins, version, err = extractReleaseZipBinaries(archiveData)
 	if err != nil {
 		return nil, "", err
 	}
@@ -349,61 +324,6 @@ func sumFor(sums, asset string) (string, bool) {
 		}
 	}
 	return "", false
-}
-
-// extractReleaseBinaries reads a cronova release tarball (gzip+tar) and returns
-// the executable payloads keyed by base name plus the VERSION string.
-func extractReleaseBinaries(r io.Reader) (map[string][]byte, string, error) {
-	gz, err := gzip.NewReader(r)
-	if err != nil {
-		return nil, "", fmt.Errorf("gunzip release: %w", err)
-	}
-	defer gz.Close()
-
-	tr := tar.NewReader(gz)
-	out := make(map[string][]byte, 2)
-	version := ""
-	for {
-		h, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, "", fmt.Errorf("read release tar: %w", err)
-		}
-		if h.Typeflag != tar.TypeReg {
-			continue
-		}
-		switch path.Base(h.Name) {
-		case "cronova", "cronova-executor":
-			if h.Size < 0 || h.Size > maxBinary {
-				return nil, "", fmt.Errorf("release file %s is too large: %d bytes", path.Base(h.Name), h.Size)
-			}
-			b, err := io.ReadAll(io.LimitReader(tr, maxBinary))
-			if err != nil {
-				return nil, "", fmt.Errorf("extract %s: %w", path.Base(h.Name), err)
-			}
-			out[path.Base(h.Name)] = b
-		case "com.cronova.plist", "com.cronova.executor.plist", "cronova.service", "cronova-executor.service":
-			if h.Size < 0 || h.Size > 1<<20 {
-				return nil, "", fmt.Errorf("release file %s is too large: %d bytes", path.Base(h.Name), h.Size)
-			}
-			b, err := io.ReadAll(io.LimitReader(tr, 1<<20))
-			if err != nil {
-				return nil, "", fmt.Errorf("extract %s: %w", path.Base(h.Name), err)
-			}
-			out[path.Base(h.Name)] = b
-		case "VERSION":
-			if h.Size < 0 || h.Size > 1<<10 {
-				return nil, "", fmt.Errorf("release VERSION is too large: %d bytes", h.Size)
-			}
-			b, err := io.ReadAll(io.LimitReader(tr, 1<<10))
-			if err == nil {
-				version = strings.TrimSpace(string(b))
-			}
-		}
-	}
-	return out, version, nil
 }
 
 // extractReleaseZipBinaries reads the Windows ZIP release and returns the
@@ -504,232 +424,5 @@ func swapBinary(dst string, data []byte) (restore func() error, err error) {
 	}, nil
 }
 
-// commitSwap drops the backup left by swapBinary/swapFile (best-effort).
+// commitSwap drops the backup left by swapBinary (best-effort).
 func commitSwap(dst string) { _ = os.Remove(dst + ".bak") }
-
-func serviceDefPaths() []string {
-	switch runtime.GOOS {
-	case "darwin":
-		return []string{launchdPlist, launchdExecutorPlist, serviceDefManifestPath()}
-	case "linux":
-		return []string{systemdUnitPath, systemdExecutorUnitPath, serviceDefManifestPath()}
-	}
-	return nil
-}
-
-func serviceDefManifestPath() string {
-	switch runtime.GOOS {
-	case "darwin":
-		return "/usr/local/etc/cronova/service-def.sha256"
-	case "linux":
-		return "/etc/cronova/service-def.sha256"
-	}
-	return ""
-}
-
-type serviceFile struct {
-	path string
-	data []byte
-}
-
-func serviceManifest(files []serviceFile) []byte {
-	var b strings.Builder
-	for _, f := range files {
-		sum := sha256.Sum256(f.data)
-		fmt.Fprintf(&b, "%x  %s\n", sum, f.path)
-	}
-	return []byte(b.String())
-}
-
-func serviceFilesMatchManifest(files []serviceFile, manifestPath string) (bool, error) {
-	b, err := os.ReadFile(manifestPath)
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	want := map[string]string{}
-	for _, line := range strings.Split(string(b), "\n") {
-		fields := strings.Fields(line)
-		if len(fields) == 2 {
-			want[fields[1]] = strings.ToLower(fields[0])
-		}
-	}
-	for _, f := range files {
-		current, err := os.ReadFile(f.path)
-		if err != nil {
-			return false, err
-		}
-		sum := fmt.Sprintf("%x", sha256.Sum256(current))
-		if want[f.path] == "" || want[f.path] != sum {
-			return false, nil
-		}
-	}
-	return true, nil
-}
-
-// refreshServiceDef installs the service definition (launchd plist / systemd
-// unit) shipped in the release over the installed one, so a format change takes
-// effect on update rather than pinning the host to its bootstrap-era definition.
-// Returns a restore func for the rollback chain, or nil when the release ships no
-// definition / there's nothing installed to replace. The macOS plist is
-// re-templated with the CURRENT service user so the daemon keeps its account.
-func refreshServiceDef(bins map[string][]byte) (func() error, error) {
-	var files []serviceFile
-	var after func() error
-	switch runtime.GOOS {
-	case "linux":
-		def, ok := bins["cronova.service"]
-		if !ok {
-			return nil, nil
-		}
-		files = append(files, serviceFile{systemdUnitPath, def})
-		if execDef, ok := bins["cronova-executor.service"]; ok {
-			if _, err := os.Stat(systemdExecutorUnitPath); err == nil {
-				files = append(files, serviceFile{systemdExecutorUnitPath, execDef})
-			}
-		}
-		after = func() error { return run("systemctl", "daemon-reload") }
-	case "darwin":
-		def, ok := bins["com.cronova.plist"]
-		if !ok {
-			return nil, nil
-		}
-		user, group, err := readPlistUserGroup(launchdPlist)
-		if err != nil {
-			return nil, err
-		}
-		rendered := []byte(strings.NewReplacer("__USER__", user, "__GROUP__", group).Replace(string(def)))
-		files = append(files, serviceFile{launchdPlist, rendered})
-		if execDef, ok := bins["com.cronova.executor.plist"]; ok {
-			if _, err := os.Stat(launchdExecutorPlist); err == nil {
-				execRendered := []byte(strings.NewReplacer("__USER__", user, "__GROUP__", group).Replace(string(execDef)))
-				files = append(files, serviceFile{launchdExecutorPlist, execRendered})
-			}
-		}
-	default:
-		return nil, nil
-	}
-	manifestPath := serviceDefManifestPath()
-	managed, err := serviceFilesMatchManifest(files, manifestPath)
-	if err != nil {
-		return nil, err
-	}
-	if !managed {
-		var candidates []string
-		for _, f := range files {
-			candidate := f.path + ".dist"
-			if err := os.WriteFile(candidate, f.data, 0o644); err != nil {
-				return nil, err
-			}
-			candidates = append(candidates, candidate)
-		}
-		return nil, fmt.Errorf("installed service definition is locally modified or has no managed checksum; preserved it and wrote %s", strings.Join(candidates, ", "))
-	}
-	files = append(files, serviceFile{path: manifestPath, data: serviceManifest(files)})
-
-	var restores []func() error
-	restoreAll := func() error {
-		var first error
-		for i := len(restores) - 1; i >= 0; i-- {
-			if err := restores[i](); err != nil && first == nil {
-				first = err
-			}
-		}
-		if after != nil {
-			_ = after()
-		}
-		return first
-	}
-	for _, f := range files {
-		restore, err := swapFile(f.path, f.data, 0o644, nil)
-		if err != nil {
-			_ = restoreAll()
-			return nil, err
-		}
-		restores = append(restores, restore)
-	}
-	if after != nil {
-		if err := after(); err != nil {
-			_ = restoreAll()
-			return nil, fmt.Errorf("service definition rejected on reload: %w", err)
-		}
-	}
-	return restoreAll, nil
-}
-
-// swapFile atomically replaces dst with data (backing dst up to dst.bak) and runs
-// after() on success. The returned restore puts the backup back and re-runs
-// after(). Mirrors swapBinary, for a config file.
-func swapFile(dst string, data []byte, mode os.FileMode, after func() error) (func() error, error) {
-	tmp := dst + ".new"
-	if err := os.WriteFile(tmp, data, mode); err != nil {
-		return nil, err
-	}
-	_ = os.Chmod(tmp, mode)
-	bak := dst + ".bak"
-	hadOld := false
-	if _, err := os.Stat(dst); err == nil {
-		if err := os.Rename(dst, bak); err != nil {
-			os.Remove(tmp)
-			return nil, err
-		}
-		hadOld = true
-	}
-	if err := os.Rename(tmp, dst); err != nil {
-		if hadOld {
-			_ = os.Rename(bak, dst)
-		}
-		os.Remove(tmp)
-		return nil, err
-	}
-	// after() is the validation step (systemd daemon-reload). systemctl restart
-	// uses the IN-MEMORY unit, so a syntactically bad NEW unit would restart fine
-	// yet sit broken on disk until the next boot/reload — with the backup already
-	// committed away. So if after() fails, the new definition is bad: undo the
-	// swap, restore + reload the known-good one, and report, so the caller keeps it.
-	if after != nil {
-		if err := after(); err != nil {
-			if hadOld {
-				_ = os.Rename(bak, dst)
-			} else {
-				_ = os.Remove(dst)
-			}
-			_ = after() // reload the restored good definition
-			return nil, fmt.Errorf("service definition rejected on reload: %w", err)
-		}
-	}
-	return func() error {
-		var err error
-		if hadOld {
-			err = os.Rename(bak, dst)
-		} else {
-			err = os.Remove(dst)
-		}
-		if after != nil {
-			_ = after()
-		}
-		return err
-	}, nil
-}
-
-var (
-	plistUserRE  = regexp.MustCompile(`(?s)<key>UserName</key>\s*<string>([^<]*)</string>`)
-	plistGroupRE = regexp.MustCompile(`(?s)<key>GroupName</key>\s*<string>([^<]*)</string>`)
-)
-
-// readPlistUserGroup extracts UserName/GroupName from the installed plist so the
-// refreshed plist keeps the daemon running as the same (non-root) account.
-func readPlistUserGroup(path string) (user, group string, err error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return "", "", err
-	}
-	um := plistUserRE.FindSubmatch(b)
-	gm := plistGroupRE.FindSubmatch(b)
-	if um == nil || gm == nil {
-		return "", "", fmt.Errorf("could not read UserName/GroupName from %s", path)
-	}
-	return string(um[1]), string(gm[1]), nil
-}

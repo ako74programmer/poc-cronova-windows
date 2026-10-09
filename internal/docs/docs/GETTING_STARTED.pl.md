@@ -64,7 +64,7 @@ Domyślnie `serve` używa względnych ścieżek katalogu roboczego i executoru w
 
 Ustawienia rozwiązywane są w kolejności ważności, od najwyższej: **jawna flaga → zmienna `CRONOVA_*` → plik konfiguracyjny `cronova.yaml` → wbudowana wartość domyślna**. Plik konfiguracyjny jest opcjonalny; `serve` zgłasza błąd brakującej konfiguracji tylko wtedy, gdy jawnie podasz `-config`.
 
-> Domyślny executor w procesie uruchamia zadania wewnątrz ręcznego procesu `serve`, więc restart kończy działające zadania. Zarządzane instalacje domyślnie używają rozdzielonego executor gRPC. Dla ręcznej pary użyj absolutnego gniazda `unix:///...` w prywatnym (`0700`) katalogu i jawnej współdzielonej ścieżki workspace. Cele executor TCP są odrzucane. Zobacz [Wdrożenie](DEPLOY.md).
+> Domyślny executor w procesie uruchamia zadania wewnątrz ręcznego procesu `serve`, więc restart kończy działające zadania. Zarządzane instalacje domyślnie używają rozdzielonego executor gRPC. Dla ręcznej pary uruchom `cronova-executor -sock 127.0.0.1:PORT` i przekaż `cronova serve -executor tcp://127.0.0.1:PORT` z jawną współdzieloną ścieżką workspace. Cel nie-loopback wymaga wzajemnego TLS (mTLS). Zobacz [Wdrożenie](DEPLOY.md).
 
 Steruj tym samym serwerem z innego terminala za pomocą CLI:
 
