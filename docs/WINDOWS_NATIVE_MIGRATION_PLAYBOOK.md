@@ -1,107 +1,54 @@
 # Windows-native SDLC migration playbook
 
-## Cel
+## Cel i status
 
-Przepisywać istniejące działające skrypty `.sh` na natywne skrypty `.ps1` dla Windows, zachowując:
+Migracja SDLC do natywnego PowerShell jest **zakończona**: w repozytorium nie ma już skryptów Bash, a wszystkie DAG-i w `dags/` używają wyłącznie `type: powershell` i wywołują skrypty `.ps1`. Playbook dokumentuje przyjęte zasady i obowiązuje przy dodawaniu lub zmianie kolejnych klocków.
 
-- ten sam DAG i ten sam graf zależności;
-- te same identyfikatory tasków;
-- te same timeouty i semantykę retry;
-- te same parametry wejściowe i wartości domyślne;
-- te same artefakty, ścieżki robocze i kody wyjścia;
-- modułowość: jeden skrypt `.ps1` odpowiada jednemu skryptowi `.sh`.
+Zasady projektowe:
 
-Nie tworzyć monolitycznego dispatchera typu `Invoke-Sdlc.ps1` jako zamiennika wielu niezależnych klocków.
+- jeden task DAG-a = jedno wywołanie modułowego skryptu `.ps1` w `internal/scripts/`;
+- stabilne identyfikatory tasków, graf zależności, timeouty i semantyka retry;
+- jawne parametry wejściowe i wartości domyślne;
+- przewidywalne artefakty, ścieżki robocze i kody wyjścia.
 
-## Kolejność następnych DAG-ów
+Nie tworzyć monolitycznego dispatchera jako zamiennika niezależnych klocków. [`scripts/sdlc/Invoke-Sdlc.ps1`](../scripts/sdlc/Invoke-Sdlc.ps1) pozostaje w repozytorium, ale żaden DAG z `dags/` go nie wywołuje.
 
-Pierwszy DAG to `sdlc_springboot`. Następne migracje wykonujemy krok po kroku w tej kolejności:
+## Aktualny stan DAG-ów
 
-1. `sdlc_maven_luhn`
-2. `sdlc_springboot_rest`
-3. `sdlc_angular`
-4. `sdlc_fullstack`
+| DAG | Skrypty | Charakterystyka |
+|---|---|---|
+| `sdlc_springboot_template_crud` | `copy-template-to-workspace.ps1`, `maven-compile.ps1`, `ai-java-mvn-generate-feature.ps1`, `java-maven-compile-fix-loop.ps1`, `maven-test.ps1` | Template, compile, AI CRUD, review loop, tests |
+| `sdlc_springboot_startio` | `fetch-springboot-project.ps1` + jak wyżej | Wariant Spring Initializr |
+| `sdlc_maven_luhn` | `generate-maven-archetype.ps1` + jak wyżej | Maven archetype, compile, AI feature, review loop, tests |
+| `sdlc_springboot_rest` | `springboot-validate-config.ps1`, `springboot-validate-openapi.ps1`, `springboot-*-from-config.ps1` | Config, OpenAPI, scaffold, compile, unit tests, package |
+| `sdlc_springboot_variant` | `resolve-springboot-variant-config.ps1` + skrypty `sdlc_springboot_rest` | Wariant wybierany przez `CRONOVA_PARAM_VARIANT` |
+| `sdlc_angular` | `angular-*.ps1` | Validate, scaffold, install, lint, unit tests, build, smoke |
+| `sdlc_fullstack` | `fullstack-*.ps1` | Validate, Playwright install, stack E2E, logs, manifest |
 
-W repozytorium istnieje również `sdlc_springboot_startio.yaml`. Nie należy mieszać go do bieżącej kolejności bez osobnej decyzji; technicznie jest podobny do `sdlc_springboot` i może być wykonany jako dodatkowy DAG po ustabilizowaniu pierwszej grupy.
+Wspólna logika znajduje się w helperach:
 
-### Aktualny stan plików DAG
-
-| Kolejność | DAG | Stan | Charakterystyka |
-|---:|---|---|---|
-| 0 | `sdlc_springboot` | w trakcie walidacji Windows | 5 modularnych tasków Maven/AI/test |
-| 1 | `sdlc_maven_luhn` | Bash | Maven archetype, compile, AI feature, review loop, tests |
-| 2 | `sdlc_springboot_rest` | Bash | config, OpenAPI, scaffold, compile, unit tests, package |
-| 3 | `sdlc_angular` | Bash | validate, scaffold, install, lint, unit tests, build, smoke |
-| 4 | `sdlc_fullstack` | PowerShell, do przebudowy | obecnie używa monolitu `Invoke-Sdlc.ps1`; nie traktować jako wzorca |
-| dodatkowy | `sdlc_springboot_startio` | Bash | wariant Spring Initializr, podobny przepływ AI |
-
-## Podsumowanie pracy nad `sdlc_springboot`
-
-### Zachowany DAG
-
-Graf pozostał taki sam:
-
-```text
-scaffold
-  -> compile_skeleton
-  -> ai_add_crud
-  -> compile_loop
-  -> tests
-```
-
-Zachowane zostały identyfikatory tasków, zależności i timeouty. Zmieniono typ tasków z `shell` na `powershell`, a każde wywołanie Bash zastąpiono osobnym plikiem `.ps1`.
-
-### Utworzone moduły
-
-| Bash | PowerShell |
-|---|---|
-| `internal/scripts/copy-template-to-workspace` | `internal/scripts/copy-template-to-workspace.ps1` |
-| `internal/scripts/compile-project` | `internal/scripts/compile-project.ps1` |
-| `internal/scripts/ai-generate-crud` | `internal/scripts/ai-generate-crud.ps1` |
-| `internal/scripts/ai-review-fix-loop` | `internal/scripts/ai-review-fix-loop.ps1` |
-| `internal/scripts/run-tests` | `internal/scripts/run-tests.ps1` |
-
-Wspólna logika została umieszczona w helperach:
-
-- `internal/scripts/common/toolchain.ps1`
-- `internal/scripts/common/ai-provider.ps1`
+- [`internal/scripts/common/toolchain.ps1`](../internal/scripts/common/toolchain.ps1)
+- [`internal/scripts/common/ai-provider.ps1`](../internal/scripts/common/ai-provider.ps1)
+- [`scripts/sdlc/common/AngularConfig.ps1`](../scripts/sdlc/common/AngularConfig.ps1), [`SpringbootConfig.ps1`](../scripts/sdlc/common/SpringbootConfig.ps1), [`FullstackConfig.ps1`](../scripts/sdlc/common/FullstackConfig.ps1)
 
 Helpery nie zastępują modułów tasków; wspierają ich wspólne operacje.
 
-### Faktyczny postęp potwierdzony raportem Windows
+## Zasady obowiązkowe
 
-Raport agenta potwierdził:
+### 1. Zaczynać od inwentaryzacji istniejącego kontraktu
 
-```text
-scaffold         success
-compile_skeleton success
-ai_add_crud      success
-```
+Przed zmianą lub dodaniem `.ps1`:
 
-`ai_add_crud` przestał zgłaszać brak providera po poprawie sposobu przechwytywania wyniku procesu Python.
-
-Następny błąd wystąpił w `compile_loop`, w wywołaniu Maven przez potok PowerShell. Ten potok został zastąpiony `Start-Process` z osobnymi plikami stdout/stderr i obsługą kodu wyjścia.
-
-Na podstawie dostępnego raportu nie wolno twierdzić, że cały DAG zakończył się sukcesem, dopóki agent Windows nie prześle wyniku `tests=success`.
-
-## Zasady obowiązkowe dla kolejnych migracji
-
-### 1. Zaczynać od referencji `.sh`
-
-Przed napisaniem `.ps1`:
-
-1. przeczytać cały skrypt `.sh`;
+1. przeczytać cały istniejący skrypt i DAG, który go wywołuje;
 2. przeczytać helpery, których używa;
 3. wypisać parametry, wartości domyślne, ścieżki, komendy i kody wyjścia;
-4. utworzyć tabelę Bash → PowerShell;
-5. dopiero wtedy zmienić DAG.
+4. dopiero wtedy zmienić DAG.
 
-Nie wolno upraszczać zachowania tylko dlatego, że PowerShell ma inną składnię.
+Nie wolno upraszczać zachowania bez osobnej decyzji.
 
-### 2. Jeden skrypt `.sh` = jeden skrypt `.ps1`
+### 2. Jeden task = jeden skrypt `.ps1`
 
-Nie scalać kilku tasków w jeden dispatcher. Każdy moduł musi być możliwy do uruchomienia osobno z tym samym kontraktem parametrów.
-
+Nie scalać kilku tasków w jeden dispatcher. Każdy moduł musi być możliwy do uruchomienia osobno z tym samym kontraktem parametrów. Dozwolone są skrypty kompozycyjne, które jedynie wywołują istniejące moduły (np. `fullstack-run-stack-e2e.ps1`).
 ### 3. Nie używać potoków PowerShell do natywnych programów Windows
 
 Dla `java.exe`, `mvn.cmd`, `python.exe` i podobnych programów nie stosować wzorców typu:
@@ -119,8 +66,8 @@ Cannot run a document in the middle of a pipeline
 Stosować:
 
 ```powershell
-Start-Process -FilePath $program -ArgumentList ... -Wait -PassThru \
-  -RedirectStandardOutput $stdoutFile \
+Start-Process -FilePath $program -ArgumentList ... -Wait -PassThru `
+  -RedirectStandardOutput $stdoutFile `
   -RedirectStandardError $stderrFile
 ```
 
@@ -195,42 +142,36 @@ Agent nie wykonuje `switch`, `reset`, nie wybiera pojedynczego commita, nie popr
 
 Agent Windows jest tylko wykonawcą testu. Nie prowadzi diagnozy i nie szuka przyczyny po stronie kodu. Ma uruchomić wskazany DAG, zebrać statusy oraz pełny log pierwszego failed taska i przekazać raport. Diagnoza, implementacja poprawki i testy sandboxowe należą do procesu repozytorium.
 
-## Procedura dla każdego następnego DAG-a
+## Procedura dla nowego lub zmienianego DAG-a
 
 ### Faza A — inwentaryzacja
 
 - odczytać DAG;
-- odczytać wszystkie wskazane `.sh`;
+- odczytać wszystkie wywoływane `.ps1`;
 - odczytać helpery;
-- sporządzić mapę task → skrypt → parametry;
-- nie zmieniać jeszcze DAG-a.
+- sporządzić mapę task → skrypt → parametry.
 
 ### Faza B — implementacja modułów
 
-- napisać osobny `.ps1` dla każdego `.sh`;
-- zachować parametry i wartości domyślne;
+- napisać osobny `.ps1` dla każdej operacji;
+- jawnie zdefiniować parametry i wartości domyślne;
 - użyć wspólnych helperów tylko dla rzeczywiście wspólnych operacji;
-- nie tworzyć monolitu;
-- nie zmieniać logiki biznesowej.
+- nie tworzyć monolitu.
 
 ### Faza C — testy sandboxowe
 
 - parsowanie wszystkich `.ps1`;
 - test każdego modułu osobno;
-- porównanie argumentów i artefaktów z `.sh`;
 - testy błędów i kodów wyjścia;
 - testy Go i kompilacja Windows.
 
 ### Faza D — zmiana DAG-a
 
-Zmienić wyłącznie:
-
-- `type: powershell` → `type: powershell`;
-- `bash path/to/script.sh` → odpowiedni `powershell path/to/script.ps1`;
-- separatory ścieżek i składnię argumentów.
+- `type: powershell`;
+- `command` wywołuje skrypt operatorem `&`, np. `& .\internal\scripts\maven-compile.ps1 -w workspaces/springboot -p app`;
+- ścieżki względne wobec repozytorium.
 
 Nie zmieniać grafu, nazw tasków, timeoutów ani zależności bez osobnej decyzji.
-
 ### Faza E — test Windows
 
 Agent wykonuje DAG od początku. Raport musi zawierać:

@@ -118,9 +118,8 @@ def build():
     for rel in DOC_SOURCES:
         path = REPO_ROOT / rel
         if not path.exists():
-            print(f"skip missing doc: {rel}")
-            continue
-        text = path.read_text(encoding="utf-8")
+            raise SystemExit(f"missing doc source: {rel} (update the source list)")
+        text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
         for c in chunk_markdown(path, text):
             chunk_id += 1
             chunks.append({
@@ -135,9 +134,8 @@ def build():
     for rel in DAG_SOURCES:
         path = REPO_ROOT / rel
         if not path.exists():
-            print(f"skip missing dag: {rel}")
-            continue
-        text = path.read_text(encoding="utf-8")
+            raise SystemExit(f"missing dag source: {rel} (update the source list)")
+        text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
         for c in chunk_yaml(path, text):
             chunk_id += 1
             chunks.append({
@@ -152,9 +150,8 @@ def build():
     for rel in SCRIPT_SOURCES:
         path = REPO_ROOT / rel
         if not path.exists():
-            print(f"skip missing script: {rel}")
-            continue
-        text = path.read_text(encoding="utf-8")
+            raise SystemExit(f"missing script source: {rel} (update the source list)")
+        text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
         if rel.endswith("README.md"):
             text = re.sub(r"\((?:[a-zA-Z]:)?/[^)]+\)", "", text)
             text = re.sub(r"\((?:[a-zA-Z]:)?\\[^)]+\)", "", text)
@@ -169,11 +166,43 @@ def build():
                 "topics": infer_topics(c["heading"] + " " + c["body"]),
             })
 
-    OUT_FILE.write_text(
-        json.dumps({"chunks": chunks}, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    problems = validate(chunks)
+    if problems:
+        raise SystemExit("knowledge base rejected:\n  " + "\n  ".join(problems))
+    # newline="\n": identical bytes on every OS/checkout, so CI can diff it.
+    with open(OUT_FILE, "w", encoding="utf-8", newline="\n") as f:
+        f.write(json.dumps({"chunks": chunks}, ensure_ascii=False, indent=2))
     print(f"wrote {OUT_FILE} with {len(chunks)} chunks")
+
+
+# Content that must never reach the AI wiki: it describes runtimes or paths the
+# Windows-only product does not support, or leaks a developer machine.
+FORBIDDEN = [
+    (re.compile(r"#!/usr/bin/env (ba)?sh"), "Unix shell shebang"),
+    (re.compile(r"(?m)^\s*type:\s*shell\s*$"), "task type: shell (rejected by the parser)"),
+    (re.compile(r"\bsh -c\b"), "sh -c runtime"),
+    (re.compile(r"\bbash\s+(/|\S+\.sh\b)"), "bash script invocation"),
+    (re.compile(r"\S+\.sh\b"), ".sh script reference"),
+    (re.compile(r"curl[^\n|]*\|\s*(sudo\s+)?(ba)?sh"), "curl | sh installer"),
+    (re.compile(r"\b(systemctl|launchctl)\b"), "systemd/launchd service manager"),
+    (re.compile(r"unix:///"), "Unix socket executor target"),
+    (re.compile(r"(?i)\b[a-z]:[/\\]users[/\\][a-z0-9._-]+"), "developer-specific Windows user path"),
+    (re.compile(r"(?i)/c/users/[a-z0-9._-]+/"), "developer-specific Git Bash path"),
+    (re.compile(r"(?i)\bgit bash\b"), "Git Bash runtime"),
+]
+
+
+def validate(chunks):
+    problems = []
+    for c in chunks:
+        src = REPO_ROOT / c["source"]
+        if not src.is_file():
+            problems.append(f'{c["id"]}: source {c["source"]} does not exist')
+        for rx, why in FORBIDDEN:
+            m = rx.search(c["text"])
+            if m:
+                problems.append(f'{c["source"]} [{c["section"]}]: {why}: {m.group(0)!r}')
+    return problems
 
 
 def infer_topics(text: str) -> list[str]:

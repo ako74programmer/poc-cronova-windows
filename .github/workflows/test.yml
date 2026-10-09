@@ -18,6 +18,13 @@ jobs:
         run: if ((gofmt -l .).Length -ne 0) { gofmt -l .; exit 1 }
       - name: verify modules
         run: go mod verify
+      - name: AI wiki knowledge base is fresh and clean
+        shell: pwsh
+        run: |
+          python internal/ai-wiki/build_knowledge_base.py
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          git diff --exit-code -- internal/aiwiki/knowledge-base.json
+          if ($LASTEXITCODE -ne 0) { Write-Error 'knowledge-base.json is stale: run scripts/build-ai-wiki.ps1 and commit'; exit 1 }
       - name: go vet
         run: go vet ./...
       - name: Go tests

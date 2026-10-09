@@ -211,9 +211,9 @@ Examples:
 
 ```yaml
 command: "python etl.py --day {{ logical_date - 1d | %Y%m%d }}"     # yesterday as 20260807
-command: "report.sh --from {{ logical_date.month_start }} --to {{ logical_date.month_end }}"
-command: "cleanup.sh --before {{ logical_date.month_start - 1d }}"  # last day of previous month
-command: "sync.sh --since {{ logical_datetime - 6h }}"
+command: "& .\\report.ps1 -From {{ logical_date.month_start }} -To {{ logical_date.month_end }}"
+command: "& .\\cleanup.ps1 -Before {{ logical_date.month_start - 1d }}"  # last day of previous month
+command: "& .\\sync.ps1 -Since {{ logical_datetime - 6h }}"
 ```
 
 An expression that does not parse (unknown unit, bad `%` token, stray text) is

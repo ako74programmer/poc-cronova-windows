@@ -2,136 +2,106 @@
 
 ## Zakres i źródła
 
-Ten dokument opisuje definicję [`dags/sdlc_springboot_startio.yaml`](../dags/sdlc_springboot_startio.yaml) oraz skrypty, które są przez nią wywoływane. Jest to analiza kodu na branchu `feature/windows-cmd-runtime-sdlc-2026-09-26`; **nie jest to raport wykonania DAG-a na Windows**.
+Ten dokument opisuje definicję [`dags/sdlc_springboot_startio.yaml`](../dags/sdlc_springboot_startio.yaml) oraz skrypty PowerShell, które są przez nią wywoływane. Jest to analiza kodu, **nie raport wykonania DAG-a**.
 
 Instrukcja runtime testu po migracji PowerShell-native: [`WINDOWS_SPRINGBOOT_STARTIO_NATIVE_TEST_2026-10-02.md`](WINDOWS_SPRINGBOOT_STARTIO_NATIVE_TEST_2026-10-02.md).
 
-Ten DAG korzysta z biblioteki skryptów `internal/scripts/`. Nie korzysta z pliku `configs/sdlc-springboot.yaml` ani z nowszych wrapperów w `scripts/sdlc/springboot/` (te są używane przez `sdlc_springboot_rest`). Nazwa `startio` odnosi się tu do Spring Initializr (`start.spring.io`), z którego pobierany jest szkielet projektu.
+Ten DAG korzysta z biblioteki skryptów `internal/scripts/`. Nie korzysta z `configs/sdlc-springboot.yaml` ani ze skryptów `springboot-*-from-config.ps1` (te są używane przez `sdlc_springboot_rest`). Nazwa `startio` odnosi się do Spring Initializr (`start.spring.io`), z którego pobierany jest szkielet projektu.
 
 ## Cel i ustawienia wykonania
 
-DAG tworzy nowy projekt Spring Boot/Maven, dodaje do niego prosty REST CRUD wygenerowany przez AI, próbuje automatycznie naprawić błędy kompilacji, a na końcu uruchamia testy Maven.
+DAG pobiera szkielet Spring Boot, kompiluje go, dodaje przez AI prosty REST CRUD, uruchamia pętlę `test-compile` → naprawa AI i na końcu testy Maven.
 
-| Ustawienie | Wartość | Znaczenie |
-|---|---|---|
-| `dag_id` | `sdlc_springboot_startio` | Identyfikator w Cronova |
-| `schedule` | `0 2 * * *` | Harmonogram cron: codziennie o 02:00 UTC; DAG nie ustawia `timezone`, a domyślnie Cronova używa UTC |
-| `start_date` | `2026-09-01` | Początkowa data harmonogramu |
-| `catchup` | `false` | Scheduler nie powinien nadrabiać wszystkich pominiętych terminów |
-| `max_active_runs` | `1` | Maksymalnie jedno równoległe uruchomienie tego DAG-a |
-| `default_retries` | `0` | Cronova nie ponawia automatycznie nieudanego taska |
+| Pole | Wartość |
+|---|---|
+| `dag_id` | `sdlc_springboot_startio` |
+| `schedule` | `0 2 * * *` |
+| `start_date` | `2026-09-01` |
+| `catchup` | `false` |
+| `max_active_runs` | `1` |
+| `default_retries` | nie ustawione |
 
-W DAG-u jest pięć tasków w łańcuchu zależności. Błąd taska blokuje kolejne zależne kroki.
+Wszystkie taski mają `type: powershell` i nie ustawiają timeoutów.
 
 ```mermaid
 flowchart LR
-  A[scaffold<br/>Spring Initializr] --> B[compile_skeleton<br/>Maven compile]
-  B --> C[ai_add_crud<br/>AI generuje CRUD]
-  C --> D[compile_loop<br/>kompilacja i AI fix loop]
-  D --> E[tests<br/>Maven test]
+  A[fetch_springboot_project] --> B[maven_compile]
+  B --> C[ai_generate_java_maven_feature]
+  C --> D[java_maven_compile_fix_loop]
+  D --> E[maven_test]
 ```
-
-Timeouty tasków wynoszą odpowiednio 300, 600, 300, 900 i 300 sekund. Są to limity poszczególnych tasków, nie gwarantowany łączny czas wykonania.
 
 ## Refaktoring Windows-native
 
-Migracja na branchu `feature/windows-cmd-runtime-sdlc-2026-09-26` zachowuje pięć tasków, identyfikatory, zależności, timeouty, argumenty i wartości domyślne z DAG-a Bash. Każdy task uruchamia osobny moduł PowerShell:
-
-| Task | Referencyjny Bash | Moduł PowerShell | Parametry DAG-a |
-|---|---|---|---|
-| `scaffold` | `internal/scripts/fetch-springboot-project` | `internal/scripts/fetch-springboot-project.ps1` | Bash `-p jar` → PowerShell `-Packaging jar`; Bash `-P app` → `-Project app`; Bash `-C` → `-Clean`; pozostałe wartości bez zmian |
-| `compile_skeleton` | `internal/scripts/compile-project` | `internal/scripts/compile-project.ps1` | `-w workspaces/springboot-startio -p app` |
-| `ai_add_crud` | `internal/scripts/ai-generate-crud` | `internal/scripts/ai-generate-crud.ps1` | `-w workspaces/springboot-startio -p app -k com.example.demo -r default -y python` |
-| `compile_loop` | `internal/scripts/ai-review-fix-loop` | `internal/scripts/ai-review-fix-loop.ps1` | `-w workspaces/springboot-startio -p app -k com.example.demo -r default -y python` |
-| `tests` | `internal/scripts/run-tests` | `internal/scripts/run-tests.ps1` | `-w workspaces/springboot-startio -p app` |
-
-Zmiana DAG-a ogranicza się do `type: shell` → `type: powershell` (`type: shell` jest obecnie odrzucany przez parser) i wywołania odpowiadającego modułu `.ps1`. Dla trzech opcji scaffoldingu Bash rozróżnia wielkość liter (`-p`/`-P` i `-c`/`-C`), czego aliasy parametrów PowerShell nie mogą zrobić; dlatego mapują się na jednoznaczne parametry nazwane przy zachowaniu wartości i semantyki. Dla Maven, Python i pobierania PowerShell używa `Start-Process`, osobnych plików stdout/stderr oraz jawnego `ExitCode`. `curl.exe`/`wget.exe` są szukane zarówno przez PowerShell `PATH`, jak i odziedziczone `CRONOVA_WINDOWS_PATH`. Windows runner zachowuje zmienne środowiskowe bez względu na wielkość liter, w tym `PATH`, `PATHEXT`, `SystemRoot` i `ComSpec`; `PATHEXT` jest potrzebne zagnieżdżonemu `cmd.exe`, które Surefire wykorzystuje do uruchomienia `java` bez jawnego rozszerzenia `.exe`. Prompty CRUD/review zachowują wymagania Bash, w tym pojedyncze escapowanie nowych linii; helpery Python walidują POM XML przed zapisem.
-
-Walidacja sandboxowa (parser PowerShell, helper POM, składnia Python, kontrakt DAG-a i dostępne testy) nie zastępuje testu Windows. Runtime Windows został potwierdzony 2026-10-02: run `sdlc_springboot_startio__manual_1790952167446808200` na commicie `c041ee0a1e1cac91ce6b07ffb848d4658d9f0d9e` zakończył się sukcesem, wszystkie pięć tasków miało status `success`, a runtime wyniósł 46 s. Bash i WSL nie były użyte.
+Każdy task wywołuje bezpośrednio jeden skrypt `.ps1` operatorem `&`. Ścieżki narzędzi pochodzą z `CRONOVA_JAVA_HOME`/`JAVA_HOME`, `CRONOVA_MAVEN_HOME`/`MAVEN_HOME`, `CRONOVA_PYTHON` oraz `PATH` (patrz [`internal/scripts/common/toolchain.ps1`](../internal/scripts/common/toolchain.ps1)).
 
 ## Przepływ krok po kroku
 
-### 1. `scaffold` — pobranie szkieletu
-
-**Wywołanie:**
+### 1. `fetch_springboot_project` — pobranie szkieletu
 
 ```powershell
 & .\internal\scripts\fetch-springboot-project.ps1 -t maven-project -l java -b 4.0.8 -g com.example -a demo -n com.example.demo -Packaging jar -c properties -j 21 -d web -w workspaces/springboot-startio -Project app -Clean
 ```
 
-**Co ma robić skrypt:** `internal/scripts/fetch-springboot-project` składa URL do `https://start.spring.io/starter.zip`, pobiera ZIP przez `curl` (lub `wget` jako fallback), a następnie rozpakowuje projekt do `workspaces/springboot-startio/app`. `-C` usuwa wcześniej istniejący katalog docelowy przed rozpakowaniem. Ustawienia generatora: Maven, Java, Spring Boot `4.0.8`, Java `21`, `jar`, konfiguracja `properties`, zależność `web`, grupa `com.example`, artefakt `demo`, pakiet `com.example.demo`.
+Skrypt [`fetch-springboot-project.ps1`](../internal/scripts/fetch-springboot-project.ps1):
 
-**Poprawka wprowadzona w tym branchu:** skrypt używa teraz `find_python` z `internal/scripts/common_toolchain.sh`, obsługuje `-y PYTHON`, preferuje jawne `CRONOVA_PYTHON` nad ogólnym wyborem `python` przekazanym przez DAG i normalizował ścieżkę Windows dla dawnego wariantu Bash (obecnie zastąpionego modułem `fetch-springboot-project.ps1`). Przy braku interpretera albo błędnej jawnej ścieżce resolver kończy się czytelnym błędem przed pobieraniem. Zachowanie na Windows jest **do potwierdzenia przez test runtime**.
+1. buduje URL `https://start.spring.io/starter.zip?type=...&language=...&bootVersion=...&groupId=...&artifactId=...&name=<artifact>&packageName=<-n>&packaging=...&configFormat=...&javaVersion=...&dependencies=...` (wartości kodowane URL; `name` jest brane z `-a`);
+2. pobiera ZIP do `.tmp\springboot-project.zip` przez `curl.exe` (lub `wget.exe`), szukając go na `PATH` lub w `CRONOVA_WINDOWS_PATH`;
+3. przy `-Clean` usuwa `workspaces/springboot-startio/app`;
+4. rozpakowuje archiwum przez `Expand-Archive`.
 
-### 2. `compile_skeleton` — kompilacja czystego projektu
+Błąd pobierania kończy skrypt kodem wyjścia downloadera.
 
-**Wywołanie:** `internal/scripts/compile-project -w workspaces/springboot-startio -p app`.
+### 2. `maven_compile` — kompilacja czystego projektu
 
-Skrypt sprawdza istnienie katalogu projektu, tworzy współdzielone repozytorium Maven `.m2/repository`, przechodzi do projektu i ładuje `internal/scripts/common_toolchain.sh`. Helper scala środowiskowe ścieżki Windows (`CRONOVA_WINDOWS_PATH`), ustawia `JAVA_HOME`/`MAVEN_HOME` z `CRONOVA_*` lub standardowych zmiennych i dodaje katalogi `bin` do `PATH`. Następnie wykonywane jest `mvn -B -Dmaven.repo.local=<repo> -DskipTests compile` — kompilacja bez uruchamiania testów.
+```powershell
+& .\internal\scripts\maven-compile.ps1 -w workspaces/springboot-startio -p app
+```
 
-Skrypt zapisuje diagnostykę Javy/Mavena do `toolchain-runtime.txt` w katalogu wygenerowanego projektu. Używa polecenia `mvn`, a nie Maven Wrappera (`mvnw`), więc Maven musi być dostępny jako narzędzie w systemie.
+Wykonuje `mvn -B -Dmaven.repo.local=<repo>\.m2\repository -DskipTests compile` (Maven z `CRONOVA_MAVEN_HOME`/`MAVEN_HOME`, nie Maven Wrapper) i zapisuje `app\toolchain-runtime.txt`.
 
-### 3. `ai_add_crud` — dodanie CRUD przez AI
+### 3. `ai_generate_java_maven_feature` — dodanie CRUD przez AI
 
-**Wywołanie:** `internal/scripts/ai-generate-crud -w workspaces/springboot-startio -p app -k com.example.demo -r default -y python`.
+```powershell
+& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/springboot_crud.txt -w workspaces/springboot-startio -p app -k com.example.demo -r default -y python
+```
 
-Skrypt `internal/scripts/ai-generate-crud`:
+[`ai-java-mvn-generate-feature.ps1`](../internal/scripts/ai-java-mvn-generate-feature.ps1) łączy prompt [`prompts/springboot_crud.txt`](../prompts/springboot_crud.txt) z regułami generatora i `pom.xml`, a następnie uruchamia [`ai_generate_feature.py`](../internal/scripts/ai_generate_feature.py), który wywołuje providera AI i zapisuje zwrócone pliki (opcjonalnie nowy `pom.xml`). Provider: `-r default` → `Resolve-AiProvider` z [`common/ai-provider.ps1`](../internal/scripts/common/ai-provider.ps1) (zmienne `CRONOVA_AI_BASE_URL`/`CRONOVA_AI_MODEL`/`CRONOVA_AI_TOKEN` albo domyślny rekord `ai_providers` w `CRONOVA_DB`, domyślnie `data\cronova.db`).
 
-1. odczytuje `pom.xml` i klasę `DemoApplication.java` z pakietu `com.example.demo`;
-2. rozwiązuje URL, model i token dostawcy AI z `data/cronova.db` (rekord providera `default`) albo z `CRONOVA_AI_BASE_URL`, `CRONOVA_AI_MODEL` i opcjonalnie `CRONOVA_AI_TOKEN`;
-3. zapisuje prompt i request/response JSON do `.tmp/`;
-4. przekazuje prompt do `internal/scripts/ai/add_crud.py`, który wysyła HTTP POST w formacie zgodnym z chat-completions (model, wiadomości system/user, `temperature: 0.2`);
-5. oczekuje JSON-a z `pom_xml`, `Item_java` i `ItemController_java`, po czym zapisuje zmiany w `pom.xml` i tworzy klasy `model/Item.java` oraz `api/ItemController.java`.
+### 4. `java_maven_compile_fix_loop` — kompilacja i naprawa przez AI
 
-Prompt wymaga zależności web i validation, klasy `Item` z polami `Long id` i `String name`, oraz kontrolera z endpointami `GET /items`, `POST /items`, `GET /items/{id}` i `DELETE /items/{id}`. Magazyn danych ma być prostą mapą `Map<Long, Item>` w kontrolerze; walidacja ma używać `jakarta.validation`.
+```powershell
+& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/springboot-startio -LoopProject app -LoopPackage com.example.demo -LoopProvider default -LoopPython python
+```
 
-Ten krok **nie tworzy testów CRUD** i nie uruchamia kompilacji. Sukces oznacza, że helper zapisał pliki z odpowiedzi AI; ich poprawność jest sprawdzana przez następny krok.
+Do 3 iteracji `mvn -B -DskipTests test-compile`. Po błędzie (poza ostatnią iteracją) wysyła `pom.xml`, ostatnie 80 linii logu i źródła do reviewera przez [`ai-review-java-maven-errors.ps1`](../internal/scripts/ai-review-java-maven-errors.ps1) → `internal/scripts/ai/review_fix_v2.py`. Błąd w ostatniej iteracji kończy task wyjątkiem.
 
-### 4. `compile_loop` — kompilacja i naprawa przez AI
+### 5. `maven_test` — testy Maven
 
-**Wywołanie:** `internal/scripts/ai-review-fix-loop -w workspaces/springboot-startio -p app -k com.example.demo -r default -y python`.
+```powershell
+& .\internal\scripts\maven-test.ps1 -w workspaces/springboot-startio -p app
+```
 
-Skrypt ustawia toolchain przez `common_toolchain.sh`, a następnie wykonuje do trzech prób `mvn ... -DskipTests compile` (wartość domyślna `MAX_ITER=3`). Po nieudanej kompilacji — maksymalnie po pierwszych dwóch próbach, bo trzecia jest ostatnia — buduje prompt z `pom.xml`, plikami Java w `src/main/java` i ostatnimi 80 liniami logu kompilacji. `internal/scripts/ai/review_fix_v2.py` wysyła request do skonfigurowanego providera, parsuje JSON i zapisuje `pom_xml` oraz wskazane przez model pliki projektu.
-
-Krok kończy się sukcesem po pierwszej poprawnej kompilacji albo błędem po wyczerpaniu prób. AI jest wywoływane warunkowo, tylko jeśli kompilacja nie przejdzie.
-
-### 5. `tests` — testy Maven
-
-**Wywołanie:** `internal/scripts/run-tests -w workspaces/springboot-startio -p app`.
-
-Skrypt ładuje ten sam helper toolchain, zapisuje `toolchain-runtime.txt`, a następnie wykonuje `mvn -B -Dmaven.repo.local=<repo> test`. Nie pakuje artefaktu i nie publikuje JAR-a; sprawdza jedynie wynik celu Maven `test`.
+Wykonuje `mvn -B -Dmaven.repo.local=... test`.
 
 ## Dane, konfiguracja i efekty uboczne
 
-- **Projekt:** `workspaces/springboot-startio/app` (katalog `workspaces/` jest ignorowany przez Git).
-- **Cache Maven:** `.m2/repository` (współdzielony pomiędzy przebiegami DAG-ów; ignorowany przez Git).
-- **Pliki tymczasowe:** `.tmp/` (ignorowany przez Git), m.in. ZIP ze Spring Initializr, prompty i odpowiedzi AI oraz `compile.log`.
-- **Konfiguracja AI:** `data/cronova.db` lub zmienne `CRONOVA_AI_*`; sekret tokenu nie jest częścią definicji DAG-a.
-- **Toolchain Windows:** Cronova uruchomiony przez `start.cmd` przekazuje `CRONOVA_WINDOWS_PATH` oraz ustawienia Java/Maven zgodnie z Windows test planem. Aktywna ścieżka PowerShell nie wymaga Basha ani `cygpath`.
+| Lokalizacja | Zawartość |
+|---|---|
+| `workspaces/springboot-startio/app` | projekt (czyszczony w każdym runie przez `-Clean`) |
+| `.tmp/springboot-project.zip` | pobrane archiwum |
+| `.tmp/ai_feature_*`, `.tmp/ai_review*`, `.tmp/compile.log` | prompty, żądania, odpowiedzi AI i log kompilacji |
+| `.m2/repository` | lokalny cache Maven w repozytorium |
 
-Kilka skryptów zapisuje do stałych nazw plików w `.tmp/` (`springboot-project.zip`, `ai_prompt.txt`, `ai_request.json`, `ai_response.json`, `compile.log`, `ai_review_prompt.txt`, itd.). `max_active_runs: 1` chroni przed dwoma równoległymi przebiegami **tego DAG-a**, ale nie przed równoległym użyciem tych samych plików tymczasowych przez inne DAG-i. W razie równoległych workflowów może dojść do kolizji.
+Wymagany jest dostęp do `start.spring.io`, repozytoriów Maven i providera AI.
 
 ## Czy to są reużywalne „klocki LEGO”?
 
-**Na poziomie kompozycji — tak.** DAG składa się z pięciu osobnych skryptów CLI, które otrzymują workspace/projekt/pakiet przez argumenty; orchestration (kolejność, zależności, timeouty) pozostaje w YAML. Nie ma dedykowanego `workflows/sdlc_springboot_startio/` ani logiki biznesowej wpiętej bezpośrednio w runner Cronova. Te same klocki są już używane w `dags/sdlc_springboot.yaml`, gdzie zmienia się źródło szkieletu (template zamiast Spring Initializr) i katalog workspace. Dokumentacja `internal/scripts/README.md` pokazuje też ich kompozycję w innych przepływach.
+**Tak.** DAG różni się od [`sdlc_springboot_template_crud`](SDLC_SPRINGBOOT_TECHNICAL.md) wyłącznie pierwszym taskiem (Spring Initializr zamiast lokalnego template’u) i ścieżką workspace. Kolejne cztery klocki (`maven-compile.ps1`, `ai-java-mvn-generate-feature.ps1`, `java-maven-compile-fix-loop.ps1`, `maven-test.ps1`) są wspólne z tamtym DAG-iem oraz z `sdlc_maven_luhn`.
 
-| Klocek | Reużywalna odpowiedzialność | Parametry różnicujące |
-|---|---|---|
-| `fetch-springboot-project` | Wygenerowanie projektu ze Spring Initializr | typ, język, wersje, zależności, workspace i projekt |
-| `compile-project` | Maven goal dla projektu | workspace, projekt, goal, uruchomienie/pominięcie testów |
-| `ai-generate-crud` | Dodanie CRUD na podstawie istniejącego projektu/promptu | workspace, projekt, package, provider/model/Python |
-| `ai-review-fix-loop` | Iteracyjna naprawa kompilacji | workspace, projekt, package, limit prób, provider/model/Python |
-| `run-tests` | Uruchomienie testów Maven | workspace i projekt |
-| `common_toolchain.sh` | Wspólna konfiguracja Java/Maven/PATH dla skryptów kompilujących | zmienne środowiskowe toolchain |
-| `internal/scripts/ai/*.py` | Transport requestów AI i zapis odpowiedzi do projektu | projekt, prompt, provider/model/token |
+Ograniczenia:
 
-**Jednak klocki nie są jeszcze w pełni niezależne ani gotowe do przenoszenia bez warunków.** Wykryte ograniczenia:
-
-1. **Resolver Pythona został ujednolicony w tym branchu:** `fetch-springboot-project`, `ai-generate-crud`, `ai-review-fix-loop` i `ai-generate-feature` używają wspólnego helpera dla `-y`, `CRONOVA_PYTHON` i autodetekcji. Cały DAG przeszedł natywny Windows runtime test na commicie `c041ee0`.
-2. **Zależność od repozytorium i uruchomienia z jego katalogu:** komendy DAG-a są względne (`internal/scripts/...`, `workspaces/...`), więc wymagają właściwego katalogu roboczego Cronova. Skrypty zakładają też dostęp do `curl`/`wget`, `unzip`, `python`, Maven, Java i sieci.
-3. **Współdzielone nazwy plików tymczasowych:** stałe pliki w `.tmp/` mogą kolidować między jednocześnie działającymi DAG-ami.
-4. **Dwa modele toolchain:** skrypty `compile-project`, `ai-review-fix-loop` i `run-tests` konfigurują Java/Maven helperem; `fetch-springboot-project` i skrypty AI mają inną ścieżkę konfiguracji Pythona. Przekazanie `-y python` do kroków AI nie naprawia kroku `scaffold`.
-5. **Różne rodziny SDLC w repo:** `sdlc_springboot_startio` korzysta z `internal/scripts/`; `sdlc_springboot_rest` korzysta z osobnej rodziny wrapperów `scripts/sdlc/springboot/` oraz wersjonowanej konfiguracji YAML. Nie należy traktować ich jako tego samego kontraktu tylko dlatego, że oba budują Spring Boot.
-6. **Wytwory są modyfikowalne/destrukcyjne:** `-C` w pierwszym kroku usuwa projekt docelowy przy każdym uruchomieniu. To jest zamierzone dla powtarzalnego scaffoldu, ale warto pamiętać, że lokalne zmiany w `workspaces/springboot-startio/app` nie są zachowywane.
-
-Wniosek: **architektura przepływu pozostaje kompozycyjna i Windows-native; pełny runtime test DAG-a został zaliczony na Windows (5/5 tasków).** Sandbox nie zastępuje natywnego testu; wynik potwierdza załączony run, a nie sama walidacja sandboxowa.
+1. Wynik AI jest niedeterministyczny; pętla naprawia tylko błędy kompilacji.
+2. Prompt reviewera jest zaszyty w `java-maven-compile-fix-loop.ps1`.
+3. Pliki w `.tmp/` są współdzielone z innymi DAG-ami używającymi tych skryptów.
+4. Wersja Boot `4.0.8` i zależność `web` są ustawione w DAG-u; zmiana wymaga edycji komendy taska.

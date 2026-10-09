@@ -82,7 +82,7 @@ When a PowerShell task sets `project`, the scheduler stages the code before each
 
 - **A fresh, isolated copy** of the uploaded project becomes the attempt's working directory (`cwd`). Attempts never interfere with each other, and a retry always starts from a clean copy — never from a half-written state left by the failed attempt.
 - The copy's absolute path is exported as **`CRONOVA_PROJECT_DIR`**, so a script can locate its own bundled data files even after `cd`-ing elsewhere.
-- File permission bits are preserved, so an executable script stays executable — `./run.sh` works.
+- The bundled files are copied as-is, so a script shipped with the project can be invoked directly — `& .\run.ps1` works.
 - The copy lives under the system temp directory and is **removed when the attempt finalizes**.
 
 !!! warning

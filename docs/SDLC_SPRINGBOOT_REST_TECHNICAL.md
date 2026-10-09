@@ -3,442 +3,158 @@
 ## 1. Cel przepływu
 
 `sdlc_springboot_rest` jest deterministycznym przepływem SDLC dla backendu Spring Boot udostępniającego API REST.
-`sdlc_springboot_variant` używa tego samego zestawu klocków, ale wybiera wariant aplikacji per-run przez `params.variant`.
+`sdlc_springboot_variant` używa tego samego zestawu klocków, ale wybiera wariant aplikacji per-run przez parametr `variant`.
 
 Zadaniem obu przepływów jest:
 
-1. sprawdzić konfigurację Spring Boot i dostępność Java/Maven;
+1. sprawdzić konfigurację Spring Boot i dostępność Javy;
 2. sprawdzić minimalną spójność kontraktu OpenAPI;
 3. utworzyć projekt Spring Boot z Spring Initializr;
-4. skompilować projekt;
+4. skompilować projekt Maven Wrapperem;
 5. uruchomić testy jednostkowe;
-6. zbudować wykonywalny JAR i opublikować go jako artefakt Cronova.
+6. spakować wykonywalny JAR i zapisać manifest.
 
-DAG nie zawiera implementacji operacji. Zawiera wyłącznie deklaratywną kolejność i parametry wywołania reużywalnych skryptów.
+DAG-i nie używają AI. Jest to analiza statyczna kodu.
 
 ## 2. Definicja DAG-u
 
-Plik:
+Pliki: [`dags/sdlc_springboot_rest.yaml`](../dags/sdlc_springboot_rest.yaml), [`dags/sdlc_springboot_variant.yaml`](../dags/sdlc_springboot_variant.yaml).
 
-```text
-dags/sdlc_springboot_rest.yaml
-dags/sdlc_springboot_variant.yaml
+| Pole | Wartość |
+|---|---|
+| `schedule` | `""` (tylko ręcznie lub przez trigger) |
+| `start_date` | `2026-09-01` |
+| `catchup` | `false` |
+| `max_active_runs` | `1` |
+| `default_retries` | `1` |
+
+`sdlc_springboot_rest` wywołuje skrypty z `-Config configs\sdlc-springboot.yaml -Artifacts artifacts\springboot` (oraz `-Workspace .workspaces\springboot` dla scaffold/compile/test/package).
+
+`sdlc_springboot_variant` w każdym tasku wybiera konfigurację:
+
+```powershell
+$variant = if ($env:CRONOVA_PARAM_VARIANT) { $env:CRONOVA_PARAM_VARIANT } else { 'rest' }
+$config = & .\internal\scripts\resolve-springboot-variant-config.ps1 -Variant $variant
+& .\internal\scripts\springboot-validate-config.ps1 -Config $config
 ```
 
-Ustawienia:
-
-| Właściwość | Wartość | Znaczenie |
-|---|---:|---|
-| `dag_id` | `sdlc_springboot_rest` | Historyczny, kompatybilny entrypoint dla wariantu REST API |
-| `dag_id` | `sdlc_springboot_variant` | Docelowy entrypoint wariantowy dla `rest`, `crud`, `h2`, `security` |
-| `schedule` | pusty | Przepływ uruchamiany ręcznie |
-| `catchup` | `false` | Brak uruchamiania zaległych instancji |
-| `max_active_runs` | `1` | Tylko jeden aktywny run tego DAG-u |
-| `default_retries` | `1` | Jedna domyślna próba ponowienia |
+[`resolve-springboot-variant-config.ps1`](../internal/scripts/resolve-springboot-variant-config.ps1) mapuje: `rest` → `configs/sdlc-springboot.yaml`, `crud` → `configs/sdlc-springboot-crud.yaml`, `h2` → `configs/sdlc-springboot-h2.yaml`, `security` → `configs/sdlc-springboot-security.yaml`; inna wartość to błąd. W wariancie workspace i katalog artefaktów pochodzą wyłącznie z konfiguracji (np. `.workspaces/springboot-crud`, `artifacts/springboot-crud`).
 
 ## 3. Graf zależności
 
-```text
-springboot_validate_config
-        │
-        ▼
-springboot_validate_openapi
-        │
-        ▼
-springboot_scaffold_from_config
-        │
-        ▼
-springboot_maven_compile_from_config
-        │
-        ▼
-springboot_maven_test_from_config
-        │
-        ▼
-springboot_package_from_config
+```mermaid
+flowchart LR
+  A[springboot_validate_config] --> B[springboot_validate_openapi]
+  B --> C[springboot_scaffold_from_config]
+  C --> D[springboot_maven_compile_from_config]
+  D --> E[springboot_maven_test_from_config]
+  E --> F[springboot_package_from_config]
 ```
 
-Każdy task ma typ `powershell`.
-W `sdlc_springboot_rest` config jest wskazany na stałe jako [configs/sdlc-springboot.yaml](../configs/sdlc-springboot.yaml).
-W `sdlc_springboot_variant` config jest wybierany per-run przez `CRONOVA_PARAM_VARIANT` i resolver [internal/scripts/resolve-springboot-variant-config.ps1](../internal/scripts/resolve-springboot-variant-config.ps1).
-
-Obsługiwane warianty:
-
-- `rest`
-- `crud`
-- `h2`
-- `security`
-
-Mapowanie wariantów prowadzi do workflow configów:
-
-- [configs/sdlc-springboot.yaml](../configs/sdlc-springboot.yaml)
-- [configs/sdlc-springboot-crud.yaml](../configs/sdlc-springboot-crud.yaml)
-- [configs/sdlc-springboot-h2.yaml](../configs/sdlc-springboot-h2.yaml)
-- [configs/sdlc-springboot-security.yaml](../configs/sdlc-springboot-security.yaml)
-
-Każdy z tych configów wskazuje standard wariantu dziedziczący po [configs/standards/springboot-base.yaml](../configs/standards/springboot-base.yaml).
-
-Potwierdzony test DAG-a wariantowego:
-
-- run UI: [http://127.0.0.1:8090/#/run/sdlc_springboot_variant__manual_1791107718627011000](http://127.0.0.1:8090/#/run/sdlc_springboot_variant__manual_1791107718627011000)
-- wariant: `h2`
-- wynik: `success`
+| Task | Timeout | Skrypt |
+|---|---:|---|
+| `springboot_validate_config` | 120 s | [`springboot-validate-config.ps1`](../internal/scripts/springboot-validate-config.ps1) |
+| `springboot_validate_openapi` | 180 s | [`springboot-validate-openapi.ps1`](../internal/scripts/springboot-validate-openapi.ps1) |
+| `springboot_scaffold_from_config` | 600 s | [`springboot-scaffold-from-config.ps1`](../internal/scripts/springboot-scaffold-from-config.ps1) |
+| `springboot_maven_compile_from_config` | 900 s | [`springboot-maven-compile-from-config.ps1`](../internal/scripts/springboot-maven-compile-from-config.ps1) |
+| `springboot_maven_test_from_config` | 900 s | [`springboot-maven-test-from-config.ps1`](../internal/scripts/springboot-maven-test-from-config.ps1) |
+| `springboot_package_from_config` | 600 s | [`springboot-package-from-config.ps1`](../internal/scripts/springboot-package-from-config.ps1) |
 
 ## 4. Przebieg krok po kroku
 
 ### 4.1. `springboot_validate_config`
 
-Wywołanie:
-
-```powershell
-& .\internal\scripts\springboot-validate-config.ps1 -Config configs\sdlc-springboot.yaml
-```
-
-Używany skrypt:
-
-```text
-internal/scripts/springboot-validate-config.ps1
-```
-
-Skrypt:
-
-1. ładuje wspólny `bootstrap.sh`;
-2. parsuje `--config`;
-3. normalizuje ścieżki względem repozytorium;
-4. przygotowuje katalogi artefaktów;
-5. konfiguruje toolchain Java/Maven;
-6. wymaga dostępności `java` i `mvn`;
-7. odrzuca prywatne lub unixowe ścieżki środowiska w konfiguracji;
-8. sprawdza obecność sekcji `project:`;
-9. sprawdza `kind: springboot`;
-10. zapisuje wersję Java i runtime toolchainu do artefaktów.
-
-Artefakty diagnostyczne:
-
-```text
-artifacts/metadata/java-version.txt
-artifacts/metadata/runtime.txt
-artifacts/metadata/toolchain-runtime.txt
-```
+1. tworzy `<artifacts>/metadata`;
+2. `Set-JavaMavenToolchain`, wymaga `java`;
+3. odrzuca konfigurację z `/c/Users/`, `/home/`, `/tmp/`, `/var/`, `systemd`, `launchd`;
+4. wymaga `project.id` oraz `project.kind: springboot` (po scaleniu ze standardem);
+5. zapisuje `java -version` do `metadata/java-version.txt` i diagnostykę do `metadata/toolchain-runtime.txt`.
 
 ### 4.2. `springboot_validate_openapi`
 
-Wywołanie:
-
-```powershell
-& .\internal\scripts\springboot-validate-openapi.ps1 -Config configs\sdlc-springboot.yaml
-```
-
-Używany skrypt:
-
-```text
-internal/scripts/springboot-validate-openapi.ps1
-```
-
-Skrypt:
-
-1. ładuje wspólny bootstrap;
-2. wymaga `python`;
-3. sprawdza obecność `contracts/openapi.yaml`;
-4. sprawdza obecność konfiguracji full-stack;
-5. odrzuca prywatne i nieprzenośne ścieżki w konfiguracji;
-6. uruchamia krótki program Python przekazany przez stdin;
-7. wymaga markerów:
-   - `openapi:`;
-   - `paths:`;
-   - `/api/items`.
-
-Jest to smoke test kontraktu, nie pełna walidacja schematu OpenAPI.
+Wymaga pliku `api.openapi_file` i Pythona. Uruchamia krótki skrypt Pythona sprawdzający obecność markerów `openapi:`, `paths:` i `/api/items`. Log: `logs/springboot-openapi-validation.log`. Nie jest to pełna walidacja OpenAPI.
 
 ### 4.3. `springboot_scaffold_from_config`
 
-Wywołanie:
-
-```powershell
-& .\internal\scripts\springboot-scaffold-from-config.ps1 -Config configs\sdlc-springboot.yaml
-```
-
-Używane skrypty:
+Jeśli `pom.xml` już istnieje w workspace — kończy się sukcesem bez zmian. W przeciwnym razie pobiera przez `Invoke-WebRequest`:
 
 ```text
-internal/scripts/springboot-scaffold-from-config.ps1
-scripts/sdlc/common/SpringbootConfig.ps1
+https://start.spring.io/starter.zip?type=maven-project&language=java&bootVersion=<runtime.spring_boot_version>&javaVersion=<runtime.java_version>&groupId=<springboot.group_id>&artifactId=<springboot.artifact_id>&name=<artifact_id>&packageName=<springboot.package_name>&packaging=jar&configFormat=yaml&dependencies=<dependencies.starters>
 ```
 
-Skrypt:
-
-1. ładuje bootstrap i parser wartości konfiguracji;
-2. konfiguruje Java/Maven;
-3. wymaga `curl` i `unzip`;
-4. kończy się bez zmian, jeśli workspace ma już `pom.xml`;
-5. odczytuje z YAML:
-   - wersję Spring Boot;
-   - wersję Java;
-   - group ID;
-   - artifact ID;
-   - nazwę pakietu;
-6. buduje URL do Spring Initializr;
-7. pobiera ZIP projektu;
-8. zapisuje ZIP w `artifacts/springboot/metadata/`;
-9. rozpakowuje projekt do workspace’u;
-10. wymaga obecności `pom.xml`.
-
-Generator używa zależności:
-
-```text
-web, validation, actuator
-```
+zapisuje ZIP do `metadata/springboot-starter.zip`, rozpakowuje do workspace i wymaga `pom.xml`. Domyślne wartości w skrypcie: Boot `3.5.5`, Java `21`, `com.example`, `item-service`, `com.example.item`, `web,validation,actuator` — używane tylko, gdy konfiguracja ich nie podaje.
 
 ### 4.4. `springboot_maven_compile_from_config`
 
-Wywołanie:
-
-```powershell
-& .\internal\scripts\springboot-maven-compile-from-config.ps1 -Config configs\sdlc-springboot.yaml
-```
-
-Używany skrypt:
-
-```text
-internal/scripts/springboot-maven-compile-from-config.ps1
-```
-
-Skrypt:
-
-1. ładuje bootstrap;
-2. konfiguruje Java/Maven i runtime Windows;
-3. wymaga `java` i `mvn`;
-4. sprawdza obecność `mvnw.cmd`;
-5. zmienia katalog na workspace;
-6. uruchamia:
-
-```text
-./mvnw.cmd -B -DskipTests compile
-```
-
-Log zapisuje do:
-
-```text
-artifacts/springboot/logs/springboot-compile.log
-```
-
-Maven Wrapper jest generowany przez Spring Initializr. Skrypt wymaga konkretnego pliku `mvnw.cmd`, więc ten klocek jest reużywalny dla projektów Spring Boot generowanych lub dostarczanych z wrapperem Maven.
+`Set-JavaMavenToolchain`, wymaga `java` i `maven`, a także Maven Wrappera z `runtime.maven_wrapper` (domyślnie `./mvnw.cmd`). Wykonuje `mvnw.cmd -B -DskipTests compile`, log `logs/springboot-compile.log`.
 
 ### 4.5. `springboot_maven_test_from_config`
 
-Wywołanie:
-
-```powershell
-& .\internal\scripts\springboot-maven-test-from-config.ps1 -Config configs\sdlc-springboot.yaml
-```
-
-Używany skrypt:
-
-```text
-internal/scripts/springboot-maven-test-from-config.ps1
-```
-
-Skrypt:
-
-1. ładuje bootstrap;
-2. konfiguruje Java/Maven;
-3. wymaga `java` i `mvn`;
-4. sprawdza `mvnw.cmd`;
-5. uruchamia:
-
-```text
-./mvnw.cmd -B test
-```
-
-Log zapisuje do:
-
-```text
-artifacts/springboot/logs/springboot-unit-tests.log
-```
+`mvnw.cmd -B test`, log `logs/springboot-unit-tests.log`.
 
 ### 4.6. `springboot_package_from_config`
 
-Wywołanie:
-
-```powershell
-& .\internal\scripts\springboot-package-from-config.ps1 -Config configs\sdlc-springboot.yaml
-```
-
-Używany skrypt:
-
-```text
-internal/scripts/springboot-package-from-config.ps1
-```
-
-Skrypt:
-
-1. ładuje bootstrap;
-2. konfiguruje Java/Maven;
-3. wymaga `java` i `mvn`;
-4. sprawdza `mvnw.cmd`;
-5. uruchamia:
-
-```text
-./mvnw.cmd -B package -DskipTests
-```
-
-6. wyszukuje JAR przez glob Bash `target/*.jar`;
-7. pomija artefakt `*-plain.jar`;
-8. kopiuje główny JAR do:
-
-```text
-artifacts/springboot/package/item-service.jar
-```
-
-9. zapisuje sumę SHA-256;
-10. tworzy manifest backendu.
-
-Artefakty:
-
-```text
-artifacts/springboot/package/item-service.jar
-artifacts/springboot/package/item-service.jar.sha256
-artifacts/springboot/backend-manifest.json
-```
+1. `mvnw.cmd -B package -DskipTests`, log `logs/springboot-package.log`;
+2. bierze pierwszy `*.jar` z `<workspace>/<project.artifact_directory>` (domyślnie `target`), z pominięciem `*-plain.jar`;
+3. kopiuje go do `<artifacts>/package/<project.artifact_name>` (domyślnie `item-service.jar`);
+4. zapisuje SHA-256 do `<jar>.sha256`;
+5. zapisuje `backend-manifest.json` (`component`, `artifact`, `source_directory`, `result`).
 
 ## 5. Wspólny bootstrap i kontrakt klocków
 
-Plik:
+Każdy skrypt ma kontrakt `-Config` (wymagany), `-Workspace` i `-Artifacts` (opcjonalne; walidatory przyjmują tylko `-Config`/`-Artifacts`). Skrypty ładują:
 
-```text
-scripts/sdlc/common/bootstrap.sh
-```
+- [`internal/scripts/common/toolchain.ps1`](../internal/scripts/common/toolchain.ps1) — `Set-JavaMavenToolchain` (`CRONOVA_JAVA_HOME`/`JAVA_HOME`, `CRONOVA_MAVEN_HOME`/`MAVEN_HOME`), `Get-ConfiguredCommand`, `Write-ToolchainRuntime`, `ConvertTo-NativeArgumentString`;
+- [`scripts/sdlc/common/SpringbootConfig.ps1`](../scripts/sdlc/common/SpringbootConfig.ps1) — `Get-SpringbootSdlcConfig`, który scala wartości z pliku workflow i pliku standardu wskazanego w `standard.file`.
 
-Jest warstwą wspólną dla wszystkich skryptów SDLC. Odpowiada za:
-
-- wyznaczenie `REPO_ROOT` na podstawie lokalizacji skryptu;
-- obsługę `--config`, `--workspace`, `--artifacts`;
-- konwersję ścieżek Windows przez `cygpath`;
-- zamianę ścieżek względnych na ścieżki względem repozytorium;
-- utworzenie katalogów `logs`, `reports`, `metadata`;
-- przygotowanie runtime Python/Node/npm i Windows PATH;
-- wymaganie poleceń przez `require_command`;
-- zapis podstawowych informacji runtime.
-
-Dzięki temu skrypty mogą zmieniać katalog roboczy bez utraty lokalizacji artefaktów.
+Natywne procesy są uruchamiane przez `Start-Process` z przekierowaniem stdout/stderr do pliku logu.
 
 ## 6. Konfiguracja
 
-Główna konfiguracja:
+`configs/sdlc-springboot.yaml` wskazuje standard `configs/standards/springboot-rest-api.yaml` i ustawia m.in. workspace `.workspaces/springboot`, `project.id: item-service`, artefakty `artifacts/springboot`. Standard REST definiuje `project.artifact_name: item-service.jar`, pakiet `com.example.items`, startery `web,validation,actuator`, port `18080` i bazuje na `configs/standards/springboot-base.yaml`, który ustawia m.in.:
 
-```text
-configs/sdlc-springboot.yaml
+```yaml
+project:
+  kind: springboot
+  artifact_directory: target
+runtime:
+  java_version: "25"
+  spring_boot_version: "4.0.0"
+  maven_wrapper: ./mvnw.cmd
+api:
+  openapi_file: contracts/openapi.yaml
 ```
 
-Opisuje:
-
-- typ projektu: `springboot`;
-- Java `25`;
-- Spring Boot `4.0.0`;
-- Maven Wrapper;
-- dane Spring Initializr;
-- kontrakt API;
-- port backendu i endpoint health;
-- katalog artefaktów;
-- ustawienia jakości i AI.
-
-Konfiguracja full-stack:
-
-```text
-configs/sdlc-fullstack.yaml
-```
-
-Jest wykorzystywana w tym DAG-u tylko przez `validate_openapi`. Zawiera wspólny identyfikator platformy, lokalizację kontraktu OpenAPI oraz manifesty i adresy usług dla dalszego DAG-u full-stack.
-
-Parser:
-
-```text
-scripts/sdlc/common/config-value.sh
-```
-
-`config_value` jest celowo prostym parserem dwupoziomowych wartości skalarnych YAML. Nie jest pełnym parserem YAML. W tym DAG-u pobiera tylko wartości o prostym układzie sekcji `runtime` i `springboot`.
+Warianty `crud`, `h2` i `security` mają własne pliki w `configs/` i standardy w `configs/standards/`.
 
 ## 7. Ocena modelu „klocków Lego”
 
 ### 7.1. Elementy rzeczywiście reużywalne
 
-| Klocek | Reużywalność | Uzasadnienie |
-|---|---|---|
-| `bootstrap.sh` | wysoka | Wspólny kontrakt argumentów, ścieżki, artefakty i runtime |
-| `config-value.sh` | średnia | Reużywalny dla prostych sekcji YAML, ale nie zastępuje parsera YAML |
-| `common_toolchain.sh` | historyczna poza aktywną ścieżką | Dokumentuje dawną wspólną konfigurację Java/Maven/Python/Node i ścieżek dla wariantu bashowego |
-| `validate.sh` Spring Boot | średnia/wysoka | Może obsługiwać różne projekty Spring Boot z podobnym manifestem |
-| `scaffold.sh` | średnia | Reużywalny dla projektów Spring Initializr, ale zależny od parametrów Spring Boot |
-| `compile.sh` | średnia/wysoka | Ogólny compile Maven Wrapper dla workspace’u Spring Boot |
-| `unit-test.sh` | średnia/wysoka | Ogólny test Maven Wrapper dla workspace’u Spring Boot |
-| `package.sh` | średnia/wysoka | Pakuje główny JAR Spring Boot i tworzy standardowy manifest |
-| `integration/validate.sh` | średnia | Wspólny smoke test OpenAPI, ale obecnie zna `/api/items` |
+- sześć skryptów `springboot-*-from-config.ps1` / `springboot-validate-*.ps1` — każdy wykonuje jedną operację i jest sterowany konfiguracją;
+- `resolve-springboot-variant-config.ps1` — wybór konfiguracji bez duplikowania DAG-a;
+- `SpringbootConfig.ps1` — scalanie configu workflow ze standardem.
 
 ### 7.2. Elementy specyficzne, które nie są w DAG-u
 
-DAG nie korzysta z dedykowanego katalogu typu:
+Wartości projektu (pakiet, startery, wersje, nazwa JAR-a) są w konfiguracji i standardach, nie w YAML DAG-a.
 
-```text
-workflows/sdlc_springboot_rest/
-```
+### 7.3. Ograniczenia reużywalności
 
-Nie ma więc osobnych wrapperów dla tego przepływu. Właściwa logika znajduje się w katalogach bibliotek:
-
-```text
-scripts/sdlc/common/
-scripts/sdlc/springboot/
-scripts/sdlc/integration/
-internal/scripts/
-```
-
-To spełnia główną zasadę architektury klocków: DAG składa przepływ z istniejących komponentów, a nie zawiera skryptów napisanych wyłącznie dla jednego DAG-u.
-
-### 7.3. Ograniczenia reużywalności do późniejszego uporządkowania
-
-Przepływ jest reużywalny, ale nie jest jeszcze w 100% neutralny. Obecne ograniczenia:
-
-1. `integration/validate.sh` wymaga literalnie `/api/items` zamiast odczytywać wymagane ścieżki z konfiguracji OpenAPI.
-2. `scaffold.sh` jest związany ze Spring Initializr i stałym zestawem zależności `web, validation, actuator`.
-3. `compile.sh`, `unit-test.sh` i `package.sh` wymagają `mvnw.cmd`, więc są przeznaczone dla workspace’ów z Maven Wrapperem.
-4. `package.sh` kopiuje artefakt do stałej nazwy `item-service.jar`, choć konfiguracja zawiera `artifact_name`.
-5. `package.sh` wyłącza tylko `*-plain.jar`; wybór głównego JAR-a jest oparty na pierwszym dopasowaniu globu.
-6. `config-value.sh` obsługuje tylko prosty fragment YAML.
-7. `validate.sh` sprawdza konfigurację przez `grep`, a nie przez formalną walidację schematu.
-8. `sdlc_springboot_rest` korzysta z konfiguracji full-stack dla walidacji OpenAPI, mimo że sam DAG nie uruchamia usług ani testów E2E.
-
-Są to ograniczenia zakresu uogólnienia, nie dedykowane skrypty DAG-u. Można je poprawić jako osobne kroki, nie zmieniając zasadniczego modelu kompozycji.
+1. Walidacja OpenAPI sprawdza wyłącznie markery tekstowe, w tym zaszyte `/api/items`.
+2. Scaffold pomija generowanie przy istniejącym `pom.xml`; DAG nie czyści workspace’u.
+3. Scaffold zależy od sieci i dostępności Spring Initializr.
+4. W `sdlc_springboot_variant` blok wyboru wariantu jest powtórzony w każdym tasku.
+5. Parser konfiguracji obsługuje tylko prosty dwupoziomowy YAML.
 
 ## 8. Wniosek audytowy
 
 ### Ocena: **spełnia założenie reużywalnych klocków, z ograniczeniami parametryzacji**
 
-DAG jest złożony poprawnie z reużywalnych elementów:
-
-- nie zawiera implementacji skryptów;
-- nie ma dedykowanego katalogu wrapperów dla `sdlc_springboot_rest`;
-- każdy krok ma jawny kontrakt wejścia i wyjścia;
-- wspólny bootstrap izoluje problemy ścieżek i katalogu roboczego;
-- skrypty są użyteczne także w innych przepływach Spring Boot/full-stack.
-
-Nie należy jednak nazywać wszystkich klocków w pełni uniwersalnymi. Część z nich jest **uniwersalna w obrębie technologii** — Spring Boot, Maven Wrapper albo OpenAPI — a nie dla dowolnego stosu.
-
-Najważniejsza granica jest prawidłowa:
-
-```text
-DAG = kompozycja i zależności
-skrypt = jedna reużywalna operacja
-config = parametry projektu i środowiska
-artifact = wynik przekazywany dalej
-```
+Oba DAG-i są deklaratywnymi grafami sześciu tasków PowerShell wywołujących te same skrypty. Wariant różni się wyłącznie wyborem pliku konfiguracji.
 
 ## 9. Zakres następnych możliwych usprawnień
 
-Po przetestowaniu kolejnych DAG-ów można niezależnie rozważyć:
-
-1. parametr `openapi_required_paths` zamiast literalnego `/api/items`;
-2. parametr `dependencies` dla scaffoldingu Spring Initializr;
-3. parametr `maven_command` lub tryb `wrapper/system-maven`;
-4. parametr `artifact_name` używany przez `package.sh`;
-5. formalną walidację YAML i konfiguracji;
-6. osobny lokalny plik toolchainu Windows, jeśli potrzebna będzie wygodniejsza konfiguracja wielu komputerów.
-
-Te usprawnienia powinny być wykonywane osobno, ponieważ obecny przepływ został już zweryfikowany end-to-end na Windowsie.
+- przeniesienie wyboru wariantu do jednego miejsca (np. parametru przekazywanego do skryptów);
+- pełniejsza walidacja OpenAPI;
+- opcja czyszczenia workspace’u przed scaffoldem.

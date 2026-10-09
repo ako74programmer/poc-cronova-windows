@@ -34,7 +34,7 @@ The original repository is the source of inspiration and the starting point for 
 - 🟢 **Small native install, zero service dependencies.** Pure-Go, CGO-free scheduler plus standalone executor with embedded SQLite. The PowerShell installer registers Windows services; no Airflow-style stack or container runtime is required.
 - 🗂️ **Airflow / Azkaban-style DAGs.** Declarative YAML DAGs with dependency edges, cron / `@every` schedules, cross-DAG triggers and waits (`trigger_after`, `depends_on_dag`), sub-workflows, catchup / backfill, per-task retries & timeouts, resource pools, run priorities & serial execution policies, and trigger rules — the orchestration primitives you already know.
 - 📡 **Scale out when you need to — dial-in workers.** Remote workers join with a one-time token over mTLS and **dial in** (no inbound port, no shared filesystem, NAT-friendly); tasks route by `worker_group:`, logs stream back live, and a worker restart re-adopts its running tasks instead of re-running them. Zero workers configured = the same single binary as always.
-- 🌐 **Polyglot tasks + project upload.** Every task runs as an OS subprocess, so write tasks in **shell, Python, SQL, a JAR, or HTTP** — any language on the host. Drag-and-drop a script, a whole project folder, or a `.zip` in the console and cronova runs it in an isolated working copy.
+- 🌐 **Polyglot tasks + project upload.** Every task runs as an OS subprocess, so write tasks in **PowerShell, Python, SQL, a JAR, or HTTP** — any language on the host. Drag-and-drop a script, a whole project folder, or a `.zip` in the console and cronova runs it in an isolated working copy.
 - 🤖 **AI-native.** A built-in **[Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server** and a remote JSON CLI let AI agents (Claude, and any MCP client) list, create, validate, trigger, and inspect DAGs through the same token-authenticated, role-gated API.
 - 🛡️ **Crash-recoverable execution.** Run tasks in a decoupled gRPC executor so restarting or upgrading the scheduler never kills running jobs — on recovery it re-attaches to in-flight tasks with no double execution.
 - 🖥️ **Batteries-included web console.** DAG dashboard, run history, task states, **live log tailing (SSE)**, manual triggers, variables & connections, an audit trail, and a visual command editor — all served in-process. REST API + OpenAPI included.
@@ -93,7 +93,7 @@ new deployed instance; it enables authentication by default.
 | Catchup / backfill | ✅ | ✅ | ❌ | ❌ |
 | Retries, timeouts, pools | ✅ | ✅ | partial | ❌ |
 | Crash recovery (no double-run) | ✅ | ✅ | partial | ❌ |
-| Polyglot tasks (shell/Python/SQL/JAR/HTTP) | ✅ | ✅ (operators) | JVM-centric | any (no orchestration) |
+| Polyglot tasks (PowerShell/Python/SQL/JAR/HTTP) | ✅ | ✅ (operators) | JVM-centric | any (no orchestration) |
 | Web console + live logs | ✅ | ✅ | ✅ | ❌ |
 | REST API + OpenAPI | ✅ | ✅ | partial | ❌ |
 | AI agent / MCP integration | ✅ **built-in** | ❌ | ❌ | ❌ |
@@ -114,7 +114,7 @@ max_active_runs: 1
 default_retries: 2
 tasks:
   - id: extract
-    type: shell
+    type: powershell        # default; may be omitted
     command: "python extract.py --date {{ logical_date }}"
     pool: default
   - id: transform
@@ -159,12 +159,12 @@ Technical details:
 
 ### Run your own scripts and projects
 
-Upload a single script, a whole project folder, or a `.zip` in the console (task editor → **Project**), then point a shell task at it:
+Upload a single script, a whole project folder, or a `.zip` in the console (task editor → **Project**), then point a PowerShell task at it:
 
 ```yaml
 tasks:
   - id: run_main
-    type: shell
+    type: powershell
     command: python main.py     # runs with cwd = a clean copy of the project
     project: my_app
 ```
@@ -226,7 +226,7 @@ Yes — for teams who want DAG scheduling (dependencies, retries, catchup, pools
 No. The scheduler and web console use an **embedded SQLite** database; the managed install adds a small standalone executor so scheduler restarts do not kill tasks. Python/Java/psql are only needed on the host if *your tasks* invoke them.
 
 **What languages can tasks be written in?**
-Any. Tasks are `shell`, `python`, `sql`, `jar`, or `http`; a shell task can invoke anything on the host (Node, Go, Rust binaries, …). The framework (Go) is fully decoupled from the task language.
+Any. Tasks are `powershell` (default), `python`, `sql`, `jar`, `http`, or `subdag`; a PowerShell task can invoke anything on the host (Node, Go, Rust binaries, …). The framework (Go) is fully decoupled from the task language.
 
 **How is cronova different from cron?**
 cron runs isolated commands on a clock. cronova runs **DAGs**: tasks with dependencies, retries, timeouts, backfill, concurrency pools, cross-DAG triggers, a web console with logs, and an API — the things you end up hand-rolling around cron.

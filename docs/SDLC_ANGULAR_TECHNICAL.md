@@ -1,512 +1,202 @@
 # Techniczny opis DAG-a `sdlc_angular`
 
-## Zakres i status analizy
+## Zakres
 
-Dokument opisuje definicję [`dags/sdlc_angular.yaml`](../dags/sdlc_angular.yaml), konfigurację [`configs/sdlc-angular.yaml`](../configs/sdlc-angular.yaml), skrypty Angular oraz wspólny bootstrap używany przez taski.
+Dokument opisuje definicję [`dags/sdlc_angular.yaml`](../dags/sdlc_angular.yaml), konfigurację [`configs/sdlc-angular.yaml`](../configs/sdlc-angular.yaml), skrypty PowerShell `internal/scripts/angular-*.ps1` oraz wspólny helper [`scripts/sdlc/common/AngularConfig.ps1`](../scripts/sdlc/common/AngularConfig.ps1).
 
-Analiza została wykonana na branchu `feature/windows-cmd-runtime-sdlc-2026-09-26`. Jest to **analiza statyczna kodu**, a nie raport uruchomienia na Windowsie. Test runtime'u Windows i pełny run DAG-a zostaną wykonane przez agenta Windows na commicie wskazanym po publikacji.
+Jest to **analiza statyczna kodu**, a nie raport uruchomienia.
 
 ## 1. Cel przepływu
 
 `sdlc_angular` jest deterministycznym przepływem jakości i produkcyjnego buildu aplikacji Angular. Jego zadaniem jest:
 
 1. sprawdzić konfigurację projektu oraz dostępność Node.js i npm;
-2. wygenerować szkielet aplikacji Angular przez Angular CLI;
+2. wygenerować szkielet aplikacji Angular przez Angular CLI (opcjonalnie z kodem wygenerowanym z kontraktu OpenAPI);
 3. zainstalować zależności z `package-lock.json` przez `npm ci`;
 4. uruchomić lint;
 5. uruchomić testy jednostkowe w trybie bez obserwowania plików;
-6. zbudować aplikację w konfiguracji production;
+6. zbudować aplikację w skonfigurowanej konfiguracji (domyślnie `production`);
 7. skopiować wynik buildu do artefaktów i wykonać smoke test `index.html`.
 
-DAG nie używa AI, Javy, Mavena ani `internal/scripts/`. Wykorzystuje skrypty z rodziny `scripts/sdlc/angular/`, wspólny bootstrap `scripts/sdlc/common/bootstrap.sh` oraz prosty odczyt wartości YAML przez `scripts/sdlc/common/config-value.sh`.
+DAG nie używa AI, Javy ani Mavena.
 
 ## 2. Definicja DAG-a i parametry wykonania
-
-Plik źródłowy:
-
-```text
-dags/sdlc_angular.yaml
-```
 
 | Pole | Wartość | Znaczenie |
 |---|---:|---|
 | `dag_id` | `sdlc_angular` | Identyfikator DAG-a w Cronova |
-| `schedule` | pusty | Tylko uruchomienie ręczne, bez harmonogramu |
+| `schedule` | brak | Tylko uruchomienie ręczne |
 | `start_date` | `2026-09-01` | Początkowa data logiczna |
 | `catchup` | `false` | Brak nadrabiania okresów |
-| `max_active_runs` | `1` | Najwyżej jeden aktywny run tego DAG-a |
-| `default_retries` | `1` | Jeden domyślny retry taska, jeśli task nie ustawia własnej wartości |
+| `max_active_runs` | `1` | Najwyżej jeden aktywny run |
+| `default_retries` | `1` | Jeden domyślny retry taska |
 
-Wszystkie taski mają `type: powershell`. Cronova uruchamia je natywnie przez PowerShell na Windowsie.
+Wszystkie taski mają `type: powershell` i nie ustawiają własnych timeoutów. Każdy task wywołuje osobny skrypt z tymi samymi parametrami:
+
+```powershell
+& .\internal\scripts\angular-<krok>.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
+```
+
+`-Workspace` i `-Artifacts` są opcjonalne; bez nich skrypty biorą `workspace.directory` i `artifacts.directory` z konfiguracji.
 
 ## 3. Graf zależności
 
 ```mermaid
 flowchart LR
-  A[validate_config\nNode/npm + konfiguracja] --> B[scaffold\nAngular CLI]
-  B --> C[install_dependencies\nnpm ci]
-  C --> D[lint\nnpm run lint]
-  D --> E[unit_tests\nnpm test -- --watch=false]
-  E --> F[build\nproduction build]
-  F --> G[smoke_test\nindex.html]
+  A[angular_validate_config] --> B[angular_scaffold_from_config]
+  B --> C[angular_npm_install_from_config]
+  C --> D[angular_lint_from_config]
+  D --> E[angular_test_from_config]
+  E --> F[angular_build_from_config]
+  F --> G[angular_smoke_test_from_config]
 ```
 
-Kolejność wykonania:
-
-```text
-validate_config
-  -> scaffold
-  -> install_dependencies
-  -> lint
-  -> unit_tests
-  -> build
-  -> smoke_test
-```
-
-Timeouty tasków:
-
-| Task | Timeout | Rola |
-|---|---:|---|
-| `validate_config` | 120 s | Walidacja konfiguracji i Node/npm |
-| `scaffold` | 600 s | Utworzenie aplikacji przez Angular CLI |
-| `install_dependencies` | 900 s | `npm ci` |
-| `lint` | 600 s | Lint aplikacji |
-| `unit_tests` | 900 s | Testy jednostkowe |
-| `build` | 900 s | Production build i publikacja artefaktu |
-| `smoke_test` | 300 s | Kontrola obecności i podstawowej poprawności HTML |
-
-Jeżeli task zakończy się błędem, zależne taski nie powinny wystartować. Ponieważ `default_retries` wynosi `1`, Cronova może ponowić task, jeśli task nie nadpisuje tej wartości.
+| Task | Skrypt |
+|---|---|
+| `angular_validate_config` | [`angular-validate-config.ps1`](../internal/scripts/angular-validate-config.ps1) |
+| `angular_scaffold_from_config` | [`angular-scaffold-from-config.ps1`](../internal/scripts/angular-scaffold-from-config.ps1) |
+| `angular_npm_install_from_config` | [`angular-npm-install-from-config.ps1`](../internal/scripts/angular-npm-install-from-config.ps1) |
+| `angular_lint_from_config` | [`angular-lint-from-config.ps1`](../internal/scripts/angular-lint-from-config.ps1) |
+| `angular_test_from_config` | [`angular-test-from-config.ps1`](../internal/scripts/angular-test-from-config.ps1) |
+| `angular_build_from_config` | [`angular-build-from-config.ps1`](../internal/scripts/angular-build-from-config.ps1) |
+| `angular_smoke_test_from_config` | [`angular-smoke-test-from-config.ps1`](../internal/scripts/angular-smoke-test-from-config.ps1) |
 
 ## 4. Konfiguracja projektu
 
-Plik:
-
-```text
-configs/sdlc-angular.yaml
-```
-
-Najważniejsze sekcje:
+Plik `configs/sdlc-angular.yaml` (fragment):
 
 ```yaml
+workspace:
+  directory: .workspaces/angular
+
 project:
   id: item-portal
   kind: angular
-  directory: frontend
-  artifact_directory: dist/item-portal/browser
 
 runtime:
   node_version: "22"
   angular_cli_version: "20"
-  package_manager: npm
-  install_command: npm ci
 
 angular:
   app_name: item-portal
   build_configuration: production
   output_path: dist/item-portal/browser
+  api_client_mode: openapi-generated
+
+api:
+  openapi_file: contracts/openapi.yaml
+  base_url: http://127.0.0.1:18080/api
+
+server:
+  host: 127.0.0.1
+  port: 4300
+
+artifacts:
+  directory: artifacts/angular
+  manifest: frontend-manifest.json
 ```
 
-Konfiguracja wskazuje wersje wymagane przez projekt, ale same skrypty nie instalują Node.js ani nie wymuszają wersji przez manager typu nvm. Agent Windows musi potwierdzić, że rzeczywiście używany Node/npm jest zgodny z oczekiwaniami środowiska.
-
-Sekcja `quality` deklaruje:
-
-```yaml
-lint: true
-unit_tests: true
-production_build: true
-```
-
-Sekcja `server` opisuje host/port aplikacji, ale ten DAG nie uruchamia serwera HTTP. `smoke_test` sprawdza plik artefaktu, nie wykonuje żądania do aplikacji pod portem `4300`.
+Wartości odczytuje `Get-AngularSdlcConfig` z `AngularConfig.ps1` przy pomocy `Get-SdlcConfigValue` — prostego parsera wartości skalarnych w dwupoziomowych sekcjach (`section:` / `  key: value`). Nie jest to pełny parser YAML. Skrypty nie wymuszają wersji Node (`node_version`).
 
 ## 5. Przepływ krok po kroku
 
-### 5.1. `validate_config` — walidacja konfiguracji i runtime'u
+Wszystkie skrypty: ładują `internal/scripts/common/toolchain.ps1` i `AngularConfig.ps1`, rozwiązują ścieżki względem repozytorium, a natywne programy uruchamiają przez `Start-Process` z przekierowaniem stdout/stderr do pliku logu (UTF-8 bez BOM). Niezerowy kod wyjścia kończy się wyjątkiem.
 
-Wywołanie:
+### 5.1. `angular_validate_config`
 
-```powershell
-& .\internal\scripts\angular-validate-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
-```
+1. tworzy workspace oraz `artifacts/angular/{logs,reports,metadata}`;
+2. odrzuca konfigurację zawierającą `/c/Users/`, `/home/`, `/tmp/`, `/var/`, `systemd` lub `launchd`;
+3. wymaga `project.id` i `project.kind: angular`;
+4. zapisuje `metadata/runtime.txt` (workspace, artifacts, config);
+5. wymaga `node` i `npm`, zapisuje `metadata/node-version.txt` i `metadata/npm-version.txt`.
 
-Używane skrypty:
+### 5.2. `angular_scaffold_from_config`
 
-```text
-scripts/sdlc/angular/validate.sh
-scripts/sdlc/common/bootstrap.sh
-scripts/sdlc/common/config-value.sh
-internal/scripts/common_toolchain.sh
-```
+Wymaga `npx`, `node`, `py` (Python launcher) i `npm`.
 
-Działanie:
-
-1. ładuje wspólny bootstrap;
-2. parsuje `--config`, `--workspace` i `--artifacts`;
-3. normalizuje ścieżki względem repozytorium, w tym ścieżki Windows przez `cygpath`;
-4. tworzy `artifacts/angular/logs`, `reports` i `metadata`;
-5. zapisuje runtime do `artifacts/angular/metadata/runtime.txt`;
-6. wymaga dostępności `node` i `npm`;
-7. odrzuca konfigurację zawierającą nieprzenośne ścieżki Unix/prywatne, takie jak `/home/`, `/tmp/`, `/var/` lub `/c/Users/`;
-8. sprawdza sekcję `project:` i marker `kind: angular`;
-9. zapisuje wersje Node i npm do:
-
-```text
-artifacts/angular/metadata/node-version.txt
-artifacts/angular/metadata/npm-version.txt
-```
-
-Nie jest to pełny parser ani schema validator YAML. `config-value.sh` obsługuje tylko proste wartości skalarne w dwupoziomowych sekcjach. Główna walidacja struktury DAG-a należy do Cronova, a skrypt sprawdza tylko wymagane markery i runtime.
-
-### 5.2. `scaffold` — utworzenie aplikacji Angular
-
-Wywołanie:
+- Jeśli `package.json` już istnieje: nie generuje projektu ponownie, ale uruchamia generator kontraktu (patrz niżej), dodaje lint i Puppeteer, jeśli brakuje, oraz generuje brakujący `package-lock.json`.
+- W przeciwnym razie wykonuje:
 
 ```powershell
-& .\internal\scripts\angular-scaffold-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
+npx --yes "@angular/cli@20" new item-portal --directory .workspaces\angular --routing --style=scss --standalone --skip-git --package-manager=npm --skip-install
 ```
 
-Używany skrypt:
+Następnie:
 
-```text
-scripts/sdlc/angular/scaffold.sh
-```
+1. **generator kontraktu** — gdy `angular.api_client_mode` to `contract` lub `openapi-generated`, uruchamia [`scripts/sdlc/integration/generate_contract_app.py`](../scripts/sdlc/integration/generate_contract_app.py) z `--contract`, `--backend-workspace .workspaces\springboot`, `--frontend-workspace`, `--backend-package com.example.items`, `--api-base-url` i `--frontend-origin http://<server.host>:<server.port>`. Wymaga istniejącego katalogu `.workspaces\springboot`;
+2. jeśli `package.json` nie ma skryptu `lint` — `npx @angular/cli@<wersja> add @angular-eslint/schematics@<wersja> --skip-confirmation`;
+3. jeśli brak zależności `puppeteer` — `npm install --save-dev --package-lock-only puppeteer@24`;
+4. `npm install --package-lock-only --ignore-scripts`.
 
-Działanie:
+Gdy `runtime.angular_cli_version` jest puste, używane jest `latest`; gdy `app_name` jest puste — `item-portal`.
 
-1. ładuje bootstrap i parser wartości YAML;
-2. wymaga `npx`;
-3. jeśli `.workspaces/angular/package.json` już istnieje, kończy się sukcesem bez ponownego scaffoldingu;
-4. odczytuje `angular.app_name` oraz `runtime.angular_cli_version`;
-5. tworzy workspace;
-6. wykonuje:
+### 5.3. `angular_npm_install_from_config`
 
-```text
-npx --yes "@angular/cli@20" new item-portal \
-  --directory .workspaces/angular \
-  --routing \
-  --style=scss \
-  --standalone \
-  --skip-git \
-  --package-manager=npm \
-  --skip-install
-```
+Wymaga `package.json` i `package-lock.json`, wykonuje `npm ci`, log: `artifacts/angular/logs/angular-npm-ci.log`.
 
-`--skip-install` oznacza, że instalacja zależności jest celowo odłożona do następnego taska. `--skip-git` zapobiega utworzeniu zagnieżdżonego repozytorium Git w workspace.
+### 5.4. `angular_lint_from_config`
 
-Skrypt korzysta z sieci npm, jeśli Angular CLI nie jest dostępne w cache npx. Nie ma opcji czyszczenia workspace’u. Przy istniejącym `package.json` task traktuje projekt jako już utworzony i go nie odtwarza.
+Wykonuje `npm run lint`, log: `logs/angular-lint.log`.
 
-### 5.3. `install_dependencies` — instalacja npm
+### 5.5. `angular_test_from_config`
 
-Wywołanie:
+Jeśli `CHROME_BIN` nie jest ustawione, a w workspace dostępny jest `puppeteer`, ustawia `CHROME_BIN` na `require("puppeteer").executablePath()`. Następnie wykonuje `npm test -- --watch=false`, log: `logs/angular-unit-tests.log`.
 
-```powershell
-& .\internal\scripts\angular-npm-install-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
-```
+### 5.6. `angular_build_from_config`
 
-Używany skrypt:
+1. `npm run build -- --configuration <build_configuration>` (domyślnie `production`), log: `logs/angular-build.log`;
+2. szuka katalogu wynikowego: `angular.output_path` → `dist\item-portal\browser` → pierwszy katalog z `index.html` pod `dist`;
+3. brak `index.html` → błąd `Angular build did not produce index.html`;
+4. kopiuje wynik do `artifacts/angular/dist/browser`;
+5. zapisuje SHA-256 `index.html` do `metadata/frontend-index.sha256`;
+6. zapisuje manifest (`artifacts.manifest`, domyślnie `frontend-manifest.json`) z polami `component`, `project`, `artifact_directory`, `openapi`, `result`.
 
-```text
-scripts/sdlc/angular/install.sh
-```
+### 5.7. `angular_smoke_test_from_config`
 
-Działanie:
+Sprawdza istnienie `artifacts/angular/dist/browser/index.html` i dopasowanie `(?i)<html`. Nie uruchamia serwera ani nie wykonuje żądań HTTP.
 
-1. ładuje bootstrap;
-2. wymaga `npm`;
-3. wymaga `package.json`;
-4. wymaga `package-lock.json`;
-5. przechodzi do workspace’u;
-6. wykonuje:
+## 6. Wspólne elementy
 
-```text
-npm ci
-```
+- [`internal/scripts/common/toolchain.ps1`](../internal/scripts/common/toolchain.ps1) — `Get-RepoRoot`, `Invoke-Native`, `ConvertTo-NativeArgumentString`, rozwiązywanie narzędzi (`CRONOVA_PYTHON`, `CRONOVA_JAVA_HOME`, `CRONOVA_MAVEN_HOME`).
+- [`scripts/sdlc/common/AngularConfig.ps1`](../scripts/sdlc/common/AngularConfig.ps1) — `Get-SdlcRepoRoot`, `Resolve-SdlcRepoPath`, `Get-SdlcConfigValue`, `Get-AngularSdlcConfig`.
 
-Log zapisuje do:
-
-```text
-artifacts/angular/logs/angular-npm-ci.log
-```
-
-`npm ci` korzysta z lockfile i jest przeznaczone do powtarzalnej instalacji. Brak `package-lock.json` jest błędem i task kończy się kodem `30`.
-
-### 5.4. `lint` — kontrola jakości kodu
-
-Wywołanie:
-
-```powershell
-& .\internal\scripts\angular-lint-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
-```
-
-Używany skrypt:
-
-```text
-scripts/sdlc/angular/lint.sh
-```
-
-Skrypt wymaga npm, przechodzi do workspace’u i uruchamia komendę z `package.json`:
-
-```text
-npm run lint
-```
-
-Log zapisuje do:
-
-```text
-artifacts/angular/logs/angular-lint.log
-```
-
-DAG nie definiuje własnych reguł lintowania. Konkretne narzędzie i konfiguracja pochodzą z wygenerowanego projektu Angular.
-
-### 5.5. `unit_tests` — testy jednostkowe
-
-Wywołanie:
-
-```powershell
-& .\internal\scripts\angular-test-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
-```
-
-Używany skrypt:
-
-```text
-scripts/sdlc/angular/test.sh
-```
-
-Skrypt wykonuje:
-
-```text
-npm test -- --watch=false
-```
-
-Log zapisuje do:
-
-```text
-artifacts/angular/logs/angular-unit-tests.log
-```
-
-Komentarz w skrypcie wyraźnie pozostawia wybór runnera projektowi: może to być Vitest, Karma lub inny runner skonfigurowany w `package.json`. Flaga `--watch=false` ma zapewnić zakończenie procesu bez trybu obserwowania.
-
-### 5.6. `build` — production build i publikacja artefaktów
-
-Wywołanie:
-
-```powershell
-& .\internal\scripts\angular-build-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
-```
-
-Używany skrypt:
-
-```text
-scripts/sdlc/angular/build.sh
-```
-
-Działanie:
-
-1. ładuje bootstrap i parser konfiguracji;
-2. wymaga npm;
-3. wykonuje:
-
-```text
-npm run build -- --configuration production
-```
-
-4. zapisuje log do `artifacts/angular/logs/angular-build.log`;
-5. odczytuje `angular.output_path`;
-6. oczekuje katalogu:
-
-```text
-.workspaces/angular/dist/item-portal/browser
-```
-
-7. sprawdza, czy w katalogu znajduje się `index.html`;
-8. kopiuje katalog buildu do:
-
-```text
-artifacts/angular/dist/browser
-```
-
-9. zapisuje SHA-256 pliku `index.html` do:
-
-```text
-artifacts/angular/metadata/frontend-index.sha256
-```
-
-10. tworzy manifest:
-
-```text
-artifacts/angular/frontend-manifest.json
-```
-
-Manifest ma między innymi pola:
-
-```json
-{
-  "component": "angular",
-  "project": "...",
-  "artifact_directory": ".../artifacts/angular/dist/browser",
-  "openapi": "contracts/openapi.yaml",
-  "result": "success"
-}
-```
-
-Jeżeli skonfigurowany output path nie istnieje, skrypt ma fallback do `dist/item-portal/browser`, a następnie do katalogu `dist`. Jeżeli nie znajdzie `index.html`, kończy się kodem `60`.
-
-### 5.7. `smoke_test` — kontrola artefaktu
-
-Wywołanie:
-
-```powershell
-& .\internal\scripts\angular-smoke-test-from-config.ps1 -Config configs\sdlc-angular.yaml -Workspace .workspaces\angular -Artifacts artifacts\angular
-```
-
-Używany skrypt:
-
-```text
-scripts/sdlc/angular/smoke.sh
-```
-
-Skrypt sprawdza:
-
-1. istnienie `artifacts/angular/dist/browser/index.html`;
-2. obecność tekstu dopasowanego przez `grep -qi '<html'`;
-3. kod zakończenia `0`.
-
-Nie uruchamia serwera Angular, nie wykonuje requestu HTTP i nie sprawdza endpointów API. Jest to smoke test struktury opublikowanego artefaktu, nie test przeglądarkowy ani E2E.
-
-## 6. Wspólne elementy infrastruktury
-
-### `scripts/sdlc/common/bootstrap.sh`
-
-Bootstrap stanowi wspólną warstwę dla wszystkich skryptów Angular. Odpowiada za:
-
-- wyznaczenie `REPO_ROOT` na podstawie lokalizacji skryptu;
-- obsługę wspólnych argumentów `--config`, `--workspace`, `--artifacts`;
-- normalizację ścieżek Unix/Windows przez `cygpath`;
-- utworzenie katalogów artefaktów;
-- sprawdzenie istnienia konfiguracji;
-- załadowanie `internal/scripts/common_toolchain.sh`;
-- przygotowanie runtime path dla Python/Node/npm;
-- funkcję `require_command`;
-- zapis diagnostyki runtime i toolchainu.
-
-### `scripts/sdlc/common/config-value.sh`
-
-`config_value` odczytuje prostą wartość skalarną z układu:
-
-```yaml
-section:
-  key: value
-```
-
-Nie jest pełnym parserem YAML. W tym DAG-u używany jest do odczytu:
-
-- `angular.app_name`;
-- `runtime.angular_cli_version`;
-- `angular.output_path`.
-
-### `internal/scripts/common_toolchain.sh`
-
-W DAG-u Angular helper jest używany pośrednio przez bootstrap. Jego główne funkcje dotyczą runtime’u Node/npm:
-
-- `setup_windows_path` przywraca Windows `PATH` z `CRONOVA_WINDOWS_PATH`;
-- `setup_runtime_tools` dodaje katalogi wskazane przez `CRONOVA_PYTHON`, `CRONOVA_NODE` i `CRONOVA_NPM`;
-- normalizacja ścieżek Windows odbywa się przez `cygpath`.
-
-Skrypty Angular nie wywołują `setup_java_maven`, bo nie potrzebują Javy ani Mavena. `validate.sh` wymaga Node i npm bezpośrednio.
+Skrypty Angular same wyszukują `node`/`npm`/`npx`/`py` przez `Get-Command` (`*.cmd`/`*.exe` lub bez rozszerzenia) na `PATH`.
 
 ## 7. Workspace, artefakty i efekty uboczne
 
-| Lokalizacja | Zawartość | Rola |
-|---|---|---|
-| `.workspaces/angular` | wygenerowana aplikacja Angular | workspace projektu, ignorowany przez Git |
-| `.workspaces/angular/package.json` | skrypty npm i zależności | kontrakt dla install/lint/test/build |
-| `.workspaces/angular/package-lock.json` | zablokowane wersje zależności | wejście dla `npm ci` |
-| `.workspaces/angular/dist/item-portal/browser` | wynik production build | wejście do publikacji artefaktu |
-| `artifacts/angular/logs/` | logi siedmiu operacji | diagnostyka |
-| `artifacts/angular/metadata/runtime.txt` | ścieżki runtime’u | diagnostyka |
-| `artifacts/angular/metadata/node-version.txt` | wersja Node | diagnostyka |
-| `artifacts/angular/metadata/npm-version.txt` | wersja npm | diagnostyka |
-| `artifacts/angular/metadata/frontend-index.sha256` | suma pliku HTML | integralność artefaktu |
-| `artifacts/angular/dist/browser` | skopiowany frontend | artefakt publikowany dalej |
-| `artifacts/angular/frontend-manifest.json` | manifest komponentu | opis wyniku buildu |
+| Lokalizacja | Zawartość |
+|---|---|
+| `.workspaces/angular` | wygenerowana aplikacja Angular |
+| `artifacts/angular/logs/` | `angular-npm-ci.log`, `angular-lint.log`, `angular-unit-tests.log`, `angular-build.log` |
+| `artifacts/angular/metadata/` | `runtime.txt`, `node-version.txt`, `npm-version.txt`, `frontend-index.sha256` |
+| `artifacts/angular/dist/browser` | skopiowany frontend |
+| `artifacts/angular/frontend-manifest.json` | manifest komponentu |
 
-`scaffold.sh` nie czyści workspace’u. Jeśli `package.json` już istnieje, pomija generowanie i pozwala kolejnym taskom pracować na istniejącym projekcie. Z tego powodu test na zanieczyszczonym workspace może nie potwierdzić faktycznego działania Angular CLI.
+Scaffold nie czyści workspace’u; przy istniejącym `package.json` nie odtwarza aplikacji.
 
 ## 8. Ocena reużywalności — model „klocków LEGO”
 
-### Werdykt
+**Tak, przepływ jest zbudowany z reużywalnych klocków w obrębie Angular/npm.** Każdy task wywołuje osobny skrypt `.ps1` o jednym zadaniu, z tym samym kontraktem parametrów (`-Config`, `-Workspace`, `-Artifacts`).
 
-**Tak, przepływ jest zbudowany z reużywalnych klocków, przede wszystkim w obrębie rodziny Angular/npm.** DAG składa osobne operacje: walidację, scaffolding, instalację, lint, test, build i smoke test. Parametry projektu oraz ścieżki są w YAML, a logika wykonawcza jest w skryptach.
-
-Podział odpowiedzialności:
-
-```text
-DAG          = kolejność, zależności, timeouty i retry
-config       = stack, nazwa aplikacji, output path i jakość
-bootstrap    = wspólny kontrakt ścieżek/runtime'u
-skrypt       = jedna operacja npm/Angular
-workspace    = kod projektu i package-lock
-artifacts    = logi, build, manifest i checksum
-```
-
-### Macierz klocków
-
-| Klocek | Odpowiedzialność | Reużywalność | Granica |
-|---|---|---|---|
-| `validate.sh` | Walidacja konfiguracji i Node/npm | Średnia/wysoka dla projektów Angular | Sprawdza tylko proste markery YAML |
-| `scaffold.sh` | Generowanie aplikacji Angular przez CLI | Średnia/wysoka dla Angular | Zakłada Angular CLI, npx i parametry `app_name`/wersję |
-| `install.sh` | Powtarzalna instalacja zależności | Wysoka dla npm z lockfile | Wymaga `package-lock.json` |
-| `lint.sh` | Uruchomienie projektu `npm run lint` | Wysoka dla projektów z kontraktem npm | Nie definiuje lint runnera |
-| `test.sh` | Uruchomienie `npm test` bez watch | Wysoka dla projektów z kontraktem npm | Nie definiuje test runnera |
-| `build.sh` | Production build, kopiowanie, checksum, manifest | Średnia/wysoka dla Angular | Zakłada `index.html` i strukturę `dist` |
-| `smoke.sh` | Minimalna kontrola artefaktu HTML | Wysoka dla statycznych frontendów | Nie testuje HTTP, DOM ani API |
-| `bootstrap.sh` | Wspólne ścieżki, artefakty i runtime | Wysoka w rodzinie SDLC | Parser konfiguracji jest prosty |
-| `config-value.sh` | Odczyt prostych wartości YAML | Średnia | Nie jest parserem YAML |
-| `configs/sdlc-angular.yaml` | Parametry projektu | Reużywalna jako kontrakt konfiguracyjny | Wymaga zgodnych nazw sekcji/kluczy |
-
-### Kompozycja
-
-Ten przepływ może być rekonfigurowany przez zmianę pliku DAG i YAML bez duplikowania implementacji:
-
-```text
-Angular app:
-  validate -> scaffold -> npm ci -> lint -> test -> production build -> smoke
-```
-
-Wspólny bootstrap jest wykorzystywany także przez skrypty Spring Boot/integration. Same taski Angular nie korzystają jednak z `internal/scripts/` używanych przez przepływy Maven i Spring Boot. To są dwie rodziny skryptów z podobnym kontraktem wejściowym, ale innymi wymaganiami toolchainu.
+| Klocek | Odpowiedzialność | Granica |
+|---|---|---|
+| `angular-validate-config.ps1` | Walidacja konfiguracji i Node/npm | Sprawdza tylko `project.id`, `kind` i zakazane ścieżki |
+| `angular-scaffold-from-config.ps1` | Angular CLI + generator kontraktu + lint/Puppeteer | Ścieżka `.workspaces\springboot` i pakiet `com.example.items` są zaszyte w skrypcie |
+| `angular-npm-install-from-config.ps1` | `npm ci` | Wymaga lockfile |
+| `angular-lint-from-config.ps1` | `npm run lint` | Runner z projektu |
+| `angular-test-from-config.ps1` | `npm test -- --watch=false` | Runner z projektu |
+| `angular-build-from-config.ps1` | Build, kopia, checksum, manifest | Zakłada `index.html` w `dist` |
+| `angular-smoke-test-from-config.ps1` | Kontrola artefaktu HTML | Nie testuje HTTP |
 
 ### Ograniczenia i ryzyka
 
-1. `scaffold.sh` przy istniejącym `package.json` pomija generowanie, więc nie jest destrukcyjnie powtarzalny i może testować stary workspace.
-2. `validate.sh` sprawdza tylko markery `project:` i `kind: angular`, a nie pełny schemat konfiguracji.
-3. `config-value.sh` obsługuje tylko prosty dwupoziomowy YAML.
-4. Wersje Node `22` i Angular CLI `20` są opisane w konfiguracji, ale skrypt nie wymusza ich instalacji ani nie zatrzymuje się z powodu niezgodnej wersji.
-5. `npm ci`, npx Angular CLI i build zależą od sieci npm, jeżeli cache jest pusty.
-6. `test.sh` zakłada, że projektowa komenda `npm test` przyjmie `--watch=false`; zgodność zależy od generatora i test runnera.
-7. `build.sh` zakłada obecność `index.html` i określony układ `dist`; fallback może ukryć rozbieżność konfiguracji.
-8. `smoke.sh` sprawdza tylko prosty marker `<html`; nie jest testem uruchomionej aplikacji ani integracji z backendem.
-9. `artifacts/angular` i `.workspaces/angular` są współdzielone przez kolejne runy, a `max_active_runs: 1` chroni tylko ten DAG.
-10. W konfiguracji istnieje `api_client_mode: openapi-generated`, ale ten DAG nie generuje klienta OpenAPI i nie wykonuje walidacji `contracts/openapi.yaml`.
+1. Przy `api_client_mode: openapi-generated` scaffold wymaga istniejącego workspace’u Spring Boot (`.workspaces\springboot`); samodzielny run `sdlc_angular` na czystym repozytorium zakończy się błędem, jeśli backend nie został wcześniej wygenerowany.
+2. `Get-SdlcConfigValue` obsługuje tylko prosty dwupoziomowy YAML.
+3. Wersja Node z konfiguracji nie jest egzekwowana.
+4. `npx`, `npm ci` i Angular CLI wymagają dostępu do rejestru npm przy pustym cache.
+5. Fallback katalogu `dist` może ukryć błędną wartość `output_path`.
+6. Smoke test sprawdza tylko marker `<html`.
 
-## 9. Wniosek końcowy
+## 9. Wniosek
 
-`sdlc_angular` spełnia założenie reużywalnych klocków:
-
-- DAG pozostaje deklaratywnym grafem;
-- każdy task wywołuje osobny skrypt o jasnej odpowiedzialności;
-- wspólny bootstrap izoluje logikę ścieżek, artefaktów i runtime’u;
-- konfiguracja projektu nie jest zaszyta w komendach poza parametrami DAG-a;
-- ten sam schemat może obsłużyć kolejne aplikacje Angular zgodne z kontraktem npm.
-
-Ocena nie oznacza pełnej niezależności od stosu. Klocki są uniwersalne głównie dla Angular/npm i wymagają zgodności projektu z konwencjami `package.json`, `package-lock.json`, `npm run lint`, `npm test` i `npm run build`.
-
-Przed uznaniem przepływu za zweryfikowany agent Windows powinien potwierdzić:
-
-- użycie wskazanego PowerShell, Node i npm;
-- widoczność DAG-a i poprawną kolejność siedmiu tasków;
-- działanie Angular CLI przez `npx`;
-- powtarzalne `npm ci`;
-- wynik lint i testów;
-- production build z `index.html`;
-- obecność checksum, manifestu i skopiowanego artefaktu;
-- przejście smoke testu;
-- brak zmian źródłowych, commitów i pushy po stronie agenta.
+`sdlc_angular` jest deklaratywnym grafem siedmiu tasków PowerShell, z których każdy wywołuje osobny, parametryzowany skrypt. Klocki są uniwersalne dla projektów Angular zgodnych z konwencjami `package.json`/`package-lock.json`, `npm run lint`, `npm test` i `npm run build`.

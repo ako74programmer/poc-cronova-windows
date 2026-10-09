@@ -34,7 +34,7 @@ Pierwotne repozytorium jest źródłem inspiracji i punktem wyjścia. Rozwój, d
 - 🟢 **Mała natywna instalacja, zero zależności usługowych.** Scheduler napisany w czystym Go, bez CGO, oraz samodzielny executor z wbudowaną SQLite. Instalator PowerShell rejestruje usługi Windows; nie jest potrzebny stos Airflow ani runtime kontenerowy.
 - 🗂️ **DAG-i w stylu Airflow / Azkaban.** Deklaratywne DAG-i YAML z krawędziami zależności, harmonogramami cron / `@every`, wyzwalaczami i oczekiwaniami między DAG-ami (`trigger_after`, `depends_on_dag`), pod-workflowami, catchup / backfill, ponawianiami i limitami czasu na poziomie zadania, pulami zasobów, priorytetami uruchomień i polisami szeregowego wykonania oraz regułami wyzwalania — prymitywy orkiestracyjne, które już znasz.
 - 📡 **Skaluj w poziomie, gdy potrzebujesz — workerzy dial-in.** Zdalni workerzy dołączają za pomocą jednorazowego tokena przez mTLS i **nawiązują połączenie wychodzące** (brak portu przychodzącego, brak współdzielonego systemu plików, przyjazne NAT); zadania są kierowane według `worker_group:`, logi strumieniowane są na żywo z powrotem, a restart workera ponownie przyjmuje jego uruchomione zadania zamiast uruchamiać je ponownie. Zero skonfigurowanych workerów = ten sam pojedynczy plik binarny co zawsze.
-- 🌐 **Wielojęzyczne zadania + przesyłanie projektów.** Każde zadanie działa jako podproces systemu operacyjnego, więc pisz zadania w **shellu, Pythonie, SQL, JAR lub HTTP** — dowolnym języku dostępnym na hoście. Przeciągnij i upuść skrypt, cały folder projektu lub `.zip` w konsoli, a cronova uruchomi go w izolowanej kopii roboczej.
+- 🌐 **Wielojęzyczne zadania + przesyłanie projektów.** Każde zadanie działa jako podproces systemu operacyjnego, więc pisz zadania w **PowerShellu, Pythonie, SQL, JAR lub HTTP** — dowolnym języku dostępnym na hoście. Przeciągnij i upuść skrypt, cały folder projektu lub `.zip` w konsoli, a cronova uruchomi go w izolowanej kopii roboczej.
 - 🤖 **Natywna integracja AI.** Wbudowany **[serwer Model Context Protocol (MCP)](https://modelcontextprotocol.io/)** i zdalne JSON CLI pozwalają agentom AI (Claude i dowolnemu klientowi MCP) listować, tworzyć, walidować, uruchamiać i przeglądać DAG-i przez to samo API uwierzytelniane tokenem i chronione rolami.
 - 🛡️ **Wykonanie odporne na awarie.** Uruchamiaj zadania w rozdzielonym executorze gRPC, więc restart lub aktualizacja schedulera nigdy nie zabija działających zadań — po odzyskaniu ponownie podłącza się do zadań w locie bez podwójnego wykonania.
 - 🖥️ **Konsola webowa z pełnym zestawem funkcji.** Pulpit DAG, historia uruchomień, stany zadań, **podgląd logów na żywo (SSE)**, ręczne wyzwalacze, zmienne i połączenia, ścieżka audytu oraz wizualny edytor poleceń — wszystko obsługiwane w procesie. Dołączone REST API + OpenAPI.
@@ -78,7 +78,7 @@ Domyślna konfiguracja deweloperska jest nieuwierzytelniona, ale tylko dla loopb
 | Catchup / backfill | ✅ | ✅ | ❌ | ❌ |
 | Ponawiania, limity czasu, pule | ✅ | ✅ | częściowo | ❌ |
 | Odzyskiwanie po awarii (brak podwójnego uruchomienia) | ✅ | ✅ | częściowo | ❌ |
-| Wielojęzyczne zadania (shell/Python/SQL/JAR/HTTP) | ✅ | ✅ (operatory) | zorientowany na JVM | dowolny (bez orkiestracji) |
+| Wielojęzyczne zadania (PowerShell/Python/SQL/JAR/HTTP) | ✅ | ✅ (operatory) | zorientowany na JVM | dowolny (bez orkiestracji) |
 | Konsola webowa + logi na żywo | ✅ | ✅ | ✅ | ❌ |
 | REST API + OpenAPI | ✅ | ✅ | częściowo | ❌ |
 | Integracja z agentem AI / MCP | ✅ **wbudowane** | ❌ | ❌ | ❌ |
@@ -99,7 +99,7 @@ max_active_runs: 1
 default_retries: 2
 tasks:
   - id: extract
-    type: shell
+    type: powershell        # default; may be omitted
     command: "python extract.py --date {{ logical_date }}"
     pool: default
   - id: transform
@@ -118,12 +118,12 @@ trigger_after:               # opcjonalnie: uruchom po sukcesie innego DAG-u
 
 ### Uruchamiaj własne skrypty i projekty
 
-Prześlij pojedynczy skrypt, cały folder projektu lub `.zip` w konsoli (edytor zadań → **Project**), a następnie wskaż go w zadaniu typu shell:
+Prześlij pojedynczy skrypt, cały folder projektu lub `.zip` w konsoli (edytor zadań → **Project**), a następnie wskaż go w zadaniu typu powershell:
 
 ```yaml
 tasks:
   - id: run_main
-    type: shell
+    type: powershell
     command: python main.py     # uruchamia się z cwd = czysta kopia projektu
     project: my_app
 ```
@@ -185,7 +185,7 @@ Tak — dla zespołów, które chcą planowania DAG (zależności, ponawiania, c
 Nie. Scheduler i konsola webowa używają **wbudowanej bazy SQLite**; zarządzana instalacja dodaje mały samodzielny executor, aby restarty schedulera nie zabijały zadań. Python/Java/psql są potrzebne na hoście tylko wtedy, gdy *Twoje zadania* je wywołują.
 
 **W jakich językach można pisać zadania?**
-W dowolnych. Zadania to `shell`, `python`, `sql`, `jar` lub `http`; zadanie typu shell może wywołać cokolwiek na hoście (Node, Go, binaria Rust, …). Framework (Go) jest w pełni rozdzielony od języka zadania.
+W dowolnych. Zadania to `powershell` (domyślny), `python`, `sql`, `jar`, `http` lub `subdag`; zadanie PowerShell może wywołać cokolwiek na hoście (Node, Go, binaria Rust, …). Framework (Go) jest w pełni rozdzielony od języka zadania.
 
 **Czym cronova różni się od cron?**
 cron uruchamia izolowane polecenia zgodnie z zegarem. cronova uruchamia **DAG-i**: zadania z zależnościami, ponawianiami, limitami czasu, backfill, pulami współbieżności, wyzwalaczami między DAG-ami, konsolą webową z logami i API — rzeczy, które w końcu ręcznie budujesz wokół cron.

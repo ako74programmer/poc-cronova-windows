@@ -201,9 +201,9 @@ Przykłady:
 
 ```yaml
 command: "python etl.py --day {{ logical_date - 1d | %Y%m%d }}"     # wczoraj jako 20260807
-command: "report.sh --from {{ logical_date.month_start }} --to {{ logical_date.month_end }}"
-command: "cleanup.sh --before {{ logical_date.month_start - 1d }}"  # ostatni dzień poprzedniego miesiąca
-command: "sync.sh --since {{ logical_datetime - 6h }}"
+command: "& .\\report.ps1 -From {{ logical_date.month_start }} -To {{ logical_date.month_end }}"
+command: "& .\\cleanup.ps1 -Before {{ logical_date.month_start - 1d }}"  # ostatni dzień poprzedniego miesiąca
+command: "& .\\sync.ps1 -Since {{ logical_datetime - 6h }}"
 ```
 
 Wyrażenie, które się nie parsuje (nieznana jednostka, zły token `%`, zbędny tekst), pozostaje w komendzie dosłownie — literówki pozostają widoczne w logu zadania zamiast cicho renderować się jako puste.

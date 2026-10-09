@@ -51,7 +51,7 @@
       "type": "doc",
       "source": "README.md",
       "section": "Why cronova?",
-      "text": "- 🟢 **Small native install, zero service dependencies.** Pure-Go, CGO-free scheduler plus standalone executor with embedded SQLite. The PowerShell installer registers Windows services; no Airflow-style stack or container runtime is required.\n- 🗂️ **Airflow / Azkaban-style DAGs.** Declarative YAML DAGs with dependency edges, cron / `@every` schedules, cross-DAG triggers and waits (`trigger_after`, `depends_on_dag`), sub-workflows, catchup / backfill, per-task retries & timeouts, resource pools, run priorities & serial execution policies, and trigger rules — the orchestration primitives you already know.\n- 📡 **Scale out when you need to — dial-in workers.** Remote workers join with a one-time token over mTLS and **dial in** (no inbound port, no shared filesystem, NAT-friendly); tasks route by `worker_group:`, logs stream back live, and a worker restart re-adopts its running tasks instead of re-running them. Zero workers configured = the same single binary as always.\n- 🌐 **Polyglot tasks + project upload.** Every task runs as an OS subprocess, so write tasks in **shell, Python, SQL, a JAR, or HTTP** — any language on the host. Drag-and-drop a script, a whole project folder, or a `.zip` in the console and cronova runs it in an isolated working copy.\n- 🤖 **AI-native.** A built-in **[Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server** and a remote JSON CLI let AI agents (Claude, and any MCP client) list, create, validate, trigger, and inspect DAGs through the same token-authenticated, role-gated API.\n- 🛡️ **Crash-recoverable execution.** Run tasks in a decoupled gRPC executor so restarting or upgrading the scheduler never kills running jobs — on recovery it re-attaches to in-flight tasks with no double execution.\n- 🖥️ **Batteries-included web console.** DAG dashboard, run history, task states, **live log tailing (SSE)**, manual triggers, variables & connections, an audit trail, and a visual command editor — all served in-process. REST API + OpenAPI included.",
+      "text": "- 🟢 **Small native install, zero service dependencies.** Pure-Go, CGO-free scheduler plus standalone executor with embedded SQLite. The PowerShell installer registers Windows services; no Airflow-style stack or container runtime is required.\n- 🗂️ **Airflow / Azkaban-style DAGs.** Declarative YAML DAGs with dependency edges, cron / `@every` schedules, cross-DAG triggers and waits (`trigger_after`, `depends_on_dag`), sub-workflows, catchup / backfill, per-task retries & timeouts, resource pools, run priorities & serial execution policies, and trigger rules — the orchestration primitives you already know.\n- 📡 **Scale out when you need to — dial-in workers.** Remote workers join with a one-time token over mTLS and **dial in** (no inbound port, no shared filesystem, NAT-friendly); tasks route by `worker_group:`, logs stream back live, and a worker restart re-adopts its running tasks instead of re-running them. Zero workers configured = the same single binary as always.\n- 🌐 **Polyglot tasks + project upload.** Every task runs as an OS subprocess, so write tasks in **PowerShell, Python, SQL, a JAR, or HTTP** — any language on the host. Drag-and-drop a script, a whole project folder, or a `.zip` in the console and cronova runs it in an isolated working copy.\n- 🤖 **AI-native.** A built-in **[Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server** and a remote JSON CLI let AI agents (Claude, and any MCP client) list, create, validate, trigger, and inspect DAGs through the same token-authenticated, role-gated API.\n- 🛡️ **Crash-recoverable execution.** Run tasks in a decoupled gRPC executor so restarting or upgrading the scheduler never kills running jobs — on recovery it re-attaches to in-flight tasks with no double execution.\n- 🖥️ **Batteries-included web console.** DAG dashboard, run history, task states, **live log tailing (SSE)**, manual triggers, variables & connections, an audit trail, and a visual command editor — all served in-process. REST API + OpenAPI included.",
       "topics": [
         "dag",
         "schedule",
@@ -141,7 +141,7 @@
       "type": "doc",
       "source": "README.md",
       "section": "cronova vs. Airflow vs. Azkaban vs. cron",
-      "text": "| | **cronova** | Apache Airflow | Azkaban | plain cron |\n|---|:---:|:---:|:---:|:---:|\n| Install | **PowerShell package / Windows services** | Python stack + DB + broker | JVM + MySQL | built-in |\n| Runtime deps | **none** (embedded SQLite) | Python, Postgres, Redis/Celery | Java, MySQL | none |\n| DAGs & dependencies | ✅ | ✅ | ✅ | ❌ |\n| Cron + interval + cross-DAG triggers | ✅ | ✅ | partial | cron only |\n| Catchup / backfill | ✅ | ✅ | ❌ | ❌ |\n| Retries, timeouts, pools | ✅ | ✅ | partial | ❌ |\n| Crash recovery (no double-run) | ✅ | ✅ | partial | ❌ |\n| Polyglot tasks (shell/Python/SQL/JAR/HTTP) | ✅ | ✅ (operators) | JVM-centric | any (no orchestration) |\n| Web console + live logs | ✅ | ✅ | ✅ | ❌ |\n| REST API + OpenAPI | ✅ | ✅ | partial | ❌ |\n| AI agent / MCP integration | ✅ **built-in** | ❌ | ❌ | ❌ |\n| Footprint | **two small native processes, tens of MB** | heavy | heavy (JVM) | tiny |\n\ncronova targets the sweet spot between a bare `crontab` and a full Airflow deployment: **real DAG orchestration with almost no operational overhead.**",
+      "text": "| | **cronova** | Apache Airflow | Azkaban | plain cron |\n|---|:---:|:---:|:---:|:---:|\n| Install | **PowerShell package / Windows services** | Python stack + DB + broker | JVM + MySQL | built-in |\n| Runtime deps | **none** (embedded SQLite) | Python, Postgres, Redis/Celery | Java, MySQL | none |\n| DAGs & dependencies | ✅ | ✅ | ✅ | ❌ |\n| Cron + interval + cross-DAG triggers | ✅ | ✅ | partial | cron only |\n| Catchup / backfill | ✅ | ✅ | ❌ | ❌ |\n| Retries, timeouts, pools | ✅ | ✅ | partial | ❌ |\n| Crash recovery (no double-run) | ✅ | ✅ | partial | ❌ |\n| Polyglot tasks (PowerShell/Python/SQL/JAR/HTTP) | ✅ | ✅ (operators) | JVM-centric | any (no orchestration) |\n| Web console + live logs | ✅ | ✅ | ✅ | ❌ |\n| REST API + OpenAPI | ✅ | ✅ | partial | ❌ |\n| AI agent / MCP integration | ✅ **built-in** | ❌ | ❌ | ❌ |\n| Footprint | **two small native processes, tens of MB** | heavy | heavy (JVM) | tiny |\n\ncronova targets the sweet spot between a bare `crontab` and a full Airflow deployment: **real DAG orchestration with almost no operational overhead.**",
       "topics": [
         "dag",
         "schedule",
@@ -156,23 +156,35 @@
       "type": "doc",
       "source": "README.md",
       "section": "Define a DAG",
-      "text": "Drop a YAML file in `./dags/` (see [`dags/`](dags/) for runnable examples):\n\n```yaml\ndag_id: daily_etl\nschedule: \"0 2 * * *\"        # cron; or \"@every 30s\"; omit for manual-only\nstart_date: 2026-06-01\ncatchup: true                # backfill missed periods\nmax_active_runs: 1\ndefault_retries: 2\ntasks:\n  - id: extract\n    type: shell\n    command: \"python extract.py --date {{ logical_date }}\"\n    pool: default\n  - id: transform\n    command: \"python transform.py --date {{ logical_date }}\"\n    deps: [extract]\n  - id: load\n    command: \"psql -f load.sql\"\n    deps: [transform]\n    retries: 3\n    timeout: 1800\ntrigger_after:               # optional: run after another DAG succeeds\n  - dag_id: upstream_ingest\n```\n\n**Template variables** work in any command, URL, header, body, or query:\n`{{ logical_date }}`, `{{ logical_datetime }}`, `{{ run_id }}`, `{{ dag_id }}`, `{{ task_id }}`, `{{ try_number }}` (also injected as `CRONOVA_*` env vars), plus UI-managed `{{ var.KEY }}`, `{{ conn.ID.host }}`, and `{{ params.KEY }}`. In the console you don't type the `{{ }}` — a **visual editor renders each variable as a color-coded pill** and a grouped palette inserts them by **click or drag**.",
+      "text": "Drop a YAML file in `./dags/` (see [`dags/`](dags/) for runnable examples):\n\n```yaml\ndag_id: daily_etl\nschedule: \"0 2 * * *\"        # cron; or \"@every 30s\"; omit for manual-only\nstart_date: 2026-06-01\ncatchup: true                # backfill missed periods\nmax_active_runs: 1\ndefault_retries: 2\ntasks:\n  - id: extract\n    type: powershell        # default; may be omitted\n    command: \"python extract.py --date {{ logical_date }}\"\n    pool: default\n  - id: transform\n    command: \"python transform.py --date {{ logical_date }}\"\n    deps: [extract]\n  - id: load\n    command: \"psql -f load.sql\"\n    deps: [transform]\n    retries: 3\n    timeout: 1800\ntrigger_after:               # optional: run after another DAG succeeds\n  - dag_id: upstream_ingest\n```",
       "topics": [
         "dag",
         "schedule",
         "retry",
         "pool",
         "ai",
-        "template",
-        "variable"
+        "install"
       ]
     },
     {
       "id": "doc-readme-15",
       "type": "doc",
       "source": "README.md",
+      "section": "Define a DAG",
+      "text": "**Template variables** work in any command, URL, header, body, or query:\n`{{ logical_date }}`, `{{ logical_datetime }}`, `{{ run_id }}`, `{{ dag_id }}`, `{{ task_id }}`, `{{ try_number }}` (also injected as `CRONOVA_*` env vars), plus UI-managed `{{ var.KEY }}`, `{{ conn.ID.host }}`, and `{{ params.KEY }}`. In the console you don't type the `{{ }}` — a **visual editor renders each variable as a color-coded pill** and a grouped palette inserts them by **click or drag**.",
+      "topics": [
+        "dag",
+        "schedule",
+        "template",
+        "variable"
+      ]
+    },
+    {
+      "id": "doc-readme-16",
+      "type": "doc",
+      "source": "README.md",
       "section": "Spring Boot Variant DAG",
-      "text": "The repository now includes a config-driven Spring Boot SDLC DAG that selects the application variant per run:\n\n- DAG: [dags/sdlc_springboot_variant.yaml](dags/sdlc_springboot_variant.yaml)\n- supported variants: `rest`, `crud`, `h2`, `security`\n- variant selection: `{{ params.variant }}` / `CRONOVA_PARAM_VARIANT`\n\nExample trigger:\n\n```powershell\n.\\cronova.exe trigger sdlc_springboot_variant -params '{\"variant\":\"h2\"}'\n```\n\nConfirmed test run:\n\n- UI: `http://127.0.0.1:8090/#/run/sdlc_springboot_variant__manual_1791107718627011000`\n- variant: `h2`\n- result: `success`\n\nTechnical details:\n\n- [docs/SDLC_DAGS.md](docs/SDLC_DAGS.md)\n- [docs/SDLC_SPRINGBOOT_REST_TECHNICAL.md](docs/SDLC_SPRINGBOOT_REST_TECHNICAL.md)\n\n### Run your own scripts and projects\n\nUpload a single script, a whole project folder, or a `.zip` in the console (task editor → **Project**), then point a shell task at it:\n\n```yaml\ntasks:\n  - id: run_main\n    type: shell\n    command: python main.py     # runs with cwd = a clean copy of the project\n    project: my_app\n```",
+      "text": "The repository now includes a config-driven Spring Boot SDLC DAG that selects the application variant per run:\n\n- DAG: [dags/sdlc_springboot_variant.yaml](dags/sdlc_springboot_variant.yaml)\n- supported variants: `rest`, `crud`, `h2`, `security`\n- variant selection: `{{ params.variant }}` / `CRONOVA_PARAM_VARIANT`\n\nExample trigger:\n\n```powershell\n.\\cronova.exe trigger sdlc_springboot_variant -params '{\"variant\":\"h2\"}'\n```\n\nConfirmed test run:\n\n- UI: `http://127.0.0.1:8090/#/run/sdlc_springboot_variant__manual_1791107718627011000`\n- variant: `h2`\n- result: `success`\n\nTechnical details:\n\n- [docs/SDLC_DAGS.md](docs/SDLC_DAGS.md)\n- [docs/SDLC_SPRINGBOOT_REST_TECHNICAL.md](docs/SDLC_SPRINGBOOT_REST_TECHNICAL.md)\n\n### Run your own scripts and projects\n\nUpload a single script, a whole project folder, or a `.zip` in the console (task editor → **Project**), then point a PowerShell task at it:\n\n```yaml\ntasks:\n  - id: run_main\n    type: powershell\n    command: python main.py     # runs with cwd = a clean copy of the project\n    project: my_app\n```",
       "topics": [
         "dag",
         "schedule",
@@ -184,7 +196,7 @@
       ]
     },
     {
-      "id": "doc-readme-16",
+      "id": "doc-readme-17",
       "type": "doc",
       "source": "README.md",
       "section": "Spring Boot Variant DAG",
@@ -196,7 +208,7 @@
       ]
     },
     {
-      "id": "doc-readme-17",
+      "id": "doc-readme-18",
       "type": "doc",
       "source": "README.md",
       "section": "AI agents (MCP + remote CLI)",
@@ -210,7 +222,7 @@
       ]
     },
     {
-      "id": "doc-readme-18",
+      "id": "doc-readme-19",
       "type": "doc",
       "source": "README.md",
       "section": "Deploy in production",
@@ -223,7 +235,7 @@
       ]
     },
     {
-      "id": "doc-readme-19",
+      "id": "doc-readme-20",
       "type": "doc",
       "source": "README.md",
       "section": "Documentation",
@@ -240,11 +252,11 @@
       ]
     },
     {
-      "id": "doc-readme-20",
+      "id": "doc-readme-21",
       "type": "doc",
       "source": "README.md",
       "section": "FAQ",
-      "text": "**Is cronova an Airflow alternative?**\nYes — for teams who want DAG scheduling (dependencies, retries, catchup, pools, a web UI, a REST API) without running a Python stack, a separate database, and a message broker. cronova is a compact native service pair with an embedded database. For very large, plugin-heavy data platforms, Airflow remains the richer ecosystem.\n\n**Does cronova need a database, JVM, or Python?**\nNo. The scheduler and web console use an **embedded SQLite** database; the managed install adds a small standalone executor so scheduler restarts do not kill tasks. Python/Java/psql are only needed on the host if *your tasks* invoke them.\n\n**What languages can tasks be written in?**\nAny. Tasks are `shell`, `python`, `sql`, `jar`, or `http`; a shell task can invoke anything on the host (Node, Go, Rust binaries, …). The framework (Go) is fully decoupled from the task language.\n\n**How is cronova different from cron?**\ncron runs isolated commands on a clock. cronova runs **DAGs**: tasks with dependencies, retries, timeouts, backfill, concurrency pools, cross-DAG triggers, a web console with logs, and an API — the things you end up hand-rolling around cron.",
+      "text": "**Is cronova an Airflow alternative?**\nYes — for teams who want DAG scheduling (dependencies, retries, catchup, pools, a web UI, a REST API) without running a Python stack, a separate database, and a message broker. cronova is a compact native service pair with an embedded database. For very large, plugin-heavy data platforms, Airflow remains the richer ecosystem.\n\n**Does cronova need a database, JVM, or Python?**\nNo. The scheduler and web console use an **embedded SQLite** database; the managed install adds a small standalone executor so scheduler restarts do not kill tasks. Python/Java/psql are only needed on the host if *your tasks* invoke them.\n\n**What languages can tasks be written in?**\nAny. Tasks are `powershell` (default), `python`, `sql`, `jar`, `http`, or `subdag`; a PowerShell task can invoke anything on the host (Node, Go, Rust binaries, …). The framework (Go) is fully decoupled from the task language.",
       "topics": [
         "dag",
         "schedule",
@@ -255,13 +267,16 @@
       ]
     },
     {
-      "id": "doc-readme-21",
+      "id": "doc-readme-22",
       "type": "doc",
       "source": "README.md",
       "section": "FAQ",
-      "text": "**Can AI agents control cronova?**\nYes. It ships a built-in **MCP server** (`cronova mcp`) and a remote JSON CLI, so AI agents can manage workflows through the same authenticated, role-gated API as humans.\n\n**Which platforms are supported?**\nThis project targets **Windows amd64**. The installer requires PowerShell with administrator privileges. Only Windows is supported.\n\n**Is it production-ready / crash-safe?**\nManaged installs use a decoupled gRPC executor, but Windows Job Objects and a full clean-machine installation test remain roadmap items. Review [ROADMAP.md](ROADMAP.md) before production adoption.",
+      "text": "**How is cronova different from cron?**\ncron runs isolated commands on a clock. cronova runs **DAGs**: tasks with dependencies, retries, timeouts, backfill, concurrency pools, cross-DAG triggers, a web console with logs, and an API — the things you end up hand-rolling around cron.\n\n**Can AI agents control cronova?**\nYes. It ships a built-in **MCP server** (`cronova mcp`) and a remote JSON CLI, so AI agents can manage workflows through the same authenticated, role-gated API as humans.\n\n**Which platforms are supported?**\nThis project targets **Windows amd64**. The installer requires PowerShell with administrator privileges. Only Windows is supported.\n\n**Is it production-ready / crash-safe?**\nManaged installs use a decoupled gRPC executor, but Windows Job Objects and a full clean-machine installation test remain roadmap items. Review [ROADMAP.md](ROADMAP.md) before production adoption.",
       "topics": [
+        "dag",
         "schedule",
+        "retry",
+        "pool",
         "project",
         "ai",
         "test",
@@ -269,7 +284,7 @@
       ]
     },
     {
-      "id": "doc-readme-22",
+      "id": "doc-readme-23",
       "type": "doc",
       "source": "README.md",
       "section": "Development",
@@ -279,7 +294,7 @@
       ]
     },
     {
-      "id": "doc-readme-23",
+      "id": "doc-readme-24",
       "type": "doc",
       "source": "README.md",
       "section": "regenerate gRPC code after editing proto/ (needs: buf + protoc-gen-go[-grpc])",
@@ -289,7 +304,7 @@
       ]
     },
     {
-      "id": "doc-readme-24",
+      "id": "doc-readme-25",
       "type": "doc",
       "source": "README.md",
       "section": "UI dev: serve console assets from disk (edit + reload, no rebuild)",
@@ -300,7 +315,7 @@
       ]
     },
     {
-      "id": "doc-readme-25",
+      "id": "doc-readme-26",
       "type": "doc",
       "source": "README.md",
       "section": "License",
@@ -313,7 +328,7 @@
       ]
     },
     {
-      "id": "doc-readme-26",
+      "id": "doc-readme-27",
       "type": "doc",
       "source": "docs/README.md",
       "section": "cronova Documentation",
@@ -327,7 +342,7 @@
       ]
     },
     {
-      "id": "doc-readme-27",
+      "id": "doc-readme-28",
       "type": "doc",
       "source": "docs/README.md",
       "section": "Get started",
@@ -343,7 +358,7 @@
       ]
     },
     {
-      "id": "doc-readme-28",
+      "id": "doc-readme-29",
       "type": "doc",
       "source": "docs/README.md",
       "section": "Reference",
@@ -357,7 +372,7 @@
       ]
     },
     {
-      "id": "doc-readme-29",
+      "id": "doc-readme-30",
       "type": "doc",
       "source": "docs/README.md",
       "section": "Operate & integrate",
@@ -368,7 +383,7 @@
       ]
     },
     {
-      "id": "doc-readme-30",
+      "id": "doc-readme-31",
       "type": "doc",
       "source": "docs/README.md",
       "section": "Concepts & background",
@@ -380,7 +395,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-31",
+      "id": "doc-getting_started-32",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "Getting Started with cronova",
@@ -392,7 +407,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-32",
+      "id": "doc-getting_started-33",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "1. Install cronova",
@@ -405,7 +420,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-33",
+      "id": "doc-getting_started-34",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "2. Start the scheduler and open the console",
@@ -419,7 +434,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-34",
+      "id": "doc-getting_started-35",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "2. Start the scheduler and open the console",
@@ -432,7 +447,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-35",
+      "id": "doc-getting_started-36",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "2. Start the scheduler and open the console",
@@ -445,7 +460,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-36",
+      "id": "doc-getting_started-37",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "2. Start the scheduler and open the console",
@@ -457,7 +472,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-37",
+      "id": "doc-getting_started-38",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "Development: clean slate, no auth, console at http://127.0.0.1:8090",
@@ -465,7 +480,7 @@
       "topics": []
     },
     {
-      "id": "doc-getting_started-38",
+      "id": "doc-getting_started-39",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "Production: persistent DB, auth from cronova.yaml",
@@ -475,7 +490,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-39",
+      "id": "doc-getting_started-40",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "Stop any running server",
@@ -486,7 +501,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-40",
+      "id": "doc-getting_started-41",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "3. Write your first DAG and trigger it",
@@ -501,7 +516,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-41",
+      "id": "doc-getting_started-42",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "3. Write your first DAG and trigger it",
@@ -517,7 +532,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-42",
+      "id": "doc-getting_started-43",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "4. Template variables",
@@ -532,7 +547,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-43",
+      "id": "doc-getting_started-44",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "4. Template variables",
@@ -546,7 +561,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-44",
+      "id": "doc-getting_started-45",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "4. Template variables",
@@ -559,7 +574,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-45",
+      "id": "doc-getting_started-46",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "5. Run your own scripts and projects",
@@ -573,7 +588,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-46",
+      "id": "doc-getting_started-47",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "5. Run your own scripts and projects",
@@ -587,7 +602,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-47",
+      "id": "doc-getting_started-48",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "5. Run your own scripts and projects",
@@ -601,7 +616,7 @@
       ]
     },
     {
-      "id": "doc-getting_started-48",
+      "id": "doc-getting_started-49",
       "type": "doc",
       "source": "docs/GETTING_STARTED.md",
       "section": "6. Next steps",
@@ -619,7 +634,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-49",
+      "id": "doc-dag_reference-50",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "DAG & Task Reference",
@@ -634,7 +649,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-50",
+      "id": "doc-dag_reference-51",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "DAG & Task Reference",
@@ -649,7 +664,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-51",
+      "id": "doc-dag_reference-52",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "DAG-level fields",
@@ -665,7 +680,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-52",
+      "id": "doc-dag_reference-53",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "DAG-level fields",
@@ -678,7 +693,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-53",
+      "id": "doc-dag_reference-54",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "DAG-level fields",
@@ -690,7 +705,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-54",
+      "id": "doc-dag_reference-55",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Definition snapshots",
@@ -703,7 +718,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-55",
+      "id": "doc-dag_reference-56",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Task-level fields",
@@ -713,7 +728,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-56",
+      "id": "doc-dag_reference-57",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Task-level fields",
@@ -731,7 +746,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-57",
+      "id": "doc-dag_reference-58",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Task-level fields",
@@ -742,7 +757,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-58",
+      "id": "doc-dag_reference-59",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Task types",
@@ -756,7 +771,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-59",
+      "id": "doc-dag_reference-60",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Task types",
@@ -769,7 +784,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-60",
+      "id": "doc-dag_reference-61",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Template variables",
@@ -783,18 +798,18 @@
       ]
     },
     {
-      "id": "doc-dag_reference-61",
+      "id": "doc-dag_reference-62",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Template variables",
-      "text": "| Piece | Values | Notes |\n|---|---|---|\n| anchor | `.month_start` `.month_end` `.week_start` `.week_end` | Binds to the base name, applies first; weeks start Monday; time resets to midnight. |\n| offset | `±N` + `d` (days) `h` (hours) `w` (weeks) `mo` (months) | Repeatable, applied left to right. `d`/`w`/`mo` are calendar arithmetic (wall clock survives DST); `h` is an absolute duration. |\n| format | `\\|` + strftime subset: `%Y %y %m %d %H %M %S %%` | Default: `YYYY-MM-DD` for `logical_date`, RFC3339 for `logical_datetime`. |\n\nExamples:\n\n```yaml\ncommand: \"python etl.py --day {{ logical_date - 1d | %Y%m%d }}\"     # yesterday as 20260807\ncommand: \"report.sh --from {{ logical_date.month_start }} --to {{ logical_date.month_end }}\"\ncommand: \"cleanup.sh --before {{ logical_date.month_start - 1d }}\"  # last day of previous month\ncommand: \"sync.sh --since {{ logical_datetime - 6h }}\"\n```\n\nAn expression that does not parse (unknown unit, bad `%` token, stray text) is\nleft in the command verbatim — typos stay visible in the task log instead of\nsilently rendering empty.",
+      "text": "| Piece | Values | Notes |\n|---|---|---|\n| anchor | `.month_start` `.month_end` `.week_start` `.week_end` | Binds to the base name, applies first; weeks start Monday; time resets to midnight. |\n| offset | `±N` + `d` (days) `h` (hours) `w` (weeks) `mo` (months) | Repeatable, applied left to right. `d`/`w`/`mo` are calendar arithmetic (wall clock survives DST); `h` is an absolute duration. |\n| format | `\\|` + strftime subset: `%Y %y %m %d %H %M %S %%` | Default: `YYYY-MM-DD` for `logical_date`, RFC3339 for `logical_datetime`. |\n\nExamples:\n\n```yaml\ncommand: \"python etl.py --day {{ logical_date - 1d | %Y%m%d }}\"     # yesterday as 20260807\ncommand: \"& .\\\\report.ps1 -From {{ logical_date.month_start }} -To {{ logical_date.month_end }}\"\ncommand: \"& .\\\\cleanup.ps1 -Before {{ logical_date.month_start - 1d }}\"  # last day of previous month\ncommand: \"& .\\\\sync.ps1 -Since {{ logical_datetime - 6h }}\"\n```\n\nAn expression that does not parse (unknown unit, bad `%` token, stray text) is\nleft in the command verbatim — typos stay visible in the task log instead of\nsilently rendering empty.",
       "topics": [
         "template",
         "variable"
       ]
     },
     {
-      "id": "doc-dag_reference-62",
+      "id": "doc-dag_reference-63",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Template variables",
@@ -808,7 +823,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-63",
+      "id": "doc-dag_reference-64",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Template variables",
@@ -822,7 +837,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-64",
+      "id": "doc-dag_reference-65",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Trigger rules",
@@ -833,7 +848,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-65",
+      "id": "doc-dag_reference-66",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "Resource pools",
@@ -845,7 +860,7 @@
       ]
     },
     {
-      "id": "doc-dag_reference-66",
+      "id": "doc-dag_reference-67",
       "type": "doc",
       "source": "docs/DAG_REFERENCE.md",
       "section": "See also",
@@ -855,7 +870,7 @@
       ]
     },
     {
-      "id": "doc-agents-67",
+      "id": "doc-agents-68",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "Connecting an AI agent to cronova",
@@ -867,7 +882,7 @@
       ]
     },
     {
-      "id": "doc-agents-68",
+      "id": "doc-agents-69",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "1. Mint a token",
@@ -878,7 +893,7 @@
       ]
     },
     {
-      "id": "doc-agents-69",
+      "id": "doc-agents-70",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "cnv_pat_XXXXXXXXXXXXXXXXXXXX     ← shown once; store it",
@@ -888,7 +903,7 @@
       ]
     },
     {
-      "id": "doc-agents-70",
+      "id": "doc-agents-71",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "2. MCP server (recommended for Claude)",
@@ -904,7 +919,7 @@
       ]
     },
     {
-      "id": "doc-agents-71",
+      "id": "doc-agents-72",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "3. Remote CLI (for shell-out agents / scripts)",
@@ -919,7 +934,7 @@
       ]
     },
     {
-      "id": "doc-agents-72",
+      "id": "doc-agents-73",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "3. Remote CLI (for shell-out agents / scripts)",
@@ -931,7 +946,7 @@
       ]
     },
     {
-      "id": "doc-agents-73",
+      "id": "doc-agents-74",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "Authoring loop (validate before create)",
@@ -943,7 +958,7 @@
       ]
     },
     {
-      "id": "doc-agents-74",
+      "id": "doc-agents-75",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "{\"valid\": false, \"error\": \"dependency cycle detected: [a b a]\", \"canonical_yaml\": \"…\"}",
@@ -951,7 +966,7 @@
       "topics": []
     },
     {
-      "id": "doc-agents-75",
+      "id": "doc-agents-76",
       "type": "doc",
       "source": "docs/AGENTS.md",
       "section": "Security notes",
@@ -963,7 +978,7 @@
       ]
     },
     {
-      "id": "doc-cli-76",
+      "id": "doc-cli-77",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "cronova CLI Reference",
@@ -978,7 +993,7 @@
       ]
     },
     {
-      "id": "doc-cli-77",
+      "id": "doc-cli-78",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Scheduler",
@@ -990,7 +1005,7 @@
       ]
     },
     {
-      "id": "doc-cli-78",
+      "id": "doc-cli-79",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Scheduler",
@@ -1006,7 +1021,7 @@
       ]
     },
     {
-      "id": "doc-cli-79",
+      "id": "doc-cli-80",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Scheduler",
@@ -1018,7 +1033,7 @@
       ]
     },
     {
-      "id": "doc-cli-80",
+      "id": "doc-cli-81",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Service lifecycle",
@@ -1031,7 +1046,7 @@
       ]
     },
     {
-      "id": "doc-cli-81",
+      "id": "doc-cli-82",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Service lifecycle",
@@ -1043,7 +1058,7 @@
       ]
     },
     {
-      "id": "doc-cli-82",
+      "id": "doc-cli-83",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Service lifecycle",
@@ -1056,7 +1071,7 @@
       ]
     },
     {
-      "id": "doc-cli-83",
+      "id": "doc-cli-84",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Service lifecycle",
@@ -1068,7 +1083,7 @@
       ]
     },
     {
-      "id": "doc-cli-84",
+      "id": "doc-cli-85",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Service lifecycle",
@@ -1079,7 +1094,7 @@
       ]
     },
     {
-      "id": "doc-cli-85",
+      "id": "doc-cli-86",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Local operations",
@@ -1094,7 +1109,7 @@
       ]
     },
     {
-      "id": "doc-cli-86",
+      "id": "doc-cli-87",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Local operations",
@@ -1106,7 +1121,7 @@
       ]
     },
     {
-      "id": "doc-cli-87",
+      "id": "doc-cli-88",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Local operations",
@@ -1120,7 +1135,7 @@
       ]
     },
     {
-      "id": "doc-cli-88",
+      "id": "doc-cli-89",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Local operations",
@@ -1133,7 +1148,7 @@
       ]
     },
     {
-      "id": "doc-cli-89",
+      "id": "doc-cli-90",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Local operations",
@@ -1146,7 +1161,7 @@
       ]
     },
     {
-      "id": "doc-cli-90",
+      "id": "doc-cli-91",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Local operations",
@@ -1156,7 +1171,7 @@
       ]
     },
     {
-      "id": "doc-cli-91",
+      "id": "doc-cli-92",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1170,7 +1185,7 @@
       ]
     },
     {
-      "id": "doc-cli-92",
+      "id": "doc-cli-93",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1184,7 +1199,7 @@
       ]
     },
     {
-      "id": "doc-cli-93",
+      "id": "doc-cli-94",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1198,7 +1213,7 @@
       ]
     },
     {
-      "id": "doc-cli-94",
+      "id": "doc-cli-95",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1210,7 +1225,7 @@
       ]
     },
     {
-      "id": "doc-cli-95",
+      "id": "doc-cli-96",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1223,7 +1238,7 @@
       ]
     },
     {
-      "id": "doc-cli-96",
+      "id": "doc-cli-97",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1236,7 +1251,7 @@
       ]
     },
     {
-      "id": "doc-cli-97",
+      "id": "doc-cli-98",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Remote / agent mode",
@@ -1248,7 +1263,7 @@
       ]
     },
     {
-      "id": "doc-cli-98",
+      "id": "doc-cli-99",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "Common questions",
@@ -1262,7 +1277,7 @@
       ]
     },
     {
-      "id": "doc-cli-99",
+      "id": "doc-cli-100",
       "type": "doc",
       "source": "docs/CLI.md",
       "section": "See also",
@@ -1273,7 +1288,7 @@
       ]
     },
     {
-      "id": "doc-architecture-100",
+      "id": "doc-architecture-101",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "cronova Architecture",
@@ -1284,7 +1299,7 @@
       ]
     },
     {
-      "id": "doc-architecture-101",
+      "id": "doc-architecture-102",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "Table of contents",
@@ -1299,7 +1314,7 @@
       ]
     },
     {
-      "id": "doc-architecture-102",
+      "id": "doc-architecture-103",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "1. Project positioning",
@@ -1312,7 +1327,7 @@
       ]
     },
     {
-      "id": "doc-architecture-103",
+      "id": "doc-architecture-104",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "2. Architecture decision records",
@@ -1327,7 +1342,7 @@
       ]
     },
     {
-      "id": "doc-architecture-104",
+      "id": "doc-architecture-105",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "2. Architecture decision records",
@@ -1335,7 +1350,7 @@
       "topics": []
     },
     {
-      "id": "doc-architecture-105",
+      "id": "doc-architecture-106",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "3. High-level architecture",
@@ -1349,7 +1364,7 @@
       ]
     },
     {
-      "id": "doc-architecture-106",
+      "id": "doc-architecture-107",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "3. High-level architecture",
@@ -1361,7 +1376,7 @@
       ]
     },
     {
-      "id": "doc-architecture-107",
+      "id": "doc-architecture-108",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "4. Module layout",
@@ -1380,7 +1395,7 @@
       ]
     },
     {
-      "id": "doc-architecture-108",
+      "id": "doc-architecture-109",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "4. Module layout",
@@ -1392,7 +1407,7 @@
       ]
     },
     {
-      "id": "doc-architecture-109",
+      "id": "doc-architecture-110",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "5. Core concepts",
@@ -1406,7 +1421,7 @@
       ]
     },
     {
-      "id": "doc-architecture-110",
+      "id": "doc-architecture-111",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "5. Core concepts",
@@ -1416,7 +1431,7 @@
       ]
     },
     {
-      "id": "doc-architecture-111",
+      "id": "doc-architecture-112",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "6. Data model",
@@ -1429,7 +1444,7 @@
       ]
     },
     {
-      "id": "doc-architecture-112",
+      "id": "doc-architecture-113",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "6. Data model",
@@ -1444,7 +1459,7 @@
       ]
     },
     {
-      "id": "doc-architecture-113",
+      "id": "doc-architecture-114",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "6. Data model",
@@ -1458,7 +1473,7 @@
       ]
     },
     {
-      "id": "doc-architecture-114",
+      "id": "doc-architecture-115",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "6. Data model",
@@ -1470,7 +1485,7 @@
       ]
     },
     {
-      "id": "doc-architecture-115",
+      "id": "doc-architecture-116",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "7. Scheduler kernel",
@@ -1482,7 +1497,7 @@
       ]
     },
     {
-      "id": "doc-architecture-116",
+      "id": "doc-architecture-117",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "7. Scheduler kernel",
@@ -1495,7 +1510,7 @@
       ]
     },
     {
-      "id": "doc-architecture-117",
+      "id": "doc-architecture-118",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "7. Scheduler kernel",
@@ -1509,7 +1524,7 @@
       ]
     },
     {
-      "id": "doc-architecture-118",
+      "id": "doc-architecture-119",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "7. Scheduler kernel",
@@ -1522,7 +1537,7 @@
       ]
     },
     {
-      "id": "doc-architecture-119",
+      "id": "doc-architecture-120",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "8. Execution layer",
@@ -1535,7 +1550,7 @@
       ]
     },
     {
-      "id": "doc-architecture-120",
+      "id": "doc-architecture-121",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "8. Execution layer",
@@ -1547,7 +1562,7 @@
       ]
     },
     {
-      "id": "doc-architecture-121",
+      "id": "doc-architecture-122",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "9. Crash recovery",
@@ -1559,7 +1574,7 @@
       ]
     },
     {
-      "id": "doc-architecture-122",
+      "id": "doc-architecture-123",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "10. Catchup and logical time",
@@ -1572,7 +1587,7 @@
       ]
     },
     {
-      "id": "doc-architecture-123",
+      "id": "doc-architecture-124",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "becomes: python extract.py --date 2026-06-09",
@@ -1584,7 +1599,7 @@
       ]
     },
     {
-      "id": "doc-architecture-124",
+      "id": "doc-architecture-125",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "11. Resource pools and concurrency control",
@@ -1597,7 +1612,7 @@
       ]
     },
     {
-      "id": "doc-architecture-125",
+      "id": "doc-architecture-126",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "12. Failure propagation and retries",
@@ -1610,7 +1625,7 @@
       ]
     },
     {
-      "id": "doc-architecture-126",
+      "id": "doc-architecture-127",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "13. Trigger flow timeline",
@@ -1624,7 +1639,7 @@
       ]
     },
     {
-      "id": "doc-architecture-127",
+      "id": "doc-architecture-128",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "14. YAML DAG specification",
@@ -1634,7 +1649,7 @@
       ]
     },
     {
-      "id": "doc-architecture-128",
+      "id": "doc-architecture-129",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "One DAG = one YAML file",
@@ -1649,7 +1664,7 @@
       ]
     },
     {
-      "id": "doc-architecture-129",
+      "id": "doc-architecture-130",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "Cross-DAG dependency (optional)",
@@ -1662,7 +1677,7 @@
       ]
     },
     {
-      "id": "doc-architecture-130",
+      "id": "doc-architecture-131",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "15. Executor gRPC protocol",
@@ -1674,7 +1689,7 @@
       ]
     },
     {
-      "id": "doc-architecture-131",
+      "id": "doc-architecture-132",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "15. Executor gRPC protocol",
@@ -1682,7 +1697,7 @@
       "topics": []
     },
     {
-      "id": "doc-architecture-132",
+      "id": "doc-architecture-133",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "16. Remote workers",
@@ -1694,7 +1709,7 @@
       ]
     },
     {
-      "id": "doc-architecture-133",
+      "id": "doc-architecture-134",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "17. API and Web UI",
@@ -1702,7 +1717,7 @@
       "topics": []
     },
     {
-      "id": "doc-architecture-134",
+      "id": "doc-architecture-135",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "17. API and Web UI",
@@ -1719,7 +1734,7 @@
       ]
     },
     {
-      "id": "doc-architecture-135",
+      "id": "doc-architecture-136",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "17. API and Web UI",
@@ -1731,7 +1746,7 @@
       ]
     },
     {
-      "id": "doc-architecture-136",
+      "id": "doc-architecture-137",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "18. Security model",
@@ -1742,7 +1757,7 @@
       ]
     },
     {
-      "id": "doc-architecture-137",
+      "id": "doc-architecture-138",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "19. Delivery roadmap",
@@ -1758,7 +1773,7 @@
       ]
     },
     {
-      "id": "doc-architecture-138",
+      "id": "doc-architecture-139",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "20. Evolution: single-node → distributed",
@@ -1770,7 +1785,7 @@
       ]
     },
     {
-      "id": "doc-architecture-139",
+      "id": "doc-architecture-140",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "21. Risks and open questions",
@@ -1784,7 +1799,7 @@
       ]
     },
     {
-      "id": "doc-deploy-140",
+      "id": "doc-deploy-141",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Deploying cronova on Windows",
@@ -1796,7 +1811,7 @@
       ]
     },
     {
-      "id": "doc-deploy-141",
+      "id": "doc-deploy-142",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Requirements",
@@ -1806,7 +1821,7 @@
       ]
     },
     {
-      "id": "doc-deploy-142",
+      "id": "doc-deploy-143",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Install from a release ZIP",
@@ -1822,7 +1837,7 @@
       ]
     },
     {
-      "id": "doc-deploy-143",
+      "id": "doc-deploy-144",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Install from a release ZIP",
@@ -1835,7 +1850,7 @@
       ]
     },
     {
-      "id": "doc-deploy-144",
+      "id": "doc-deploy-145",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Data and configuration",
@@ -1850,7 +1865,7 @@
       ]
     },
     {
-      "id": "doc-deploy-145",
+      "id": "doc-deploy-146",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Service operations",
@@ -1861,7 +1876,7 @@
       ]
     },
     {
-      "id": "doc-deploy-146",
+      "id": "doc-deploy-147",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Task execution and process containment",
@@ -1875,7 +1890,7 @@
       ]
     },
     {
-      "id": "doc-deploy-147",
+      "id": "doc-deploy-148",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Task execution and process containment",
@@ -1888,7 +1903,7 @@
       ]
     },
     {
-      "id": "doc-deploy-148",
+      "id": "doc-deploy-149",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Upgrade and uninstall",
@@ -1900,7 +1915,7 @@
       ]
     },
     {
-      "id": "doc-deploy-149",
+      "id": "doc-deploy-150",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Build and package from source",
@@ -1914,7 +1929,7 @@
       ]
     },
     {
-      "id": "doc-deploy-150",
+      "id": "doc-deploy-151",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Verification status",
@@ -1925,7 +1940,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_angular-151",
+      "id": "dag-sdlc_angular-152",
       "type": "dag",
       "source": "dags/sdlc_angular.yaml",
       "section": "DAG sdlc_angular",
@@ -1940,7 +1955,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_fullstack-152",
+      "id": "dag-sdlc_fullstack-153",
       "type": "dag",
       "source": "dags/sdlc_fullstack.yaml",
       "section": "DAG sdlc_fullstack",
@@ -1954,7 +1969,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_maven_luhn-153",
+      "id": "dag-sdlc_maven_luhn-154",
       "type": "dag",
       "source": "dags/sdlc_maven_luhn.yaml",
       "section": "DAG sdlc_maven_luhn",
@@ -1971,7 +1986,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_rest-154",
+      "id": "dag-sdlc_springboot_rest-155",
       "type": "dag",
       "source": "dags/sdlc_springboot_rest.yaml",
       "section": "DAG sdlc_springboot_rest",
@@ -1987,7 +2002,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_startio-155",
+      "id": "dag-sdlc_springboot_startio-156",
       "type": "dag",
       "source": "dags/sdlc_springboot_startio.yaml",
       "section": "DAG sdlc_springboot_startio",
@@ -2004,7 +2019,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_template_crud-156",
+      "id": "dag-sdlc_springboot_template_crud-157",
       "type": "dag",
       "source": "dags/sdlc_springboot_template_crud.yaml",
       "section": "DAG sdlc_springboot_template_crud",
@@ -2022,7 +2037,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_variant-157",
+      "id": "dag-sdlc_springboot_variant-158",
       "type": "dag",
       "source": "dags/sdlc_springboot_variant.yaml",
       "section": "DAG sdlc_springboot_variant",
@@ -2038,7 +2053,7 @@
       ]
     },
     {
-      "id": "script-copy-template-to-workspace-ps1-158",
+      "id": "script-copy-template-to-workspace-ps1-159",
       "type": "script",
       "source": "internal/scripts/copy-template-to-workspace.ps1",
       "section": "Script copy-template-to-workspace.ps1",
@@ -2051,7 +2066,7 @@
       ]
     },
     {
-      "id": "script-fetch-springboot-project-ps1-159",
+      "id": "script-fetch-springboot-project-ps1-160",
       "type": "script",
       "source": "internal/scripts/fetch-springboot-project.ps1",
       "section": "Script fetch-springboot-project.ps1",
@@ -2066,7 +2081,7 @@
       ]
     },
     {
-      "id": "script-generate-maven-archetype-ps1-160",
+      "id": "script-generate-maven-archetype-ps1-161",
       "type": "script",
       "source": "internal/scripts/generate-maven-archetype.ps1",
       "section": "Script generate-maven-archetype.ps1",
@@ -2079,7 +2094,7 @@
       ]
     },
     {
-      "id": "script-maven-compile-ps1-161",
+      "id": "script-maven-compile-ps1-162",
       "type": "script",
       "source": "internal/scripts/maven-compile.ps1",
       "section": "Script maven-compile.ps1",
@@ -2092,7 +2107,7 @@
       ]
     },
     {
-      "id": "script-maven-test-ps1-162",
+      "id": "script-maven-test-ps1-163",
       "type": "script",
       "source": "internal/scripts/maven-test.ps1",
       "section": "Script maven-test.ps1",
@@ -2105,7 +2120,7 @@
       ]
     },
     {
-      "id": "script-ai-java-mvn-generate-feature-ps1-163",
+      "id": "script-ai-java-mvn-generate-feature-ps1-164",
       "type": "script",
       "source": "internal/scripts/ai-java-mvn-generate-feature.ps1",
       "section": "Script ai-java-mvn-generate-feature.ps1",
@@ -2120,7 +2135,7 @@
       ]
     },
     {
-      "id": "script-java-maven-compile-fix-loop-ps1-164",
+      "id": "script-java-maven-compile-fix-loop-ps1-165",
       "type": "script",
       "source": "internal/scripts/java-maven-compile-fix-loop.ps1",
       "section": "Script java-maven-compile-fix-loop.ps1",
@@ -2137,7 +2152,7 @@
       ]
     },
     {
-      "id": "script-angular-validate-config-ps1-165",
+      "id": "script-angular-validate-config-ps1-166",
       "type": "script",
       "source": "internal/scripts/angular-validate-config.ps1",
       "section": "Script angular-validate-config.ps1",
@@ -2148,7 +2163,7 @@
       ]
     },
     {
-      "id": "script-angular-scaffold-from-config-ps1-166",
+      "id": "script-angular-scaffold-from-config-ps1-167",
       "type": "script",
       "source": "internal/scripts/angular-scaffold-from-config.ps1",
       "section": "Script angular-scaffold-from-config.ps1",
@@ -2161,7 +2176,7 @@
       ]
     },
     {
-      "id": "script-fullstack-run-stack-e2e-ps1-167",
+      "id": "script-fullstack-run-stack-e2e-ps1-168",
       "type": "script",
       "source": "internal/scripts/fullstack-run-stack-e2e.ps1",
       "section": "Script fullstack-run-stack-e2e.ps1",
@@ -2171,7 +2186,7 @@
       ]
     },
     {
-      "id": "script-springboot-validate-config-ps1-168",
+      "id": "script-springboot-validate-config-ps1-169",
       "type": "script",
       "source": "internal/scripts/springboot-validate-config.ps1",
       "section": "Script springboot-validate-config.ps1",
@@ -2184,7 +2199,7 @@
       ]
     },
     {
-      "id": "script-readme-md-169",
+      "id": "script-readme-md-170",
       "type": "script",
       "source": "internal/scripts/README.md",
       "section": "Script README.md",
