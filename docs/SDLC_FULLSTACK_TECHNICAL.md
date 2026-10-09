@@ -26,6 +26,17 @@ Dokument opisuje [`dags/sdlc_fullstack.yaml`](../dags/sdlc_fullstack.yaml), konf
 | `trigger_after` | `sdlc_angular`, `sdlc_springboot_rest` | Uruchamiany po zakończeniu obu DAG-ów komponentowych |
 | liczba tasków | `5` | Wszystkie `type: powershell` |
 
+> **Ręczne uruchomienie całego łańcucha:** `trigger_after` wymaga sukcesu obu DAG-ów komponentowych dla tej samej daty logicznej. Dwa osobne ręczne uruchomienia mają różne daty, więc trzeba je powiązać tym samym `dependency_sync_key`:
+>
+> ```powershell
+> $body = @{ params = @{ dependency_sync_key = 'release-42' } } | ConvertTo-Json
+> foreach ($dag in 'sdlc_springboot_rest', 'sdlc_angular') {
+>     Invoke-RestMethod "http://127.0.0.1:8090/api/dags/$dag/trigger" -Method Post -Body $body -ContentType application/json -WebSession $session
+> }
+> ```
+>
+> `sdlc_fullstack` startuje automatycznie, gdy oba zakończą się sukcesem. Sam `sdlc_fullstack` można też uruchomić bezpośrednio, jeśli artefakty obu komponentów już istnieją.
+
 Wszystkie taski wywołują skrypty z parametrami `-Config configs\sdlc-fullstack.yaml -Artifacts artifacts\fullstack`. Taski nie ustawiają własnych timeoutów ani reguł wyzwalania.
 
 ## 3. Graf zależności
@@ -54,7 +65,7 @@ flowchart LR
 - `stack`: `angular_config`, `springboot_config`, `openapi_file` (`contracts/openapi.yaml`);
 - `artifacts`: `directory: artifacts/fullstack`, `frontend_dist: artifacts/angular/dist/browser`, `backend_jar: artifacts/springboot/package/item-service.jar` (oraz ścieżki manifestów komponentów, których skrypty nie odczytują);
 - `services`: backend `127.0.0.1:18080`, health `http://127.0.0.1:18080/actuator/health`, profil `e2e`, frontend `127.0.0.1:4300`, `startup_timeout_seconds: 90`;
-- `playwright`: `directory: e2e/playwright`, `browser: chromium`, `base_url`, `api_url` (oraz `workers`, `retries`, `trace`, `screenshot`, `video`, których skrypty nie odczytują).
+- `playwright`: `directory: e2e/playwright`, `browser`, `base_url`, `api_url`, `workers`, `retries`, `trace`, `screenshot`, `video`. `fullstack-run-playwright-e2e.ps1` przekazuje je do `playwright.config.ts` jako `PW_BROWSER`, `PW_WORKERS`, `PW_RETRIES`, `PW_TRACE`, `PW_SCREENSHOT`, `PW_VIDEO`; brakujący klucz = domyślna wartość z `playwright.config.ts`. Raport (`junit.xml`, `html/`) trafia do `artifacts/fullstack/playwright/` (`PW_REPORT_DIR`).
 
 Wartości odczytuje `Get-FullstackSdlcConfig` z [`scripts/sdlc/common/FullstackConfig.ps1`](../scripts/sdlc/common/FullstackConfig.ps1) (prosty parser dwupoziomowy).
 
@@ -126,8 +137,8 @@ Repozytorium zawiera też [`scripts/sdlc/Invoke-Sdlc.ps1`](../scripts/sdlc/Invok
 ### Ograniczenia
 
 1. DAG nie buduje komponentów; obecność plików w `artifacts/angular` i `artifacts/springboot` nie dowodzi, że pochodzą z najnowszego runu DAG-ów komponentowych.
-2. Klucze `playwright.workers/retries/trace/screenshot/video` oraz `artifacts.*_manifest` są w konfiguracji, ale skrypty ich nie odczytują (mogą być używane przez `playwright.config.ts` — nie zweryfikowano).
-3. `collect_logs` i `archive_results` nie mają w DAG-u jawnej reguły wyzwalania; czy wykonają się po błędzie `playwright_e2e`, zależy od domyślnej reguły Cronova.
+2. Klucze `artifacts.*_manifest` są w konfiguracji, ale skrypty fullstack ich nie odczytują (zostają dla innych klocków).
+3. `collect_logs` i `archive_results` mają `trigger_rule: all_done`: logi, raport Playwright i `manifest.json` powstają także po nieudanym E2E, a cały run i tak kończy się jako `failed`. `default_retries: 0` — nieudany E2E nie jest powtarzany przez scheduler (powtórki testów: `playwright.retries`).
 4. Parser konfiguracji obsługuje tylko prosty podzbiór YAML.
 
 ## 8. Wniosek

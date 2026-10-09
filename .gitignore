@@ -42,3 +42,6 @@ __pycache__/
 /publish/
 # graphify knowledge-graph artifacts (generated locally, not shipped)
 /graphify-out/
+
+e2e/playwright/test-results/
+e2e/playwright/playwright-report/

@@ -35,6 +35,23 @@ if (-not [string]::IsNullOrWhiteSpace($settings.PlaywrightBaseUrl)) {
 if (-not [string]::IsNullOrWhiteSpace($settings.PlaywrightApiUrl)) {
     $env:API_URL = $settings.PlaywrightApiUrl
 }
+# configs\sdlc-fullstack.yaml -> playwright.config.ts (reads PW_*; unset keys keep its defaults).
+$pwEnv = [ordered]@{
+    PW_BROWSER    = $settings.PlaywrightBrowser
+    PW_WORKERS    = $settings.PlaywrightWorkers
+    PW_RETRIES    = $settings.PlaywrightRetries
+    PW_TRACE      = $settings.PlaywrightTrace
+    PW_SCREENSHOT = $settings.PlaywrightScreenshot
+    PW_VIDEO      = $settings.PlaywrightVideo
+    PW_REPORT_DIR = Join-Path $artifactsPath 'playwright'
+}
+$previousPwEnv = @{}
+foreach ($name in $pwEnv.Keys) {
+    $previousPwEnv[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
+    if (-not [string]::IsNullOrWhiteSpace($pwEnv[$name])) {
+        [Environment]::SetEnvironmentVariable($name, [string]$pwEnv[$name], 'Process')
+    }
+}
 
 Write-Output "Running Playwright E2E in $e2ePath"
 $base = Join-Path ([IO.Path]::GetTempPath()) ("fullstack-playwright-" + [guid]::NewGuid().ToString('N'))
@@ -54,5 +71,8 @@ try {
     $env:FRONTEND_URL = $previousFrontendUrl
     $env:API_URL = $previousApiUrl
     $env:PLAYWRIGHT_BASE_URL = $previousPlaywrightBaseUrl
+    foreach ($name in $previousPwEnv.Keys) {
+        [Environment]::SetEnvironmentVariable($name, $previousPwEnv[$name], 'Process')
+    }
     Remove-Item -LiteralPath $stdoutFile, $stderrFile -Force -ErrorAction SilentlyContinue
 }

@@ -83,5 +83,10 @@ function Get-FullstackSdlcConfig {
         PlaywrightBrowser = Get-SdlcConfigValue -Config $Config -Section 'playwright' -Key 'browser' -RepoRoot $RepoRoot
         PlaywrightBaseUrl = Get-SdlcConfigValue -Config $Config -Section 'playwright' -Key 'base_url' -RepoRoot $RepoRoot
         PlaywrightApiUrl = Get-SdlcConfigValue -Config $Config -Section 'playwright' -Key 'api_url' -RepoRoot $RepoRoot
+        PlaywrightWorkers = Get-SdlcConfigValue -Config $Config -Section 'playwright' -Key 'workers' -RepoRoot $RepoRoot
+        PlaywrightRetries = Get-SdlcConfigValue -Config $Config -Section 'playwright' -Key 'retries' -RepoRoot $RepoRoot
+        PlaywrightTrace = Get-SdlcConfigValue -Config $Config -Section 'playwright' -Key 'trace' -RepoRoot $RepoRoot
+        PlaywrightScreenshot = Get-SdlcConfigValue -Config $Config -Section 'playwright' -Key 'screenshot' -RepoRoot $RepoRoot
+        PlaywrightVideo = Get-SdlcConfigValue -Config $Config -Section 'playwright' -Key 'video' -RepoRoot $RepoRoot
     }
 }

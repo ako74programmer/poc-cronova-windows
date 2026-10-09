@@ -2,7 +2,7 @@ dag_id: sdlc_fullstack
 start_date: "2026-09-01"
 catchup: false
 max_active_runs: 1
-default_retries: 1
+default_retries: 0
 tasks:
     - id: validate_stack
       type: powershell
@@ -21,11 +21,13 @@ tasks:
     - id: collect_logs
       type: powershell
       command: '& .\internal\scripts\fullstack-collect-logs.ps1 -Config configs\sdlc-fullstack.yaml -Artifacts artifacts\fullstack'
+      trigger_rule: all_done
       deps:
         - playwright_e2e
     - id: archive_results
       type: powershell
       command: '& .\internal\scripts\fullstack-archive-results.ps1 -Config configs\sdlc-fullstack.yaml -Artifacts artifacts\fullstack'
+      trigger_rule: all_done
       deps:
         - collect_logs
 trigger_after:
