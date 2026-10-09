@@ -76,8 +76,16 @@ On Windows with Go 1.26.5 or newer:
 .\scripts\package.ps1
 ```
 
-The script builds both `windows/amd64` executables and creates `dist\cronova_windows_amd64.zip` with a SHA-256 checksum. The package includes the three PowerShell lifecycle scripts, `cronova.yaml`, example DAGs, runtime PowerShell scripts from `internal/scripts`, and supporting `configs`, `contracts`, `prompts`, `templates`, and Playwright assets required by distributed DAGs.
+The script builds both `windows/amd64` executables and creates `dist\cronova_windows_amd64.zip` plus `dist\SHA256SUMS` (required by `cronova update`; publish both files together when releasing). The package includes the three PowerShell lifecycle scripts, `cronova.yaml`, example DAGs, runtime PowerShell scripts from `internal/scripts`, and supporting `configs`, `contracts`, `prompts`, `templates`, and Playwright assets required by distributed DAGs.
 
 ## Verification status
 
-The repository workflow runs on `windows-latest` and performs formatting, module verification, vet, tests and Windows builds. Cross-compiling `windows/amd64` from another host cannot replace native validation of Windows Services, Job Objects, ACLs, clean installation, service recovery or descendant-process termination.
+There is no hosted CI. All checks run locally on Windows with one script, which any future pipeline (e.g. a GitLab Windows runner) can call unchanged:
+
+```powershell
+.\scripts\windows\check-all.ps1            # gofmt, go mod verify, docs mirror, AI wiki KB, vet, tests, PowerShell tests
+.\scripts\windows\check-all.ps1 -Full      # + race detector and govulncheck
+.\scripts\windows\check-all.ps1 -Package   # + build the release ZIP and verify its DAG references
+```
+
+ Cross-compiling `windows/amd64` from another host cannot replace native validation of Windows Services, Job Objects, ACLs, clean installation, service recovery or descendant-process termination.

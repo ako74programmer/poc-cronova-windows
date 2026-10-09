@@ -30,6 +30,9 @@ try {
   $OutFile = Join-Path (Join-Path $Root $Output) "cronova_windows_amd64.zip"
   if (Test-Path $OutFile) { Remove-Item $OutFile -Force }
   Compress-Archive -Path (Join-Path $Stage "*") -DestinationPath $OutFile
-  Get-FileHash $OutFile -Algorithm SHA256 | Format-List
+  $hash = (Get-FileHash $OutFile -Algorithm SHA256).Hash.ToLower()
+  # SHA256SUMS is required by `cronova update`; upload it next to the ZIP when publishing a release.
+  [IO.File]::WriteAllText((Join-Path (Split-Path $OutFile) "SHA256SUMS"), "$hash  cronova_windows_amd64.zip`n")
+  Write-Host "SHA256 $hash"
   Write-Host "Created $OutFile"
 } finally { Remove-Item $Stage -Recurse -Force -ErrorAction SilentlyContinue }

@@ -1,9 +1,7 @@
-# cronova documentation site (Material for MkDocs), published to GitHub Pages at
-# https://zoyluoblue.github.io/cronova/ by .github/workflows/docs.yml on push to main.
+# cronova documentation site (Material for MkDocs), built locally.
 #
 #   make docs-serve    # live-reload preview at http://127.0.0.1:8000
 #   make docs-build    # build ./site (strict: broken links fail the build)
-#   (deploy is automatic via GitHub Actions; no manual step)
 #
 # Sources are the SAME docs/*.md that render on GitHub (docs-as-code, one source
 # of truth). docs/README.md is the GitHub-facing index and is excluded here;

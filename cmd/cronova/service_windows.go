@@ -94,4 +94,3 @@ func windowsDataDir() string {
 	}
 	return filepath.Join(`C:\ProgramData`, "Cronova")
 }
-

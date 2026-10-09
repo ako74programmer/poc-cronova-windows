@@ -1927,7 +1927,7 @@
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Build and package from source",
-      "text": "On Windows with Go 1.26.5 or newer:\n\n```powershell\n.\\scripts\\package.ps1\n```\n\nThe script builds both `windows/amd64` executables and creates `dist\\cronova_windows_amd64.zip` with a SHA-256 checksum. The package includes the three PowerShell lifecycle scripts, `cronova.yaml`, example DAGs, runtime PowerShell scripts from `internal/scripts`, and supporting `configs`, `contracts`, `prompts`, `templates`, and Playwright assets required by distributed DAGs.",
+      "text": "On Windows with Go 1.26.5 or newer:\n\n```powershell\n.\\scripts\\package.ps1\n```\n\nThe script builds both `windows/amd64` executables and creates `dist\\cronova_windows_amd64.zip` plus `dist\\SHA256SUMS` (required by `cronova update`; publish both files together when releasing). The package includes the three PowerShell lifecycle scripts, `cronova.yaml`, example DAGs, runtime PowerShell scripts from `internal/scripts`, and supporting `configs`, `contracts`, `prompts`, `templates`, and Playwright assets required by distributed DAGs.",
       "topics": [
         "dag",
         "schedule",
@@ -1941,8 +1941,11 @@
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Verification status",
-      "text": "The repository workflow runs on `windows-latest` and performs formatting, module verification, vet, tests and Windows builds. Cross-compiling `windows/amd64` from another host cannot replace native validation of Windows Services, Job Objects, ACLs, clean installation, service recovery or descendant-process termination.",
+      "text": "There is no hosted CI. All checks run locally on Windows with one script, which any future pipeline (e.g. a GitLab Windows runner) can call unchanged:\n\n```powershell\n.\\scripts\\windows\\check-all.ps1            # gofmt, go mod verify, docs mirror, AI wiki KB, vet, tests, PowerShell tests\n.\\scripts\\windows\\check-all.ps1 -Full      # + race detector and govulncheck\n.\\scripts\\windows\\check-all.ps1 -Package   # + build the release ZIP and verify its DAG references\n```\n\n Cross-compiling `windows/amd64` from another host cannot replace native validation of Windows Services, Job Objects, ACLs, clean installation, service recovery or descendant-process termination.",
       "topics": [
+        "dag",
+        "project",
+        "ai",
         "test",
         "install"
       ]
