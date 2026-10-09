@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/secrets"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/secrets"
 )
 
 // With a cipher installed, passwords are sealed on disk but transparent through

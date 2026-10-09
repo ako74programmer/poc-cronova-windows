@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/metrics"
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/metrics"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // metrics serves Prometheus text-format metrics, all derived from the store at

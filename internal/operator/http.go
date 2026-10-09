@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // maxBodyLog caps how much response body is echoed to the task log.

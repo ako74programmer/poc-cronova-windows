@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // TestDagSaveCAS: a build carrying expected_hash only lands when the stored

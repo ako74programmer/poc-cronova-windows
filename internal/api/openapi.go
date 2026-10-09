@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // This file exposes the entire cronova HTTP API as a self-describing OpenAPI 3

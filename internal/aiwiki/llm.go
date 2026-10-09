@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // LLMClient calls an OpenAI-compatible chat completions endpoint.

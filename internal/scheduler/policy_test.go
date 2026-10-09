@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // waitRunState ticks until the run reaches want (or fails the test).

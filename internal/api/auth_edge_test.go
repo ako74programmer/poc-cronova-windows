@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/metrics"
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/store/sqlite"
+	"github.com/ako74programmer/poc-cronova-windows/internal/metrics"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store/sqlite"
 )
 
 func TestMePrincipals(t *testing.T) {

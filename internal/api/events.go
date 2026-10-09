@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/auth"
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/store"
+	"github.com/ako74programmer/poc-cronova-windows/internal/auth"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store"
 )
 
 var eventKeyRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.:-]*$`)

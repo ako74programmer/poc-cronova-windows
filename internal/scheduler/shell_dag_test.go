@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/executor"
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/store/sqlite"
+	"github.com/ako74programmer/poc-cronova-windows/internal/executor"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store/sqlite"
 )
 
 // newTestSchedulerWithDir is like newTestScheduler but with a DAG directory, so

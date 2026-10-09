@@ -8,10 +8,10 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/auth"
-	"github.com/zoyluo/cronova/internal/certs"
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/store"
+	"github.com/ako74programmer/poc-cronova-windows/internal/auth"
+	"github.com/ako74programmer/poc-cronova-windows/internal/certs"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store"
 )
 
 // WorkerHubControl is the slice of the worker hub the API needs for live

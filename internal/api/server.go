@@ -21,12 +21,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/aiwiki"
-	"github.com/zoyluo/cronova/internal/certs"
-	"github.com/zoyluo/cronova/internal/docs"
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/scheduler/parser"
-	"github.com/zoyluo/cronova/internal/store"
+	"github.com/ako74programmer/poc-cronova-windows/internal/aiwiki"
+	"github.com/ako74programmer/poc-cronova-windows/internal/certs"
+	"github.com/ako74programmer/poc-cronova-windows/internal/docs"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/scheduler/parser"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store"
 	"gopkg.in/yaml.v3"
 )
 

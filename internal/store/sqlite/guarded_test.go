@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // TestUpdateTaskInstanceGuarded verifies the optimistic CAS: a write applies only

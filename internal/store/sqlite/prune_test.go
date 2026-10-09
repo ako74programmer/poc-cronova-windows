@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // PruneRuns must delete only finished runs older than the cutoff — never

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 func TestRenderCommand(t *testing.T) {

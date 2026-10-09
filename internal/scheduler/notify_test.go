@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // captureHook returns an httptest server that records every POST body, plus a

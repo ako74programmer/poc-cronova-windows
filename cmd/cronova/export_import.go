@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/zoyluo/cronova/internal/client"
+	"github.com/ako74programmer/poc-cronova-windows/internal/client"
 )
 
 // cmdExport writes a portable bundle of an instance's configuration:

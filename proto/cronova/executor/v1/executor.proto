@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package cronova.executor.v1;
 
-option go_package = "github.com/zoyluo/cronova/proto/cronova/executor/v1;executorv1";
+option go_package = "github.com/ako74programmer/poc-cronova-windows/proto/cronova/executor/v1;executorv1";
 
 // Executor runs tasks as OS subprocesses in a long-lived process, decoupled
 // from the scheduler so a scheduler restart never kills running tasks. See

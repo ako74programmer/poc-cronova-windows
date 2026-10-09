@@ -446,7 +446,7 @@ const file_cronova_executor_v1_executor_proto_rawDesc = "" +
 	"\bExecutor\x12Q\n" +
 	"\x06Launch\x12\".cronova.executor.v1.LaunchRequest\x1a#.cronova.executor.v1.LaunchResponse\x12N\n" +
 	"\x05Probe\x12!.cronova.executor.v1.ProbeRequest\x1a\".cronova.executor.v1.ProbeResponse\x12Q\n" +
-	"\x06Cancel\x12\".cronova.executor.v1.CancelRequest\x1a#.cronova.executor.v1.CancelResponseB@Z>github.com/zoyluo/cronova/proto/cronova/executor/v1;executorv1b\x06proto3"
+	"\x06Cancel\x12\".cronova.executor.v1.CancelRequest\x1a#.cronova.executor.v1.CancelResponseBUZSgithub.com/ako74programmer/poc-cronova-windows/proto/cronova/executor/v1;executorv1b\x06proto3"
 
 var (
 	file_cronova_executor_v1_executor_proto_rawDescOnce sync.Once

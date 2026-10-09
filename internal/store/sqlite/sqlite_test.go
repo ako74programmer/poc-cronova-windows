@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/fsperm"
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/store"
+	"github.com/ako74programmer/poc-cronova-windows/internal/fsperm"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store"
 )
 
 func TestNewSecuresDatabaseFile(t *testing.T) {

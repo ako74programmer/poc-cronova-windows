@@ -26,11 +26,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/secrets"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/stdlib" // registers the "pgx" database/sql driver
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/secrets"
-	"github.com/zoyluo/cronova/internal/store"
 )
 
 //go:embed schema.sql

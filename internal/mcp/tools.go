@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/zoyluo/cronova/internal/api"
-	"github.com/zoyluo/cronova/internal/client"
+	"github.com/ako74programmer/poc-cronova-windows/internal/api"
+	"github.com/ako74programmer/poc-cronova-windows/internal/client"
 )
 
 // defaultMaxOut caps a tool result so a huge response (e.g. a long log) can't

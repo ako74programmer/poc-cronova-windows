@@ -13,8 +13,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/projectfs"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/projectfs"
 )
 
 // Uploaded projects are plain directories under the server's projects dir; a

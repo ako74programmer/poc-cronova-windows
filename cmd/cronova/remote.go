@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/zoyluo/cronova/internal/client"
+	"github.com/ako74programmer/poc-cronova-windows/internal/client"
 )
 
 // Remote mode + machine-readable output. An AI agent (or any script) drives

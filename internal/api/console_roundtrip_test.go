@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/scheduler/parser"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/scheduler/parser"
 )
 
 // consoleRoundTrip feeds a GET /api/dags/{id} body through the real console

@@ -25,12 +25,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/secrets"
-	"github.com/zoyluo/cronova/internal/store"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/secrets"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store"
 	sqlitelib "modernc.org/sqlite"
 
-	"github.com/zoyluo/cronova/internal/fsperm"
+	"github.com/ako74programmer/poc-cronova-windows/internal/fsperm"
 )
 
 //go:embed schema.sql

@@ -3,7 +3,7 @@ package scheduler
 import (
 	"testing"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // TestResolveHTTPSpec: url, header values, and body are templated with the same

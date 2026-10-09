@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	pb "github.com/zoyluo/cronova/proto/cronova/executor/v1"
+	pb "github.com/ako74programmer/poc-cronova-windows/proto/cronova/executor/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zoyluo/cronova/internal/auth"
+	"github.com/ako74programmer/poc-cronova-windows/internal/auth"
 )
 
 func TestVariablesEdgeCases(t *testing.T) {

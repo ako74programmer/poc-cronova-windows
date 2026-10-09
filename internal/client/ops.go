@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // Typed convenience wrappers over Call for the operations the CLI renders as

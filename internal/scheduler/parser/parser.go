@@ -15,9 +15,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ako74programmer/poc-cronova-windows/internal/datetmpl"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 	"github.com/robfig/cron/v3"
-	"github.com/zoyluo/cronova/internal/datetmpl"
-	"github.com/zoyluo/cronova/internal/model"
 	"gopkg.in/yaml.v3"
 )
 

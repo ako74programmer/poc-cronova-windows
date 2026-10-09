@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/auth"
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/auth"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // prefixLen is how many leading chars of a token we keep for display (enough to

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 func registerSimpleDAG(t *testing.T, s *Scheduler, id, command string) {

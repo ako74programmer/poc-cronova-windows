@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/executor"
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/executor"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 func TestDependencyEventRetriesAfterGlobalQueueCapacityReturns(t *testing.T) {

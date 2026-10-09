@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	pb "github.com/zoyluo/cronova/proto/cronova/executor/v1"
+	pb "github.com/ako74programmer/poc-cronova-windows/proto/cronova/executor/v1"
 )
 
 // GRPCServer adapts a Runner to the generated gRPC ExecutorServer. It is hosted

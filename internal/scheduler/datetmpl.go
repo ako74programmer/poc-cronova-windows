@@ -3,8 +3,8 @@ package scheduler
 import (
 	"time"
 
-	"github.com/zoyluo/cronova/internal/datetmpl"
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/datetmpl"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // Date expression templates ({{ logical_date - 7d | %Y%m%d }} and friends)

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // Plan2 R5B run-operations surface: hold/release intents and the read-only

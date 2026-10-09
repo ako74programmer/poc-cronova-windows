@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/store"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store"
 )
 
 func newLeaseStore(t *testing.T) *Store {

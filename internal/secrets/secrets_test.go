@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/zoyluo/cronova/internal/fsperm"
+	"github.com/ako74programmer/poc-cronova-windows/internal/fsperm"
 )
 
 func TestEncryptDecryptRoundTrip(t *testing.T) {

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package cronova.worker.v1;
 
-option go_package = "github.com/zoyluo/cronova/proto/cronova/worker/v1;workerv1";
+option go_package = "github.com/ako74programmer/poc-cronova-windows/proto/cronova/worker/v1;workerv1";
 
 // WorkerHub is the scheduler-side service a remote worker DIALS INTO. The
 // direction is deliberately inverted from the legacy Executor service: the

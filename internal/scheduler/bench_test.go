@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/executor"
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/store"
-	"github.com/zoyluo/cronova/internal/store/postgres"
-	"github.com/zoyluo/cronova/internal/store/sqlite"
+	"github.com/ako74programmer/poc-cronova-windows/internal/executor"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store/postgres"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store/sqlite"
 )
 
 // TestThroughputBench is the reproducible scheduler benchmark behind

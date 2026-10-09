@@ -22,8 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/executor"
-	workerv1 "github.com/zoyluo/cronova/proto/cronova/worker/v1"
+	"github.com/ako74programmer/poc-cronova-windows/internal/executor"
+	workerv1 "github.com/ako74programmer/poc-cronova-windows/proto/cronova/worker/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

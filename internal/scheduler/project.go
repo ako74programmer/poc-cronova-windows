@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/projectfs"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/projectfs"
 )
 
 // Per-task project staging. When a shell task sets Project, the scheduler copies

@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/certs"
-	"github.com/zoyluo/cronova/internal/executor"
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/store/sqlite"
-	"github.com/zoyluo/cronova/internal/worker"
-	workerv1 "github.com/zoyluo/cronova/proto/cronova/worker/v1"
+	"github.com/ako74programmer/poc-cronova-windows/internal/certs"
+	"github.com/ako74programmer/poc-cronova-windows/internal/executor"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store/sqlite"
+	"github.com/ako74programmer/poc-cronova-windows/internal/worker"
+	workerv1 "github.com/ako74programmer/poc-cronova-windows/proto/cronova/worker/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

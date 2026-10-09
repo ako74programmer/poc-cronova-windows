@@ -9,8 +9,8 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/store"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store"
 )
 
 //go:embed knowledge-base.json

@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/zoyluo/cronova/internal/store/postgres"
-	"github.com/zoyluo/cronova/internal/store/sqlite"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store/postgres"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store/sqlite"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "modernc.org/sqlite"

@@ -27,20 +27,20 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/api"
-	"github.com/zoyluo/cronova/internal/auth"
-	"github.com/zoyluo/cronova/internal/client"
-	"github.com/zoyluo/cronova/internal/executor"
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/operator"
-	"github.com/zoyluo/cronova/internal/scheduler"
-	"github.com/zoyluo/cronova/internal/secrets"
-	"github.com/zoyluo/cronova/internal/store"
-	"github.com/zoyluo/cronova/internal/store/postgres"
-	"github.com/zoyluo/cronova/internal/store/sqlite"
-	"github.com/zoyluo/cronova/internal/web"
+	"github.com/ako74programmer/poc-cronova-windows/internal/api"
+	"github.com/ako74programmer/poc-cronova-windows/internal/auth"
+	"github.com/ako74programmer/poc-cronova-windows/internal/client"
+	"github.com/ako74programmer/poc-cronova-windows/internal/executor"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/operator"
+	"github.com/ako74programmer/poc-cronova-windows/internal/scheduler"
+	"github.com/ako74programmer/poc-cronova-windows/internal/secrets"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store/postgres"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store/sqlite"
+	"github.com/ako74programmer/poc-cronova-windows/internal/web"
 
-	"github.com/zoyluo/cronova/internal/fsperm"
+	"github.com/ako74programmer/poc-cronova-windows/internal/fsperm"
 )
 
 // version is the build's release version, injected at link time via

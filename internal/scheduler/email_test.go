@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // fakeSMTP is a minimal plaintext SMTP server (no STARTTLS, no AUTH) that

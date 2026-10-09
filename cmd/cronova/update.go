@@ -89,10 +89,14 @@ func cmdUpdate(args []string) error {
 	// Swap the binaries. cronova is required; the executor is only replaced when
 	// the release ships one AND the host already has it (don't silently add it).
 	var restores []func() error
-	rollback := func() {
+	rollback := func() error {
+		var errs []error
 		for i := len(restores) - 1; i >= 0; i-- {
-			_ = restores[i]()
+			if err := restores[i](); err != nil {
+				errs = append(errs, err)
+			}
 		}
+		return errors.Join(errs...)
 	}
 
 	restore, err := swapBinary(binDst, bins["cronova"])
@@ -105,7 +109,9 @@ func cmdUpdate(args []string) error {
 		if _, statErr := os.Stat(binExecutor); statErr == nil {
 			r2, err := swapBinary(binExecutor, eb)
 			if err != nil {
-				rollback()
+				if rbErr := rollback(); rbErr != nil {
+					return fmt.Errorf("replace %s: %w (restoring previous binaries also failed: %v)", binExecutor, err, rbErr)
+				}
 				return fmt.Errorf("replace %s: %w", binExecutor, err)
 			}
 			restores = append(restores, r2)
@@ -119,7 +125,12 @@ func cmdUpdate(args []string) error {
 		fmt.Println("cronova: restarting service…")
 		if err := restartService(); err != nil {
 			fmt.Fprintln(os.Stderr, "cronova: restart failed — rolling back to the previous version")
-			rollback()
+			// A running executable is locked on Windows: stop everything before
+			// moving the *.bak binaries back.
+			_ = stopServices()
+			if rbErr := rollback(); rbErr != nil {
+				return fmt.Errorf("update failed and restoring the previous binaries failed: %v (original: %w)", rbErr, err)
+			}
 			if restartErr := restartService(); restartErr != nil {
 				return fmt.Errorf("update failed and the rollback restart also failed: %v (original: %w)", restartErr, err)
 			}

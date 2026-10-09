@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"text/tabwriter"
 
-	"github.com/zoyluo/cronova/internal/auth"
-	"github.com/zoyluo/cronova/internal/client"
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/auth"
+	"github.com/ako74programmer/poc-cronova-windows/internal/client"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // Operator verbs for agents/scripts. These map 1:1 to REST endpoints and are

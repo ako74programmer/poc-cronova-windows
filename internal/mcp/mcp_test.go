@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/client"
+	"github.com/ako74programmer/poc-cronova-windows/internal/client"
 )
 
 func TestBuildToolsAndReadOnly(t *testing.T) {

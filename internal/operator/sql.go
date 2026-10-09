@@ -14,7 +14,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib" // "pgx" driver (pure Go)
 	_ "modernc.org/sqlite"             // "sqlite" driver (pure Go, no CGO)
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // SQLSpec is the resolved spec for a sql-type task: a driver name + DSN (built

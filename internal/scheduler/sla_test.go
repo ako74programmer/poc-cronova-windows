@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // tickUntilTerminal drives the loop with real time passing (so elapsed-based

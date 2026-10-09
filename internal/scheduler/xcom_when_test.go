@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // A task writes a JSON map to $env:CRONOVA_OUTPUT; the downstream command sees the

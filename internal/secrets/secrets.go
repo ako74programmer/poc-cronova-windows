@@ -16,7 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/zoyluo/cronova/internal/fsperm"
+	"github.com/ako74programmer/poc-cronova-windows/internal/fsperm"
 )
 
 const prefix = "enc:v1:"

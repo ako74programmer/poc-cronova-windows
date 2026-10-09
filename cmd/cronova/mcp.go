@@ -8,8 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/zoyluo/cronova/internal/client"
-	"github.com/zoyluo/cronova/internal/mcp"
+	"github.com/ako74programmer/poc-cronova-windows/internal/client"
+	"github.com/ako74programmer/poc-cronova-windows/internal/mcp"
 )
 
 // cmdMCP runs an MCP server over stdio, exposing cronova's operations as tools

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/certs"
+	"github.com/ako74programmer/poc-cronova-windows/internal/certs"
 )
 
 // Join performs the one-time bootstrap against a scheduler: generate a local

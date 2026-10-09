@@ -17,8 +17,8 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/zoyluo/cronova/internal/executor"
-	pb "github.com/zoyluo/cronova/proto/cronova/executor/v1"
+	"github.com/ako74programmer/poc-cronova-windows/internal/executor"
+	pb "github.com/ako74programmer/poc-cronova-windows/proto/cronova/executor/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"

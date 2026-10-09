@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/executor"
-	"github.com/zoyluo/cronova/internal/scheduler"
+	"github.com/ako74programmer/poc-cronova-windows/internal/executor"
+	"github.com/ako74programmer/poc-cronova-windows/internal/scheduler"
 )
 
 // cmdBackfill enqueues runs for every schedule period in a date window — the

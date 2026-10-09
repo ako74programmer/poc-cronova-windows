@@ -955,7 +955,7 @@ const file_cronova_worker_v1_worker_proto_rawDesc = "" +
 	"\fPHASE_EXITED\x10\x02\x12\x11\n" +
 	"\rPHASE_UNKNOWN\x10\x032^\n" +
 	"\tWorkerHub\x12Q\n" +
-	"\aSession\x12 .cronova.worker.v1.WorkerMessage\x1a .cronova.worker.v1.ServerMessage(\x010\x01B<Z:github.com/zoyluo/cronova/proto/cronova/worker/v1;workerv1b\x06proto3"
+	"\aSession\x12 .cronova.worker.v1.WorkerMessage\x1a .cronova.worker.v1.ServerMessage(\x010\x01BQZOgithub.com/ako74programmer/poc-cronova-windows/proto/cronova/worker/v1;workerv1b\x06proto3"
 
 var (
 	file_cronova_worker_v1_worker_proto_rawDescOnce sync.Once

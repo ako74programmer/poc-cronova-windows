@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/store"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store"
 )
 
 const workerCols = `worker_id, name, labels, state, draining, version, active_tasks, last_heartbeat, created_at`

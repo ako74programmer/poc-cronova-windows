@@ -13,8 +13,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/metrics"
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/metrics"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // notifyPayload is the JSON body POSTed to a DAG's notify webhook. `text` is a

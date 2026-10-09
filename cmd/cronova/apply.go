@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/zoyluo/cronova/internal/client"
-	"github.com/zoyluo/cronova/internal/scheduler/parser"
+	"github.com/ako74programmer/poc-cronova-windows/internal/client"
+	"github.com/ako74programmer/poc-cronova-windows/internal/scheduler/parser"
 )
 
 // cmdApply pushes a directory (or single file) of DAG YAML to a RUNNING server

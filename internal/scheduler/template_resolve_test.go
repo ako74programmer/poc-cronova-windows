@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
 )
 
 // TestRenderCommandDotted checks the pure resolver: base vars, params.*, and

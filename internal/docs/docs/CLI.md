@@ -69,7 +69,7 @@ The local executor endpoint is intentionally loopback-only. Remote TCP endpoints
 These wrap Windows Service Control Manager, so you normally do not need to call `sc.exe` directly.
 
 !!! note "Elevation"
-    `start`, `stop`, `restart`, `update` and `uninstall` call `sc.exe` and do not self-elevate: run them from an elevated PowerShell (Run as administrator), otherwise Service Control Manager returns "access denied". For lifecycle scripts use `deploy\install.ps1`, `deploy\update.ps1` and `deploy\uninstall.ps1` from an elevated PowerShell.
+    `start`, `stop`, `restart`, `update` and `uninstall` talk to the Service Control Manager directly and require an elevated PowerShell (Run as administrator); without it they stop immediately with a clear error and change nothing. `start`/`restart` wait until each service is `RUNNING` and still running a few seconds later, so a service that crashes on startup is reported as a failure. `status` works without elevation. For lifecycle scripts use `deploy\install.ps1`, `deploy\update.ps1` and `deploy\uninstall.ps1` from an elevated PowerShell.
 
 ### `cronova start` / `stop` / `restart`
 

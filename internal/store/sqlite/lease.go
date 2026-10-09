@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/model"
-	"github.com/zoyluo/cronova/internal/store"
+	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store"
 )
 
 // AcquireLease claims the single scheduler lease for holder, valid for ttl.

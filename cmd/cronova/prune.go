@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/zoyluo/cronova/internal/scheduler"
+	"github.com/ako74programmer/poc-cronova-windows/internal/scheduler"
 )
 
 // cmdPrune deletes finished runs (and their log directories) older than a
