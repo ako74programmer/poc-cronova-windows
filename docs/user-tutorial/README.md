@@ -6,5 +6,6 @@ To tutorial pisany prostym językiem. Każda część jest osobnym, krótkim kro
 
 1. [Instalacja i pierwsze otwarcie](01-instalacja.md)
 2. [Poznajemy ekran](02-poznajemy-ekran.md)
+3. [Zbudujmy pierwszy prosty plan](03-pierwszy-plan.md)
 
-Następna planowana część: pierwszy DAG i jego zadania.
+Następna planowana część: czym jest skrypt i jak uruchomić go jako task.
