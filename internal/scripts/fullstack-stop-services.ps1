@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)][string]$Config,
     [string]$Artifacts
@@ -21,7 +21,10 @@ foreach ($name in @('frontend', 'backend')) {
     $pidPath = Join-Path $artifactsPath "runtime\$name.pid"
     if (Test-Path -LiteralPath $pidPath -PathType Leaf) {
         $processId = [int](Get-Content -LiteralPath $pidPath)
-        Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+        # npx/java may spawn children (cmd -> node http-server); stop the whole tree.
+        if (Get-Process -Id $processId -ErrorAction SilentlyContinue) {
+            & taskkill.exe /PID $processId /T /F 2>&1 | Out-Null
+        }
         Remove-Item -LiteralPath $pidPath -Force -ErrorAction SilentlyContinue
         Write-Output "Stopped $name PID $processId"
     }
