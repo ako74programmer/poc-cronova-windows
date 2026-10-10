@@ -41,8 +41,8 @@ flowchart LR
 |---|---|
 | `generate_maven_archetype` | `& .\internal\scripts\generate-maven-archetype.ps1 -a maven-archetype-quickstart -g com.example -r luhn -k com.example.luhn -j 21 -w workspaces/sdlc_maven_luhn -p app -C` |
 | `maven_compile` | `& .\internal\scripts\maven-compile.ps1 -w workspaces/sdlc_maven_luhn -p app` |
-| `ai_generate_java_maven_feature` | `& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/luhn.txt -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -r default -y python` |
-| `java_maven_compile_fix_loop` | `& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/sdlc_maven_luhn -LoopProject app -LoopPackage com.example.luhn -LoopModel kimi-k2.7-code -LoopPython python` |
+| `ai_generate_java_maven_feature` | `& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/luhn.txt -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -r default -m gpt-5.3-codex -y python` |
+| `java_maven_compile_fix_loop` | `& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/sdlc_maven_luhn -LoopProject app -LoopPackage com.example.luhn -LoopProvider default -LoopModel gpt-5.3-codex -LoopPython python` |
 | `maven_test` | `& .\internal\scripts\maven-test.ps1 -w workspaces/sdlc_maven_luhn -p app` |
 
 ## 4. Przepływ krok po kroku
@@ -110,7 +110,7 @@ W każdej iteracji:
 3. błąd w ostatniej iteracji → wyjątek `Max iterations reached`;
 4. w przeciwnym razie buduje prompt reviewera (`pom.xml`, ostatnie 80 linii logu, wszystkie źródła z `src\main\java` i `src\test\java`) i wywołuje [`ai-review-java-maven-errors.ps1`](../internal/scripts/ai-review-java-maven-errors.ps1), który uruchamia [`internal/scripts/ai/review_fix_v2.py`](../internal/scripts/ai/review_fix_v2.py) i zapisuje poprawione pliki.
 
-W tym DAG-u model jest jawnie ustawiony na `kimi-k2.7-code`, a provider (base URL/token) pochodzi z rekordu domyślnego.
+W tym DAG-u model jest jawnie ustawiony na `gpt-5.3-codex`, a provider (base URL/token) pochodzi z rekordu domyślnego.
 
 ### Ważna granica obecnej reużywalności
 

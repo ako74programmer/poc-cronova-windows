@@ -60,7 +60,7 @@ Template zawiera `pom.xml`, `DemoApplication.java` i `DemoApplicationTests.java`
 ### 4.3. `ai_generate_java_maven_feature` — generowanie CRUD
 
 ```powershell
-& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/springboot_crud.txt -w workspaces/springboot -p app -k com.example.demo -r default -y python
+& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/springboot_crud.txt -w workspaces/springboot -p app -k com.example.demo -r default -m gpt-5.3-codex -y python
 ```
 
 [`ai-java-mvn-generate-feature.ps1`](../internal/scripts/ai-java-mvn-generate-feature.ps1) buduje prompt z [`prompts/springboot_crud.txt`](../prompts/springboot_crud.txt), reguł generatora i `pom.xml`, zapisuje go do `.tmp\ai_feature_prompt.txt` i uruchamia [`ai_generate_feature.py`](../internal/scripts/ai_generate_feature.py). Odpowiedź AI (JSON `ścieżka → zawartość`, opcjonalnie `pom_xml`) jest zapisywana do projektu.
@@ -68,7 +68,7 @@ Template zawiera `pom.xml`, `DemoApplication.java` i `DemoApplicationTests.java`
 ### 4.4. `java_maven_compile_fix_loop` — kompilacja i warunkowa naprawa przez AI
 
 ```powershell
-& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/springboot -LoopProject app -LoopPackage com.example.demo -LoopProvider default -LoopPython python
+& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/springboot -LoopProject app -LoopPackage com.example.demo -LoopProvider default -LoopModel gpt-5.3-codex -LoopPython python
 ```
 
 [`java-maven-compile-fix-loop.ps1`](../internal/scripts/java-maven-compile-fix-loop.ps1): do 3 iteracji (`-LoopIterations`) `mvn -B -DskipTests test-compile`, log `.tmp\compile.log`. Po błędzie (poza ostatnią iteracją) przygotowuje prompt reviewera i wywołuje [`ai-review-java-maven-errors.ps1`](../internal/scripts/ai-review-java-maven-errors.ps1), który uruchamia `internal/scripts/ai/review_fix_v2.py`. Sukces kompilacji kończy task kodem `0`, błąd w ostatniej iteracji — wyjątkiem.

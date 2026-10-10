@@ -14,12 +14,12 @@ tasks:
         - copy_template_to_workspace
     - id: ai_generate_java_maven_feature
       type: powershell
-      command: '& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/springboot_crud.txt -w workspaces/springboot -p app -k com.example.demo -r default -y python'
+      command: '& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/springboot_crud.txt -w workspaces/springboot -p app -k com.example.demo -r default -m gpt-5.3-codex -y python'
       deps:
         - maven_compile
     - id: java_maven_compile_fix_loop
       type: powershell
-      command: '& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/springboot -LoopProject app -LoopPackage com.example.demo -LoopProvider default -LoopPython python'
+      command: '& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/springboot -LoopProject app -LoopPackage com.example.demo -LoopProvider default -LoopModel gpt-5.3-codex -LoopPython python'
       deps:
         - ai_generate_java_maven_feature
     - id: maven_test

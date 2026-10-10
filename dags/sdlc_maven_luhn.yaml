@@ -14,12 +14,12 @@ tasks:
         - generate_maven_archetype
     - id: ai_generate_java_maven_feature
       type: powershell
-      command: '& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/luhn.txt -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -r default -y python'
+      command: '& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/luhn.txt -w workspaces/sdlc_maven_luhn -p app -k com.example.luhn -r default -m gpt-5.3-codex -y python'
       deps:
         - maven_compile
     - id: java_maven_compile_fix_loop
       type: powershell
-      command: '& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/sdlc_maven_luhn -LoopProject app -LoopPackage com.example.luhn -LoopModel kimi-k2.7-code -LoopPython python'
+      command: '& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/sdlc_maven_luhn -LoopProject app -LoopPackage com.example.luhn -LoopProvider default -LoopModel gpt-5.3-codex -LoopPython python'
       deps:
         - ai_generate_java_maven_feature
     - id: maven_test

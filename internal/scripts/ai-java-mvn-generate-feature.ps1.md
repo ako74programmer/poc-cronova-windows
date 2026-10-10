@@ -14,7 +14,7 @@ Czyta istniejący `pom.xml`, buduje pełny prompt dla modelu AI i zapisuje wygen
 ## Jak używać
 
 ```powershell
-& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/springboot_crud.txt -w workspaces/springboot -p app -k com.example.demo -r default -y python
+& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/springboot_crud.txt -w workspaces/springboot -p app -k com.example.demo -r default -m gpt-5.3-codex -y python
 ```
 
 ## Parametry

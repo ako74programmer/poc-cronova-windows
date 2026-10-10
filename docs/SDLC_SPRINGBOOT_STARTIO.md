@@ -63,7 +63,7 @@ Wykonuje `mvn -B -Dmaven.repo.local=<repo>\.m2\repository -DskipTests compile` (
 ### 3. `ai_generate_java_maven_feature` — dodanie CRUD przez AI
 
 ```powershell
-& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/springboot_crud.txt -w workspaces/springboot-startio -p app -k com.example.demo -r default -y python
+& .\internal\scripts\ai-java-mvn-generate-feature.ps1 -f prompts/springboot_crud.txt -w workspaces/springboot-startio -p app -k com.example.demo -r default -m gpt-5.3-codex -y python
 ```
 
 [`ai-java-mvn-generate-feature.ps1`](../internal/scripts/ai-java-mvn-generate-feature.ps1) łączy prompt [`prompts/springboot_crud.txt`](../prompts/springboot_crud.txt) z regułami generatora i `pom.xml`, a następnie uruchamia [`ai_generate_feature.py`](../internal/scripts/ai_generate_feature.py), który wywołuje providera AI i zapisuje zwrócone pliki (opcjonalnie nowy `pom.xml`). Provider: `-r default` → `Resolve-AiProvider` z [`common/ai-provider.ps1`](../internal/scripts/common/ai-provider.ps1) (zmienne `CRONOVA_AI_BASE_URL`/`CRONOVA_AI_MODEL`/`CRONOVA_AI_TOKEN` albo domyślny rekord `ai_providers` w `CRONOVA_DB`, domyślnie `data\cronova.db`).
@@ -71,7 +71,7 @@ Wykonuje `mvn -B -Dmaven.repo.local=<repo>\.m2\repository -DskipTests compile` (
 ### 4. `java_maven_compile_fix_loop` — kompilacja i naprawa przez AI
 
 ```powershell
-& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/springboot-startio -LoopProject app -LoopPackage com.example.demo -LoopProvider default -LoopPython python
+& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/springboot-startio -LoopProject app -LoopPackage com.example.demo -LoopProvider default -LoopModel gpt-5.3-codex -LoopPython python
 ```
 
 Do 3 iteracji `mvn -B -DskipTests test-compile`. Po błędzie (poza ostatnią iteracją) wysyła `pom.xml`, ostatnie 80 linii logu i źródła do reviewera przez [`ai-review-java-maven-errors.ps1`](../internal/scripts/ai-review-java-maven-errors.ps1) → `internal/scripts/ai/review_fix_v2.py`. Błąd w ostatniej iteracji kończy task wyjątkiem.

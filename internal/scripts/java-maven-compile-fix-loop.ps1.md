@@ -14,7 +14,7 @@ Uruchamia `mvn test-compile`, a gdy kompilacja się nie powiedzie, buduje prompt
 ## Jak używać
 
 ```powershell
-& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/springboot-startio -LoopProject app -LoopPackage com.example.demo -LoopProvider default -LoopPython python
+& .\internal\scripts\java-maven-compile-fix-loop.ps1 -LoopWorkspace workspaces/springboot-startio -LoopProject app -LoopPackage com.example.demo -LoopProvider default -LoopModel gpt-5.3-codex -LoopPython python
 ```
 
 ## Parametry
