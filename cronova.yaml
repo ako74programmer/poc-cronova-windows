@@ -9,7 +9,7 @@ workspaces: ""
 tick: 2s
 executor: ""
 http: 127.0.0.1:8090
-reload: ""
+reload: 10s
 allow_unauthenticated_remote: false
 retention: 2160h
 audit_retention: 8760h
