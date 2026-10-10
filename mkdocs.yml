@@ -149,6 +149,7 @@ nav:
       - Część 3 — pierwszy plan: user-tutorial/03-pierwszy-plan.md
       - Część 4 — skrypt jako task: user-tutorial/04-skrypt-jako-zadanie.md
       - Część 5 — statusy i logi: user-tutorial/05-statusy-i-logi.md
+      - Część 6 — diagnozowanie błędu: user-tutorial/06-diagnozujemy-blad.md
   - Tutorial:
       - tutorial/index.md
       - Install cronova: tutorial/install.md
