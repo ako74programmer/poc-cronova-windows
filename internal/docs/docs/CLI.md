@@ -366,7 +366,7 @@ cronova retry example_etl__manual_1783442227904284000 transform  # one task
 
 Operator override of a run or task state — skip a known-bad task, force a run green after a manual fix.
 
-```powershell
+```text
 cronova mark <run_id> success                # mark the run:  success | failed
 cronova mark <run_id> <task_id> skipped      # mark one task: success | failed | skipped
 ```

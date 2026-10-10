@@ -23,7 +23,7 @@ path, since you need a token to reach the API):
 cronova tokens create my-agent -role admin      # or -role viewer for read-only
 #   cnv_pat_XXXXXXXXXXXXXXXXXXXX     ← shown once; store it
 cronova tokens list
-cronova tokens delete <id>
+cronova tokens delete $tokenId
 ```
 
 Give the agent the printed token as `CRONOVA_TOKEN`.
@@ -77,12 +77,12 @@ cronova dags -o json                          # list DAGs
 cronova get etl_daily -o json                 # one DAG definition
 cronova trigger etl_daily -params '{\"day\":\"2026-01-01\"}' -o json
 cronova runs etl_daily -o json                # recent runs
-cronova run <run_id>                          # a run + task states
-cronova logs <task_instance_id>               # a task's log (text)
-cronova cancel <run_id>
-cronova retry <run_id> [task_id]
-cronova mark <run_id> [task_id] success       # operator override
-cronova pause etl_daily        (-off to resume)
+cronova run $runId                            # a run + task states
+cronova logs $taskInstanceId                 # a task's log (text)
+cronova cancel $runId
+cronova retry $runId                          # optionally: cronova retry $runId <task_id>
+cronova mark $runId success                   # operator override (task: mark $runId <task_id> success)
+cronova pause etl_daily                       # cronova pause etl_daily -off to resume
 cronova overview                              # dashboard summary
 ```
 

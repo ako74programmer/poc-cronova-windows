@@ -182,7 +182,7 @@ The run flips back to `running`, `transform` and `load` execute again, and the `
 
 Sometimes re-running is wrong — you already fixed the data by hand, or a task is stuck and you want the pipeline to move on. `cronova mark` is the operator override:
 
-```powershell
+```text
 cronova mark <run_id> <state>              # run:  success | failed
 cronova mark <run_id> <task_id> <state>    # task: success | failed | skipped
 ```

@@ -6,7 +6,7 @@ Katalog zawiera skrypty PowerShell wspólne dla workflowów Angular, Spring Boot
 
 Każdy skrypt przyjmuje:
 
-```powershell
+```text
 .\scripts\sdlc\Invoke-Sdlc.ps1 -Step <krok> -Config <plik sdlc YAML> [-Workspace <katalog projektu>] [-Artifacts <katalog wyników>]
 ```
 
