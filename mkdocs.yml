@@ -145,6 +145,7 @@ nav:
   - Tutorial dla początkujących (PL):
       - user-tutorial/README.md
       - Część 1 — instalacja: user-tutorial/01-instalacja.md
+      - Część 2 — ekran: user-tutorial/02-poznajemy-ekran.md
   - Tutorial:
       - tutorial/index.md
       - Install cronova: tutorial/install.md

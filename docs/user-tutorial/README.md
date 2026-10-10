@@ -5,5 +5,6 @@ To tutorial pisany prostym językiem. Każda część jest osobnym, krótkim kro
 ## Części
 
 1. [Instalacja i pierwsze otwarcie](01-instalacja.md)
+2. [Poznajemy ekran](02-poznajemy-ekran.md)
 
-Następna planowana część: poznawanie ekranu Cronovy. Nie została jeszcze przygotowana.
+Następna planowana część: pierwszy DAG i jego zadania.
