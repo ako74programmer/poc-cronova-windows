@@ -12,21 +12,21 @@ Każdy rozdział rozwija poprzedni, ale można go też czytać samodzielnie. Je�
 
 ### Co zbudujesz
 
-Krok po kroku rozbudujesz niewielki pipeline w stylu **ETL**. Zacznie się od pojedynczego zadania `echo` w pliku YAML, a następnie zyska harmonogram **cron** z backfillem, łańcuch zależności extract → transform → load, komendy z datami w szablonach, sekrety z zarządzanych połączeń, własny przesłany projekt Python, ponawianie zadań i pulę zasobów — a na końcu podrzędny **DAG** raportujący po udanym zakończeniu pipeline’u.
+Krok po kroku rozbudujesz niewielki pipeline w stylu **ETL**. Zacznie się od pojedynczego zadania `echo` w pliku YAML, a następnie zyska harmonogram **cron** z backfillem, łańcuch zależności extract → transform → load, komendy z datami w szablonach, sekrety z zarządzanych połączeń, własny przesłany projekt kodu, ponawianie zadań i pulę zasobów — a na końcu podrzędny **DAG** raportujący po udanym zakończeniu pipeline’u.
 
 Wszystko działa lokalnie: jeden plik binarny `cronova`, wbudowana baza SQLite i konsola webowa pod **http://localhost:8090**. Bez zewnętrznej bazy danych, brokera wiadomości czy kontenerów.
 
 ### Wymagania
 
-- Komputer **Windows amd64** — wystarczy laptop. Archiwa wydań (najnowsze wydanie: **v0.2.1**) są przeznaczone dla Windows amd64.
+- Komputer **Windows amd64** — wystarczy laptop. Pakiet dla Windows amd64 pobierzesz z [wydania v0.2.2](https://github.com/ako74programmer/poc-cronova-windows/releases/tag/v0.2.2).
 - Terminal PowerShell.
-- **Go 1.26.5+**, *tylko jeśli* zdecydujesz się budować ze źródeł. Gotowe wydanie i instalator uruchamiany jednym wierszem nie wymagają toolchaina.
+- **Go 1.26.5+**, *tylko jeśli* zdecydujesz się budować ze źródeł. Gotowe archiwum ZIP nie wymaga toolchaina; `setup.cmd` służy do instalacji cronova na stałe.
 
 > **Wskazówka:** Plik binarny nie korzysta z CGO (SQLite w czystym Go), więc nie trzeba niczego kompilować ani linkować — pobierz, rozpakuj i uruchom.
 
 ### Rozdziały
 
-1. **[Instalacja cronova](install.pl.md)** — pobierz plik binarny (gotowe wydanie, instalator jednym wierszem lub `go build`), uruchom `cronova serve` i otwórz konsolę.
+1. **[Instalacja cronova](install.pl.md)** — pobierz i rozpakuj archiwum ZIP dla Windows, uruchom `cronova.exe` bez instalowania usługi albo opcjonalnie zainstaluj program przez `setup.cmd`.
 2. **[Twój pierwszy DAG](first-dag.pl.md)** — utwórz DAG jako plik YAML w `./dags`, wyzwól go i obserwuj przebieg w konsoli oraz CLI.
 3. **[Harmonogram](scheduling.pl.md)** — wyrażenia cron i interwały `@every`, `start_date`, backfill `catchup` oraz znaczenie *daty logicznej*.
 4. **[Zależności zadań](dependencies.pl.md)** — połącz zadania przez `deps` i określ, kiedy mają się uruchamiać, za pomocą reguł takich jak `all_success` i `one_failed`.
@@ -37,7 +37,7 @@ Wszystko działa lokalnie: jeden plik binarny `cronova`, wbudowana baza SQLite i
 9. **[Ponawianie, limity czasu i pule](retries-timeouts-pools.pl.md)** — zwiększ odporność pipeline’u za pomocą `retries`, `retry_delay`, `timeout`, SLA i globalnych pul współbieżności.
 10. **[Zależności między DAG-ami](cross-dag.pl.md)** — łącz całe DAG-i przez `trigger_after` i otrzymuj powiadomienia webhook o sukcesie lub błędzie.
 
-> **Uwaga:** Tutorial omawia pola i komendy używane na co dzień. Pełny schemat znajduje się w [referencji DAG](../DAG_REFERENCE.pl.md), a wszystkie komendy i flagi — w [referencji CLI](../CLI.md). Uruchamialne przykładowe DAG-i znajdziesz w katalogu repozytorium [`dags/`](https://github.com/ako74programmer/poc-cronova-windows/tree/main/dags).
+> **Uwaga:** Tutorial omawia pola i komendy używane na co dzień. Pełny schemat znajduje się w [referencji DAG](../DAG_REFERENCE.pl.md), a wszystkie komendy i flagi — w [referencji CLI](../CLI.md). Dodatkowe uruchamialne DAG-i są w katalogu repozytorium [`dags/`](https://github.com/ako74programmer/poc-cronova-windows/tree/main/dags).
 
 ### Jak czytać tutorial
 
@@ -49,7 +49,7 @@ Każdy rozdział ma podobny układ: krótkie wyjaśnienie, niewielki uruchamialn
 - Wystarczy komputer Windows amd64 — Go 1.26.5+ jest potrzebne wyłącznie do budowania ze źródeł.
 - Dziesięć rozdziałów prowadzi od instalacji po orkiestrację między DAG-ami; szczegóły uzupełniają dokumenty referencyjne.
 
-**Na początek:** uruchom plik binarny, wykonując instrukcje w rozdziale [Instalacja cronova](install.pl.md).
+**Na początek:** pobierz archiwum ZIP dla Windows i wykonaj instrukcje w rozdziale [Instalacja cronova](install.pl.md).
 
 ---
 
@@ -61,21 +61,21 @@ Each chapter builds on the previous one, but is also written to stand on its own
 
 ### What you'll build
 
-You'll grow one small **ETL-style pipeline** chapter by chapter. It starts as a single `echo` task in a YAML file, then gains a real **cron** schedule with backfill, an extract → transform → load dependency chain, date-templated commands, secrets from managed connections, your own uploaded Python project, retries and a resource pool — and finally a downstream reporting **DAG** that runs whenever the pipeline succeeds.
+You'll grow one small **ETL-style pipeline** chapter by chapter. It starts as a single `echo` task in a YAML file, then gains a real **cron** schedule with backfill, an extract → transform → load dependency chain, date-templated commands, secrets from managed connections, your own uploaded project, retries and a resource pool — and finally a downstream reporting **DAG** that runs whenever the pipeline succeeds.
 
 Everything runs locally: one `cronova` binary, an embedded SQLite database, and the web console at **http://localhost:8090**. No external database, no message broker, no containers.
 
 ### What you need
 
-- A **Windows amd64** machine — a laptop is fine. Release ZIPs (latest release: **v0.2.1**) target Windows amd64.
+- A **Windows amd64** machine — a laptop is fine. Download the Windows ZIP from the [v0.2.2 release](https://github.com/ako74programmer/poc-cronova-windows/releases/tag/v0.2.2).
 - A PowerShell terminal.
-- **Go 1.26.5+**, *only* if you choose to build from source. The prebuilt release and the one-line installer need no toolchain at all.
+- **Go 1.26.5+**, *only* if you choose to build from source. The prebuilt release ZIP needs no toolchain; use `setup.cmd` only for a persistent installation.
 
 > **Tip:** The binary is CGO-free (pure-Go SQLite), so there is nothing to compile or link against — download, extract, run.
 
 ### Chapters
 
-1. **[Install cronova](install.md)** — get the binary (prebuilt release, one-line installer, or `go build`), run `cronova serve`, and open the console.
+1. **[Install cronova](install.md)** — download and extract the Windows ZIP, run `cronova.exe` directly for the tutorial, or optionally install it with `setup.cmd`.
 2. **[Your first DAG](first-dag.md)** — write a DAG as a YAML file in `./dags`, trigger it, and watch the run in the console and CLI.
 3. **[Scheduling](scheduling.md)** — cron expressions and `@every` intervals, `start_date`, `catchup` backfill, and what the *logical date* means.
 4. **[Task dependencies](dependencies.md)** — wire tasks together with `deps` and control when they fire with trigger rules like `all_success` and `one_failed`.
@@ -98,4 +98,4 @@ Every chapter follows the same rhythm: a short explanation, a small runnable sni
 - You need only a Windows amd64 machine — Go 1.26.5+ is required only for source builds.
 - Ten chapters take you from install to cross-DAG orchestration, with reference docs for everything deeper.
 
-**Start here:** get the binary running in [Install cronova](install.md).
+**Start here:** download the Windows ZIP and follow [Install cronova](install.md).

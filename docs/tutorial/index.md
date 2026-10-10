@@ -12,16 +12,16 @@ Everything runs locally: one `cronova` binary, an embedded SQLite database, and 
 
 ## What you need
 
-- A **Windows amd64** machine — a laptop is fine. Release ZIPs (latest release: **v0.2.1**) target Windows amd64.
+- A **Windows amd64** machine — a laptop is fine. The Windows amd64 package is available from the [v0.2.2 release](https://github.com/ako74programmer/poc-cronova-windows/releases/tag/v0.2.2).
 - A PowerShell terminal.
-- **Go 1.26.5+**, *only* if you choose to build from source. The prebuilt release and the one-line installer need no toolchain at all.
+- **Go 1.26.5+**, *only* if you choose to build from source. The prebuilt release ZIP needs no toolchain; run `setup.cmd` only if you want a persistent installation.
 
 !!! tip
     The binary is CGO-free (pure-Go SQLite), so there is nothing to compile or link against — download, extract, run.
 
 ## Chapters
 
-1. **[Install cronova](install.md)** — get the binary (prebuilt release, one-line installer, or `go build`), run `cronova serve`, and open the console.
+1. **[Install cronova](install.md)** — download and extract the Windows ZIP, run `cronova.exe` directly for the tutorial, or optionally install it with `setup.cmd`.
 2. **[Your first DAG](first-dag.md)** — write a DAG as a YAML file in `./dags`, trigger it, and watch the run in the console and CLI.
 3. **[Scheduling](scheduling.md)** — cron expressions and `@every` intervals, `start_date`, `catchup` backfill, and what the *logical date* means.
 4. **[Task dependencies](dependencies.md)** — wire tasks together with `deps` and control when they fire with trigger rules like `all_success` and `one_failed`.
