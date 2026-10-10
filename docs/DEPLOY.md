@@ -8,7 +8,7 @@ Run installation from an elevated PowerShell.
 
 ## Quick install for recipients (setup.cmd)
 
-The ZIP root contains `setup.cmd`, `setup.ps1` and `README-INSTALL.md`. Double-click `setup.cmd`:
+The ZIP root contains `setup.cmd`, `setup.ps1`, `README-INSTALL.md` (Polish), and `README-INSTALL.en.md` (English). Double-click `setup.cmd`; it displays both guide filenames before starting:
 
 - it removes the "downloaded from the internet" mark (`Unblock-File`) from all extracted files;
 - a member of Administrators is asked whether to install Windows Services (UAC prompt), which runs `deploy\install.ps1 -Start`;

@@ -12,7 +12,7 @@ Everything runs locally: one `cronova` binary, an embedded SQLite database, and 
 
 ## What you need
 
-- A **Windows amd64** machine — a laptop is fine. The Windows amd64 package is available from the [v0.2.2 release](https://github.com/ako74programmer/poc-cronova-windows/releases/tag/v0.2.2).
+- A **Windows amd64** machine — a laptop is fine. The Windows amd64 package is available from the [v0.2.3 release](https://github.com/ako74programmer/poc-cronova-windows/releases/tag/v0.2.3).
 - A PowerShell terminal.
 - **Go 1.26.5+**, *only* if you choose to build from source. The prebuilt release ZIP needs no toolchain; run `setup.cmd` only if you want a persistent installation.
 

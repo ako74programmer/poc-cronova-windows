@@ -1,5 +1,7 @@
 # Cronova – instalacja (Windows)
 
+**Język: [English](README-INSTALL.en.md) | Polski**
+
 1. Rozpakuj ZIP do dowolnego katalogu.
 2. Kliknij dwukrotnie **`setup.cmd`**.
 

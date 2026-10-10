@@ -51,4 +51,4 @@ Write-Host "Version : $ver"
 Write-Host "Size    : $([math]::Round((Get-Item $zip).Length / 1MB, 1)) MB"
 Write-Host "SHA-256 : $sum"
 Write-Host 'Send the ZIP; send the SHA-256 separately (recipient: Get-FileHash .\cronova_windows_amd64.zip).'
-Write-Host 'Recipient: extract the ZIP and double-click setup.cmd (see README-INSTALL.md inside).'
+Write-Host 'Recipient: extract the ZIP and double-click setup.cmd (see README-INSTALL.md for Polish or README-INSTALL.en.md for English).'

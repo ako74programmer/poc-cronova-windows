@@ -17,7 +17,7 @@ try {
   Copy-Item (Join-Path $Root "deploy/update.ps1") (Join-Path $Stage "deploy")
   Copy-Item (Join-Path $Root "deploy/reinstall.ps1") (Join-Path $Stage "deploy")
   # Recipient entry points at the ZIP root: double-click setup.cmd.
-  foreach ($f in "setup.cmd", "setup.ps1", "README-INSTALL.md") { Copy-Item (Join-Path $Root "deploy/$f") $Stage }
+  foreach ($f in "setup.cmd", "setup.ps1", "README-INSTALL.md", "README-INSTALL.en.md") { Copy-Item (Join-Path $Root "deploy/$f") $Stage }
   Copy-Item (Join-Path $Root "cronova.yaml") (Join-Path $Stage "cronova.yaml")
   Copy-Item (Join-Path $Root "dags/*.yaml") (Join-Path $Stage "dags")
   Copy-Item (Join-Path $Root "docs/DEPLOY.md") (Join-Path $Stage "docs")

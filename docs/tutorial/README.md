@@ -18,7 +18,7 @@ Wszystko działa lokalnie: jeden plik binarny `cronova`, wbudowana baza SQLite i
 
 ### Wymagania
 
-- Komputer **Windows amd64** — wystarczy laptop. Pakiet dla Windows amd64 pobierzesz z [wydania v0.2.2](https://github.com/ako74programmer/poc-cronova-windows/releases/tag/v0.2.2).
+- Komputer **Windows amd64** — wystarczy laptop. Pakiet dla Windows amd64 pobierzesz z [wydania v0.2.3](https://github.com/ako74programmer/poc-cronova-windows/releases/tag/v0.2.3).
 - Terminal PowerShell.
 - **Go 1.26.5+**, *tylko jeśli* zdecydujesz się budować ze źródeł. Gotowe archiwum ZIP nie wymaga toolchaina; `setup.cmd` służy do instalacji cronova na stałe.
 
@@ -67,7 +67,7 @@ Everything runs locally: one `cronova` binary, an embedded SQLite database, and 
 
 ### What you need
 
-- A **Windows amd64** machine — a laptop is fine. Download the Windows ZIP from the [v0.2.2 release](https://github.com/ako74programmer/poc-cronova-windows/releases/tag/v0.2.2).
+- A **Windows amd64** machine — a laptop is fine. Download the Windows ZIP from the [v0.2.3 release](https://github.com/ako74programmer/poc-cronova-windows/releases/tag/v0.2.3).
 - A PowerShell terminal.
 - **Go 1.26.5+**, *only* if you choose to build from source. The prebuilt release ZIP needs no toolchain; use `setup.cmd` only for a persistent installation.
 

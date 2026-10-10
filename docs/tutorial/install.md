@@ -4,7 +4,7 @@ cronova is a self-hosted **workflow scheduler** for Windows, distributed as a Wi
 
 ## Option 1: Run the tutorial from the release ZIP (recommended)
 
-Download **`cronova_windows_amd64.zip`** from the [cronova v0.2.2 release](https://github.com/ako74programmer/poc-cronova-windows/releases/tag/v0.2.2) and extract it into a working directory. The package includes `cronova.exe`, `cronova-executor.exe`, a `dags/` directory, and the optional installer `setup.cmd`.
+Download **`cronova_windows_amd64.zip`** from the [cronova v0.2.3 release](https://github.com/ako74programmer/poc-cronova-windows/releases/tag/v0.2.3) and extract it into a working directory. The package includes `cronova.exe`, `cronova-executor.exe`, a `dags/` directory, the optional installer `setup.cmd`, and both installation guides: `README-INSTALL.en.md` (English) and `README-INSTALL.md` (Polish).
 
 For this tutorial, **do not run `setup.cmd`**. Running the executable directly keeps the setup local to the extracted directory and avoids installing Windows services or a logon task:
 
@@ -16,7 +16,7 @@ Set-Location .\cronova_windows_amd64
 The version command prints the build version and platform, for example:
 
 ```
-cronova v0.2.2 windows/amd64
+cronova v0.2.3 windows/amd64
 ```
 
 If you extracted the ZIP into a directory with a different name, change to that directory instead. You do not need Go or administrator rights to run the prebuilt binaries.
