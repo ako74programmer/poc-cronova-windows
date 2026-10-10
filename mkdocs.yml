@@ -147,6 +147,7 @@ nav:
       - Część 1 — instalacja: user-tutorial/01-instalacja.md
       - Część 2 — ekran: user-tutorial/02-poznajemy-ekran.md
       - Część 3 — pierwszy plan: user-tutorial/03-pierwszy-plan.md
+      - Część 4 — skrypt jako task: user-tutorial/04-skrypt-jako-zadanie.md
   - Tutorial:
       - tutorial/index.md
       - Install cronova: tutorial/install.md
