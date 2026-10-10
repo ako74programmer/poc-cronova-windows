@@ -83,6 +83,9 @@ go build -o cronova.exe ./cmd/cronova   # or grab a prebuilt release
 - **[Tutorial](tutorial/index.md)** — the step-by-step path: install → first DAG → scheduling → variables → projects → cross-DAG.
 - **[Console guide](console/index.md)** — every page of the web UI: dashboard, DAG editor, visual task editor, runs & live logs, pools, variables, audit, API tokens.
 - **[Quick start](GETTING_STARTED.md)** — the single-page fast path.
+- **[Przewodnik użytkownika (PL)](USER_GUIDE.pl.md)** — kompletny przewodnik instalacji i codziennej obsługi.
+- **[Tutorial dla początkujących (PL)](user-tutorial/README.md)** — krótkie, proste instrukcje krok po kroku.
+- **[Dokumentacja techniczna (PL)](WINDOWS_TECHNICAL.pl.md)** — implementacja, konfiguracja, API, bezpieczeństwo oraz ograniczenia branchu Windows.
 - **[Deployment](DEPLOY.md)** — Windows services (`Cronova`, `CronovaExecutor`), updates, the crash-recoverable executor.
 - **[Comparison](COMPARISON.md)** — cronova vs. Airflow, Azkaban, Dagster, Prefect & cron.
 - **[FAQ](FAQ.md)** — common questions, answered.

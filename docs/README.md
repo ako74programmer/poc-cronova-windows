@@ -9,6 +9,9 @@ New to cronova? Read the [project overview](../README.md) first, then [Getting S
 - **[Getting Started](GETTING_STARTED.md)** — install, run `cronova serve`, write your first DAG, template variables, and uploading your own scripts/projects.
 - **[Console Guide](console/index.md)** — every page of the web UI: dashboard, DAG editor, visual task editor, runs & live logs, pools, variables, audit, API tokens.
 - **[Deployment](DEPLOY.md)** — Windows ZIP installation, Windows Services, PowerShell task execution, Job Objects, upgrades and backup.
+- **[Przewodnik użytkownika (PL)](USER_GUIDE.pl.md)** — instalacja, konsola, tworzenie i uruchamianie DAG-ów, typy zadań, CLI, integracje i FAQ.
+- **[Tutorial dla początkujących (PL)](user-tutorial/README.md)** — proste instrukcje w zatwierdzanych częściach, zaczynając od instalacji.
+- **[Dokumentacja techniczna (PL)](WINDOWS_TECHNICAL.pl.md)** — architektura, przepływy, konfiguracja, API, bezpieczeństwo, build/test/deploy oraz znane ograniczenia tego branchu.
 
 ## Reference
 

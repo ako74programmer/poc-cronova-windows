@@ -140,6 +140,11 @@ extra:
 nav:
   - Home: index.md
   - Quick start: GETTING_STARTED.md
+  - Przewodnik użytkownika (PL): USER_GUIDE.pl.md
+  - Dokumentacja techniczna (PL): WINDOWS_TECHNICAL.pl.md
+  - Tutorial dla początkujących (PL):
+      - user-tutorial/README.md
+      - Część 1 — instalacja: user-tutorial/01-instalacja.md
   - Tutorial:
       - tutorial/index.md
       - Install cronova: tutorial/install.md
