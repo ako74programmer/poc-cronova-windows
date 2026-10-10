@@ -37,35 +37,47 @@ ai_base_url = normalize_chat_completions_url(ai_base_url)
 with open(prompt_file, "r", encoding="utf-8") as f:
     prompt = f.read()
 
-req = {
-    "model": ai_model,
-    "messages": [
-        {"role": "system", "content": "You output only valid JSON where keys are relative file paths and values are file contents."},
-        {"role": "user", "content": prompt},
-    ],
-    "temperature": 0.2,
-}
-with open(req_file, "w", encoding="utf-8") as f:
-    json.dump(req, f)
+try:
+    max_attempts = max(1, int(os.environ.get("CRONOVA_AI_ATTEMPTS", "3")))
+except ValueError:
+    max_attempts = 3
 
-with open(req_file, "rb") as f:
-    data = f.read()
+messages = [
+    {"role": "system", "content": "You output only valid JSON where keys are relative file paths and values are file contents."},
+    {"role": "user", "content": prompt},
+]
 
 headers = {"Content-Type": "application/json"}
 if ai_token:
     headers["Authorization"] = f"Bearer {ai_token}"
 
-req_obj = urllib.request.Request(
-    ai_base_url,
-    data=data,
-    headers=headers,
-    method="POST",
-)
-with urllib.request.urlopen(req_obj) as resp:
-    resp_body = resp.read().decode("utf-8")
+for attempt in range(1, max_attempts + 1):
+    req = {"model": ai_model, "messages": messages, "temperature": 0.2}
+    with open(req_file, "w", encoding="utf-8") as f:
+        json.dump(req, f)
+    with open(req_file, "rb") as f:
+        data = f.read()
 
-with open(resp_file, "w", encoding="utf-8") as f:
-    f.write(resp_body)
+    req_obj = urllib.request.Request(ai_base_url, data=data, headers=headers, method="POST")
+    with urllib.request.urlopen(req_obj) as resp:
+        resp_body = resp.read().decode("utf-8")
 
-resp_json = json.loads(resp_body)
-apply_ai_file_patch(project_dir, resp_body)
+    with open(resp_file, "w", encoding="utf-8") as f:
+        f.write(resp_body)
+
+    try:
+        apply_ai_file_patch(project_dir, resp_body)
+        break
+    except (ValueError, KeyError, IndexError, TypeError) as err:
+        # json.JSONDecodeError is a ValueError; validation runs before any file is written.
+        if attempt == max_attempts:
+            raise
+        print(f"AI response rejected (attempt {attempt}/{max_attempts}): {err}", flush=True)
+        try:
+            previous = json.loads(resp_body)["choices"][0]["message"]["content"]
+        except (ValueError, KeyError, IndexError, TypeError):
+            previous = resp_body
+        messages = messages[:2] + [
+            {"role": "assistant", "content": previous},
+            {"role": "user", "content": f"Your previous response was rejected: {err}. Return the complete corrected JSON object only, following all rules."},
+        ]

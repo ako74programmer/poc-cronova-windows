@@ -19,7 +19,7 @@ class ApplyAiFilePatchTests(unittest.TestCase):
                                 "content": json.dumps(
                                     {
                                         "pom_xml": "<project><modelVersion>4.0.0</modelVersion></project>",
-                                        "src/main/java/com/example/App.java": "class App {}",
+                                        "src/main/java/com/example/App.java": "package com.example;\nclass App {}",
                                     }
                                 )
                             }
@@ -35,7 +35,7 @@ class ApplyAiFilePatchTests(unittest.TestCase):
             self.assertTrue(pom_path.exists())
             self.assertTrue(source_path.exists())
             ET.fromstring(pom_path.read_text(encoding="utf-8"))
-            self.assertEqual(source_path.read_text(encoding="utf-8"), "class App {}")
+            self.assertEqual(source_path.read_text(encoding="utf-8"), "package com.example;\nclass App {}")
 
 
 if __name__ == "__main__":

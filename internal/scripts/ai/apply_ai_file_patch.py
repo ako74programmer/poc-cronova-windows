@@ -74,22 +74,16 @@ def parse_ai_response_content(resp_body):
     return json.loads(content)
 
 
-def apply_ai_file_patch(project_dir, response_payload, emit_writes=True):
-    if isinstance(response_payload, str):
-        data = parse_ai_response_content(response_payload)
-    else:
-        data = response_payload
-
-    if "pom_xml" in data:
-        pom_xml = normalize_pom_xml(data["pom_xml"])
-        with open(os.path.join(project_dir, "pom.xml"), "w", encoding="utf-8") as file_handle:
-            file_handle.write(pom_xml)
-        if emit_writes:
-            print("Wrote pom.xml")
-
+def validate_ai_file_patch(data):
+    """Validate the whole AI payload before anything is written; returns the normalized pom.xml (or None)."""
+    if not isinstance(data, dict) or not data:
+        raise ValueError("AI response must be a non-empty JSON object of file path -> content")
+    pom_xml = normalize_pom_xml(data["pom_xml"]) if "pom_xml" in data else None
     for key, value in data.items():
         if key == "pom_xml":
             continue
+        if not isinstance(value, str):
+            raise ValueError(f"AI response for {key} is not a string")
         if key.endswith(".java"):
             validate_java_package(key, value)
         if key.endswith("Test.java"):
@@ -98,6 +92,25 @@ def apply_ai_file_patch(project_dir, response_payload, emit_writes=True):
                     raise ValueError(
                         f"AI response for {key} contains unsupported Spring MVC test pattern: {forbidden_pattern}"
                     )
+    return pom_xml
+
+
+def apply_ai_file_patch(project_dir, response_payload, emit_writes=True):
+    if isinstance(response_payload, str):
+        data = parse_ai_response_content(response_payload)
+    else:
+        data = response_payload
+
+    pom_xml = validate_ai_file_patch(data)
+    if pom_xml is not None:
+        with open(os.path.join(project_dir, "pom.xml"), "w", encoding="utf-8") as file_handle:
+            file_handle.write(pom_xml)
+        if emit_writes:
+            print("Wrote pom.xml")
+
+    for key, value in data.items():
+        if key == "pom_xml":
+            continue
         path = os.path.join(project_dir, key)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as file_handle:

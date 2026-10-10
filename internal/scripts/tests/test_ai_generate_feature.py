@@ -93,6 +93,62 @@ class AiGenerateFeaturePomTests(unittest.TestCase):
 
             self.assertFalse((project / "pom.xml").exists())
 
+    def test_retries_after_invalid_response_and_writes_only_valid_one(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            project = root / "project"
+            project.mkdir()
+            prompt = root / "prompt.txt"
+            prompt.write_text("test prompt", encoding="utf-8")
+
+            def body(payload):
+                content = json.dumps(payload)
+                return json.dumps({"choices": [{"message": {"content": content}}]}).encode("utf-8")
+
+            bad = body({"pom_xml": "<project><broken></project>", "src/main/java/a/A.java": "package a;"})
+            good = body({"src/main/java/a/A.java": "package a;\nclass A {}"})
+            calls = []
+
+            def fake_urlopen(request):
+                calls.append(json.loads(request.data))
+                return FakeResponse(bad if len(calls) == 1 else good)
+
+            argv = [
+                str(SCRIPT), str(project), str(prompt), str(root / "req.json"),
+                str(root / "resp.json"), "test-model", "http://127.0.0.1/test", "",
+            ]
+            with patch.object(sys, "argv", argv), patch.object(urllib.request, "urlopen", side_effect=fake_urlopen):
+                runpy.run_path(str(SCRIPT), run_name="__main__")
+
+            self.assertEqual(len(calls), 2)
+            self.assertIn("rejected", calls[1]["messages"][-1]["content"])
+            self.assertFalse((project / "pom.xml").exists())
+            self.assertIn("class A", (project / "src/main/java/a/A.java").read_text(encoding="utf-8"))
+
+    def test_gives_up_after_max_attempts(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            project = root / "project"
+            project.mkdir()
+            prompt = root / "prompt.txt"
+            prompt.write_text("test prompt", encoding="utf-8")
+            bad = json.dumps({"choices": [{"message": {"content": "not json"}}]}).encode("utf-8")
+            calls = []
+
+            def fake_urlopen(request):
+                calls.append(1)
+                return FakeResponse(bad)
+
+            argv = [
+                str(SCRIPT), str(project), str(prompt), str(root / "req.json"),
+                str(root / "resp.json"), "test-model", "http://127.0.0.1/test", "",
+            ]
+            with patch.object(sys, "argv", argv), patch.object(
+                urllib.request, "urlopen", side_effect=fake_urlopen
+            ), patch.dict("os.environ", {"CRONOVA_AI_ATTEMPTS": "3"}), self.assertRaises(ValueError):
+                runpy.run_path(str(SCRIPT), run_name="__main__")
+            self.assertEqual(len(calls), 3)
+
 
 if __name__ == "__main__":
     unittest.main()

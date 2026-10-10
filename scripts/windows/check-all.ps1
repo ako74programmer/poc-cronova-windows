@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Runs every project check locally (replaces hosted CI).
 
@@ -7,7 +7,8 @@
   runner) only needs to call this script. Exits 1 on the first failure.
 
   Default checks: gofmt, go mod verify, embedded docs mirror, AI wiki KB
-  freshness, go vet, go test, PowerShell script/service-helper tests.
+  freshness, go vet, go test, Python script unit tests, PowerShell
+  script/service-helper tests.
 
 .PARAMETER Full
   Also run the race detector and govulncheck (slower, needs network).
@@ -75,6 +76,13 @@ Invoke-Check 'AI wiki KB fresh and clean' {
 }
 Invoke-Check 'go vet' { Invoke-Native go @('vet', './...') }
 Invoke-Check 'go test' { Invoke-Native go @('test', './...') }
+Invoke-Check 'Python script tests' {
+    $modules = Get-ChildItem internal\scripts\tests\test_*.py | ForEach-Object { 'internal.scripts.tests.' + $_.BaseName }
+    # unittest reports on stderr; PS 5.1 would turn that into an error under Stop.
+    $ErrorActionPreference = 'Continue'
+    python -m unittest @modules 2>&1 | ForEach-Object { "$_" } | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "python unittest failed with exit code $LASTEXITCODE" }
+}
 Invoke-Check 'PowerShell scripts' { Invoke-Native powershell @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'scripts\windows\test-powershell-scripts.ps1') }
 Invoke-Check 'service helpers' { Invoke-Native powershell @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'scripts\windows\test-service-helpers.ps1') }
 

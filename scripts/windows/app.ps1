@@ -1,8 +1,11 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [Parameter(Position = 0)]
     [ValidateSet('start', 'start-dev', 'restart', 'restart-dev', 'stop', 'status')]
-    [string]$Command
+    [string]$Command,
+
+    [ValidateRange(1, 65535)]
+    [int]$Port = 8090
 )
 
 $ErrorActionPreference = 'Stop'
@@ -10,7 +13,6 @@ $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $Binary = Join-Path $RepoRoot 'cronova.exe'
 $Config = Join-Path $RepoRoot 'cronova.yaml'
-$Port = 8090
 $HostAddress = '127.0.0.1'
 $Db = Join-Path $RepoRoot 'data\cronova.db'
 $Logs = Join-Path $RepoRoot 'logs'
