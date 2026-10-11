@@ -80,6 +80,14 @@ Aby zainstalować cronova, zamiast tylko przejść tutorial, kliknij dwukrotnie 
 - Jeśli masz uprawnienia administratora, zaproponuje instalację usług Windows `Cronova` i `CronovaExecutor`. Zaakceptuj monit UAC, aby zainstalować usługi.
 - Jeśli odmówisz UAC lub nie masz uprawnień administratora, program zainstaluje się dla bieżącego użytkownika i będzie uruchamiany przy logowaniu za pomocą Harmonogramu zadań.
 
+Jeśli port 8090 jest zajęty, instalator przerwie działanie zamiast automatycznie wybrać inny port. Otwórz PowerShell w katalogu rozpakowanego ZIP-a i ponów instalację, podając wolny port, np.:
+
+```powershell
+.\setup.cmd -Port 8091
+```
+
+`setup.cmd` przekazuje argument do instalatora. Konsola będzie wtedy dostępna pod adresem `http://127.0.0.1:8091/` (lub pod wybranym portem).
+
 Instalator konfiguruje konto administratora, a na końcu wypisze adres konsoli i hasło. Jeśli hasło zostanie wygenerowane automatycznie, **zapisz je od razu** — jest wyświetlane tylko raz. Domyślny adres konsoli to [**http://127.0.0.1:8090/**](http://127.0.0.1:8090/). Opcje i polecenia zarządzania opisuje polski przewodnik wdrożeniowy: [Wdrażanie](../DEPLOY.pl.md) oraz polska instrukcja `README-INSTALL.md` dołączona do ZIP-a.
 
 > **Ważne:** instalator sam uruchamia cronova. Po instalacji nie uruchamiaj dodatkowego procesu `cronova serve` korzystającego z tego samego katalogu danych. Aby kontynuować tutorial, wybierz Opcję 1 i nie uruchamiaj `setup.cmd`.
