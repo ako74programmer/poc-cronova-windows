@@ -76,68 +76,9 @@ Każdy załadowany DAG pojawi się na liście wraz ze swoim harmonogramem. To po
 
 ## Opcja 2: Zainstaluj cronova do stałego użycia
 
-Aby zainstalować cronova, zamiast tylko przejść tutorial, kliknij dwukrotnie **`setup.cmd`** w rozpakowanym ZIP-ie. Instalator wybiera tryb na podstawie Twoich uprawnień:
+Jeśli chcesz używać cronova na stałe, a nie tylko przejść tutorial, uruchom **`setup.cmd`** z rozpakowanego ZIP-a. Instalator skonfiguruje uruchamianie jako usługi Windows albo dla bieżącego użytkownika — zależnie od uprawnień i wyboru w monicie UAC. Po instalacji sam uruchomi cronova; **nie uruchamiaj równocześnie drugiego `cronova serve` z tymi samymi danymi**.
 
-- Jeśli masz uprawnienia administratora, zaproponuje instalację usług Windows `Cronova` i `CronovaExecutor`. Zaakceptuj monit UAC, aby zainstalować usługi.
-- Jeśli odmówisz UAC lub nie masz uprawnień administratora, program zainstaluje się dla bieżącego użytkownika i będzie uruchamiany przy logowaniu za pomocą Harmonogramu zadań.
-
-Jeśli port 8090 jest zajęty, instalator przerwie działanie zamiast automatycznie wybrać inny port. Otwórz PowerShell w katalogu rozpakowanego ZIP-a i ponów instalację, podając wolny port, np.:
-
-```powershell
-.\setup.cmd -Port 8091
-```
-
-`setup.cmd` przekazuje argument do instalatora. Konsola będzie wtedy dostępna pod adresem `http://127.0.0.1:8091/` (lub pod wybranym portem).
-
-Instalator konfiguruje konto administratora, a na końcu wypisze faktyczny adres konsoli i hasło. Domyślny adres to [**http://127.0.0.1:8090/**](http://127.0.0.1:8090/); jeśli podasz `-Port`, instalator wypisze adres z wybranym portem. Gdy hasło zostanie wygenerowane automatycznie, **zapisz je od razu** — jest wyświetlane tylko raz. Opcje i polecenia zarządzania opisuje polski przewodnik wdrożeniowy: [Wdrażanie](../DEPLOY.pl.md) oraz polska instrukcja `README-INSTALL.pl.md` dołączona do ZIP-a.
-
-Wygenerowane hasło możesz później zmienić tym samym poleceniem `users passwd` niezależnie od wybranego trybu. Sama komenda jest wspólna, ale ścieżka bazy zależy od instalacji: Opcja 1 używa `data\cronova.db`; instalacja bieżącego użytkownika zapisuje bazę bezpośrednio w `%LOCALAPPDATA%\Cronova\cronova.db`, a instalacja usług w `%ProgramData%\Cronova\cronova.db` (w tych dwóch instalacjach nie ma podkatalogu `data`). Wybierz **jeden** zestaw ścieżek odpowiadający instalacji:
-
-```powershell
-$cronovaExe = (Resolve-Path ".\cronova.exe").Path
-$dbPath = (Resolve-Path ".\data\cronova.db").Path
-```
-
-Powyższy zestaw dotyczy Opcji 1: uruchom go w PowerShellu otwartym w katalogu rozpakowanego ZIP-a. Dla instalacji bieżącego użytkownika uruchom PowerShell jako to samo konto Windows i użyj:
-
-```powershell
-$cronovaExe = "$env:LOCALAPPDATA\Programs\Cronova\cronova.exe"
-$dbPath = "$env:LOCALAPPDATA\Cronova\cronova.db"
-```
-
-Dla instalacji jako usługi Windows uruchom PowerShell jako administrator i użyj:
-
-```powershell
-$cronovaExe = "$env:ProgramFiles\Cronova\cronova.exe"
-$dbPath = "$env:ProgramData\Cronova\cronova.db"
-```
-
-Po ustawieniu właściwych ścieżek wprowadź nowe hasło. Wpisywane znaki są ukryte:
-
-```powershell
-$securePassword = Read-Host -Prompt "Wpisz nowe hasło administratora (znaki będą ukryte)" -AsSecureString
-$newPassword = [System.Net.NetworkCredential]::new("", $securePassword).Password
-& $cronovaExe users passwd admin -password $newPassword -db $dbPath
-Remove-Variable securePassword, newPassword, cronovaExe, dbPath
-```
-
-Po zmianie hasła istniejące sesje zostaną unieważnione — zaloguj się ponownie nowym hasłem.
-
-**Ważne:** instalator sam uruchamia cronova. Po instalacji nie uruchamiaj dodatkowego procesu `cronova serve` korzystającego z tego samego katalogu danych.
-
-Aby sprawdzić, czy instalacja bieżącego użytkownika działa i jest uruchamiana przez Harmonogram zadań, wykonaj:
-
-```powershell
-& "$env:LOCALAPPDATA\Cronova\internal\scripts\cronova-user.ps1" status
-```
-
-Wynik powinien zawierać `cronova.exe RUNNING`, `cronova-executor.exe RUNNING` oraz wpis `Autostart: scheduled task 'Cronova (user)'`. Przy instalacji jako usługi Windows zamiast tego sprawdź status obu usług w PowerShell uruchomionym jako administrator:
-
-```powershell
-Get-Service Cronova, CronovaExecutor
-```
-
-Aby kontynuować tutorial, wybierz Opcję 1 i nie uruchamiaj `setup.cmd`.
+Szczegółowe kroki, wybór portu, hasła i zarządzanie instalacją opisuje [polska instrukcja instalatora (`deploy/README-INSTALL.pl.md`)](https://github.com/ako74programmer/poc-cronova-windows/blob/feature/windows-cmd-runtime-sdlc-2026-09-26/deploy/README-INSTALL.pl.md). Jeśli chcesz kontynuować ten tutorial, wróć do **Opcji 1** i nie uruchamiaj `setup.cmd`.
 
 ## Opcja 3: Zbuduj scheduler ze źródeł
 

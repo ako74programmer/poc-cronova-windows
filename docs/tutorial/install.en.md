@@ -77,68 +77,9 @@ Each loaded DAG is listed with its schedule. This confirms the scheduler is runn
 
 ## Option 2: Install cronova for ongoing use
 
-To install cronova rather than just follow the tutorial, double-click **`setup.cmd`** in the extracted ZIP. The setup program chooses a mode based on your permissions:
+If you want to use cronova beyond this tutorial, run **`setup.cmd`** from the extracted ZIP. Depending on your permissions and choice at the UAC prompt, setup configures cronova as Windows services or for your Windows user. The installer starts cronova when setup finishes; **do not also start another `cronova serve` process using the same data**.
 
-- If you are an administrator, it offers to install the `Cronova` and `CronovaExecutor` Windows services. Accept the UAC prompt to install the services.
-- If you decline UAC, or do not have administrator rights, it installs for your Windows user and starts at sign-in through Task Scheduler.
-
-If port 8090 is already in use, the installer stops instead of choosing another port automatically. Open PowerShell in the extracted ZIP directory and rerun it with a free port, for example:
-
-```powershell
-.\setup.cmd -Port 8091
-```
-
-`setup.cmd` forwards the argument to the installer. The console will then be available at `http://127.0.0.1:8091/` (or the port you selected).
-
-The installer configures the admin account and prints the actual console URL and password at the end. The default address is **http://127.0.0.1:8090/**; if you pass `-Port`, the printed URL uses the selected port. If the password is generated automatically, **save it then**; it is shown only once. For options and management commands, see the packaged [Windows installation guide](../DEPLOY.md), `README-INSTALL.en.md` (English), or `README-INSTALL.pl.md` (Polish) in the ZIP.
-
-You can change the generated password later with the same `users passwd` command in any installation mode. The command is the same, but the database location depends on the installation: Option 1 uses `data\cronova.db`; a per-user install stores it directly at `%LOCALAPPDATA%\Cronova\cronova.db`, and a service install at `%ProgramData%\Cronova\cronova.db` (those installed modes do not have a `data` subdirectory). Choose **one** path pair for the installation you are using:
-
-```powershell
-$cronovaExe = (Resolve-Path ".\cronova.exe").Path
-$dbPath = (Resolve-Path ".\data\cronova.db").Path
-```
-
-The pair above is for Option 1; run it in PowerShell opened in the extracted ZIP directory. For a per-user installation, run PowerShell as the same Windows user and use:
-
-```powershell
-$cronovaExe = "$env:LOCALAPPDATA\Programs\Cronova\cronova.exe"
-$dbPath = "$env:LOCALAPPDATA\Cronova\cronova.db"
-```
-
-For a Windows service installation, run PowerShell as an administrator and use:
-
-```powershell
-$cronovaExe = "$env:ProgramFiles\Cronova\cronova.exe"
-$dbPath = "$env:ProgramData\Cronova\cronova.db"
-```
-
-After setting the paths for your installation, enter the new password. The characters you type are hidden:
-
-```powershell
-$securePassword = Read-Host -Prompt "Enter a new admin password (input is hidden)" -AsSecureString
-$newPassword = [System.Net.NetworkCredential]::new("", $securePassword).Password
-& $cronovaExe users passwd admin -password $newPassword -db $dbPath
-Remove-Variable securePassword, newPassword, cronovaExe, dbPath
-```
-
-Changing the password revokes existing sessions; sign in again with the new password.
-
-**Important:** The installer starts cronova for you. After installation, do not start another `cronova serve` process using the same data directory.
-
-To check that a per-user installation is running and registered to start through Task Scheduler, run:
-
-```powershell
-& "$env:LOCALAPPDATA\Cronova\internal\scripts\cronova-user.ps1" status
-```
-
-The output should include `cronova.exe RUNNING`, `cronova-executor.exe RUNNING`, and `Autostart: scheduled task 'Cronova (user)'`. For a Windows service installation, check both services instead, from an elevated PowerShell:
-
-```powershell
-Get-Service Cronova, CronovaExecutor
-```
-
-To continue this tutorial, use Option 1 and leave `setup.cmd` unused.
+For detailed steps, port selection, passwords, and installation management, see the [English installation guide (`deploy/README-INSTALL.en.md`)](https://github.com/ako74programmer/poc-cronova-windows/blob/feature/windows-cmd-runtime-sdlc-2026-09-26/deploy/README-INSTALL.en.md). To continue this tutorial, return to **Option 1** and leave `setup.cmd` unused.
 
 ## Option 3: Build the scheduler from source
 
