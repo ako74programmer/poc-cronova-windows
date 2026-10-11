@@ -88,9 +88,48 @@ Jeśli port 8090 jest zajęty, instalator przerwie działanie zamiast automatycz
 
 `setup.cmd` przekazuje argument do instalatora. Konsola będzie wtedy dostępna pod adresem `http://127.0.0.1:8091/` (lub pod wybranym portem).
 
-Instalator konfiguruje konto administratora, a na końcu wypisze adres konsoli i hasło. Jeśli hasło zostanie wygenerowane automatycznie, **zapisz je od razu** — jest wyświetlane tylko raz. Domyślny adres konsoli to [**http://127.0.0.1:8090/**](http://127.0.0.1:8090/). Opcje i polecenia zarządzania opisuje polski przewodnik wdrożeniowy: [Wdrażanie](../DEPLOY.pl.md) oraz polska instrukcja `README-INSTALL.md` dołączona do ZIP-a.
+Instalator konfiguruje konto administratora, a na końcu wypisze faktyczny adres konsoli i hasło. Domyślny adres to [**http://127.0.0.1:8090/**](http://127.0.0.1:8090/); jeśli podasz `-Port`, instalator wypisze adres z wybranym portem. Gdy hasło zostanie wygenerowane automatycznie, **zapisz je od razu** — jest wyświetlane tylko raz. Opcje i polecenia zarządzania opisuje polski przewodnik wdrożeniowy: [Wdrażanie](../DEPLOY.pl.md) oraz polska instrukcja `README-INSTALL.md` dołączona do ZIP-a.
 
-> **Ważne:** instalator sam uruchamia cronova. Po instalacji nie uruchamiaj dodatkowego procesu `cronova serve` korzystającego z tego samego katalogu danych. Aby kontynuować tutorial, wybierz Opcję 1 i nie uruchamiaj `setup.cmd`.
+Wygenerowane hasło możesz później zmienić poleceniem `users passwd`. Najpierw ustaw ścieżki odpowiednie dla wybranego trybu instalacji. Dla instalacji bieżącego użytkownika uruchom PowerShell jako to samo konto Windows:
+
+```powershell
+$cronovaExe = "$env:LOCALAPPDATA\Programs\Cronova\cronova.exe"
+$dbPath = "$env:LOCALAPPDATA\Cronova\cronova.db"
+```
+
+Dla instalacji jako usługi Windows uruchom PowerShell jako administrator:
+
+```powershell
+$cronovaExe = "$env:ProgramFiles\Cronova\cronova.exe"
+$dbPath = "$env:ProgramData\Cronova\cronova.db"
+```
+
+Po ustawieniu właściwych ścieżek wprowadź nowe hasło. Wpisywane znaki są ukryte:
+
+```powershell
+$securePassword = Read-Host -Prompt "Wpisz nowe hasło administratora (znaki będą ukryte)" -AsSecureString
+$newPassword = [System.Net.NetworkCredential]::new("", $securePassword).Password
+& $cronovaExe users passwd admin -password $newPassword -db $dbPath
+Remove-Variable securePassword, newPassword, cronovaExe, dbPath
+```
+
+Po zmianie hasła istniejące sesje zostaną unieważnione — zaloguj się ponownie nowym hasłem.
+
+**Ważne:** instalator sam uruchamia cronova. Po instalacji nie uruchamiaj dodatkowego procesu `cronova serve` korzystającego z tego samego katalogu danych.
+
+Aby sprawdzić, czy instalacja bieżącego użytkownika działa i jest uruchamiana przez Harmonogram zadań, wykonaj:
+
+```powershell
+& "$env:LOCALAPPDATA\Cronova\internal\scripts\cronova-user.ps1" status
+```
+
+Wynik powinien zawierać `cronova.exe RUNNING`, `cronova-executor.exe RUNNING` oraz wpis `Autostart: scheduled task 'Cronova (user)'`. Przy instalacji jako usługi Windows zamiast tego sprawdź status obu usług w PowerShell uruchomionym jako administrator:
+
+```powershell
+Get-Service Cronova, CronovaExecutor
+```
+
+Aby kontynuować tutorial, wybierz Opcję 1 i nie uruchamiaj `setup.cmd`.
 
 ## Opcja 3: Zbuduj scheduler ze źródeł
 
