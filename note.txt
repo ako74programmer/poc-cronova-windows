@@ -3,3 +3,38 @@
 .\deploy\uninstall.ps1 -KillAll   # zabija też cronova*.exe spoza katalogu instalacji (np. z dist)
 
 .\deploy\reinstall.ps1 -Source .\dist -Start
+
+---
+### Budowa paczki ZIP na Windows
+
+Na komputerze z repozytorium przejdź w PowerShellu do jego katalogu, zaktualizuj branch i uruchom pełne kontrole wraz z budową paczki:
+
+```powershell
+.\scripts\windows\check-all.ps1 -Package
+```
+
+Potrzebujesz **Go 1.26.5 lub nowszego** oraz Pythona dla zestawu kontroli. Paczka i suma kontrolna pojawią się tutaj:
+
+```text
+dist\cronova_windows_amd64.zip
+dist\SHA256SUMS
+```
+
+Jeśli chcesz tylko zbudować ZIP bez pełnego zestawu testów, użyj:
+
+```powershell
+.\scripts\package.ps1
+```
+
+Rozpakuj `dist\cronova_windows_amd64.zip`. Aby wymusić **Tryb użytkownika**, otwórz PowerShell w rozpakowanym katalogu i uruchom:
+
+```powershell
+.\setup.ps1 -Mode user
+.\setup.ps1 -Mode user -Port 8091 -AdminPassword 'admin123'
+```
+
+Szczegóły instalacji są też w [polskiej instrukcji dołączanej do ZIP-a](/home/ubuntu/poc-cronova-windows/deploy/README-INSTALL.pl.md).
+
+### Weryfikacja
+
+Przeszło `git diff --check`, pełna kontrola zgodności dokumentacji embedded i odtworzenie bazy wiedzy AI Wiki; **10 testów Python zakończyło się powodzeniem**. Dodałem test PowerShell dla rozwiązywania ścieżki i migracji bazy oraz podłączyłem go do `check-all`. Nie udało się uruchomić go w sandboxie ani zbudować ZIP-a tutaj, ponieważ w tym środowisku nie ma PowerShella ani Go. Repository jest wypchnięte i zsynchronizowane ze zdalnym branchem.

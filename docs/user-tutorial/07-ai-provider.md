@@ -12,7 +12,7 @@ Potrzebujesz danych od dostawcy usługi AI albo administratora, który skonfigur
 - dokładnej nazwy modelu dostępnego pod tym adresem;
 - API Token.
 
-Nie zgaduj tych wartości. Różne usługi mogą wymagać różnych adresów i nazw modeli. Cronova wysyła zapytanie do adresu wpisanego w **Base URL**. W tym polu nie dopisuje automatycznie końcówki `/chat/completions`, więc sprawdź u dostawcy, jaki dokładnie adres wpisać. Wskazówka `http://127.0.0.1:4141/v1` widoczna w formularzu jest przykładem lokalnego serwera, a nie adresem działającym u każdego.
+Nie zgaduj tych wartości. Różne usługi mogą wymagać różnych adresów i nazw modeli. W polu **Base URL** podaj bazowy adres OpenAI-compatible API, zwykle kończący się na `/v1`, np. `http://127.0.0.1:4141/v1`. Cronova dopisuje `/chat/completions` podczas wysyłania zapytania. Jeśli dostawca podał pełny adres endpointu, można wpisać go bez zmian.
 
 Formularz **wymaga API Token nawet przy tworzeniu lokalnego providera**. Jeśli Twój lokalny serwer nie używa tokenów, ekran może nie pozwolić zapisać ustawienia. Nie wymyślaj sekretu — skonsultuj tę sytuację z administratorem.
 

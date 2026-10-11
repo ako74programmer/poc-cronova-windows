@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/ako74programmer/poc-cronova-windows/internal/model"
@@ -68,7 +70,10 @@ When the context mentions YAML fields, explain how to use them in a DAG definiti
 		return "", err
 	}
 
-	url := c.provider.BaseURL
+	url, err := chatCompletionsURL(c.provider.BaseURL)
+	if err != nil {
+		return "", err
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
@@ -107,4 +112,20 @@ When the context mentions YAML fields, explain how to use them in a DAG definiti
 		return "", fmt.Errorf("no choices in LLM response")
 	}
 	return result.Choices[0].Message.Content, nil
+}
+
+func chatCompletionsURL(baseURL string) (string, error) {
+	u, err := url.Parse(strings.TrimSpace(baseURL))
+	if err != nil {
+		return "", fmt.Errorf("invalid AI provider base URL: %w", err)
+	}
+	if strings.HasSuffix(strings.TrimRight(u.Path, "/"), "/chat/completions") ||
+		strings.HasSuffix(strings.TrimRight(u.Path, "/"), "/completions") {
+		u.Path = strings.TrimRight(u.Path, "/")
+		u.RawPath = ""
+		return u.String(), nil
+	}
+	u.Path = strings.TrimRight(u.Path, "/") + "/chat/completions"
+	u.RawPath = ""
+	return u.String(), nil
 }
