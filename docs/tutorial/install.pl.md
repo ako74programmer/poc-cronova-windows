@@ -89,7 +89,7 @@ Jeśli port 8090 jest zajęty, instalator przerwie działanie zamiast automatycz
 
 `setup.cmd` przekazuje argument do instalatora. Konsola będzie wtedy dostępna pod adresem `http://127.0.0.1:8091/` (lub pod wybranym portem).
 
-Instalator konfiguruje konto administratora, a na końcu wypisze faktyczny adres konsoli i hasło. Domyślny adres to [**http://127.0.0.1:8090/**](http://127.0.0.1:8090/); jeśli podasz `-Port`, instalator wypisze adres z wybranym portem. Gdy hasło zostanie wygenerowane automatycznie, **zapisz je od razu** — jest wyświetlane tylko raz. Opcje i polecenia zarządzania opisuje polski przewodnik wdrożeniowy: [Wdrażanie](../DEPLOY.pl.md) oraz polska instrukcja `README-INSTALL.md` dołączona do ZIP-a.
+Instalator konfiguruje konto administratora, a na końcu wypisze faktyczny adres konsoli i hasło. Domyślny adres to [**http://127.0.0.1:8090/**](http://127.0.0.1:8090/); jeśli podasz `-Port`, instalator wypisze adres z wybranym portem. Gdy hasło zostanie wygenerowane automatycznie, **zapisz je od razu** — jest wyświetlane tylko raz. Opcje i polecenia zarządzania opisuje polski przewodnik wdrożeniowy: [Wdrażanie](../DEPLOY.pl.md) oraz polska instrukcja `README-INSTALL.pl.md` dołączona do ZIP-a.
 
 Wygenerowane hasło możesz później zmienić tym samym poleceniem `users passwd` niezależnie od wybranego trybu. Sama komenda jest wspólna, ale ścieżka bazy zależy od instalacji: Opcja 1 używa `data\cronova.db`; instalacja bieżącego użytkownika zapisuje bazę bezpośrednio w `%LOCALAPPDATA%\Cronova\cronova.db`, a instalacja usług w `%ProgramData%\Cronova\cronova.db` (w tych dwóch instalacjach nie ma podkatalogu `data`). Wybierz **jeden** zestaw ścieżek odpowiadający instalacji:
 

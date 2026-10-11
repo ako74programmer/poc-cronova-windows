@@ -179,7 +179,7 @@ Powstają `dist\cronova_windows_amd64.zip` i `dist\SHA256SUMS`. `scripts/release
 
 ### Usługi / instalacja / aktualizacja
 
-Pakiet odbiorcy ma `setup.cmd` w korzeniu ZIP. `deploy/setup.ps1` wybiera usługę Windows (UAC/admin) lub tryb per-user; przy braku admina/odmowie UAC instaluje pod `%LOCALAPPDATA%` i uruchamia po zalogowaniu. Ścieżka usług instaluje `CronovaExecutor` oraz `Cronova` w SCM; domyślne pliki danych w `%ProgramData%\Cronova`. Usługi działają jako `LocalSystem`, executor ma oddzielny cykl życia. Szczegóły i ścieżki zmian: [Deployment](DEPLOY.md), [README instalatora](../deploy/README-INSTALL.md).
+Pakiet odbiorcy ma `setup.cmd` w korzeniu ZIP. `deploy/setup.ps1` wybiera usługę Windows (UAC/admin) lub tryb per-user; przy braku admina/odmowie UAC instaluje pod `%LOCALAPPDATA%` i uruchamia po zalogowaniu. Ścieżka usług instaluje `CronovaExecutor` oraz `Cronova` w SCM; domyślne pliki danych w `%ProgramData%\Cronova`. Usługi działają jako `LocalSystem`, executor ma oddzielny cykl życia. Szczegóły i ścieżki zmian: [Deployment](DEPLOY.md), [README instalatora](../deploy/README-INSTALL.pl.md).
 
 Dostępne wrappery: `deploy/install.ps1`, `reinstall.ps1`, `setup.cmd`, `setup.ps1`, `uninstall.ps1`, `update.ps1`. Lifecycle service wymaga elevation. `cronova update` pobiera Windows ZIP i SHA256 z GitHub, podmienia pliki binarne i próbuje rollback w razie błędu; update restartuje usługi i może przerwać uruchomione zadania. `uninstall` zachowuje dane domyślnie; `-Purge` jest destrukcyjne. Nie uruchomiono tych poleceń podczas audytu.
 

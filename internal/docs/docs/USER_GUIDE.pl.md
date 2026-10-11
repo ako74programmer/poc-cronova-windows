@@ -42,7 +42,7 @@ Port można zmienić, przekazując `-Port`:
 .\setup.ps1 -Mode user -Port 8091
 ```
 
-Dostępne są także `-AdminUser`, `-AdminPassword`, `-AiBaseUrl`, `-AiModel`; szczegóły zobacz w `deploy/setup.ps1` i [README instalatora](../deploy/README-INSTALL.md). Nie przekazuj hasła w publicznym poleceniu/terminalu współdzielonym: argumenty procesu mogą być widoczne dla lokalnych administratorów.
+Dostępne są także `-AdminUser`, `-AdminPassword`, `-AiBaseUrl`, `-AiModel`; szczegóły zobacz w `deploy/setup.ps1` i [README instalatora](../deploy/README-INSTALL.pl.md). Nie przekazuj hasła w publicznym poleceniu/terminalu współdzielonym: argumenty procesu mogą być widoczne dla lokalnych administratorów.
 
 ### Uruchomienie bez instalatora
 

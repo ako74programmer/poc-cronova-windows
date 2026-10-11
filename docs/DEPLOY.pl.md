@@ -10,7 +10,7 @@ Instalację uruchom w podwyższonej sesji PowerShell (jako administrator).
 
 ## Szybka instalacja dla odbiorców pakietu (`setup.cmd`)
 
-W katalogu głównym ZIP-a znajdują się `setup.cmd`, `setup.ps1`, `README-INSTALL.md` (po polsku) i `README-INSTALL.en.md` (po angielsku). Kliknij dwukrotnie `setup.cmd`; przed uruchomieniem instalatora wyświetli on nazwy obu instrukcji:
+W katalogu głównym ZIP-a znajdują się `setup.cmd`, `setup.ps1`, `README-INSTALL.pl.md` (po polsku) i `README-INSTALL.en.md` (po angielsku). Kliknij dwukrotnie `setup.cmd`; przed uruchomieniem instalatora wyświetli on nazwy obu instrukcji:
 
 - usuwa z rozpakowanych plików znacznik pochodzenia z Internetu (`Unblock-File`);
 - członek grupy Administratorzy otrzymuje monit UAC z pytaniem o instalację usług Windows; wybranie tej opcji uruchamia `deploy\install.ps1 -Start`;

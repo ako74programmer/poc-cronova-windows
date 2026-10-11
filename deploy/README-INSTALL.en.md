@@ -1,6 +1,6 @@
 # Cronova — Windows installation
 
-**Language: English | [Polski](README-INSTALL.md)**
+**Language: English | [Polski](README-INSTALL.pl.md)**
 
 1. Extract the ZIP into a directory of your choice.
 2. Double-click **`setup.cmd`**.

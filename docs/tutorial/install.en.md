@@ -90,7 +90,7 @@ If port 8090 is already in use, the installer stops instead of choosing another 
 
 `setup.cmd` forwards the argument to the installer. The console will then be available at `http://127.0.0.1:8091/` (or the port you selected).
 
-The installer configures the admin account and prints the actual console URL and password at the end. The default address is **http://127.0.0.1:8090/**; if you pass `-Port`, the printed URL uses the selected port. If the password is generated automatically, **save it then**; it is shown only once. For options and management commands, see the packaged [Windows installation guide](../DEPLOY.md), `README-INSTALL.en.md` (English), or `README-INSTALL.md` (Polish) in the ZIP.
+The installer configures the admin account and prints the actual console URL and password at the end. The default address is **http://127.0.0.1:8090/**; if you pass `-Port`, the printed URL uses the selected port. If the password is generated automatically, **save it then**; it is shown only once. For options and management commands, see the packaged [Windows installation guide](../DEPLOY.md), `README-INSTALL.en.md` (English), or `README-INSTALL.pl.md` (Polish) in the ZIP.
 
 You can change the generated password later with the same `users passwd` command in any installation mode. The command is the same, but the database location depends on the installation: Option 1 uses `data\cronova.db`; a per-user install stores it directly at `%LOCALAPPDATA%\Cronova\cronova.db`, and a service install at `%ProgramData%\Cronova\cronova.db` (those installed modes do not have a `data` subdirectory). Choose **one** path pair for the installation you are using:
 

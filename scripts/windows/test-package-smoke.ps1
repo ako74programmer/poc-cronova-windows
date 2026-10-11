@@ -19,7 +19,7 @@ $requiredFiles = @(
     'deploy\reinstall.ps1',
     'setup.cmd',
     'setup.ps1',
-    'README-INSTALL.md',
+    'README-INSTALL.pl.md',
     'README-INSTALL.en.md',
     'internal\scripts\cronova-user.ps1',
     'internal\scripts\cronova-user-install.ps1',

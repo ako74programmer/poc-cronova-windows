@@ -23,7 +23,7 @@ Braki:
 - `package.ps1` **nie pakuje** `deploy/reinstall.ps1` ani `scripts/windows/app.ps1`.
 - Brak jednego „wejściowego” skryptu dla odbiorcy (`setup.ps1`), który rozpoznaje uprawnienia.
 - Brak trybu per-user z autostartem i bez portów/ścieżek wymagających admina.
-- Brak instrukcji dla odbiorcy wewnątrz ZIP (`README-INSTALL.md`).
+- Brak instrukcji dla odbiorcy wewnątrz ZIP (`README-INSTALL.pl.md`).
 - Pliki z internetu/maila mają Mark-of-the-Web → PowerShell blokuje skrypty (`ExecutionPolicy`).
 
 ## Strona autora: `scripts/release.ps1` (nowy, cienki wrapper)
@@ -36,7 +36,7 @@ Kroki:
 5. Wypisz: ścieżkę ZIP, wersję (`VERSION`), SHA256 do przekazania odbiorcy.
 
 Zmiany w `package.ps1`:
-- dołożyć `deploy/reinstall.ps1`, `deploy/setup.ps1` (nowy), `scripts/windows/app.ps1`, `scripts/windows/detect-toolchain.ps1`, `README-INSTALL.md`, `deploy/cronova.env.example`;
+- dołożyć `deploy/reinstall.ps1`, `deploy/setup.ps1` (nowy), `scripts/windows/app.ps1`, `scripts/windows/detect-toolchain.ps1`, `README-INSTALL.pl.md`, `deploy/cronova.env.example`;
 - dopisać je do listy w `test-package-smoke.ps1`.
 
 ## Strona odbiorcy: `setup.ps1` w katalogu głównym ZIP (nowy)
@@ -101,7 +101,7 @@ Ograniczenia trybu USER (do opisania w README):
 1. `package.ps1` + smoke: dołożenie brakujących plików.
 2. `setup.ps1` + `setup.cmd`: detekcja uprawnień, `Unblock-File`, routing do trybu.
 3. Tryb USER: instalator per-user, Task Scheduler, `cronova-user.ps1`, uninstall.
-4. `README-INSTALL.md` w ZIP (krótko: dwuklik `setup.cmd`, co się dzieje z/bez admina).
+4. `README-INSTALL.pl.md` w ZIP (krótko: dwuklik `setup.cmd`, co się dzieje z/bez admina).
 5. `scripts/release.ps1` po stronie autora.
 6. Testy: czysta maszyna/VM — (a) konto admin, (b) konto standardowe, (c) ZIP pobrany z internetu (MOTW), (d) zajęty port, (e) ponowna instalacja/aktualizacja, (f) uninstall obu trybów.
 7. Aktualizacja `docs/DEPLOY.md` i `internal/scripts/README.md`.

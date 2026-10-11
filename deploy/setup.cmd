@@ -4,7 +4,7 @@ rem administrator (UAC prompt), otherwise a per-user install without admin right
 echo.
 echo Installation guide / Instrukcja instalacji:
 echo   English: README-INSTALL.en.md
-echo   Polski:  README-INSTALL.md
+echo   Polski:  README-INSTALL.pl.md
 echo.
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0setup.ps1" %*
 if errorlevel 1 (
