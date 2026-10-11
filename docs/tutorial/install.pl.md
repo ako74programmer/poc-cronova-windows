@@ -61,7 +61,7 @@ Z katalogu zawierającego `cronova.exe` uruchom scheduler oraz wbudowany executo
 .\cronova.exe serve
 ```
 
-Domyślnie pliki DAG YAML są wczytywane z `./dags` (katalog powstaje, jeśli go brakuje), baza SQLite jest zapisywana w `data/cronova.db`, a logi zadań w `logs/` — wszystkie ścieżki są względne wobec bieżącego katalogu roboczego. Dlatego osobny katalog dla rozpakowanego archiwum jest wygodny podczas pracy z tutorialem.
+Domyślnie pliki DAG YAML są wczytywane z `./dags` (katalog powstaje, jeśli go brakuje), baza SQLite jest zapisywana w `data\cronova.db`, a logi zadań w `logs/` — wszystkie ścieżki są względne wobec bieżącego katalogu roboczego. Dlatego osobny katalog dla rozpakowanego archiwum jest wygodny podczas pracy z tutorialem.
 
 Otwórz w przeglądarce [**http://localhost:8090**](http://localhost:8090) i zaloguj się jako `admin`, używając hasła wpisanego w monicie. W konsoli pojawią się dołączone pliki DAG z katalogu `dags/`. W drugim oknie PowerShell sprawdź, czy cronova je załadowała:
 
@@ -90,14 +90,21 @@ Jeśli port 8090 jest zajęty, instalator przerwie działanie zamiast automatycz
 
 Instalator konfiguruje konto administratora, a na końcu wypisze faktyczny adres konsoli i hasło. Domyślny adres to [**http://127.0.0.1:8090/**](http://127.0.0.1:8090/); jeśli podasz `-Port`, instalator wypisze adres z wybranym portem. Gdy hasło zostanie wygenerowane automatycznie, **zapisz je od razu** — jest wyświetlane tylko raz. Opcje i polecenia zarządzania opisuje polski przewodnik wdrożeniowy: [Wdrażanie](../DEPLOY.pl.md) oraz polska instrukcja `README-INSTALL.md` dołączona do ZIP-a.
 
-Wygenerowane hasło możesz później zmienić poleceniem `users passwd`. Najpierw ustaw ścieżki odpowiednie dla wybranego trybu instalacji. Dla instalacji bieżącego użytkownika uruchom PowerShell jako to samo konto Windows:
+Wygenerowane hasło możesz później zmienić tym samym poleceniem `users passwd` niezależnie od wybranego trybu. Sama komenda jest wspólna, ale ścieżka bazy zależy od instalacji: Opcja 1 używa `data\cronova.db`; instalacja bieżącego użytkownika zapisuje bazę bezpośrednio w `%LOCALAPPDATA%\Cronova\cronova.db`, a instalacja usług w `%ProgramData%\Cronova\cronova.db` (w tych dwóch instalacjach nie ma podkatalogu `data`). Wybierz **jeden** zestaw ścieżek odpowiadający instalacji:
+
+```powershell
+$cronovaExe = (Resolve-Path ".\cronova.exe").Path
+$dbPath = (Resolve-Path ".\data\cronova.db").Path
+```
+
+Powyższy zestaw dotyczy Opcji 1: uruchom go w PowerShellu otwartym w katalogu rozpakowanego ZIP-a. Dla instalacji bieżącego użytkownika uruchom PowerShell jako to samo konto Windows i użyj:
 
 ```powershell
 $cronovaExe = "$env:LOCALAPPDATA\Programs\Cronova\cronova.exe"
 $dbPath = "$env:LOCALAPPDATA\Cronova\cronova.db"
 ```
 
-Dla instalacji jako usługi Windows uruchom PowerShell jako administrator:
+Dla instalacji jako usługi Windows uruchom PowerShell jako administrator i użyj:
 
 ```powershell
 $cronovaExe = "$env:ProgramFiles\Cronova\cronova.exe"

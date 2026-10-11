@@ -61,7 +61,7 @@ From the directory containing `cronova.exe`, start the scheduler and the in-proc
 .\cronova.exe serve
 ```
 
-By default, DAG YAML files load from `./dags` (created if missing), the SQLite database is stored at `data/cronova.db`, and task logs go to `logs/`, all relative to the current working directory. This is why a dedicated extracted working directory is convenient for the tutorial.
+By default, DAG YAML files load from `./dags` (created if missing), the SQLite database is stored at `data\cronova.db`, and task logs go to `logs/`, all relative to the current working directory. This is why a dedicated extracted working directory is convenient for the tutorial.
 
 Open **http://localhost:8090** in your browser and sign in as `admin` with the password you typed at the prompt. The bundled DAG files in `dags/` appear in the console. From a second PowerShell window, verify that cronova loaded them:
 
@@ -90,14 +90,21 @@ If port 8090 is already in use, the installer stops instead of choosing another 
 
 The installer configures the admin account and prints the actual console URL and password at the end. The default address is **http://127.0.0.1:8090/**; if you pass `-Port`, the printed URL uses the selected port. If the password is generated automatically, **save it then**; it is shown only once. For options and management commands, see the packaged [Windows installation guide](../DEPLOY.md), `README-INSTALL.en.md` (English), or `README-INSTALL.md` (Polish) in the ZIP.
 
-You can change the generated password later with `users passwd`. First, set the paths for your installation mode. For a per-user installation, run PowerShell as the same Windows user:
+You can change the generated password later with the same `users passwd` command in any installation mode. The command is the same, but the database location depends on the installation: Option 1 uses `data\cronova.db`; a per-user install stores it directly at `%LOCALAPPDATA%\Cronova\cronova.db`, and a service install at `%ProgramData%\Cronova\cronova.db` (those installed modes do not have a `data` subdirectory). Choose **one** path pair for the installation you are using:
+
+```powershell
+$cronovaExe = (Resolve-Path ".\cronova.exe").Path
+$dbPath = (Resolve-Path ".\data\cronova.db").Path
+```
+
+The pair above is for Option 1; run it in PowerShell opened in the extracted ZIP directory. For a per-user installation, run PowerShell as the same Windows user and use:
 
 ```powershell
 $cronovaExe = "$env:LOCALAPPDATA\Programs\Cronova\cronova.exe"
 $dbPath = "$env:LOCALAPPDATA\Cronova\cronova.db"
 ```
 
-For a Windows service installation, run PowerShell as an administrator:
+For a Windows service installation, run PowerShell as an administrator and use:
 
 ```powershell
 $cronovaExe = "$env:ProgramFiles\Cronova\cronova.exe"
