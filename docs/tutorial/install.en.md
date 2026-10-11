@@ -79,7 +79,7 @@ Each loaded DAG is listed with its schedule. This confirms the scheduler is runn
 
 If you want to use cronova beyond this tutorial, run **`setup.cmd`** from the extracted ZIP. Depending on your permissions and choice at the UAC prompt, setup configures cronova as Windows services or for your Windows user. The installer starts cronova when setup finishes; **do not also start another `cronova serve` process using the same data**.
 
-For detailed steps, port selection, passwords, and installation management, see the [English installation guide (`deploy/README-INSTALL.en.md`)](https://github.com/ako74programmer/poc-cronova-windows/blob/feature/windows-cmd-runtime-sdlc-2026-09-26/deploy/README-INSTALL.en.md). To continue this tutorial, return to **Option 1** and leave `setup.cmd` unused.
+For detailed steps, port selection, passwords, and installation management, see the [English installation guide (`deploy/README-INSTALL.en.md`)](../../deploy/README-INSTALL.en.md). To continue this tutorial, return to **Option 1** and leave `setup.cmd` unused.
 
 ## Option 3: Build the scheduler from source
 

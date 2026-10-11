@@ -78,7 +78,7 @@ Każdy załadowany DAG pojawi się na liście wraz ze swoim harmonogramem. To po
 
 Jeśli chcesz używać cronova na stałe, a nie tylko przejść tutorial, uruchom **`setup.cmd`** z rozpakowanego ZIP-a. Instalator skonfiguruje uruchamianie jako usługi Windows albo dla bieżącego użytkownika — zależnie od uprawnień i wyboru w monicie UAC. Po instalacji sam uruchomi cronova; **nie uruchamiaj równocześnie drugiego `cronova serve` z tymi samymi danymi**.
 
-Szczegółowe kroki, wybór portu, hasła i zarządzanie instalacją opisuje [polska instrukcja instalatora (`deploy/README-INSTALL.pl.md`)](https://github.com/ako74programmer/poc-cronova-windows/blob/feature/windows-cmd-runtime-sdlc-2026-09-26/deploy/README-INSTALL.pl.md). Jeśli chcesz kontynuować ten tutorial, wróć do **Opcji 1** i nie uruchamiaj `setup.cmd`.
+Szczegółowe kroki, wybór portu, hasła i zarządzanie instalacją opisuje [polska instrukcja instalatora (`deploy/README-INSTALL.pl.md`)](../../deploy/README-INSTALL.pl.md). Jeśli chcesz kontynuować ten tutorial, wróć do **Opcji 1** i nie uruchamiaj `setup.cmd`.
 
 ## Opcja 3: Zbuduj scheduler ze źródeł
 
