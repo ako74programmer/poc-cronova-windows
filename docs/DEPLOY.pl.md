@@ -17,6 +17,8 @@ W katalogu głównym ZIP-a znajdują się `setup.cmd`, `setup.ps1`, `README-INST
 - w pozostałych przypadkach — również po odmowie UAC — Cronova jest instalowana **dla bieżącego użytkownika, bez uprawnień administratora**: pliki programu trafiają do `%LOCALAPPDATA%\Programs\Cronova`, dane do `%LOCALAPPDATA%\Cronova`, a uruchamianie po zalogowaniu zapewnia zadanie Harmonogramu zadań `Cronova (user)`. Nadzorca `internal\scripts\cronova-user-run.ps1` ponownie uruchamia executor i scheduler po awarii (rezygnuje po 5 awariach w ciągu 5 minut);
 - jeśli nie podasz `-AdminPassword`, generowane jest losowe hasło, które zostaje wyświetlone jeden raz.
 
+Tryb użytkownika korzysta ze ścieżki bazy w `%LOCALAPPDATA%\Cronova\cronova.yaml` (domyślnie `db: data/cronova.db`), więc domyślny plik bazy to `%LOCALAPPDATA%\Cronova\data\cronova.db`. Instalator przenosi wcześniejszą bazę z katalogu głównego wraz z plikami pobocznymi SQLite `-wal`, `-shm` lub `-journal`, jeśli skonfigurowana lokalizacja docelowa nie istnieje. Jeśli pliki bazy są w obu lokalizacjach, zatrzymuje się bez nadpisywania danych. Procesy tasków AI otrzymują tę samą ścieżkę przez `CRONOVA_DB`.
+
 Opcje: `setup.ps1 -Mode auto|service|user -Port 8091 -AdminUser admin -AdminPassword ... -AiBaseUrl ... -AiModel ...`. Jeśli port jest zajęty, instalacja zostaje przerwana przed wprowadzeniem zmian. Log instalacji usług znajduje się w `%TEMP%\cronova-setup.log`.
 
 Zarządzanie instalacją dla użytkownika:

@@ -1,166 +1,185 @@
-# Retries, timeout-y i pule
+# Ponowienia, limity czasu i pule
 
-W tym rozdziale nauczysz się, jak cronova radzi sobie z **awariami zadań** (retries), chroni przed **zawieszonymi zadaniami** (timeout-y) i ogranicza **współbieżność** (pule). Wszystkie trzy są konfigurowane w YAML-u DAG-a i działają bez dodatkowej infrastruktury.
+Prawdziwe pipeline'y zawodzą: API zrywa połączenie, zapytanie się wiesza, dziesięć ciężkich zadań trafia na tę samą maszynę jednocześnie. Ten rozdział czyni twój workflow odpornym dzięki automatycznym **ponowieniom (retries)**, limitom czasu na pojedynczą próbę (**timeouts**), miękkim **SLA**, twardemu deadline'owi wykonania oraz globalnym limitom współbieżności — funkcjom, które odróżniają scheduler workflow od zwykłego crona.
 
-## Retries — kiedy zadanie powinno spróbować ponownie
+## Zawodne zadanie
 
-Zadania czasami zawodzą z przejściowych powodów: krótkotrwały błąd sieci, zablokowany zasób, race condition. Zamiast natychmiast oznaczać całe uruchomienie jako nieudane, możesz poprosić cronova, by spróbował ponownie.
+Zbudujmy zadanie, które celowo zawodzi. Każda próba otrzymuje numer próby — `{{ try_number }}` w szablonach, `CRONOVA_TRY_NUMBER` w środowisku — zaczynając od `1` i zwiększając się przy każdym ponowieniu. Użyjemy go do zasymulowania pobrania, które powiedzie się dopiero przy trzeciej próbie.
 
-Edytuj `dags/hello.yaml`:
+Utwórz `dags/flaky_pipeline.yaml`:
 
 ```yaml
-dag_id: hello
-schedule: "@every 5m"
+dag_id: flaky_pipeline
 tasks:
-  - id: greet
-    type: powershell
-    command: echo "hello from cronova"
-  - id: flaky
+  - id: fetch
     type: powershell
     command: |
-      if ([int]$env:CRONOVA_ATTEMPT -lt 2) {
-        [Console]::Error.WriteLine("attempt $env:CRONOVA_ATTEMPT failed")
+      if ([int]$env:CRONOVA_TRY_NUMBER -lt 3) {
+        [Console]::Error.WriteLine("attempt $env:CRONOVA_TRY_NUMBER: connection reset by peer")
         exit 1
       }
-      echo "attempt $env:CRONOVA_ATTEMPT succeeded"
-    deps: [greet]
-    retry:
-      count: 3
-      interval: 10s
+      echo "attempt $env:CRONOVA_TRY_NUMBER: fetched 1200 rows"
+    retries: 3
+    retry_delay: 5
 ```
 
-### `retry.count`
+Dwa nowe pola zadania:
 
-Maksymalna liczba **dodatkowych** prób po pierwszej nieudanej. `count: 3` oznacza do czterech prób łącznie.
+- `retries: 3` — ponów do 3 razy przy błędzie. Zadanie ma łącznie **`retries` + 1 prób** (tutaj: 4).
+- `retry_delay: 5` — odczekaj 5 sekund między próbami. Domyślnie oba są `0`.
 
-### `retry.interval`
-
-Opóźnienie między kolejnymi próbami. Wartość to ciąg czasu parsowany przez Go (`10s`, `1m`, `2m30s`).
-
-### `CRONOVA_ATTEMPT`
-
-Każde zadanie otrzymuje zmienną środowiskową `CRONOVA_ATTEMPT` zaczynającą się od `1`. Powyższy skrypt celowo zawodzi na pierwszej próbie, a udaje się na drugiej. Dzięki `retry.count: 3` druga próba kończy się sukcesem i uruchomienie kontynuuje.
-
-Uruchom i obserwuj:
+Brak pola `schedule` oznacza, że DAG uruchamia się tylko po ręcznym wyzwoleniu. Zrób to teraz:
 
 ```powershell
-cronova trigger hello
-cronova runs hello
+cronova trigger flaky_pipeline
 ```
 
-Widzisz `flaky=success`, ale w logach zadania `flaky` znajdziesz dwa wiersze — jeden z `attempt 1 failed` i jeden z `attempt 2 succeeded`. Konsola webowa pokazuje każdą próbę jako osobny wiersz w panelu zadania.
+Następnie obserwuj przebieg:
+
+```powershell
+cronova runs flaky_pipeline
+```
+
+Przez pierwsze dwie próby zobaczysz, że zadanie przechodzi między `running` i `up_for_retry` — stan, w którym ląduje nieudana próba, czekając na zakończenie `retry_delay`:
+
+```
+RUN_ID                                  LOGICAL_DATE          STATE    TRIGGER  TASKS
+flaky_pipeline__manual_1751871234...    2026-07-07T00:00:00Z  running  manual   fetch=up_for_retry
+```
+
+Po około dziesięciu sekundach (dwie porażki × 5s opóźnienia) uruchom ponownie — trzecia próba powiedzie się i przebieg zakończy się:
+
+```
+RUN_ID                                  LOGICAL_DATE          STATE    TRIGGER  TASKS
+flaky_pipeline__manual_1751871234...    2026-07-07T00:00:00Z  success  manual   fetch=success
+```
+
+Otwórz przebieg w konsoli pod adresem [http://localhost:8090](http://localhost:8090) i kliknij zadanie `fetch`: log pokazuje każdą próbę — `attempt 1: connection reset by peer`, `attempt 2: …`, i wreszcie `attempt 3: fetched 1200 rows`. Numer próby zadania jest zapisywany dla każdej próby, więc zawsze możesz sprawdzić, jak bardzo zadanie musiało się natrudzić.
 
 !!! tip
+    Automatyczne ponowienia radzą sobie z przejściowymi błędami. Dla przebiegu, który już się zakończył jako nieudany, użyj polecenia operatora `cronova retry <run_id> [task_id]`, aby ponownie uruchomić tylko nieudane zadania — zobacz [CLI Reference](../CLI.md).
 
-    Domyślnie `retry.count` to `0`, więc bez tej sekcji pierwsza porażka zadania
-    natychmiast oznacza uruchomienie jako nieudane (chyba że inne zadania mają
-    `depends: any_success` lub podobne).
+## Domyślne wartości na poziomie DAG
 
-## Timeout-y — zabijanie zawieszonych zadań
-
-Zadanie, które utknie w nieskończonej pętli lub czeka na zewnętrzny zasób, może zablokować pulę i opóźnić inne workflow. Dodaj `timeout`, by cronova wymusiła limit czasu.
+Ustawianie `retries` w każdym zadaniu jest powtarzalne. Ustal wartość domyślną raz na poziomie DAG:
 
 ```yaml
-  - id: slow
-    type: powershell
-    command: Start-Sleep 300
-    deps: [greet]
-    timeout: 5s
+dag_id: flaky_pipeline
+default_retries: 2
+default_retry_delay: 30
+tasks:
+  - id: fetch
+    ...            # inherits: 2 retries, 30s apart
+  - id: load
+    retries: 5     # tasks can still override the default
+    ...
 ```
 
-Po 5 sekundach cronova zabija proces `powershell.exe` (`Start-Sleep`) i oznacza zadanie jako `failed`. Jeśli zdefiniowałeś `retry`, zadanie zostanie ponowione; w przeciwnym razie uruchomienie kończy się niepowodzeniem.
+`default_retries` i `default_retry_delay` mają zastosowanie do każdego zadania, które nie ustawi własnych `retries` / `retry_delay`. Obie domyślnie równe `0`.
 
-!!! warning
+## Limity czasu: zabij zablokowaną próbę
 
-    Timeout jest egzekwowany przez scheduler, więc działa nawet wtedy, gdy zadanie
-    jest wykonywane przez zdalny executor. Nie polega na samym OS-ie.
-
-## Pule — ograniczanie współbieżności
-
-Pule pozwalają ograniczyć, ile zadań lub uruchomień może działać jednocześnie. Są przydatne, gdy zadania dzielą ograniczony zasób: baza danych, API z rate limit, licencja, pamięć.
-
-### Pula zadań
-
-Utwórz pulę w `cronova.yaml` (lub w sekcji `pools:` DAG-a) i przypisz zadania:
+Ponowienie pomaga tylko wtedy, gdy próba faktycznie *kończy się błędem*. Zawieszony proces — zablokowane połączenie, blokada, która nigdy się nie zwalnia — mógłby inaczej działać wiecznie. `timeout` nakłada limit czasu na pojedynczą próbę. Dodaj drugie zadanie:
 
 ```yaml
-# dags/hello.yaml
-dag_id: hello
-schedule: "@every 1m"
-pools:
-  - name: db_pool
-    size: 2
-tasks:
-  - id: query_1
-    type: powershell
-    command: Start-Sleep 10; Write-Output "query 1 done"
-    pool: db_pool
-  - id: query_2
-    type: powershell
-    command: Start-Sleep 10; Write-Output "query 2 done"
-    pool: db_pool
-  - id: query_3
-    type: powershell
-    command: Start-Sleep 10; Write-Output "query 3 done"
-    pool: db_pool
-```
-
-Tylko dwa z trzech zadań `query_*` mogą działać jednocześnie. Trzecie czeka w kolejce, aż jedno z puli się zwolni. Pule są globalne — jeśli dwa DAG-i używają tej samej nazwy puli, współdzielą ten sam licznik.
-
-### Pula uruchomień DAG-a
-
-Możesz również ograniczyć liczbę równoczesnych uruchomień tego samego DAG-a:
-
-```yaml
-dag_id: hello
-schedule: "@every 10s"
-max_active_runs: 1
-tasks:
-  # ...
-```
-
-Jeśli jedno uruchomienie `hello` nadal trwa, a nadejdzie kolejny tick harmonogramu, nowe uruchomienie zostanie **zaplanowane** (utworzone w stanie `queued`), ale nie rozpocznie się, dopóki poprzednie się nie zakończy. `max_active_runs` jest często używany z długimi zadaniami lub zadaniami, które nie mogą nakładać się na siebie.
-
-## Łączenie retries, timeout-ów i puli
-
-Typowa konfiguracja produkcyjna wygląda tak:
-
-```yaml
-dag_id: etl
-tasks:
-  - id: extract
-    type: powershell
-    command: python extract.py
-    retry:
-      count: 2
-      interval: 30s
-    timeout: 5m
-    pool: api_pool
   - id: transform
     type: powershell
-    command: python transform.py
-    deps: [extract]
-    retry:
-      count: 1
-      interval: 10s
-    timeout: 10m
-  - id: load
-    type: powershell
-    command: python load.py
-    deps: [transform]
-    timeout: 5m
-    pool: db_pool
+    command: "Start-Sleep 120"
+    deps: [fetch]
+    timeout: 5
 ```
 
-- `extract` może ponowić do 2 razy, ma 5 minut na wykonanie i jest ograniczona przez `api_pool`.
-- `transform` czeka na `extract`, ponawia raz i ma 10 minut.
-- `load` czeka na `transform`, ma 5 minut i jest ograniczona przez `db_pool`.
+`timeout: 5` daje każdej próbie 5 sekund. Po przekroczeniu cronova zabija **całą grupę procesów** — nie tylko powłokę najwyższego poziomu, ale też wszystkie procesy potomne, które ona uruchomiła — więc nic nie będzie dalej działać w tle. Domyślnie jest `0` (brak limitu).
+
+Wyzwól DAG ponownie i po kilku sekundach sprawdź log `transform` w konsoli. `sleep` nigdy się nie zakończy; zamiast tego log kończy się:
+
+```
+=== killed: timeout after 5s ===
+```
+
+Zabita próba kończy się kodem `124` i liczy się jako zwykła porażka — więc jeśli zadanie ma pozostałe `retries`, przejdzie do `up_for_retry` i dostanie kolejną próbę z nowym zegarem. Jeśli nie ma już ponowień, finalizuje się jako `failed`, a jego zadania zależne stają się `upstream_failed`.
+
+## SLA: miękki deadline, który alarmuje
+
+Czasami nie chcesz niczego zabijać — chcesz po prostu *wiedzieć*, kiedy rzeczy się opóźniają. To robi `sla`, dostępne na obu poziomach i zawsze mierzone **od rozpoczęcia uruchomienia**:
+
+```yaml
+dag_id: flaky_pipeline
+sla: 600                 # alert if the whole run exceeds 10 minutes
+notify:
+  - url: https://hooks.example.com/cronova
+    on: [failure]
+tasks:
+  - id: transform
+    sla: 300             # alert if this task hasn't finished 5 minutes into the run
+    ...
+```
+
+Gdy uruchomienie (lub wciąż nierozpoczęte zadanie) przekroczy swoje `sla`, cronova zapisuje ostrzeżenie i wywołuje webhook `notify:` DAG-a z payloadem `sla_miss` (lub `task_sla_miss`). Uruchomienie **kontynuuje** — SLA to czysto alert, wysyłany co najwyżej raz na uruchomienie lub zadanie. Samo ustawienie progu jest formą opt-in: alerty SLA wywołują się na dowolnym skonfigurowanym webhooku niezależnie od listy `on:` (która jedynie kontroluje alerty sukcesu/porażki na końcu uruchomienia).
+
+!!! note
+    `sla` zadania to deadline liczony od **rozpoczęcia uruchomienia**, a nie od momentu startu zadania. Jeśli zadania nadrzędne zużyją cały budżet, zadanie podrzędne może przegapić swoje SLA zanim wykona choćby jedną linijkę — i właśnie o tym chcesz być informowany.
+
+## dagrun_timeout: twarde zatrzymanie
+
+`sla` ostrzega; `dagrun_timeout` działa. To twardy deadline na poziomie uruchomienia, również w sekundach od startu:
+
+```yaml
+dag_id: flaky_pipeline
+sla: 600
+dagrun_timeout: 1800     # kill the whole run after 30 minutes
+```
+
+Po przekroczeniu cronova zabija każde uruchomione zadanie, oznacza wszystkie niedokończone zadania jako `timed_out`, finalizuje uruchomienie jako `timed_out` i — jeśli skonfigurowano webhook `notify:` — wysyła alert o porażce (również niepodlegający `on:`). Domyślnie `0` oznacza brak limitu.
+
+Dobrym wzorcem jest ich sparowanie: `sla` ustaw na czas, którego się *oczekujesz*, `dagrun_timeout` na czas, którego nie możesz *tolerować*.
+
+## Pule zasobów: globalne limity współbieżności
+
+Ponowienia i limity czasu chronią pojedyncze zadanie. **Pule** chronią współdzielone zasoby — bazę danych, która obsłuży 4 równoczesne zapytania raportowe, API z rygorystycznym limitem — w skali *wszystkich* DAG-ów. Pula to nazwana pula globalnych slotów; zadanie zajmuje jeden slot puli podczas wykonywania.
+
+Utwórz pulę z CLI:
+
+```powershell
+cronova pools set reports 4
+```
+
+```
+pool "reports" set to 4 slots
+```
+
+Następnie wskaż zadania na nią przez `pool:`, i ustaw im kolejność przez `priority:`:
+
+```yaml
+  - id: build_report
+    type: powershell
+    command: "python report.py --date {{ logical_date }}"
+    deps: [transform]
+    pool: reports
+    priority: 10
+```
+
+Bez względu na to, ile uruchomień DAG-ów jest aktywnych, maksymalnie 4 zadania z puli `reports` wykonują się jednocześnie. Gdy więcej zadań czeka niż jest wolnych slotów, wygrywa wyższe `priority` (domyślnie `0`).
+
+Każde zadanie, które nie ustawi `pool:`, korzysta z wbudowanej puli `default`, utworzonej z 16 slotami. Sprawdź, co istnieje, i zmień rozmiar puli w dowolnym momencie:
+
+```powershell
+cronova pools
+```
+
+```
+NAME     SLOTS
+default  16
+reports  4
+```
+
+!!! warning
+    Jeśli zadanie odwołuje się do puli, która jeszcze nie istnieje, cronova automatycznie ją tworzy z domyślnie 16 slotami, żeby nic nie zablokować — prawdopodobnie nie jest to jednak limit, który miałeś na myśli. Utwórz pulę za pomocą `cronova pools set` *zanim* wdrożysz DAG.
 
 ## Czego się nauczyłeś
 
-- `retry.count` i `retry.interval` pozwalają zadaniom ponawiać po przejściowych awariach; `CRONOVA_ATTEMPT` mówi zadaniu, która próba jest wykonywana.
-- `timeout` zabija zawieszone zadania po określonym czasie.
-- `pool` ogranicza współbieżność zadań współdzielących zasób; `max_active_runs` ogranicza współbieżność uruchomień jednego DAG-a.
-- Wszystkie trzy są czysto deklaratywne w YAML-u — nie ma potrzeby pisania kodu obsługi błędów.
+- `retries` / `retry_delay` (i domyślne DAG-owe `default_retries` / `default_retry_delay`) dają zadaniu `retries + 1` prób, z rosnącym `try_number` i stanem `up_for_retry` w czasie oczekiwania.
+- `timeout` zabija całą grupę procesów zawieszonej próby; `sla` (zadania lub DAG-a) to miękki deadline generujący tylko alerty liczony od początku uruchomienia; `dagrun_timeout` to twarde zatrzymanie całego uruchomienia.
+- Pule ograniczają współbieżność globalnie: `cronova pools set reports 4`, potem `pool:` + `priority:` na zadaniach; wszystkie pozostałe korzystają z 16-slotowej puli `default`.
 
-**Dalej:** zobacz, jak dzielić workflow na projekty i używać zmiennych szablonowych w [Projektach i zmiennych](projects.md).
+Następny rozdział: łączenie całych workflowów przy użyciu `trigger_after` i powiadomień webhook w [Cross-DAG dependencies](cross-dag.pl.md).

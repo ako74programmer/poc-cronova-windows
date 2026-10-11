@@ -85,6 +85,7 @@ Invoke-Check 'Python script tests' {
 }
 Invoke-Check 'PowerShell scripts' { Invoke-Native powershell @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'scripts\windows\test-powershell-scripts.ps1') }
 Invoke-Check 'service helpers' { Invoke-Native powershell @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'scripts\windows\test-service-helpers.ps1') }
+Invoke-Check 'per-user database paths' { Invoke-Native powershell @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'scripts\windows\test-user-db-paths.ps1') }
 
 if ($Full) {
     Invoke-Check 'go test -race' { Invoke-Native go @('test', '-race', './...') }

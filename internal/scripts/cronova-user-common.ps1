@@ -4,6 +4,73 @@ Set-StrictMode -Version Latest
 
 $script:CronovaUserTaskName = 'Cronova (user)'
 
+function Get-CronovaUserDatabasePath {
+    param(
+        [Parameter(Mandatory = $true)][string]$DataDir,
+        [Parameter(Mandatory = $true)][string]$ConfigPath
+    )
+    # Keep this in sync with cronova's built-in defaultConfig(). The installed
+    # config normally contains this explicit value, but older configs may omit it.
+    $configured = 'data/cronova.db'
+    if (Test-Path -LiteralPath $ConfigPath -PathType Leaf) {
+        $match = Select-String -LiteralPath $ConfigPath -Pattern '^\s*db:\s*(?<value>.*?)(?:\s+#.*)?\s*$' | Select-Object -First 1
+        if ($match) {
+            $configured = $match.Matches[0].Groups['value'].Value.Trim()
+            if ($configured.Length -ge 2 -and (($configured[0] -eq '"' -and $configured[-1] -eq '"') -or ($configured[0] -eq "'" -and $configured[-1] -eq "'"))) {
+                $configured = $configured.Substring(1, $configured.Length - 2)
+            }
+            if (-not $configured) { throw "The db: value in '$ConfigPath' is empty." }
+        }
+    }
+    if ([IO.Path]::IsPathRooted($configured)) { return [IO.Path]::GetFullPath($configured) }
+    return [IO.Path]::GetFullPath((Join-Path $DataDir $configured))
+}
+
+function Move-CronovaUserDatabaseToConfiguredPath {
+    param(
+        [Parameter(Mandatory = $true)][string]$DataDir,
+        [Parameter(Mandatory = $true)][string]$DatabasePath
+    )
+    $legacy = [IO.Path]::GetFullPath((Join-Path $DataDir 'cronova.db'))
+    $target = [IO.Path]::GetFullPath($DatabasePath)
+    if ([string]::Equals($legacy, $target, [StringComparison]::OrdinalIgnoreCase)) { return }
+
+    $sourceFiles = @($legacy, ($legacy + '-wal'), ($legacy + '-shm'), ($legacy + '-journal'))
+    $targetFiles = @($target, ($target + '-wal'), ($target + '-shm'), ($target + '-journal'))
+    $existingSources = @($sourceFiles | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf })
+    if (-not $existingSources.Count) { return }
+    $conflicts = @($targetFiles | Where-Object { Test-Path -LiteralPath $_ })
+    if ($conflicts.Count) {
+        throw "Cannot migrate the legacy per-user database: both '$legacy' and target database files exist. No files were changed; back up and reconcile them manually."
+    }
+
+    $parent = Split-Path -Parent $target
+    if ($parent) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
+    $moved = [System.Collections.Generic.List[int]]::new()
+    try {
+        for ($i = 0; $i -lt $sourceFiles.Count; $i++) {
+            if (Test-Path -LiteralPath $sourceFiles[$i] -PathType Leaf) {
+                Move-Item -LiteralPath $sourceFiles[$i] -Destination $targetFiles[$i] -ErrorAction Stop
+                $moved.Add($i)
+            }
+        }
+    }
+    catch {
+        $migrationError = $_
+        $rollbackErrors = @()
+        for ($i = $moved.Count - 1; $i -ge 0; $i--) {
+            $index = $moved[$i]
+            try { Move-Item -LiteralPath $targetFiles[$index] -Destination $sourceFiles[$index] -ErrorAction Stop }
+            catch { $rollbackErrors += $_.Exception.Message }
+        }
+        if ($rollbackErrors.Count) {
+            throw "Database migration failed and rollback was incomplete. Original error: $($migrationError.Exception.Message). Rollback errors: $($rollbackErrors -join '; '). Do not restart Cronova until the database files have been inspected."
+        }
+        throw $migrationError
+    }
+    Write-Host "Moved the existing per-user database to the configured location: $target"
+}
+
 function Get-CronovaUserProcesses {
     param([Parameter(Mandatory = $true)][string]$InstallDir)
     $dir = [IO.Path]::GetFullPath($InstallDir).TrimEnd('\') + '\'

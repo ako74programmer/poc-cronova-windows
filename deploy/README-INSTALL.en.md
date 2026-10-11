@@ -15,6 +15,8 @@ The installer selects a mode based on your permissions:
 
 At the end, the installer prints the console URL (default: http://127.0.0.1:8090/), the login `admin`, and a **randomly generated password shown only once**. Save the password.
 
+In per-user mode, the default database is `%LOCALAPPDATA%\Cronova\data\cronova.db`, as selected by `db: data/cronova.db` in `cronova.yaml`. Before updating, copy the entire `%LOCALAPPDATA%\Cronova` directory as a backup. When updating an older per-user installation, setup moves the former `%LOCALAPPDATA%\Cronova\cronova.db` (and any SQLite `-wal`, `-shm`, or `-journal` sidecars) to the configured location if that target does not already exist. If both locations contain database files, setup stops without overwriting either; back up and reconcile them before retrying. AI DAG scripts receive the same resolved database path through `CRONOVA_DB`.
+
 ## PowerShell options
 
 ```powershell

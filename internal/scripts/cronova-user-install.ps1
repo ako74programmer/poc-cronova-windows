@@ -31,7 +31,7 @@ $wasRunning = [bool](Get-CronovaUserProcesses -InstallDir $InstallDir)
 Stop-CronovaUser -InstallDir $InstallDir
 
 New-Item -ItemType Directory -Force -Path $InstallDir, $DataDir | Out-Null
-foreach ($d in 'dags', 'logs', 'state', 'projects', 'workspaces') { New-Item -ItemType Directory -Force -Path (Join-Path $DataDir $d) | Out-Null }
+foreach ($d in 'data', 'dags', 'logs', 'state', 'projects', 'workspaces') { New-Item -ItemType Directory -Force -Path (Join-Path $DataDir $d) | Out-Null }
 Copy-Item (Join-Path $sourceRoot 'cronova.exe'), (Join-Path $sourceRoot 'cronova-executor.exe') $InstallDir -Force
 
 $config = Join-Path $DataDir 'cronova.yaml'
@@ -45,6 +45,17 @@ elseif ($PSBoundParameters.ContainsKey('Port')) {
     $text = [regex]::Replace($text, '(?m)^http:\s*\S+', "http: 127.0.0.1:$Port")
     [IO.File]::WriteAllText($config, $text, [Text.UTF8Encoding]::new($false))
 }
+$db = Get-CronovaUserDatabasePath -DataDir $DataDir -ConfigPath $config
+try { Move-CronovaUserDatabaseToConfiguredPath -DataDir $DataDir -DatabasePath $db }
+catch {
+    $migrationError = $_
+    if ($wasRunning -and $migrationError.Exception.Message -notmatch 'rollback was incomplete') {
+        try { Start-CronovaUser -InstallDir $InstallDir -DataDir $DataDir }
+        catch { Write-Warning "Could not restart the previous Cronova installation: $($_.Exception.Message)" }
+    }
+    throw $migrationError
+}
+New-Item -ItemType Directory -Force -Path (Split-Path -Parent $db) | Out-Null
 
 Copy-Item (Join-Path $sourceRoot 'dags\*.yaml') (Join-Path $DataDir 'dags') -Force -ErrorAction SilentlyContinue
 foreach ($dir in @('internal\scripts', 'scripts\sdlc', 'scripts\windows', 'prompts', 'templates', 'configs', 'contracts', 'e2e\playwright')) {
@@ -63,13 +74,12 @@ $detect = Join-Path $DataDir 'scripts\windows\detect-toolchain.ps1'
 if (Test-Path $detect) {
     foreach ($line in @(& $detect)) { if ($line -match '^[A-Z_]+=.+$') { $lines.Add($line) } }
 }
-$allow = @()
+$allow = @('CRONOVA_DB')
 if ($AiBaseUrl) { $lines.Add("CRONOVA_AI_BASE_URL=$AiBaseUrl"); $allow += 'CRONOVA_AI_BASE_URL' }
 if ($AiModel) { $lines.Add("CRONOVA_AI_MODEL=$AiModel"); $allow += 'CRONOVA_AI_MODEL' }
-if ($allow) { $lines.Add("CRONOVA_TASK_ENV_ALLOWLIST=$($allow -join ',')") }
+$lines.Add("CRONOVA_TASK_ENV_ALLOWLIST=$($allow -join ',')")
 [IO.File]::WriteAllLines($envFile, $lines, [Text.UTF8Encoding]::new($false))
 
-$db = Join-Path $DataDir 'cronova.db'
 if ($AdminPassword) {
     $cli = Join-Path $InstallDir 'cronova.exe'
     $ErrorActionPreference = 'Continue'

@@ -11,6 +11,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot 'cronova-user-common.ps1')
 
 $log = Join-Path $DataDir 'logs\cronova-user.log'
 New-Item -ItemType Directory -Force -Path (Split-Path $log) | Out-Null
@@ -30,18 +31,24 @@ if (Test-Path $envFile) {
 
 $exec = Join-Path $InstallDir 'cronova-executor.exe'
 $sched = Join-Path $InstallDir 'cronova.exe'
+$config = Join-Path $DataDir 'cronova.yaml'
 $endpoint = "127.0.0.1:$ExecutorPort"
 
 $crashes = New-Object System.Collections.Generic.List[datetime]
 while ($true) {
     Write-Log "starting executor ($endpoint) and scheduler"
-    $e = Start-Process -FilePath $exec -WorkingDirectory $DataDir -WindowStyle Hidden -PassThru `
-        -RedirectStandardError (Join-Path $DataDir 'logs\executor.err.log') -RedirectStandardOutput (Join-Path $DataDir 'logs\executor.out.log') `
-        -ArgumentList @('-sock', $endpoint, '-state-dir', (Join-Path $DataDir 'state'), '-workdir', $DataDir)
+    $taskDb = Get-CronovaUserDatabasePath -DataDir $DataDir -ConfigPath $config
+    $env:CRONOVA_DB = $taskDb
+    try {
+        $e = Start-Process -FilePath $exec -WorkingDirectory $DataDir -WindowStyle Hidden -PassThru `
+            -RedirectStandardError (Join-Path $DataDir 'logs\executor.err.log') -RedirectStandardOutput (Join-Path $DataDir 'logs\executor.out.log') `
+            -ArgumentList @('-sock', $endpoint, '-state-dir', (Join-Path $DataDir 'state'), '-workdir', $DataDir)
+    }
+    finally { Remove-Item Env:CRONOVA_DB -ErrorAction SilentlyContinue }
     Start-Sleep -Seconds 2
     $s = Start-Process -FilePath $sched -WorkingDirectory $DataDir -WindowStyle Hidden -PassThru `
         -RedirectStandardError (Join-Path $DataDir 'logs\scheduler.err.log') -RedirectStandardOutput (Join-Path $DataDir 'logs\scheduler.out.log') `
-        -ArgumentList @('serve', '-config', (Join-Path $DataDir 'cronova.yaml'), '-db', (Join-Path $DataDir 'cronova.db'),
+        -ArgumentList @('serve', '-config', $config,
             '-dags', (Join-Path $DataDir 'dags'), '-logs', (Join-Path $DataDir 'logs'), '-projects', (Join-Path $DataDir 'projects'),
             '-workspaces', (Join-Path $DataDir 'workspaces'), '-executor', "tcp://$endpoint")
 

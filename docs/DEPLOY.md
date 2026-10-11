@@ -15,6 +15,8 @@ The ZIP root contains `setup.cmd`, `setup.ps1`, `README-INSTALL.pl.md` (Polish),
 - otherwise (or when UAC is declined) Cronova is installed **per user, without admin rights**: binaries in `%LOCALAPPDATA%\Programs\Cronova`, data in `%LOCALAPPDATA%\Cronova`, autostart through the logon scheduled task `Cronova (user)`. The supervisor `internal\scripts\cronova-user-run.ps1` restarts executor and scheduler after a crash (gives up after 5 crashes in 5 minutes);
 - without `-AdminPassword` a random password is generated and printed once.
 
+Per-user mode uses the database path from `%LOCALAPPDATA%\Cronova\cronova.yaml` (`db: data/cronova.db` by default), so the default file is `%LOCALAPPDATA%\Cronova\data\cronova.db`. The installer migrates the former root-level database and any SQLite `-wal`, `-shm`, or `-journal` sidecars if the configured target is absent; if both locations contain data, it stops without overwriting either. AI task processes receive the same resolved path as `CRONOVA_DB`.
+
 Options: `setup.ps1 -Mode auto|service|user -Port 8091 -AdminUser admin -AdminPassword ... -AiBaseUrl ... -AiModel ...`. A busy port fails before anything is installed. Service setup is logged to `%TEMP%\cronova-setup.log`.
 
 Per-user management:

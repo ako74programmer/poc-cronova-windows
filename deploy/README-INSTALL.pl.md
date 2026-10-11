@@ -15,6 +15,8 @@ Skrypt sam wybiera tryb:
 
 Na końcu skrypt wypisze adres konsoli (domyślnie http://127.0.0.1:8090/), login `admin` i **jednorazowo** wygenerowane hasło — zapisz je.
 
+W trybie użytkownika domyślna baza to `%LOCALAPPDATA%\Cronova\data\cronova.db`, zgodnie z `db: data/cronova.db` w `cronova.yaml`. Przed aktualizacją skopiuj cały katalog `%LOCALAPPDATA%\Cronova` jako kopię zapasową. Instalator przenosi dotychczasowy plik `%LOCALAPPDATA%\Cronova\cronova.db` (oraz ewentualne pliki poboczne SQLite `-wal`, `-shm` lub `-journal`) do lokalizacji z konfiguracji, jeśli plik docelowy jeszcze nie istnieje. Jeśli bazy znajdują się w obu lokalizacjach, instalator zatrzyma się bez nadpisania żadnej z nich; przed ponowieniem wykonaj kopię zapasową i rozstrzygnij, której bazy użyć. Skrypty DAG-ów AI otrzymują tę samą wyliczoną ścieżkę przez `CRONOVA_DB`.
+
 ## Opcje (PowerShell)
 
 ```powershell
