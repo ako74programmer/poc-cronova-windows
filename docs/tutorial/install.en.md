@@ -37,6 +37,8 @@ Remove-Variable adminPassword, securePassword
 
 The success message is `created admin account "admin"`. Do **not** run `users add` again for this database: an “already exists” error means the account was created earlier. If the browser returns `401`, reset the existing account's password; do not try to add it again.
 
+#### Change the password:
+
 If the server is running, leave it running and open a second PowerShell window. Change to the same extracted ZIP directory so the command uses the same database. Run this line by itself to request a new password:
 
 ```powershell

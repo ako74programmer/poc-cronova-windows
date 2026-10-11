@@ -21,7 +21,7 @@ Everything runs locally: one `cronova` binary, an embedded SQLite database, and 
 
 ## Chapters
 
-1. **[Install cronova](install.md)** — download and extract the Windows ZIP, run `cronova.exe` directly for the tutorial, or optionally install it with `setup.cmd`.
+1. **[Install cronova](install.en.md)** — download and extract the Windows ZIP, run `cronova.exe` directly for the tutorial, or optionally install it with `setup.cmd`.
 2. **[Your first DAG](first-dag.md)** — write a DAG as a YAML file in `./dags`, trigger it, and watch the run in the console and CLI.
 3. **[Scheduling](scheduling.md)** — cron expressions and `@every` intervals, `start_date`, `catchup` backfill, and what the *logical date* means.
 4. **[Task dependencies](dependencies.md)** — wire tasks together with `deps` and control when they fire with trigger rules like `all_success` and `one_failed`.
@@ -45,4 +45,4 @@ Every chapter follows the same rhythm: a short explanation, a small runnable sni
 - You need only a Windows amd64 machine — Go 1.26.5+ is required only for source builds.
 - Ten chapters take you from install to cross-DAG orchestration, with reference docs for everything deeper.
 
-Next up: get the binary running in [Install cronova](install.md).
+Next up: get the binary running in [Install cronova](install.en.md).

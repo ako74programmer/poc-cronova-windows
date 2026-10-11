@@ -37,6 +37,7 @@ Remove-Variable adminPassword, securePassword
 
 Komunikat `created admin account "admin"` oznacza, że konto zostało utworzone. **Nie uruchamiaj ponownie `users add` dla tej bazy** — błąd „already exists” oznacza, że konto już istnieje. Jeśli przeglądarka zwraca `401`, zmień hasło istniejącego konta; nie próbuj dodawać go ponownie.
 
+#### Zmiana hasła:
 Jeśli serwer działa, pozostaw go uruchomionego i otwórz drugie okno PowerShell. Przejdź w nim do tego samego katalogu rozpakowanego ZIP-a, aby użyć tej samej bazy danych. Uruchom samodzielnie tę linię, aby poprosić o nowe hasło:
 
 ```powershell
