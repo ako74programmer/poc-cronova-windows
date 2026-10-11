@@ -10,5 +10,6 @@ To tutorial pisany prostym językiem. Każda część jest osobnym, krótkim kro
 4. [Czym jest skrypt i jak uruchomić go jako task](04-skrypt-jako-zadanie.md)
 5. [Sprawdzamy uruchomienie i czytamy logi](05-statusy-i-logi.md)
 6. [Znaleźliśmy błąd i poprawiamy go](06-diagnozujemy-blad.md)
+7. [Ustawiamy AI Provider](07-ai-provider.md)
 
-Następna planowana część: przekazywanie wartości do planu przy jego uruchamianiu.
+Następna planowana część: korzystanie z AI Wiki.
