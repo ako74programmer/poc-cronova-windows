@@ -1,25 +1,53 @@
 # Install cronova
 
-cronova is a self-hosted **workflow scheduler** for Windows, distributed as a Windows ZIP containing the scheduler, executor, web console, REST API, CLI, and the supporting files used by the example DAGs. This chapter shows the quickest way to run the tutorial and, separately, how to install cronova for ongoing use.
+cronova is a self-hosted **workflow scheduler** for Windows, distributed as a ZIP containing the scheduler, executor, web console, REST API, CLI, and the files used by the example DAGs. This chapter shows how to run the tutorial directly from the ZIP and, separately, how to install cronova for ongoing use.
 
 ## Option 1: Run the tutorial from the release ZIP (recommended)
 
-Download **`cronova_windows_amd64.zip`** from the [cronova v0.2.3 release](https://github.com/ako74programmer/poc-cronova-windows/releases/tag/v0.2.3) and extract it into a working directory. The package includes `cronova.exe`, `cronova-executor.exe`, a `dags/` directory, the optional installer `setup.cmd`, and both installation guides: `README-INSTALL.en.md` (English) and `README-INSTALL.md` (Polish).
+Download **`cronova_windows_amd64.zip`** from the [GitHub Releases page](https://github.com/ako74programmer/poc-cronova-windows/releases) and extract it into a working directory. The package includes `cronova.exe`, `cronova-executor.exe`, `cronova.yaml`, the `dags/` directory, the optional installer `setup.cmd`, and Polish and English installation guides.
 
-For this tutorial, **do not run `setup.cmd`**. Running the executable directly keeps the setup local to the extracted directory and avoids installing Windows services or a logon task:
+For this tutorial, **do not run `setup.cmd`**. Running the executable directly keeps data in the extracted working directory and avoids installing Windows services or a logon task:
 
 ```powershell
 Set-Location .\cronova_windows_amd64
 .\cronova.exe version
 ```
 
-The version command prints the build version and platform, for example:
+The version command prints the release version and platform, for example `cronova <release-version> windows/amd64`. If you extracted the ZIP into a directory with a different name, change to that directory instead. You do not need Go or administrator rights to run the prebuilt binaries.
 
-```
-cronova v0.2.3 windows/amd64
+### Create the initial admin account
+
+The release ZIP includes a `cronova.yaml` with authentication enabled. Therefore, seeing a login page is **expected**. Before the first `serve` run, create an admin account in the tutorial's SQLite database. Choose a strong, unique password; the secure prompt below avoids putting it directly in the command text:
+
+```powershell
+$securePassword = Read-Host "Choose an admin password" -AsSecureString
+$adminPassword = [System.Net.NetworkCredential]::new("", $securePassword).Password
+.\cronova.exe users add admin -role admin -password $adminPassword -db "data\cronova.db"
+Remove-Variable adminPassword, securePassword
 ```
 
-If you extracted the ZIP into a directory with a different name, change to that directory instead. You do not need Go or administrator rights to run the prebuilt binaries.
+Run this once for this extracted directory/database. On later starts, do not add the same user again; sign in with the account you already created. The default database path is `data/cronova.db`, relative to the current working directory.
+
+### Start the scheduler and open the console
+
+From the directory containing `cronova.exe`, start the scheduler and the in-process executor:
+
+```powershell
+.\cronova.exe serve
+```
+
+By default, DAG YAML files load from `./dags` (created if missing), the SQLite database is stored at `data/cronova.db`, and task logs go to `logs/`, all relative to the current working directory. This is why a dedicated extracted working directory is convenient for the tutorial.
+
+Open **http://localhost:8090** in your browser and sign in as `admin` with the password you chose above. The bundled DAG files in `dags/` appear in the console. From a second PowerShell window, verify that cronova loaded them:
+
+```powershell
+.\cronova.exe dags
+```
+
+Each loaded DAG is listed with its schedule. This confirms the scheduler is running and reading the directory. The same `serve` process provides the web console and REST API. Stop the server with ++ctrl+c++; your DAGs, database, and logs remain on disk for the next run.
+
+!!! warning
+    The release ZIP enables authentication and binds the console to `127.0.0.1:8090` by default. Keep the listener local while following this tutorial. If you later expose cronova to a network, review the security guidance in [Enabling login](../GETTING_STARTED.md#enabling-login) and [Deployment](../DEPLOY.md).
 
 ## Option 2: Install cronova for ongoing use
 
@@ -28,9 +56,9 @@ To install cronova rather than just follow the tutorial, double-click **`setup.c
 - If you are an administrator, it offers to install the `Cronova` and `CronovaExecutor` Windows services. Accept the UAC prompt to install the services.
 - If you decline UAC, or do not have administrator rights, it installs for your Windows user and starts at sign-in through Task Scheduler.
 
-The installer configures a login and prints the console URL and password at the end. If it generates a password, **save it then**; it is shown only once. The default console address is **http://127.0.0.1:8090/**. For options and management commands, see the packaged [Windows installation guide](../DEPLOY.md) or `README-INSTALL.md` in the ZIP.
+The installer configures the admin account and prints the console URL and password at the end. If it generates a password, **save it then**; it is shown only once. The default console address is **http://127.0.0.1:8090/**. For options and management commands, see the packaged [Windows installation guide](../DEPLOY.md), `README-INSTALL.en.md` (English), or `README-INSTALL.md` (Polish) in the ZIP.
 
-> **Important:** The installer starts cronova for you. If you install it, do not also start another `cronova serve` process on the same data directory. To continue this tutorial, use the direct-from-ZIP method above and leave `setup.cmd` unused.
+> **Important:** The installer starts cronova for you. If you install it, do not also start another `cronova serve` process on the same data directory. To continue this tutorial, use Option 1 and leave `setup.cmd` unused.
 
 ## Option 3: Build the scheduler from source
 
@@ -44,36 +72,13 @@ go build -o .\cronova.exe .\cmd\cronova
 
 `git clone` creates the `poc-cronova-windows` directory; run the build from that directory. The build produces the scheduler, web console, and CLI in one binary. It uses pure-Go SQLite and does not require a C toolchain. A plain `go build` reports its version as `dev`.
 
-To build the complete Windows installer ZIP (both executables and all runtime assets), use the project's Windows packaging and verification scripts. See [Deployment](../DEPLOY.md#build-and-package-from-source); building only `cronova.exe` is sufficient for the standalone tutorial, not for the service installer.
-
-## Start the scheduler and open the console
-
-From the directory containing `cronova.exe`, start the scheduler and the in-process executor:
-
-```powershell
-.\cronova.exe serve
-```
-
-By default, DAG YAML files load from `./dags` (created if missing), the SQLite database is stored at `data/cronova.db`, and task logs go to `logs/`, all relative to the current working directory. This is why a dedicated extracted working directory is convenient for the tutorial.
-
-Open **http://localhost:8090** in your browser. The bundled DAG files in `dags/` appear in the console. From a second PowerShell window, verify that cronova loaded them:
-
-```powershell
-.\cronova.exe dags
-```
-
-Each loaded DAG is listed with its schedule. This confirms the scheduler is running and reading the directory. The same `serve` process provides the web console and REST API.
-
-!!! warning
-    A standalone development `serve` does not require login by default. Its default listener, `127.0.0.1:8090`, is reachable only from this machine. Cronova refuses an unauthenticated non-loopback bind unless you explicitly enable the dangerous override. Before allowing network access, enable login — see [Enabling login](../GETTING_STARTED.md#enabling-login).
-
-Stop the server with ++ctrl+c++. Your DAGs, database, and logs remain on disk, ready for the next `cronova serve`.
+To build the complete Windows installer ZIP (both executables and all runtime assets), use the project's Windows packaging and verification scripts. See [Deployment](../DEPLOY.md#build-and-package-from-source); building only `cronova.exe` is sufficient for the standalone tutorial, not for the service installer. When running the binary from the repository's working directory, follow the initial-account step in Option 1 because the repository's `cronova.yaml` also enables authentication.
 
 ## What you learned
 
 - Download the Windows amd64 ZIP and run `cronova.exe` directly to follow the tutorial; this requires neither Go nor administrator rights.
+- The release ZIP enables authentication, so create a local admin account once before the first `serve` run.
 - `setup.cmd` is the separate guided installer for Windows services or a per-user installation; it starts cronova itself.
 - To build only the scheduler from source, use Go 1.26.5+ from the `poc-cronova-windows` repository directory.
-- `cronova serve` runs the scheduler, web console, REST API, and in-process executor; DAGs, the database, and logs are relative to the working directory.
 
 Next up: write and trigger your first DAG — [First DAG](first-dag.md).
