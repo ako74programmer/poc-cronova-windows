@@ -20,7 +20,7 @@ cronova schedules **DAGs** — tasks with dependencies, retries, catchup and poo
 powershell -ExecutionPolicy Bypass -File deploy\install.ps1
 ```
 
-[Start the Tutorial](tutorial/index.md){ .md-button .md-button--primary }
+[Start the Tutorial](tutorial/README.md){ .md-button .md-button--primary }
 [Quick start](GETTING_STARTED.md){ .md-button }
 
 ![cronova web console — visual task editor with drag-and-drop template variable pills](img/task-editor.png)
@@ -80,7 +80,7 @@ go build -o cronova.exe ./cmd/cronova   # or grab a prebuilt release
 
 ## Learn more
 
-- **[Tutorial](tutorial/index.md)** — the step-by-step path: install → first DAG → scheduling → variables → projects → cross-DAG.
+- **[Tutorial](tutorial/README.md)** — the step-by-step path: install → first DAG → scheduling → variables → projects → cross-DAG.
 - **[Console guide](console/index.md)** — every page of the web UI: dashboard, DAG editor, visual task editor, runs & live logs, pools, variables, audit, API tokens.
 - **[Quick start](GETTING_STARTED.md)** — the single-page fast path.
 - **[Przewodnik użytkownika (PL)](USER_GUIDE.pl.md)** — kompletny przewodnik instalacji i codziennej obsługi.

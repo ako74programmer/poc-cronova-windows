@@ -153,7 +153,7 @@ nav:
       - Część 7 — AI Provider: user-tutorial/07-ai-provider.md
       - Część 8 — AI Wiki: user-tutorial/08-ai-wiki.md
   - Tutorial:
-      - tutorial/index.md
+      - tutorial/README.md
       - Install cronova: tutorial/install.md
       - Your first DAG: tutorial/first-dag.md
       - Scheduling & catchup: tutorial/scheduling.md
