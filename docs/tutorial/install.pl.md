@@ -17,16 +17,41 @@ Polecenie `version` wypisze wersję wydania i platformę, na przykład `cronova 
 
 ### Utwórz początkowe konto administratora
 
-W pliku `cronova.yaml` dołączonym do archiwum wydania uwierzytelnianie jest włączone. Dlatego pojawienie się ekranu logowania jest **oczekiwane**. Przed pierwszym uruchomieniem `serve` utwórz konto administratora w bazie SQLite używanej przez tutorial. Wybierz silne, unikatowe hasło; bezpieczny monit poniżej nie umieszcza go bezpośrednio w tekście polecenia:
+W pliku `cronova.yaml` dołączonym do archiwum wydania uwierzytelnianie jest włączone, więc pojawienie się ekranu logowania jest **oczekiwane**. Konto administratora utwórz raz dla tego rozpakowanego katalogu i bazy danych.
+
+Najpierw uruchom samodzielnie tę jedną linię:
 
 ```powershell
-$securePassword = Read-Host "Ustaw hasło administratora" -AsSecureString
+$securePassword = Read-Host -Prompt "Wpisz hasło, którego użyjesz do logowania (znaki będą ukryte)" -AsSecureString
+```
+
+Tekst w cudzysłowie jest tylko etykietą monitu, **a nie hasłem**. Gdy PowerShell wyświetli monit, wpisz hasło, którego chcesz używać do logowania, i naciśnij Enter. Wpisywane znaki nie będą widoczne na ekranie. Przed uruchomieniem kolejnego bloku poczekaj, aż wróci zwykły prompt `PS>`; nie wklejaj obu bloków jednocześnie.
+
+Teraz uruchom ten blok jeden raz:
+
+```powershell
 $adminPassword = [System.Net.NetworkCredential]::new("", $securePassword).Password
 .\cronova.exe users add admin -role admin -password $adminPassword -db "data\cronova.db"
 Remove-Variable adminPassword, securePassword
 ```
 
-Wykonaj to polecenie raz dla tego katalogu/bazy danych. Przy kolejnych uruchomieniach nie dodawaj ponownie tego samego użytkownika — zaloguj się utworzonym już kontem. Domyślna ścieżka bazy to `data/cronova.db`, względna wobec bieżącego katalogu roboczego.
+Komunikat `created admin account "admin"` oznacza, że konto zostało utworzone. **Nie uruchamiaj ponownie `users add` dla tej bazy** — błąd „already exists” oznacza, że konto już istnieje. Jeśli przeglądarka zwraca `401`, zmień hasło istniejącego konta; nie próbuj dodawać go ponownie.
+
+Jeśli serwer działa, pozostaw go uruchomionego i otwórz drugie okno PowerShell. Przejdź w nim do tego samego katalogu rozpakowanego ZIP-a, aby użyć tej samej bazy danych. Uruchom samodzielnie tę linię, aby poprosić o nowe hasło:
+
+```powershell
+$securePassword = Read-Host -Prompt "Wpisz nowe hasło dla admina (znaki będą ukryte)" -AsSecureString
+```
+
+Wpisz nowe hasło przy monicie i poczekaj, aż wróci prompt `PS>`. Następnie uruchom:
+
+```powershell
+$newPassword = [System.Net.NetworkCredential]::new("", $securePassword).Password
+.\cronova.exe users passwd admin -password $newPassword -db "data\cronova.db"
+Remove-Variable newPassword, securePassword
+```
+
+Zaloguj się nowym hasłem. Ścieżka bazy jest względna wobec bieżącego katalogu roboczego.
 
 ### Uruchom scheduler i otwórz konsolę
 
@@ -38,7 +63,7 @@ Z katalogu zawierającego `cronova.exe` uruchom scheduler oraz wbudowany executo
 
 Domyślnie pliki DAG YAML są wczytywane z `./dags` (katalog powstaje, jeśli go brakuje), baza SQLite jest zapisywana w `data/cronova.db`, a logi zadań w `logs/` — wszystkie ścieżki są względne wobec bieżącego katalogu roboczego. Dlatego osobny katalog dla rozpakowanego archiwum jest wygodny podczas pracy z tutorialem.
 
-Otwórz w przeglądarce **http://localhost:8090** i zaloguj się jako `admin`, używając wybranego hasła. W konsoli pojawią się dołączone pliki DAG z katalogu `dags/`. W drugim oknie PowerShell sprawdź, czy cronova je załadowała:
+Otwórz w przeglądarce **http://localhost:8090** i zaloguj się jako `admin`, używając hasła wpisanego w monicie. W konsoli pojawią się dołączone pliki DAG z katalogu `dags/`. W drugim oknie PowerShell sprawdź, czy cronova je załadowała:
 
 ```powershell
 .\cronova.exe dags

@@ -17,16 +17,41 @@ The version command prints the release version and platform, for example `cronov
 
 ### Create the initial admin account
 
-The release ZIP includes a `cronova.yaml` with authentication enabled. Therefore, seeing a login page is **expected**. Before the first `serve` run, create an admin account in the tutorial's SQLite database. Choose a strong, unique password; the secure prompt below avoids putting it directly in the command text:
+The release ZIP includes a `cronova.yaml` with authentication enabled, so seeing a login page is **expected**. Create the admin account once for this extracted directory and database.
+
+First, run this single line by itself:
 
 ```powershell
-$securePassword = Read-Host "Choose an admin password" -AsSecureString
+$securePassword = Read-Host -Prompt "Type the password you want to use at login (input is hidden)" -AsSecureString
+```
+
+The quoted text is only the prompt label, **not** your password. When PowerShell displays the prompt, type the password you want to use to log in and press Enter. The characters will not appear on screen. Wait until the normal `PS>` prompt returns before running the next block; do not paste both blocks at once.
+
+Now run this block once:
+
+```powershell
 $adminPassword = [System.Net.NetworkCredential]::new("", $securePassword).Password
 .\cronova.exe users add admin -role admin -password $adminPassword -db "data\cronova.db"
 Remove-Variable adminPassword, securePassword
 ```
 
-Run this once for this extracted directory/database. On later starts, do not add the same user again; sign in with the account you already created. The default database path is `data/cronova.db`, relative to the current working directory.
+The success message is `created admin account "admin"`. Do **not** run `users add` again for this database: an “already exists” error means the account was created earlier. If the browser returns `401`, reset the existing account's password; do not try to add it again.
+
+If the server is running, leave it running and open a second PowerShell window. Change to the same extracted ZIP directory so the command uses the same database. Run this line by itself to request a new password:
+
+```powershell
+$securePassword = Read-Host -Prompt "Type a new password for admin (input is hidden)" -AsSecureString
+```
+
+Type the new password at the prompt and wait for `PS>` to return. Then run:
+
+```powershell
+$newPassword = [System.Net.NetworkCredential]::new("", $securePassword).Password
+.\cronova.exe users passwd admin -password $newPassword -db "data\cronova.db"
+Remove-Variable newPassword, securePassword
+```
+
+Sign in with the new password. The database path is relative to the current working directory.
 
 ### Start the scheduler and open the console
 
@@ -38,7 +63,7 @@ From the directory containing `cronova.exe`, start the scheduler and the in-proc
 
 By default, DAG YAML files load from `./dags` (created if missing), the SQLite database is stored at `data/cronova.db`, and task logs go to `logs/`, all relative to the current working directory. This is why a dedicated extracted working directory is convenient for the tutorial.
 
-Open **http://localhost:8090** in your browser and sign in as `admin` with the password you chose above. The bundled DAG files in `dags/` appear in the console. From a second PowerShell window, verify that cronova loaded them:
+Open **http://localhost:8090** in your browser and sign in as `admin` with the password you typed at the prompt. The bundled DAG files in `dags/` appear in the console. From a second PowerShell window, verify that cronova loaded them:
 
 ```powershell
 .\cronova.exe dags
