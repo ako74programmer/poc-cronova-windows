@@ -69,10 +69,9 @@ Open **http://localhost:8090** in your browser and sign in as `admin` with the p
 .\cronova.exe dags
 ```
 
-Each loaded DAG is listed with its schedule. This confirms the scheduler is running and reading the directory. The same `serve` process provides the web console and REST API. Stop the server with ++ctrl+c++; your DAGs, database, and logs remain on disk for the next run.
+Each loaded DAG is listed with its schedule. This confirms the scheduler is running and reading the directory. The same `serve` process provides the web console and REST API. Stop the server by pressing **Ctrl+C** (hold Ctrl and press C); your DAGs, database, and logs remain on disk for the next run.
 
-!!! warning
-    The release ZIP enables authentication and binds the console to `127.0.0.1:8090` by default. Keep the listener local while following this tutorial. If you later expose cronova to a network, review the security guidance in [Enabling login](../GETTING_STARTED.md#enabling-login) and [Deployment](../DEPLOY.md).
+**WARNING:** The release ZIP enables authentication and binds the console to `127.0.0.1:8090` by default. Keep the listener local while following this tutorial. If you later expose cronova to a network, review the security guidance in [Enabling login](../GETTING_STARTED.md#enabling-login) and [Deployment](../DEPLOY.md).
 
 ## Option 2: Install cronova for ongoing use
 

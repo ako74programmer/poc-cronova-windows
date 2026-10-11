@@ -63,7 +63,7 @@ Z katalogu zawierającego `cronova.exe` uruchom scheduler oraz wbudowany executo
 
 Domyślnie pliki DAG YAML są wczytywane z `./dags` (katalog powstaje, jeśli go brakuje), baza SQLite jest zapisywana w `data/cronova.db`, a logi zadań w `logs/` — wszystkie ścieżki są względne wobec bieżącego katalogu roboczego. Dlatego osobny katalog dla rozpakowanego archiwum jest wygodny podczas pracy z tutorialem.
 
-Otwórz w przeglądarce **http://localhost:8090** i zaloguj się jako `admin`, używając hasła wpisanego w monicie. W konsoli pojawią się dołączone pliki DAG z katalogu `dags/`. W drugim oknie PowerShell sprawdź, czy cronova je załadowała:
+Otwórz w przeglądarce [**http://localhost:8090**](http://localhost:8090) i zaloguj się jako `admin`, używając hasła wpisanego w monicie. W konsoli pojawią się dołączone pliki DAG z katalogu `dags/`. W drugim oknie PowerShell sprawdź, czy cronova je załadowała:
 
 ```powershell
 .\cronova.exe dags
@@ -71,8 +71,7 @@ Otwórz w przeglądarce **http://localhost:8090** i zaloguj się jako `admin`, u
 
 Każdy załadowany DAG pojawi się na liście wraz ze swoim harmonogramem. To potwierdza, że scheduler działa i odczytuje katalog. Ten sam proces `serve` udostępnia konsolę webową i REST API. Zatrzymaj serwer, naciskając **Ctrl+C** (przytrzymaj Ctrl i naciśnij C); DAG-i, baza danych i logi pozostaną na dysku do następnego uruchomienia.
 
-!!! warning "WARNING:"
-    Archiwum wydania włącza uwierzytelnianie i domyślnie nasłuchuje pod adresem `127.0.0.1:8090`. Podczas tutoriala pozostaw konsolę dostępną tylko lokalnie. Jeśli później udostępnisz cronova w sieci, zapoznaj się z zasadami bezpieczeństwa w sekcji: [Włączanie logowania](../GETTING_STARTED.pl.md#włączanie-logowania).
+**WARNING:** Archiwum wydania włącza uwierzytelnianie i domyślnie nasłuchuje pod adresem `127.0.0.1:8090`. Podczas tutoriala pozostaw konsolę dostępną tylko lokalnie. Jeśli później udostępnisz cronova w sieci, zapoznaj się z zasadami bezpieczeństwa w sekcji: [Włączanie logowania](../GETTING_STARTED.pl.md#włączanie-logowania) oraz w przewodniku: [Wdrażanie](../DEPLOY.pl.md).
 
 ## Opcja 2: Zainstaluj cronova do stałego użycia
 
@@ -81,7 +80,7 @@ Aby zainstalować cronova, zamiast tylko przejść tutorial, kliknij dwukrotnie 
 - Jeśli masz uprawnienia administratora, zaproponuje instalację usług Windows `Cronova` i `CronovaExecutor`. Zaakceptuj monit UAC, aby zainstalować usługi.
 - Jeśli odmówisz UAC lub nie masz uprawnień administratora, program zainstaluje się dla bieżącego użytkownika i będzie uruchamiany przy logowaniu za pomocą Harmonogramu zadań.
 
-Instalator konfiguruje konto administratora, a na końcu wypisze adres konsoli i hasło. Jeśli hasło zostanie wygenerowane automatycznie, **zapisz je od razu** — jest wyświetlane tylko raz. Domyślny adres konsoli to **http://127.0.0.1:8090/**. Opcje i polecenia zarządzania opisuje polska instrukcja `README-INSTALL.md` dołączona do ZIP-a.
+Instalator konfiguruje konto administratora, a na końcu wypisze adres konsoli i hasło. Jeśli hasło zostanie wygenerowane automatycznie, **zapisz je od razu** — jest wyświetlane tylko raz. Domyślny adres konsoli to [**http://127.0.0.1:8090/**](http://127.0.0.1:8090/). Opcje i polecenia zarządzania opisuje polski przewodnik wdrożeniowy: [Wdrażanie](../DEPLOY.pl.md) oraz polska instrukcja `README-INSTALL.md` dołączona do ZIP-a.
 
 > **Ważne:** instalator sam uruchamia cronova. Po instalacji nie uruchamiaj dodatkowego procesu `cronova serve` korzystającego z tego samego katalogu danych. Aby kontynuować tutorial, wybierz Opcję 1 i nie uruchamiaj `setup.cmd`.
 
@@ -97,7 +96,7 @@ go build -o .\cronova.exe .\cmd\cronova
 
 `git clone` tworzy katalog `poc-cronova-windows`; kompilację uruchom z tego katalogu. Build wytwarza jeden plik binarny zawierający scheduler, konsolę webową i CLI. Korzysta z SQLite w czystym Go i nie wymaga toolchaina C. Zwykłe `go build` raportuje wersję jako `dev`.
 
-Aby zbudować kompletne archiwum instalacyjne Windows (obie binarki i wszystkie pliki runtime), użyj windowsowych skryptów pakowania i weryfikacji projektu; samo zbudowanie `cronova.exe` wystarczy do samodzielnego przejścia tutoriala, ale nie do instalatora usług. Jeśli uruchamiasz binarkę z katalogu repozytorium, wykonaj też opisany wyżej krok tworzenia konta — znajdujący się tam `cronova.yaml` również włącza uwierzytelnianie.
+Aby zbudować kompletne archiwum instalacyjne Windows (obie binarki i wszystkie pliki runtime), użyj windowsowych skryptów pakowania i weryfikacji projektu; szczegóły opisuje przewodnik: [Wdrażanie](../DEPLOY.pl.md#budowanie-i-pakowanie-ze-źródeł). Samo zbudowanie `cronova.exe` wystarczy do samodzielnego przejścia tutoriala, ale nie do instalatora usług. Jeśli uruchamiasz binarkę z katalogu repozytorium, wykonaj też opisany wyżej krok tworzenia konta — znajdujący się tam `cronova.yaml` również włącza uwierzytelnianie.
 
 ## Czego się nauczyłeś
 
