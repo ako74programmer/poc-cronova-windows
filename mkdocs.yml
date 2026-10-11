@@ -151,6 +151,7 @@ nav:
       - Część 5 — statusy i logi: user-tutorial/05-statusy-i-logi.md
       - Część 6 — diagnozowanie błędu: user-tutorial/06-diagnozujemy-blad.md
       - Część 7 — AI Provider: user-tutorial/07-ai-provider.md
+      - Część 8 — AI Wiki: user-tutorial/08-ai-wiki.md
   - Tutorial:
       - tutorial/index.md
       - Install cronova: tutorial/install.md
