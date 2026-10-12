@@ -166,6 +166,28 @@ func TestListAndGetDAG(t *testing.T) {
 	}
 }
 
+func TestAskAcceptsConversationHistory(t *testing.T) {
+	h, _, _, _ := setup(t)
+	body := `{"question":"Jak ustawić retry dla taska?","lang":"pl","history":[{"role":"user","content":"Jak działa task?"},{"role":"assistant","content":"Task wykonuje polecenie."}]}`
+	req := httptest.NewRequest(http.MethodPost, "/api/ask", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("POST /api/ask status = %d, body = %s", rec.Code, rec.Body.String())
+	}
+	var response struct {
+		Answer  string `json:"answer"`
+		Sources []any  `json:"sources"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if !strings.Contains(strings.ToLower(response.Answer), "retry") || len(response.Sources) == 0 {
+		t.Fatalf("unexpected /api/ask response: %+v", response)
+	}
+}
+
 func TestDagGraph(t *testing.T) {
 	h, st, _, _ := setup(t)
 	ctx := context.Background()

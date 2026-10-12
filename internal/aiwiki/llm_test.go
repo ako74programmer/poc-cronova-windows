@@ -35,7 +35,7 @@ func TestGenerateAnswerAppendsChatCompletionsToBaseURL(t *testing.T) {
 		BaseURL: server.URL + "/v1/",
 		Model:   "test-model",
 	})
-	answer, err := client.GenerateAnswer(context.Background(), "question", nil)
+	answer, err := client.GenerateAnswer(context.Background(), "question", []Chunk{{Source: "docs/example.md", Section: "Example", Text: "Grounded context."}})
 	if err != nil {
 		t.Fatalf("GenerateAnswer() error: %v", err)
 	}

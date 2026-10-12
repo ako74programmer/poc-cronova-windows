@@ -234,8 +234,9 @@ func (s *Server) Handler() http.Handler {
 // Static assets, health probes, and /metrics scrapes are never logged.
 func (s *Server) askWiki(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Question string `json:"question"`
-		Lang     string `json:"lang"`
+		Question string           `json:"question"`
+		Lang     string           `json:"lang"`
+		History  []aiwiki.Message `json:"history"`
 	}
 	if err := decodeJSON(r, &req); err != nil {
 		httpErr(w, http.StatusBadRequest, "invalid request")
@@ -245,7 +246,7 @@ func (s *Server) askWiki(w http.ResponseWriter, r *http.Request) {
 		httpErr(w, http.StatusBadRequest, "question is required")
 		return
 	}
-	answer := s.wiki.Ask(r.Context(), req.Question, req.Lang)
+	answer := s.wiki.AskWithHistory(r.Context(), req.Question, req.Lang, req.History)
 	writeJSON(w, http.StatusOK, answer)
 }
 

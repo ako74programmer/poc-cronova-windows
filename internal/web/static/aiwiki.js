@@ -5,6 +5,8 @@
   let msgsEl = null;
   let inputEl = null;
   let sendBtn = null;
+  let transcript = [];
+  let conversationHistory = [];
 
   function buildUI() {
     main.innerHTML = `<div class="aiwiki-page">
@@ -21,7 +23,8 @@
     sendBtn.onclick = ask;
     inputEl.onkeydown = e => { if (e.key === 'Enter') ask(); };
     inputEl.focus();
-    if (!msgsEl.childElementCount) addMsg(t('aiwiki_welcome'), 'bot');
+    if (!transcript.length) addMsg(t('aiwiki_welcome'), 'bot');
+    else transcript.forEach(renderMessage);
   }
 
   window.showAIWiki = function () {
@@ -33,10 +36,29 @@
 
   function addMsg(text, who, extras) {
     if (!msgsEl) return;
+    const item = {
+      text,
+      who,
+      sources: extras && Array.isArray(extras.sources) ? extras.sources : [],
+      actions: extras && Array.isArray(extras.actions) ? extras.actions : [],
+    };
+    transcript.push(item);
+    renderMessage(item);
+  }
+
+  function renderMessage(item) {
+    if (!msgsEl) return;
     const div = document.createElement('div');
-    div.className = 'aiwiki-msg ' + who;
-    div.textContent = text;
-    if (extras) div.appendChild(extras);
+    div.className = 'aiwiki-msg ' + item.who;
+    div.textContent = item.text;
+    if (item.sources.length || item.actions.length) {
+      const extras = document.createElement('div');
+      const src = renderSources(item.sources);
+      const acts = renderActions(item.actions);
+      if (src) extras.appendChild(src);
+      if (acts) extras.appendChild(acts);
+      div.appendChild(extras);
+    }
     msgsEl.appendChild(div);
     msgsEl.scrollTop = msgsEl.scrollHeight;
   }
@@ -180,16 +202,18 @@
       const resp = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: q, lang: (typeof lang !== 'undefined' ? lang : 'en') }),
+        body: JSON.stringify({
+          question: q,
+          lang: (typeof lang !== 'undefined' ? lang : 'en'),
+          history: conversationHistory.slice(-8),
+        }),
       });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const data = await resp.json();
-      const extras = document.createElement('div');
-      const src = renderSources(data.sources);
-      const acts = renderActions(data.actions);
-      if (src) extras.appendChild(src);
-      if (acts) extras.appendChild(acts);
-      addMsg(data.answer || t('aiwiki_fallback'), 'bot', extras);
+      const answer = data.answer || t('aiwiki_fallback');
+      addMsg(answer, 'bot', { sources: data.sources, actions: data.actions });
+      conversationHistory.push({ role: 'user', content: q }, { role: 'assistant', content: answer });
+      if (conversationHistory.length > 8) conversationHistory = conversationHistory.slice(-8);
     } catch (e) {
       addMsg(t('aiwiki_error') + e.message, 'bot');
     } finally {

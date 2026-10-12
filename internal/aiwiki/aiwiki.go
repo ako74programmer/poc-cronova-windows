@@ -38,6 +38,12 @@ type Answer struct {
 	Actions []Action `json:"actions"`
 }
 
+// Message is one prior user/assistant turn used only to resolve follow-up references.
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
 // Source points to a document, DAG, or script.
 type Source struct {
 	Type    string `json:"type"`
@@ -72,47 +78,48 @@ func New(st store.Store) (*Wiki, error) {
 	return &Wiki{kb: kb, index: newBM25Index(kb.Chunks), store: st}, nil
 }
 
-// Ask answers a user question using BM25 retrieval and, if an AI provider is
-// configured, an LLM-generated answer. Falls back to canned templates when no
-// provider is available so the feature works offline and with zero config.
-// The lang parameter requests a documentation language ("pl" or "en") for
-// open_docs actions; it defaults to "en".
+// Ask answers a user question using BM25 retrieval and, if configured, an LLM.
+// The lang parameter controls documentation actions and defaults to English.
 func (w *Wiki) Ask(ctx context.Context, question, lang string) Answer {
-	// Ensure the LLM client is up to date before answering.
+	return w.AskWithHistory(ctx, question, lang, nil)
+}
+
+// AskWithHistory answers a question using retrieved documentation and bounded
+// conversation context. History resolves follow-up references but is not treated
+// as factual evidence in place of retrieved sources.
+func (w *Wiki) AskWithHistory(ctx context.Context, question, lang string, history []Message) Answer {
 	w.refreshLLM(ctx)
-
-	translated := translateQueryPLToEN(question)
-	hits := w.index.search(translated, 5)
-
-	// If no strong match, let the LLM answer from its general knowledge and
-	// clearly label it as such. Avoid pretending a random low-score chunk
-	// answers the question.
-	if len(hits) == 0 || !isRelevant(translated, hits) {
-		if w.llm != nil {
-			if generated, err := w.llm.GenerateAnswer(ctx, question, nil); err == nil && generated != "" {
-				return Answer{Answer: "Nie znalazłem odpowiedzi w bazie wiedzy cronova, ale wiem, że " + generated}
-			}
+	queries := []string{question}
+	if w.llm != nil {
+		if expanded, err := w.llm.ExpandQueriesWithHistory(ctx, question, boundedHistory(history)); err == nil {
+			queries = append(queries, expanded...)
 		}
+	}
+	queries = uniqueQueries(queries)
+	hits := w.searchQueries(queries, 8)
+	if len(hits) == 0 || !isRelevant(strings.Join(queries, " "), hits) {
 		return Answer{
-			Answer: "Nie znalazłem odpowiedzi w bazie wiedzy cronova. Zapytaj o coś związanego z cronova, np. 'Jak zrobić DAG?' lub 'Co to jest retry?'.",
-			Actions: []Action{
-				{Type: "open_editor", Label: "Przeglądaj DAG-i", Path: "dags/"},
-			},
+			Answer:  "Nie znalazłem odpowiedzi w dokumentacji cronova. Spróbuj zadać pytanie inaczej albo podać nazwę funkcji, pola lub pliku.",
+			Actions: []Action{{Type: "open_editor", Label: "Przeglądaj DAG-i", Path: "dags/"}},
 		}
 	}
 
 	var answer string
+	generationFailed := false
 	if w.llm != nil {
 		chunks := make([]Chunk, 0, len(hits))
 		for _, h := range hits {
 			chunks = append(chunks, h.chunk)
 		}
-		if generated, err := w.llm.GenerateAnswer(ctx, question, chunks); err == nil && generated != "" {
-			answer = generated
+		generated, err := w.llm.GenerateAnswerWithHistory(ctx, question, chunks, boundedHistory(history))
+		if err == nil && strings.TrimSpace(generated) != "" {
+			answer = strings.TrimSpace(generated)
+		} else {
+			generationFailed = true
 		}
 	}
 	if answer == "" {
-		answer = buildAnswer(question, hits[0].chunk)
+		answer = sourceExcerptAnswer(hits[0].chunk, generationFailed, question)
 	}
 
 	sources := []Source{}
@@ -123,20 +130,123 @@ func (w *Wiki) Ask(ctx context.Context, question, lang string) Answer {
 			continue
 		}
 		seen[key] = true
-		sources = append(sources, Source{
-			Type:    h.chunk.Type,
-			Path:    h.chunk.Source,
-			Section: h.chunk.Section,
-		})
+		sources = append(sources, Source{Type: h.chunk.Type, Path: h.chunk.Source, Section: h.chunk.Section})
 	}
+	return Answer{Answer: answer, Sources: sources, Actions: suggestActions(hits[0].chunk, lang)}
+}
 
-	actions := suggestActions(hits[0].chunk, lang)
-
-	return Answer{
-		Answer:  answer,
-		Sources: sources,
-		Actions: actions,
+func (w *Wiki) searchQueries(queries []string, topN int) []scoredChunk {
+	byID := make(map[string]scoredChunk)
+	for _, query := range queries {
+		for rank, hit := range w.index.search(query, topN) {
+			id := hit.chunk.ID
+			if id == "" {
+				id = hit.chunk.Source + "|" + hit.chunk.Section
+			}
+			if previous, ok := byID[id]; ok {
+				if hit.score < previous.score {
+					hit.score = previous.score
+				}
+				hit.score += 0.02 / float64(rank+1)
+			}
+			byID[id] = hit
+		}
 	}
+	results := make([]scoredChunk, 0, len(byID))
+	for _, hit := range byID {
+		results = append(results, hit)
+	}
+	for i := 0; i < len(results); i++ {
+		for j := i + 1; j < len(results); j++ {
+			if results[j].score > results[i].score {
+				results[i], results[j] = results[j], results[i]
+			}
+		}
+	}
+	if topN > 0 && len(results) > topN {
+		results = results[:topN]
+	}
+	return results
+}
+
+func uniqueQueries(queries []string) []string {
+	seen := make(map[string]bool)
+	result := make([]string, 0, len(queries))
+	for _, query := range queries {
+		query = strings.TrimSpace(query)
+		key := strings.ToLower(query)
+		if query == "" || seen[key] {
+			continue
+		}
+		seen[key] = true
+		if len(result) < 5 {
+			result = append(result, query)
+		}
+	}
+	return result
+}
+
+func boundedHistory(history []Message) []Message {
+	const maxMessages = 8
+	const maxContent = 1200
+	start := len(history) - maxMessages
+	if start < 0 {
+		start = 0
+	}
+	out := make([]Message, 0, len(history)-start)
+	for _, msg := range history[start:] {
+		role := strings.ToLower(strings.TrimSpace(msg.Role))
+		if role != "user" && role != "assistant" {
+			continue
+		}
+		content := strings.TrimSpace(msg.Content)
+		contentRunes := []rune(content)
+		if len(contentRunes) > maxContent {
+			content = string(contentRunes[:maxContent])
+		}
+		if content != "" {
+			out = append(out, Message{Role: role, Content: content})
+		}
+	}
+	return out
+}
+
+func sourceExcerptAnswer(c Chunk, generationFailed bool, question string) string {
+	text := strings.TrimSpace(c.Text)
+	textRunes := []rune(text)
+	if len(textRunes) > 1200 {
+		lower := strings.ToLower(text)
+		position := -1
+		for _, term := range tokenizeBM25(translateQueryPLToEN(question)) {
+			if len(term) < 4 {
+				continue
+			}
+			if at := strings.Index(lower, term); at >= 0 {
+				runeAt := len([]rune(lower[:at]))
+				if position < 0 || runeAt < position {
+					position = runeAt
+				}
+			}
+		}
+		start := 0
+		if position > 250 {
+			start = position - 250
+		}
+		end := start + 1200
+		if end > len(textRunes) {
+			end = len(textRunes)
+		}
+		if end < len(textRunes) {
+			text = strings.TrimSpace(string(textRunes[start:end])) + "…"
+		} else {
+			text = strings.TrimSpace(string(textRunes[start:end]))
+		}
+	}
+	prefix := "AI nie jest skonfigurowane. Znalazłem pasujący fragment dokumentacji:"
+	if generationFailed {
+		prefix = "Znalazłem pasujący fragment dokumentacji, ale generowanie odpowiedzi przez AI nie powiodło się. Oto fragment:"
+	}
+	return prefix + "\n\n" + c.Source + " — " + c.Section + "\n" + text
 }
 
 // isRelevant decides whether the top BM25 hit is strong enough to base an
@@ -203,26 +313,6 @@ func (w *Wiki) refreshLLM(ctx context.Context) {
 		p = providers[0]
 	}
 	w.llm = NewLLMClient(p)
-}
-
-func buildAnswer(question string, c Chunk) string {
-	q := strings.ToLower(question)
-	switch {
-	case strings.Contains(q, "retry") || strings.Contains(q, "ponow"):
-		return "W cronova retry ustawiasz w definicji taska polem `retries`. Możesz też dodać `retry_delay` i `timeout`. Zobacz przykład w źródle."
-	case strings.Contains(q, "co to jest dag") || strings.Contains(q, "czym jest dag") || strings.Contains(q, "co oznacza dag") || strings.Contains(q, "skrót dag"):
-		return "DAG to skrót od Directed Acyclic Graph — skierowany graf acykliczny. W cronova DAG to jeden plik YAML opisujący workflow: zadania (tasks) oraz krawędzie zależności (deps), które mówią, co musi się wykonać przed czym. DAG ma też harmonogram (`schedule`) mówiący, kiedy uruchamiać nowe instancje."
-	case strings.Contains(q, "dag") && strings.Contains(q, "zrobi"):
-		return "DAG to plik YAML w katalogu `dags/`. Definiujesz `dag_id`, `schedule`, listę `tasks` i ich `deps`. Źródło pokazuje przykład."
-	case strings.Contains(q, "schedule") || strings.Contains(q, "harmonogram"):
-		return "Harmonogram ustawiasz polem `schedule` w DAG-u. Może to być cron (`0 2 * * *`) lub interwał (`@every 30s`)."
-	case strings.Contains(q, "project") || strings.Contains(q, "projekt"):
-		return "Własne skrypty wrzucasz jako project w UI (task editor → Project), a potem wskazujesz `project: nazwa` w shell tasku."
-	case strings.Contains(q, "ai") || strings.Contains(q, "mcp"):
-		return "cronova ma wbudowany MCP server (`cronova mcp`) oraz AI-SDLC workflow'y, w których AI generuje kod i naprawia błędy kompilacji."
-	default:
-		return "Oto informacja z bazy wiedzy: " + c.Section + ". Szczegóły znajdziesz w źródle."
-	}
 }
 
 func suggestActions(c Chunk, lang string) []Action {
