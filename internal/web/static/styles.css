@@ -118,9 +118,6 @@ input:focus, textarea:focus { border-color: var(--accent); }
 .aiwiki-input button { white-space: nowrap; }
 .aiwiki-input .aiwiki-mic { flex: 0 0 42px; padding: 0; border-color: var(--line-2); font-size: 17px; }
 .aiwiki-input .aiwiki-mic.listening { color: var(--fail); border-color: var(--fail); background: color-mix(in srgb, var(--fail) 10%, transparent); }
-.aiwiki-voice-status { min-height: 16px; margin: -6px 2px 6px; color: var(--muted); font-size: 11px; }
-.aiwiki-voice-status.error { color: var(--fail); }
-.aiwiki-voice-status.unsupported { min-height: auto; margin-top: 6px; }
 
 /* ---- shell ---- */
 .app { display: grid; grid-template-columns: 232px 1fr; grid-template-rows: 100vh; }

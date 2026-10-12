@@ -6,7 +6,6 @@
   let inputEl = null;
   let sendBtn = null;
   let micBtn = null;
-  let voiceStatus = null;
   let recognition = null;
   let voiceListening = false;
   let transcript = [];
@@ -22,13 +21,11 @@
         <button id="aiwiki-mic" class="icon aiwiki-mic" type="button" aria-label="${esc(t('aiwiki_voice_start'))}" title="${esc(t('aiwiki_voice_start'))}">🎙</button>
         <button id="aiwiki-send" class="primary">${esc(t('aiwiki_send'))}</button>
       </div>
-      <div id="aiwiki-voice-status" class="aiwiki-voice-status" role="status" aria-live="polite"></div>
     </div>`;
     msgsEl = $('aiwiki-msgs');
     inputEl = $('aiwiki-q');
     sendBtn = $('aiwiki-send');
     micBtn = $('aiwiki-mic');
-    voiceStatus = $('aiwiki-voice-status');
     sendBtn.onclick = ask;
     setupVoiceInput();
     inputEl.onkeydown = e => { if (e.key === 'Enter') ask(); };
@@ -49,13 +46,10 @@
       micBtn.disabled = true;
       micBtn.title = t('aiwiki_voice_unsupported');
       micBtn.setAttribute('aria-label', t('aiwiki_voice_unsupported'));
-      voiceStatus.textContent = t('aiwiki_voice_unsupported');
-      voiceStatus.classList.add('unsupported');
       return;
     }
     micBtn.title = t('aiwiki_voice_start');
     micBtn.setAttribute('aria-label', t('aiwiki_voice_start'));
-    voiceStatus.textContent = t('aiwiki_voice_hint');
     micBtn.onclick = toggleVoiceInput;
   }
 
@@ -85,6 +79,8 @@
     current.interimResults = true;
     current.maxAlternatives = 1;
     const startingText = inputEl.value.trim();
+    let receivedSpeech = false;
+    let recognitionError = false;
 
     current.onstart = () => {
       if (recognition !== current) return;
@@ -93,8 +89,7 @@
       micBtn.setAttribute('aria-pressed', 'true');
       micBtn.title = t('aiwiki_voice_stop');
       micBtn.setAttribute('aria-label', t('aiwiki_voice_stop'));
-      voiceStatus.classList.remove('unsupported', 'error');
-      voiceStatus.textContent = t('aiwiki_voice_listening');
+      window.toast && window.toast(t('aiwiki_voice_listening'), 'info');
     };
     current.onresult = (event) => {
       if (recognition !== current) return;
@@ -106,13 +101,23 @@
         else interimText += result[0].transcript;
       }
       const recognized = (finalText + interimText).trim();
+      if (recognized) receivedSpeech = true;
       inputEl.value = [startingText, recognized].filter(Boolean).join(' ');
-      if (interimText.trim()) voiceStatus.textContent = interimText.trim();
     };
     current.onerror = (event) => {
       if (recognition !== current || event.error === 'aborted') return;
-      voiceStatus.classList.add('error');
-      voiceStatus.textContent = t('aiwiki_voice_error');
+      recognitionError = true;
+      const messages = {
+        'not-allowed': 'aiwiki_voice_denied',
+        'service-not-allowed': 'aiwiki_voice_denied',
+        'audio-capture': 'aiwiki_voice_audio',
+        'network': 'aiwiki_voice_network',
+        'no-speech': 'aiwiki_voice_no_speech',
+        'language-not-supported': 'aiwiki_voice_language',
+      };
+      const key = messages[event.error];
+      const message = key ? t(key) : t('aiwiki_voice_error') + (event.error || 'unknown');
+      window.toast && window.toast(message, 'fail');
     };
     current.onend = () => {
       if (recognition !== current) return;
@@ -122,15 +127,17 @@
       micBtn.setAttribute('aria-pressed', 'false');
       micBtn.title = t('aiwiki_voice_start');
       micBtn.setAttribute('aria-label', t('aiwiki_voice_start'));
-      if (!voiceStatus.classList.contains('error')) voiceStatus.textContent = t('aiwiki_voice_hint');
+      if (!recognitionError) {
+        const message = receivedSpeech ? t('aiwiki_voice_ready') : t('aiwiki_voice_no_speech');
+        window.toast && window.toast(message, receivedSpeech ? 'ok' : 'warn');
+      }
       inputEl.focus();
     };
     try {
       current.start();
-    } catch (_) {
+    } catch (error) {
       recognition = null;
-      voiceStatus.classList.add('error');
-      voiceStatus.textContent = t('aiwiki_voice_error');
+      window.toast && window.toast(t('aiwiki_voice_start_error') + (error.name || error.message || 'unknown'), 'fail');
     }
   }
   window.renderAIWiki = buildUI;
