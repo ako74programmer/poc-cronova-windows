@@ -649,7 +649,7 @@ const DICT = {
     nv_see_log: "view log",
     nv_step_extract: "Extract data", nv_step_transform: "Transform", nv_step_load: "Load results",
     nv_step_fetch: "Fetch data", nv_step_render: "Render & send report", nv_step_1: "First step",
-    aiwiki_title: "AI wiki — cronova", aiwiki_sub: "Ask a question about cronova. The answer is built from the documentation and DAGs.", aiwiki_placeholder: "Ask something like how to create a DAG…", aiwiki_send: "Send", aiwiki_close: "Close", aiwiki_speak: "Read documentation", aiwiki_speak_unsupported: "Your browser does not support text-to-speech.",
+    aiwiki_title: "AI wiki — cronova", aiwiki_sub: "Ask about cronova docs or a specific run_id. Run/task details are sent to your configured AI Provider to answer. Logs are read only when requested; up to 3 redacted tails are sent, but redaction may not catch every secret.", aiwiki_placeholder: "Ask something like how to create a DAG…", aiwiki_send: "Send", aiwiki_close: "Close", aiwiki_speak: "Read documentation", aiwiki_speak_unsupported: "Your browser does not support text-to-speech.",
     aiwiki_welcome: "Hi! I'm the cronova AI wiki. Ask me e.g. \"How do I create a DAG?\" or \"What is retry?\"",
     aiwiki_error: "AI wiki connection error: ", aiwiki_copied: "Copied to clipboard", aiwiki_triggered: "Triggered DAG ", aiwiki_no_runs: "No runs for DAG ",
     aiwiki_run_dag: "Run this DAG", aiwiki_dag_runs: "Run history", aiwiki_show_logs: "Show logs", aiwiki_copy_cmd: "Copy CLI command",

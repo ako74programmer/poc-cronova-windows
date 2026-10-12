@@ -86,7 +86,10 @@
 
   function openSource(s) {
     const src = (s.path || '').toLowerCase();
-    if (src.startsWith('dags/')) {
+    if ((s.type === 'runtime' || s.type === 'runtime_log') && src.startsWith('runs/')) {
+      const runId = s.path.slice('runs/'.length);
+      window.location.hash = '#/run/' + encodeURIComponent(runId);
+    } else if (src.startsWith('dags/')) {
       const dagId = src.replace('dags/', '').replace('.yaml', '');
       window.location.hash = '#/dags/' + encodeURIComponent(dagId);
     } else if (src.startsWith('docs/')) {
@@ -156,7 +159,7 @@
             .then(runs => {
               const run = (runs || []).find(x => x.run_id) || (runs && runs.value && runs.value.find(x => x.run_id));
               if (run && run.run_id) {
-                window.location.hash = '#/runs/' + encodeURIComponent(run.run_id);
+                window.location.hash = '#/run/' + encodeURIComponent(run.run_id);
               } else {
                 window.toast && window.toast(t('aiwiki_no_runs') + a.dag_id);
               }
@@ -212,7 +215,11 @@
       const data = await resp.json();
       const answer = data.answer || t('aiwiki_fallback');
       addMsg(answer, 'bot', { sources: data.sources, actions: data.actions });
-      conversationHistory.push({ role: 'user', content: q }, { role: 'assistant', content: answer });
+      const runtimeSource = (data.sources || []).find(s => s.type === 'runtime' || s.type === 'runtime_log');
+      const historyAnswer = runtimeSource
+        ? 'Cronova runtime data was shown for ' + runtimeSource.path.replace(/^runs\//, '') + '.'
+        : answer;
+      conversationHistory.push({ role: 'user', content: q }, { role: 'assistant', content: historyAnswer });
       if (conversationHistory.length > 8) conversationHistory = conversationHistory.slice(-8);
     } catch (e) {
       addMsg(t('aiwiki_error') + e.message, 'bot');

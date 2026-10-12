@@ -6,10 +6,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ako74programmer/poc-cronova-windows/internal/model"
+	"github.com/ako74programmer/poc-cronova-windows/internal/store"
 )
 
 type chatRequest struct {
@@ -173,5 +177,185 @@ func TestBoundedHistoryDropsInvalidRolesAndLimitsSize(t *testing.T) {
 	}
 	if len(got[0].Content) > 1200 {
 		t.Fatalf("history content length = %d, want at most 1200", len(got[0].Content))
+	}
+}
+
+type runtimeStoreStub struct {
+	store.Store
+	run       *model.DagRun
+	tasks     []*model.TaskInstance
+	providers []*model.AIProvider
+}
+
+func (s *runtimeStoreStub) GetDagRun(_ context.Context, runID string) (*model.DagRun, error) {
+	if s.run == nil || s.run.RunID != runID {
+		return nil, store.ErrNotFound
+	}
+	return s.run, nil
+}
+
+func (s *runtimeStoreStub) ListTaskInstances(_ context.Context, runID string) ([]*model.TaskInstance, error) {
+	if s.run == nil || s.run.RunID != runID {
+		return nil, store.ErrNotFound
+	}
+	return s.tasks, nil
+}
+
+func (s *runtimeStoreStub) ListAIProviders(_ context.Context) ([]*model.AIProvider, error) {
+	return s.providers, nil
+}
+
+func setupRuntimeWiki(t *testing.T, logContents string) (*Wiki, *runtimeStoreStub) {
+	t.Helper()
+	dir := t.TempDir()
+	now := time.Now().UTC()
+	logPath := filepath.Join(dir, "extract.log")
+	if logContents != "" {
+		if err := os.WriteFile(logPath, []byte(logContents), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	stub := &runtimeStoreStub{
+		run:   &model.DagRun{RunID: "etl__r1", DagID: "etl", LogicalDate: now, State: model.RunFailed, TriggerType: model.TriggerManual, StartedAt: &now, FinishedAt: &now},
+		tasks: []*model.TaskInstance{{RunID: "etl__r1", TaskID: "extract", State: model.TaskFailed, TryNumber: 2, MaxRetries: 3, Pool: "default", LogPath: logPath, StartedAt: &now, FinishedAt: &now}},
+	}
+	wiki, err := New(stub)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return wiki, stub
+}
+
+func TestAskReadsRunStatusButDoesNotReadLogsByDefault(t *testing.T) {
+	wiki, _ := setupRuntimeWiki(t, "DO_NOT_INCLUDE_WITHOUT_LOG_REQUEST\n")
+	answer := wiki.Ask(context.Background(), "What is the status of run etl__r1?", "en")
+	if !strings.Contains(answer.Answer, "failed") || !strings.Contains(answer.Answer, "extract") {
+		t.Fatalf("runtime status/task details missing: %s", answer.Answer)
+	}
+	if strings.Contains(answer.Answer, "DO_NOT_INCLUDE_WITHOUT_LOG_REQUEST") {
+		t.Fatal("logs were read although the question did not ask for logs")
+	}
+	if len(answer.Sources) != 1 || answer.Sources[0].Type != "runtime" || answer.Sources[0].Path != "runs/etl__r1" {
+		t.Fatalf("unexpected runtime sources: %+v", answer.Sources)
+	}
+	if len(answer.Actions) != 0 {
+		t.Fatalf("runtime answer offered mutating actions: %+v", answer.Actions)
+	}
+}
+
+func TestAskReadsOnlyRequestedRedactedLogTail(t *testing.T) {
+	logText := "start\npassword=super-secret\napi-token=another-secret\nAuthorization: Bearer very.secret.token\nerror: disk unavailable\n"
+	wiki, _ := setupRuntimeWiki(t, logText)
+	answer := wiki.Ask(context.Background(), "Show logs for task extract in run etl__r1", "en")
+	if !strings.Contains(answer.Answer, "error: disk unavailable") {
+		t.Fatalf("requested log tail not included: %s", answer.Answer)
+	}
+	if strings.Contains(answer.Answer, "super-secret") || strings.Contains(answer.Answer, "another-secret") || strings.Contains(answer.Answer, "very.secret.token") {
+		t.Fatalf("log redaction failed: %s", answer.Answer)
+	}
+	if !strings.Contains(answer.Answer, "[REDACTED]") {
+		t.Fatalf("expected visible redaction marker: %s", answer.Answer)
+	}
+	if len(answer.Sources) != 2 || answer.Sources[1].Type != "runtime_log" {
+		t.Fatalf("expected run and log sources: %+v", answer.Sources)
+	}
+}
+
+func TestRuntimeFallbackMarksTruncatedEvidence(t *testing.T) {
+	wiki, _ := setupRuntimeWiki(t, "")
+	answer := wiki.answerRuntime(context.Background(), "status", nil, []Chunk{
+		{Section: "large data", Text: strings.Repeat("x", 12001)},
+		{Section: "later data", Text: "must be marked omitted"},
+	})
+	if !strings.Contains(answer.Answer, "Fragment ucięto") || !strings.Contains(answer.Answer, "Dalsze dane pominięto") {
+		t.Fatalf("truncation was not disclosed: %s", answer.Answer[len(answer.Answer)-150:])
+	}
+}
+
+func TestAskReportsUnknownRunID(t *testing.T) {
+	wiki, _ := setupRuntimeWiki(t, "")
+	answer := wiki.Ask(context.Background(), "Show status for run etl__missing", "en")
+	if !strings.Contains(answer.Answer, "Nie znalazłem runu `etl__missing`") {
+		t.Fatalf("unexpected answer for unknown run: %s", answer.Answer)
+	}
+}
+
+func TestAskUsesRunIDFromHistoryForFollowUp(t *testing.T) {
+	wiki, _ := setupRuntimeWiki(t, "")
+	answer := wiki.AskWithHistory(context.Background(), "Dlaczego?", "pl", []Message{
+		{Role: "user", Content: "Sprawdź run etl__r1"},
+		{Role: "assistant", Content: "Run etl__r1 ma status failed."},
+	})
+	if !strings.Contains(answer.Answer, "etl__r1") || !strings.Contains(answer.Answer, "failed") {
+		t.Fatalf("follow-up did not use the run from history: %s", answer.Answer)
+	}
+}
+
+func TestAskPassesRuntimeEvidenceToConfiguredProvider(t *testing.T) {
+	var received string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req chatRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
+		for _, msg := range req.Messages {
+			received += msg.Content
+		}
+		writeChatResponse(w, "Run etl__r1 failed; task extract also failed.")
+	}))
+	defer server.Close()
+	wiki, stub := setupRuntimeWiki(t, "LOG_CONTENT_MUST_NOT_BE_SENT_WITHOUT_REQUEST")
+	stub.providers = []*model.AIProvider{{ID: "test", Name: "test", BaseURL: server.URL, Model: "test-model", Default: true}}
+	answer := wiki.Ask(context.Background(), "Explain run etl__r1", "en")
+	if !strings.Contains(answer.Answer, "task extract") {
+		t.Fatalf("unexpected model answer: %s", answer.Answer)
+	}
+	if !strings.Contains(received, "Run ID: etl__r1") || !strings.Contains(received, "Task extract: state=failed") {
+		t.Fatalf("provider did not receive the live runtime fields: %s", received)
+	}
+	if strings.Contains(received, "LOG_CONTENT_MUST_NOT_BE_SENT_WITHOUT_REQUEST") {
+		t.Fatal("provider received log contents although the question did not request logs")
+	}
+}
+
+func TestAskSendsOnlyRedactedLogExcerptToProvider(t *testing.T) {
+	var received string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req chatRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
+		for _, msg := range req.Messages {
+			received += msg.Content
+		}
+		writeChatResponse(w, "The log reports a disk error.")
+	}))
+	defer server.Close()
+	wiki, stub := setupRuntimeWiki(t, "password=not-for-model\nerror: disk unavailable\n")
+	stub.providers = []*model.AIProvider{{ID: "test", Name: "test", BaseURL: server.URL, Model: "test-model", Default: true}}
+	_ = wiki.Ask(context.Background(), "Show logs for task extract in run etl__r1", "en")
+	if strings.Contains(received, "not-for-model") || !strings.Contains(received, "[REDACTED]") {
+		t.Fatalf("provider did not receive a redacted log excerpt: %s", received)
+	}
+	if !strings.Contains(received, "error: disk unavailable") {
+		t.Fatalf("provider did not receive the requested log evidence: %s", received)
+	}
+}
+
+func TestRequestedRunIDAmbiguityAndFollowUpGate(t *testing.T) {
+	if id, ambiguous := requestedRunID("Compare etl__r1 and etl__r2", nil); id != "" || !ambiguous {
+		t.Fatalf("expected ambiguous run IDs, got id=%q ambiguous=%v", id, ambiguous)
+	}
+	if id, ambiguous := requestedRunID("What is a DAG?", []Message{{Role: "user", Content: "run etl__r1"}}); id != "" || ambiguous {
+		t.Fatalf("unrelated question unexpectedly reused prior run ID: id=%q ambiguous=%v", id, ambiguous)
+	}
+	if id, ambiguous := requestedRunID("Jaki jest stan?", []Message{{Role: "user", Content: "Sprawdź run etl__r1"}}); id != "etl__r1" || ambiguous {
+		t.Fatalf("Polish runtime follow-up did not reuse run ID: id=%q ambiguous=%v", id, ambiguous)
+	}
+	if !taskIDMentioned("pokaż logi taska extract", "extract") || taskIDMentioned("pokaż logi taska extract_data", "extract") {
+		t.Fatal("task ID matching did not respect token boundaries")
+	}
+	if !logRequestPattern.MatchString("Pokaż logi taska") || !logRequestPattern.MatchString("show logs") || logRequestPattern.MatchString("pokaż katalog") {
+		t.Fatal("log request detection did not respect Polish/English word boundaries")
 	}
 }

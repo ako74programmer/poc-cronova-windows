@@ -8,7 +8,7 @@
 2. W menu po lewej stronie kliknij **AI wiki**.
 3. Zobaczysz wiadomość powitalną i pole, w którym można wpisać pytanie.
 
-## Krok 2: zadaj proste pytanie
+## Krok 2: zadaj pytanie o dokumentację
 
 Kliknij pole z podpowiedzią **„Zapytaj np. jak zrobić DAG…”** i wpisz:
 
@@ -38,10 +38,11 @@ Lepiej pytać o jedną rzecz naraz. Konkretne pytanie, takie jak „Gdzie ustawi
 
 Pod odpowiedzią może pojawić się sekcja **Źródła**.
 
-Źródło mówi, z jakiego dokumentu, przykładowego DAG-a albo skryptu pochodzi pasująca informacja. Kliknij nazwę źródła:
+Źródło mówi, z jakiego dokumentu, przykładowego DAG-a, skryptu albo danych runu pochodzi informacja. Kliknij nazwę źródła:
 
 - jeśli jest to dokument, otworzy się w oknie nad konsolą;
-- jeśli jest to DAG, Cronova otworzy stronę tego DAG-a.
+- jeśli jest to DAG, Cronova otworzy stronę tego DAG-a;
+- jeśli źródłem jest `runs/<run_id>`, Cronova otworzy szczegóły tego uruchomienia.
 
 AI Wiki może pokazać kilka źródeł. Porównaj je z odpowiedzią — zwłaszcza jeśli chcesz później zmienić działający DAG.
 
@@ -55,9 +56,41 @@ Gdy klikniesz źródło będące dokumentem, możesz:
 
 Jeśli przeglądarka nie obsługuje czytania tekstu, przycisk może pokazać ostrzeżenie zamiast odczytać dokument.
 
-## Krok 5: uważaj na przyciski działań
+## Krok 5: zapytaj o konkretne uruchomienie DAG-a
 
-Czasem odpowiedź zawiera także przyciski do wykonania następnego kroku, na przykład:
+AI Wiki może sprawdzić bieżące dane **konkretnego** uruchomienia (runu). Najpierw znajdź run w historii DAG-a i skopiuj jego **Run ID** z nagłówka strony szczegółów.
+
+W pytaniu podaj pełny identyfikator, na przykład:
+
+```text
+Jaki jest stan runu etl__r1 i które taski się nie powiodły?
+```
+
+AI Wiki pobiera wtedy stan runu, jego DAG, daty rozpoczęcia/zakończenia i stany tasków. Źródło `runs/<run_id>` możesz kliknąć, aby wrócić do strony tego runu. AI Wiki nie wyszukuje w tym trybie „najnowszego runu” za Ciebie — potrzebuje dokładnego Run ID. Jeśli podasz kilka ID naraz, poprosi o jeden konkretny.
+
+Możesz zadać pytanie uzupełniające w tej samej rozmowie, na przykład:
+
+```text
+A dlaczego ten run się nie powiódł?
+```
+
+AI Wiki użyje Run ID z poprzedniej wiadomości i pobierze aktualne dane ponownie. Historia rozmowy nie jest zapisywana na stałe.
+
+## Krok 6: poproś o logi tylko wtedy, gdy ich potrzebujesz
+
+Logi nie są pobierane przy zwykłym pytaniu o stan runu. Poproś o nie wprost, na przykład:
+
+```text
+Pokaż logi taska extract z runu etl__r1.
+```
+
+AI Wiki dołącza maksymalnie trzy końcowe fragmenty logów, po maksymalnie 8 KiB każdy. Najpierw wybiera task wymieniony w pytaniu, a potem taski zakończone błędem lub timeoutem. Fragmenty są redagowane pod kątem typowych zapisów sekretów, ale **redakcja może nie wykryć każdego sekretu**.
+
+Gdy w konsoli jest skonfigurowany AI Provider, dane runu/tasków z pytania o Run ID są wysyłane do tego providera w celu ułożenia odpowiedzi. Jeśli poprosisz o logi, do providera trafią również wybrane, ograniczone fragmenty logów. Nie proś o analizę logów zawierających dane, których nie wolno wysyłać do skonfigurowanego providera. Pełne logi nadal sprawdzisz na stronie runu.
+
+## Krok 7: uważaj na przyciski działań
+
+Czasem odpowiedź dotycząca dokumentacji zawiera także przyciski do wykonania następnego kroku, na przykład:
 
 - **Uruchom ten DAG**;
 - **Historia runów**;
@@ -70,13 +103,13 @@ Przycisk **Kopiuj komendę CLI** kopiuje tekst polecenia. Samo kopiowanie nie ur
 
 ## Skąd AI Wiki bierze informacje?
 
-Cronova przeszukuje swoją wbudowaną bazę wiedzy, zbudowaną z wybranych dokumentów projektu, przykładowych DAG-ów i skryptów. Jeśli skonfigurowano **AI Provider**, może użyć go do ułożenia odpowiedzi na podstawie znalezionych fragmentów.
+Przy pytaniu o funkcje Cronovy aplikacja przeszukuje wbudowaną bazę wiedzy, zbudowaną z wybranych dokumentów projektu, przykładowych DAG-ów i skryptów. Jeśli skonfigurowano **AI Provider**, może użyć go do ułożenia odpowiedzi na podstawie znalezionych fragmentów.
 
-AI Wiki nie musi znać każdego DAG-a utworzonego przez Ciebie ani każdej zmiany w Twoim projekcie. Traktuj ją jak pomoc w odnajdywaniu informacji, a nie jak kogoś, kto na pewno widział wszystko, co znajduje się na Twoim komputerze.
+Przy pytaniu z konkretnym Run ID aplikacja pobiera stan tego runu i jego tasków bezpośrednio z bazy Cronovy. Logi odczytuje dopiero wtedy, gdy poprosisz o nie wprost. AI Wiki nie musi znać każdego DAG-a utworzonego przez Ciebie ani każdej zmiany w Twoim projekcie. Traktuj ją jak pomoc w odnajdywaniu informacji, a nie jak kogoś, kto na pewno widział wszystko, co znajduje się na Twoim komputerze.
 
 ## Czy AI Provider jest potrzebny?
 
-**AI Wiki może działać również bez skonfigurowanego AI Provider.** Wtedy Cronova nadal przeszukuje bazę wiedzy, ale odpowiedź może być prostsza i oparta na przygotowanych podpowiedziach.
+**AI Wiki może działać również bez skonfigurowanego AI Provider.** Wtedy Cronova nadal przeszukuje bazę wiedzy, a pytanie o konkretny run pokaże dostępne dane runtime bez modelu. Odpowiedź może być prostsza.
 
 Po skonfigurowaniu providera odpowiedzi mogą być układane przez model. To jednak nie gwarantuje, że model będzie dostępny ani że zawsze odpowie poprawnie. Przed ważną zmianą sprawdź podane źródło lub dokumentację.
 
@@ -87,15 +120,15 @@ Spróbuj kolejno:
 1. Zadaj krótsze i bardziej konkretne pytanie.
 2. Dodaj nazwę funkcji, o którą pytasz, na przykład `DAG`, `task`, `retry` albo `harmonogram`.
 3. Otwórz podane źródło i sprawdź, czy dotyczy Twojego pytania.
-4. Jeśli odpowiedź wspomina, że nie znalazła informacji w bazie Cronovy, nie traktuj dalszego tekstu jako odpowiedzi potwierdzonej przez dokumentację.
-5. Jeśli ekran pokaże **Błąd połączenia z AI wiki**, sprawdź, czy jesteś zalogowany i czy konsola Cronovy działa. Jeśli problem powtarza się po skonfigurowaniu providera, administrator powinien sprawdzić jego endpoint, model, token i dostępność usługi.
-
-Jeśli AI Provider nie odpowie na zapytanie, AI Wiki może pokazać prostszą odpowiedź zastępczą zamiast wyraźnego komunikatu o błędzie providera.
+4. Jeśli pytasz o live run, sprawdź, czy skopiowałeś dokładny Run ID, np. `etl__r1`, a nie nazwę DAG-a.
+5. Jeśli AI Wiki odpowie, że runu nie znaleziono, sprawdź identyfikator i upewnij się, że run nie został już usunięty przez retencję.
+6. Jeśli ekran pokaże **Błąd połączenia z AI wiki**, sprawdź, czy jesteś zalogowany i czy konsola Cronova działa. Jeśli problem powtarza się po skonfigurowaniu providera, administrator powinien sprawdzić jego endpoint, model, token i dostępność usługi.
+7. Jeśli generowanie odpowiedzi przez AI się nie powiedzie, sprawdź wyświetlone dane/źródło runtime; sama awaria modelu nie oznacza, że odczyt stanu runu się nie udał.
 
 ## Czy rozmowa zostaje zapisana?
 
-Na ekranie AI Wiki nie ma funkcji zapisywania ani przeglądania historii rozmów. Nie zakładaj więc, że odpowiedź będzie dostępna po opuszczeniu strony albo odświeżeniu konsoli. Jeśli jest ważna, skopiuj ją samodzielnie.
+Na ekranie AI Wiki nie ma funkcji trwałego zapisywania ani przeglądania historii rozmów. W tej samej otwartej stronie AI Wiki może użyć ostatnich wiadomości, aby zrozumieć pytanie uzupełniające, na przykład „A dlaczego?”. Rozmowa nie jest przechowywana na stałe. Jeśli odpowiedź jest ważna, skopiuj ją samodzielnie.
 
 ## Gotowe
 
-Potrafisz już zadać pytanie w AI Wiki, sprawdzić źródło i odróżnić zwykłą odpowiedź od przycisku, który może naprawdę uruchomić DAG.
+Potrafisz już zadać pytanie w AI Wiki, sprawdzić źródło, odczytać stan wskazanego runu i poprosić o ograniczone fragmenty jego logów — wiedząc, że logi mogą zostać wysłane do skonfigurowanego AI Provider.
