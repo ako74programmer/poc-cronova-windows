@@ -103,6 +103,11 @@ input:focus, textarea:focus { border-color: var(--accent); }
 .aiwiki-msg { padding: 10px 12px; border-radius: var(--r-sm); max-width: 80%; line-height: 1.45; }
 .aiwiki-msg.user { align-self: flex-end; background: var(--accent); color: #fff; }
 .aiwiki-msg.bot { align-self: flex-start; background: var(--panel-2); border: 1px solid var(--line); }
+.aiwiki-msg .aiwiki-answer { font-size: inherit; line-height: 1.55; overflow-wrap: anywhere; }
+.aiwiki-msg .aiwiki-answer > :last-child { margin-bottom: 0; }
+.aiwiki-msg .aiwiki-answer pre { max-width: 100%; white-space: pre; }
+.aiwiki-msg .aiwiki-answer table { display: block; max-width: 100%; overflow-x: auto; }
+.aiwiki-msg .aiwiki-answer a { overflow-wrap: anywhere; }
 .aiwiki-msg .src { margin-top: 8px; font-size: 11px; color: var(--faint); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
 .aiwiki-msg .src a { color: var(--accent); text-decoration: none; }
 .aiwiki-msg .src a:hover { text-decoration: underline; }

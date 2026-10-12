@@ -50,7 +50,14 @@
     if (!msgsEl) return;
     const div = document.createElement('div');
     div.className = 'aiwiki-msg ' + item.who;
-    div.textContent = item.text;
+    if (item.who === 'bot') {
+      const body = document.createElement('div');
+      body.className = 'markdown-body aiwiki-answer';
+      body.appendChild(renderMarkdown(item.text));
+      div.appendChild(body);
+    } else {
+      div.textContent = item.text;
+    }
     if (item.sources.length || item.actions.length) {
       const extras = document.createElement('div');
       const src = renderSources(item.sources);
@@ -61,6 +68,73 @@
     }
     msgsEl.appendChild(div);
     msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  // Parse Markdown, then copy only an explicit safe subset into the live DOM.
+  // Do not insert Marked's HTML directly: model output is untrusted input.
+  function renderMarkdown(markdown) {
+    if (typeof marked === 'undefined' || typeof DOMParser === 'undefined') {
+      return document.createTextNode(markdown || '');
+    }
+    let parsed;
+    try {
+      parsed = new DOMParser().parseFromString(marked.parse(markdown || ''), 'text/html');
+    } catch (_) {
+      return document.createTextNode(markdown || '');
+    }
+
+    const allowed = new Set([
+      'P', 'BR', 'STRONG', 'B', 'EM', 'I', 'DEL', 'S', 'UL', 'OL', 'LI',
+      'PRE', 'CODE', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'HR',
+      'A', 'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'TH', 'TD'
+    ]);
+    const dropContent = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'SVG', 'MATH', 'TEMPLATE']);
+    const output = document.createDocumentFragment();
+
+    function safeLink(raw) {
+      if (!raw) return null;
+      try {
+        const url = new URL(raw, window.location.href);
+        if (!['http:', 'https:', 'mailto:'].includes(url.protocol)) return null;
+        return url;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function copyChildren(source, target) {
+      for (const child of source.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          target.appendChild(document.createTextNode(child.nodeValue || ''));
+          continue;
+        }
+        if (child.nodeType !== Node.ELEMENT_NODE) continue;
+        const tag = child.tagName;
+        if (dropContent.has(tag)) continue;
+        if (!allowed.has(tag)) {
+          copyChildren(child, target);
+          continue;
+        }
+        const clean = document.createElement(tag.toLowerCase());
+        if (tag === 'A') {
+          const url = safeLink(child.getAttribute('href'));
+          if (!url) {
+            copyChildren(child, target);
+            continue;
+          }
+          clean.href = url.href;
+          if (url.origin !== window.location.origin && url.protocol !== 'mailto:') {
+            clean.target = '_blank';
+            clean.rel = 'noopener noreferrer';
+          }
+        }
+        copyChildren(child, clean);
+        target.appendChild(clean);
+      }
+    }
+
+    copyChildren(parsed.body, output);
+    return output;
   }
 
   function renderSources(sources) {
