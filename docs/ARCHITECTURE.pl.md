@@ -156,7 +156,7 @@ cronova/
 │   ├── operator/             # hold/release, mark, retry operatorów
 │   ├── metrics/              # metryki Prometheus
 │   ├── mcp/                  # integracja serwera MCP
-│   └── aiwiki/               # chat RAG AI wiki
+│   └── aiwiki/               # retrieval RAG używany przez AI Chat
 ├── proto/
 │   └── cronova/
 │       ├── executor/v1/executor.proto   # lokalny executor gRPC
@@ -740,7 +740,7 @@ Kluczowe komunikaty:
 | `GET/POST` | `/api/workers`, `/api/worker-tokens` | zarządzanie workerami |
 | `POST` | `/api/events` | zdarzenie zewnętrzne |
 | `POST` | `/api/hooks/{dag}/{secret}` | trigger webhook |
-| `POST` | `/api/ask` | chat AI wiki |
+| `POST` | `/api/ask` | AI Chat |
 | `GET` | `/metrics` | metryki Prometheus |
 | `GET` | `/openapi.json` | specyfikacja OpenAPI |
 
@@ -751,7 +751,7 @@ Kluczowe komunikaty:
 - Historia runów według `logical_date` z ręcznym trigger/backfill;
 - Podgląd logów zadania z live tail;
 - Edytor YAML z online walidacją (wykrywanie cykli, sprawdzanie pól);
-- Panel chatu AI wiki.
+- Panel chatu AI Chat.
 
 ---
 

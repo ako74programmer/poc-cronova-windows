@@ -73,18 +73,18 @@ Jeśli formularz zgłosi błąd, sprawdź, czy:
 
 Po zapisaniu provider pojawi się na liście. Zobaczysz jego ID, nazwę, adres, model i informację, czy token został zapisany. **Samego tokena nie da się potem odczytać z listy.**
 
-W formularzu nie ma przycisku **Test connection**. Zapisanie konfiguracji oznacza, że Cronova ją przyjęła — **nie potwierdza**, że adres, token i model zadziałają podczas prawdziwego zapytania. Sprawdzimy to w kolejnej części, używając AI Wiki.
+W formularzu nie ma przycisku **Test connection**. Zapisanie konfiguracji oznacza, że Cronova ją przyjęła — **nie potwierdza**, że adres, token i model zadziałają podczas prawdziwego zapytania. Sprawdzimy to w kolejnej części, używając AI Chat.
 
 ## Jeśli edytujesz istniejący provider
 
 Pole tokena przy edycji może być puste. Jeśli token był już zapisany i chcesz go zachować, zostaw to pole puste. Wpisanie nowego tokena zastąpi poprzedni.
 
-Nie usuwaj konfiguracji, jeśli nie masz pewności, czy korzysta z niej AI Wiki albo automatyzacja SDLC.
+Nie usuwaj konfiguracji, jeśli nie masz pewności, czy korzysta z niej AI Chat albo automatyzacja SDLC.
 
 ## Co z tego korzysta?
 
-AI Wiki używa domyślnego providera. Jeśli nie ma providera ustawionego jako domyślny, kod wybiera pierwszy dostępny. Niektóre skrypty SDLC mogą wskazywać provider osobno. To, że provider pojawił się na liście, nie oznacza jeszcze, że każde zadanie Cronovy będzie korzystać z AI.
+AI Chat używa domyślnego providera. Jeśli nie ma providera ustawionego jako domyślny, kod wybiera pierwszy dostępny. Niektóre skrypty SDLC mogą wskazywać provider osobno. To, że provider pojawił się na liście, nie oznacza jeszcze, że każde zadanie Cronovy będzie korzystać z AI.
 
 ## Gotowe
 
-Wiesz już, jakie informacje są potrzebne i gdzie ustawić AI Provider. Następna część pokaże, jak zadać pytanie w **AI Wiki**, jak czytać podane źródła i co zrobić, gdy odpowiedź nie pasuje.
+Wiesz już, jakie informacje są potrzebne i gdzie ustawić AI Provider. Następna część pokaże, jak zadać pytanie w **AI Chat**, jak czytać podane źródła i co zrobić, gdy odpowiedź nie pasuje.

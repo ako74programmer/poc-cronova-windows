@@ -104,7 +104,7 @@ The script builds both `windows/amd64` executables and creates `dist\cronova_win
 There is no hosted CI. All checks run locally on Windows with one script, which any future pipeline (e.g. a GitLab Windows runner) can call unchanged:
 
 ```powershell
-.\scripts\windows\check-all.ps1            # gofmt, go mod verify, docs mirror, AI wiki KB, vet, tests, PowerShell tests
+.\scripts\windows\check-all.ps1            # gofmt, go mod verify, docs mirror, AI Chat KB, vet, tests, PowerShell tests
 .\scripts\windows\check-all.ps1 -Full      # + race detector and govulncheck
 .\scripts\windows\check-all.ps1 -Package   # + build the release ZIP and verify its DAG references
 ```

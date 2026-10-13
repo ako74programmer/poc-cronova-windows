@@ -11,6 +11,6 @@ To tutorial pisany prostym językiem. Każda część jest osobnym, krótkim kro
 5. [Sprawdzamy uruchomienie i czytamy logi](05-statusy-i-logi.md)
 6. [Znaleźliśmy błąd i poprawiamy go](06-diagnozujemy-blad.md)
 7. [Ustawiamy AI Provider](07-ai-provider.md)
-8. [Pytamy AI Wiki i sprawdzamy odpowiedź](08-ai-wiki.md)
+8. [Pytamy AI Chat i sprawdzamy odpowiedź](08-ai-wiki.md)
 
 Następna planowana część: Pools — jak ograniczyć liczbę zadań wykonywanych jednocześnie.

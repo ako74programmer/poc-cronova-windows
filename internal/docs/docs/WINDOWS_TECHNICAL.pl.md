@@ -167,7 +167,7 @@ Pełny zestaw projektowy (wymaga Windows PowerShell, Go oraz wymaganych narzędz
 .\scripts\windows\check-all.ps1 -Package
 ```
 
-Domyślny check uruchamia formatowanie, `go mod verify`, kontrolę lustra dokumentów, świeżości AI Wiki, `go vet`, `go test ./...`, testy Python i wybrane testy PowerShell/helperów. `-Full` dodaje `go test -race ./...` i `govulncheck`; `-Package` buduje ZIP i waliduje referencje DAG. Oddzielne skrypty: `scripts/windows/test-dags.ps1`, `test-powershell-only-runtime.ps1`, `test-powershell-scripts.ps1`, `test-service-helpers.ps1`, `test-services.ps1`, `test-package-smoke.ps1`. Test `test-services.ps1` wymaga podwyższonych praw/Windows.
+Domyślny check uruchamia formatowanie, `go mod verify`, kontrolę lustra dokumentów, aktualności indeksu AI Chat, `go vet`, `go test ./...`, testy Python i wybrane testy PowerShell/helperów. `-Full` dodaje `go test -race ./...` i `govulncheck`; `-Package` buduje ZIP i waliduje referencje DAG. Oddzielne skrypty: `scripts/windows/test-dags.ps1`, `test-powershell-only-runtime.ps1`, `test-powershell-scripts.ps1`, `test-service-helpers.ps1`, `test-services.ps1`, `test-package-smoke.ps1`. Test `test-services.ps1` wymaga podwyższonych praw/Windows.
 
 `go build -o cronova.exe ./cmd/cronova` buduje samą komendę; `scripts/package.ps1` tworzy kompletny package, nie to samo co pojedynczy build:
 
@@ -198,7 +198,7 @@ MkDocs konfiguracja `mkdocs.yml`; komentarz na górze wymienia `make docs-serve`
 
 ### REST/console
 
-UI i API współdzielą listener HTTP `http` (domyślnie loopback port 8090). Dynamiczny OpenAPI obsługiwany przez `internal/api/openapi.go` i udostępniany przez serwer (`/openapi.json` oraz Redoc `/docs`). Funkcjonalne grupy endpointów implementowane w `internal/api/` obejmują: health/readiness; auth/sessions/users; DAG CRUD/validate/version/graph; trigger/backfill/events/hook; runs/task instances/logs/SSE/cancel/retry/mark/pause; pools; variables/connections/alert groups; projekty; tokeny/audit; workers/join/drain; metryki/proxy/AI Wiki.
+UI i API współdzielą listener HTTP `http` (domyślnie loopback port 8090). Dynamiczny OpenAPI obsługiwany przez `internal/api/openapi.go` i udostępniany przez serwer (`/openapi.json` oraz Redoc `/docs`). Funkcjonalne grupy endpointów implementowane w `internal/api/` obejmują: health/readiness; auth/sessions/users; DAG CRUD/validate/version/graph; trigger/backfill/events/hook; runs/task instances/logs/SSE/cancel/retry/mark/pause; pools; variables/connections/alert groups; projekty; tokeny/audit; workers/join/drain; metryki/proxy/AI Chat.
 
 Błędy JSON zwykle mają `{ "error": "..." }`; statusy obejmują m.in. 400 dla walidacji, 401/403 dla auth/roli, 404, 409 dla konfliktu stanu i 429 dla ograniczeń kolejek/rate limit (sprawdź `Retry-After` w odpowiednim przypadku). Szczegóły endpointów i schemas runtime odczytuj z `/openapi.json` aktualnego procesu. Request JSON jest limitowany w handlerach; spec implementacji/testów jest źródłem prawdy.
 

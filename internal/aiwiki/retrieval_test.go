@@ -291,6 +291,21 @@ func TestAskUsesRunIDFromHistoryForFollowUp(t *testing.T) {
 	}
 }
 
+func TestAskReadsLogsFromRunIDInPunctuatedRuntimeHistory(t *testing.T) {
+	wiki, _ := setupRuntimeWiki(t, "error: disk unavailable\n")
+	runID := "etl__r1"
+	answer := wiki.AskWithHistory(context.Background(), "Pokaż logi tego zadania", "pl", []Message{
+		{Role: "user", Content: "Jaki jest stan runu " + runID + "?"},
+		{Role: "assistant", Content: "Cronova runtime data was shown for " + runID + "."},
+	})
+	if !strings.Contains(answer.Answer, "disk unavailable") {
+		t.Fatalf("follow-up log request did not use the run from history: %s", answer.Answer)
+	}
+	if len(answer.Sources) < 2 || answer.Sources[1].Type != "runtime_log" {
+		t.Fatalf("follow-up log request did not include a runtime-log source: %+v", answer.Sources)
+	}
+}
+
 func TestAskPassesRuntimeEvidenceToConfiguredProvider(t *testing.T) {
 	var received string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -351,6 +366,9 @@ func TestRequestedRunIDAmbiguityAndFollowUpGate(t *testing.T) {
 	}
 	if id, ambiguous := requestedRunID("Jaki jest stan?", []Message{{Role: "user", Content: "Sprawdź run etl__r1"}}); id != "etl__r1" || ambiguous {
 		t.Fatalf("Polish runtime follow-up did not reuse run ID: id=%q ambiguous=%v", id, ambiguous)
+	}
+	if id, ambiguous := requestedRunID("Jaki jest stan runu etl__r1.", nil); id != "etl__r1" || ambiguous {
+		t.Fatalf("trailing sentence punctuation became part of Run ID: id=%q ambiguous=%v", id, ambiguous)
 	}
 	if !taskIDMentioned("pokaż logi taska extract", "extract") || taskIDMentioned("pokaż logi taska extract_data", "extract") {
 		t.Fatal("task ID matching did not respect token boundaries")
