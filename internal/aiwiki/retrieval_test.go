@@ -182,12 +182,17 @@ func TestBoundedHistoryDropsInvalidRolesAndLimitsSize(t *testing.T) {
 
 type runtimeStoreStub struct {
 	store.Store
-	run       *model.DagRun
-	tasks     []*model.TaskInstance
-	providers []*model.AIProvider
+	run             *model.DagRun
+	tasks           []*model.TaskInstance
+	recentRuns      []*model.DagRun
+	providers       []*model.AIProvider
+	getRunCalls     int
+	recentRunsCalls int
+	lastRecentLimit int
 }
 
 func (s *runtimeStoreStub) GetDagRun(_ context.Context, runID string) (*model.DagRun, error) {
+	s.getRunCalls++
 	if s.run == nil || s.run.RunID != runID {
 		return nil, store.ErrNotFound
 	}
@@ -205,6 +210,15 @@ func (s *runtimeStoreStub) ListAIProviders(_ context.Context) ([]*model.AIProvid
 	return s.providers, nil
 }
 
+func (s *runtimeStoreStub) RecentRuns(_ context.Context, limit int) ([]*model.DagRun, error) {
+	s.recentRunsCalls++
+	s.lastRecentLimit = limit
+	if limit >= 0 && len(s.recentRuns) > limit {
+		return s.recentRuns[:limit], nil
+	}
+	return s.recentRuns, nil
+}
+
 func setupRuntimeWiki(t *testing.T, logContents string) (*Wiki, *runtimeStoreStub) {
 	t.Helper()
 	dir := t.TempDir()
@@ -215,9 +229,11 @@ func setupRuntimeWiki(t *testing.T, logContents string) (*Wiki, *runtimeStoreStu
 			t.Fatal(err)
 		}
 	}
+	run := &model.DagRun{RunID: "etl__r1", DagID: "etl", LogicalDate: now, State: model.RunFailed, TriggerType: model.TriggerManual, StartedAt: &now, FinishedAt: &now}
 	stub := &runtimeStoreStub{
-		run:   &model.DagRun{RunID: "etl__r1", DagID: "etl", LogicalDate: now, State: model.RunFailed, TriggerType: model.TriggerManual, StartedAt: &now, FinishedAt: &now},
-		tasks: []*model.TaskInstance{{RunID: "etl__r1", TaskID: "extract", State: model.TaskFailed, TryNumber: 2, MaxRetries: 3, Pool: "default", LogPath: logPath, StartedAt: &now, FinishedAt: &now}},
+		run:        run,
+		recentRuns: []*model.DagRun{run},
+		tasks:      []*model.TaskInstance{{RunID: "etl__r1", TaskID: "extract", State: model.TaskFailed, TryNumber: 2, MaxRetries: 3, Pool: "default", LogPath: logPath, StartedAt: &now, FinishedAt: &now}},
 	}
 	wiki, err := New(stub)
 	if err != nil {
@@ -226,9 +242,88 @@ func setupRuntimeWiki(t *testing.T, logContents string) (*Wiki, *runtimeStoreStu
 	return wiki, stub
 }
 
+func TestDocumentationModeDoesNotReadRuntimeData(t *testing.T) {
+	wiki, stub := setupRuntimeWiki(t, "private runtime log")
+	answer := wiki.AskWithModeHistory(context.Background(), "What is the status of run etl__r1?", "en", ModeDocumentation, nil)
+	if stub.getRunCalls != 0 || stub.recentRunsCalls != 0 {
+		t.Fatalf("documentation mode accessed runtime store: get=%d recent=%d", stub.getRunCalls, stub.recentRunsCalls)
+	}
+	for _, source := range answer.Sources {
+		if source.Type == "runtime" || source.Type == "runtime_log" {
+			t.Fatalf("documentation mode returned runtime evidence: %+v", source)
+		}
+	}
+	if !strings.Contains(answer.Answer, "Run analysis") {
+		t.Fatalf("documentation mode did not direct the user to the runtime mode: %s", answer.Answer)
+	}
+}
+
+func TestRunListIntentIsExplicitAndDoesNotCaptureDefinitions(t *testing.T) {
+	for _, question := range []string{
+		"Jakie masz runy w bazie?",
+		"Pokaż ostatnie runy",
+		"Show recent runs",
+		"What runs are in the database?",
+	} {
+		if !isRunListRequest(question) {
+			t.Errorf("expected run-list request: %q", question)
+		}
+	}
+	for _, question := range []string{
+		"What is a run in Cronova?",
+		"Which runs failed?",
+		"Jaki jest stan runu etl__r1?",
+	} {
+		if isRunListRequest(question) {
+			t.Errorf("unexpected run-list classification: %q", question)
+		}
+	}
+}
+
+func TestRunAnalysisListsAtMostTenRunsAndOffersExplicitSelection(t *testing.T) {
+	wiki, stub := setupRuntimeWiki(t, "must not read logs for list")
+	stub.recentRuns = nil
+	for i := 0; i < 12; i++ {
+		now := time.Now().UTC()
+		stub.recentRuns = append(stub.recentRuns, &model.DagRun{
+			RunID: fmt.Sprintf("etl__r%02d", i), DagID: "etl", LogicalDate: now,
+			State: model.RunSuccess, TriggerType: model.TriggerManual, StartedAt: &now, FinishedAt: &now,
+		})
+	}
+	answer := wiki.AskWithModeHistory(context.Background(), "Jakie masz runy w bazie?", "pl", ModeRunAnalysis, nil)
+	if stub.recentRunsCalls != 1 || stub.lastRecentLimit != 10 {
+		t.Fatalf("RecentRuns called %d times with limit %d; want once with limit 10", stub.recentRunsCalls, stub.lastRecentLimit)
+	}
+	if len(answer.Sources) != 10 || len(answer.Actions) != 10 {
+		t.Fatalf("expected 10 runtime sources and selection actions, got %d sources, %d actions", len(answer.Sources), len(answer.Actions))
+	}
+	if !strings.Contains(answer.Answer, "etl__r00") || !strings.Contains(answer.Answer, "etl__r09") || strings.Contains(answer.Answer, "etl__r10") {
+		t.Fatalf("recent-run response did not respect the 10-run limit: %s", answer.Answer)
+	}
+	for i, source := range answer.Sources {
+		if source.Type != "runtime" || source.Section != "Recent runs" || answer.Actions[i].Type != "inspect_run" || answer.Actions[i].RunID == "" {
+			t.Fatalf("run row %d lacks a runtime source or explicit selection action: source=%+v action=%+v", i, source, answer.Actions[i])
+		}
+	}
+	if stub.getRunCalls != 0 || strings.Contains(answer.Answer, "must not read logs") {
+		t.Fatalf("run listing unexpectedly fetched a run detail or log: %s", answer.Answer)
+	}
+}
+
+func TestRunAnalysisDoesNotFallBackToDocumentation(t *testing.T) {
+	wiki, stub := setupRuntimeWiki(t, "")
+	answer := wiki.AskWithModeHistory(context.Background(), "Jak ustawić retry dla taska?", "pl", ModeRunAnalysis, nil)
+	if len(answer.Sources) != 0 || stub.getRunCalls != 0 || stub.recentRunsCalls != 0 {
+		t.Fatalf("run analysis unexpectedly searched docs/runtime without a Run ID or list request: %+v", answer)
+	}
+	if !strings.Contains(answer.Answer, "podaj Run ID") {
+		t.Fatalf("run analysis did not explain how to continue: %s", answer.Answer)
+	}
+}
+
 func TestAskReadsRunStatusButDoesNotReadLogsByDefault(t *testing.T) {
 	wiki, _ := setupRuntimeWiki(t, "DO_NOT_INCLUDE_WITHOUT_LOG_REQUEST\n")
-	answer := wiki.Ask(context.Background(), "What is the status of run etl__r1?", "en")
+	answer := wiki.AskWithModeHistory(context.Background(), "What is the status of run etl__r1?", "en", ModeRunAnalysis, nil)
 	if !strings.Contains(answer.Answer, "failed") || !strings.Contains(answer.Answer, "extract") {
 		t.Fatalf("runtime status/task details missing: %s", answer.Answer)
 	}
@@ -246,7 +341,7 @@ func TestAskReadsRunStatusButDoesNotReadLogsByDefault(t *testing.T) {
 func TestAskReadsOnlyRequestedRedactedLogTail(t *testing.T) {
 	logText := "start\npassword=super-secret\napi-token=another-secret\nAuthorization: Bearer very.secret.token\nerror: disk unavailable\n"
 	wiki, _ := setupRuntimeWiki(t, logText)
-	answer := wiki.Ask(context.Background(), "Show logs for task extract in run etl__r1", "en")
+	answer := wiki.AskWithModeHistory(context.Background(), "Show logs for task extract in run etl__r1", "en", ModeRunAnalysis, nil)
 	if !strings.Contains(answer.Answer, "error: disk unavailable") {
 		t.Fatalf("requested log tail not included: %s", answer.Answer)
 	}
@@ -274,15 +369,15 @@ func TestRuntimeFallbackMarksTruncatedEvidence(t *testing.T) {
 
 func TestAskReportsUnknownRunID(t *testing.T) {
 	wiki, _ := setupRuntimeWiki(t, "")
-	answer := wiki.Ask(context.Background(), "Show status for run etl__missing", "en")
-	if !strings.Contains(answer.Answer, "Nie znalazłem runu `etl__missing`") {
+	answer := wiki.AskWithModeHistory(context.Background(), "Show status for run etl__missing", "en", ModeRunAnalysis, nil)
+	if !strings.Contains(answer.Answer, "Run `etl__missing` was not found") {
 		t.Fatalf("unexpected answer for unknown run: %s", answer.Answer)
 	}
 }
 
 func TestAskUsesRunIDFromHistoryForFollowUp(t *testing.T) {
 	wiki, _ := setupRuntimeWiki(t, "")
-	answer := wiki.AskWithHistory(context.Background(), "Dlaczego?", "pl", []Message{
+	answer := wiki.AskWithModeHistory(context.Background(), "Dlaczego?", "pl", ModeRunAnalysis, []Message{
 		{Role: "user", Content: "Sprawdź run etl__r1"},
 		{Role: "assistant", Content: "Run etl__r1 ma status failed."},
 	})
@@ -294,7 +389,7 @@ func TestAskUsesRunIDFromHistoryForFollowUp(t *testing.T) {
 func TestAskReadsLogsFromRunIDInPunctuatedRuntimeHistory(t *testing.T) {
 	wiki, _ := setupRuntimeWiki(t, "error: disk unavailable\n")
 	runID := "etl__r1"
-	answer := wiki.AskWithHistory(context.Background(), "Pokaż logi tego zadania", "pl", []Message{
+	answer := wiki.AskWithModeHistory(context.Background(), "Pokaż logi taska extract z tego runu", "pl", ModeRunAnalysis, []Message{
 		{Role: "user", Content: "Jaki jest stan runu " + runID + "?"},
 		{Role: "assistant", Content: "Cronova runtime data was shown for " + runID + "."},
 	})
@@ -321,7 +416,7 @@ func TestAskPassesRuntimeEvidenceToConfiguredProvider(t *testing.T) {
 	defer server.Close()
 	wiki, stub := setupRuntimeWiki(t, "LOG_CONTENT_MUST_NOT_BE_SENT_WITHOUT_REQUEST")
 	stub.providers = []*model.AIProvider{{ID: "test", Name: "test", BaseURL: server.URL, Model: "test-model", Default: true}}
-	answer := wiki.Ask(context.Background(), "Explain run etl__r1", "en")
+	answer := wiki.AskWithModeHistory(context.Background(), "Explain run etl__r1", "en", ModeRunAnalysis, nil)
 	if !strings.Contains(answer.Answer, "task extract") {
 		t.Fatalf("unexpected model answer: %s", answer.Answer)
 	}
@@ -348,7 +443,7 @@ func TestAskSendsOnlyRedactedLogExcerptToProvider(t *testing.T) {
 	defer server.Close()
 	wiki, stub := setupRuntimeWiki(t, "password=not-for-model\nerror: disk unavailable\n")
 	stub.providers = []*model.AIProvider{{ID: "test", Name: "test", BaseURL: server.URL, Model: "test-model", Default: true}}
-	_ = wiki.Ask(context.Background(), "Show logs for task extract in run etl__r1", "en")
+	_ = wiki.AskWithModeHistory(context.Background(), "Show logs for task extract in run etl__r1", "en", ModeRunAnalysis, nil)
 	if strings.Contains(received, "not-for-model") || !strings.Contains(received, "[REDACTED]") {
 		t.Fatalf("provider did not receive a redacted log excerpt: %s", received)
 	}

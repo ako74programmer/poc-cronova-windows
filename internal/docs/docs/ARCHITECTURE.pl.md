@@ -744,6 +744,15 @@ Kluczowe komunikaty:
 | `GET` | `/metrics` | metryki Prometheus |
 | `GET` | `/openapi.json` | specyfikacja OpenAPI |
 
+#### AI Chat: tryby i dane wejściowe
+
+`POST /api/ask` przyjmuje `question`, `lang`, opcjonalne `mode` oraz opcjonalną historię `history`. Dozwolone tryby to `documentation` i `run_analysis`; brak `mode` oznacza `documentation`, a nieznana wartość zwraca HTTP 400.
+
+- `documentation` przeszukuje wbudowaną bazę dokumentacji (BM25/RAG) i nie pobiera danych runtime runów.
+- `run_analysis` nie przeszukuje dokumentacji. Dla konkretnego Run ID pobiera status runu/tasków; dla jawnej prośby o listę odpytuje `Store.RecentRuns(ctx, 10)`. Lista obejmuje do 10 najnowszych runów aktywnych DAG-ów. Odpowiedź zawiera źródła `runs/<run_id>` i akcje wyboru runu.
+- Logi są odczytywane wyłącznie po rozpoznaniu wyraźnej prośby; do odpowiedzi/modelu trafiają maksymalnie trzy końcowe fragmenty, po maksymalnie 8 KiB każdy, po zastosowaniu redakcji typowych wzorców sekretów. Redakcja nie gwarantuje wykrycia wszystkich sekretów.
+- `history` jest ograniczana do ostatnich 8 wiadomości i służy do rozumienia pytań uzupełniających. UI utrzymuje odrębne historie dla trybów; rozmowy nie są trwale zapisywane.
+
 ### Moduły Web UI
 
 - Lista DAG z przełącznikiem pauzy, stanem ostatniego runu, następnym harmonogramem;

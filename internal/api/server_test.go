@@ -188,6 +188,27 @@ func TestAskAcceptsConversationHistory(t *testing.T) {
 	}
 }
 
+func TestAskHonorsExplicitRunAnalysisModeAndRejectsUnknownMode(t *testing.T) {
+	h, _, _, _ := setup(t)
+	body := `{"question":"Show status for run missing__r1","lang":"en","mode":"run_analysis"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/ask", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Run `missing__r1` was not found") {
+		t.Fatalf("run_analysis mode was not dispatched to runtime lookup: status=%d body=%s", rec.Code, rec.Body.String())
+	}
+
+	body = `{"question":"What is a DAG?","lang":"en","mode":"mystery"}`
+	req = httptest.NewRequest(http.MethodPost, "/api/ask", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("unknown chat mode status = %d, want %d; body=%s", rec.Code, http.StatusBadRequest, rec.Body.String())
+	}
+}
+
 func TestDagGraph(t *testing.T) {
 	h, st, _, _ := setup(t)
 	ctx := context.Background()

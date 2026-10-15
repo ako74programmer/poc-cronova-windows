@@ -8,7 +8,9 @@
 2. W menu po lewej stronie kliknij **AI Chat**.
 3. Zobaczysz wiadomość powitalną i pole, w którym można wpisać pytanie.
 
-## Krok 2: zadaj pytanie o dokumentację
+## Krok 2: wybierz tryb Dokumentacja i zadaj pytanie
+
+Nad oknem rozmowy znajdziesz listę **Tryb**. Wybierz **Dokumentacja**, gdy pytasz o funkcje Cronovy, DAG-i, taski, konfigurację lub instrukcje. Ten tryb przeszukuje dokumentację i nie odczytuje danych runów z bazy.
 
 Kliknij pole z podpowiedzią **„Zapytaj np. jak zrobić DAG…”** i wpisz:
 
@@ -60,9 +62,17 @@ Gdy klikniesz źródło będące dokumentem, możesz:
 
 Jeśli przeglądarka nie obsługuje czytania tekstu, przycisk może pokazać ostrzeżenie zamiast odczytać dokument.
 
-## Krok 5: zapytaj o konkretne uruchomienie DAG-a
+## Krok 5: wybierz tryb Analiza runów
 
-AI Chat może sprawdzić bieżące dane **konkretnego** uruchomienia (runu). Najpierw znajdź run w historii DAG-a i skopiuj jego **Run ID** z nagłówka strony szczegółów.
+Gdy chcesz sprawdzić wykonania w bazie, na liście **Tryb** wybierz **Analiza runów**. Możesz poprosić o listę najnowszych runów:
+
+```text
+Pokaż ostatnie runy
+```
+
+Cronova pokaże maksymalnie 10 najnowszych runów należących do aktywnych DAG-ów. Przy każdym runie pojawi się przycisk **Analizuj ten run**. Kliknij go, aby w czacie sprawdzić status i taski. Możesz też kliknąć źródło `runs/<run_id>`, aby otworzyć stronę szczegółów runu.
+
+Jeśli znasz identyfikator, możesz pominąć listę i wpisać **Run ID** ręcznie. Znajdziesz go w nagłówku szczegółów runu.
 
 W pytaniu podaj pełny identyfikator, na przykład:
 
@@ -70,7 +80,7 @@ W pytaniu podaj pełny identyfikator, na przykład:
 Jaki jest stan runu etl__r1 i które taski się nie powiodły?
 ```
 
-AI Chat pobiera wtedy stan runu, jego DAG, daty rozpoczęcia/zakończenia i stany tasków. Źródło `runs/<run_id>` możesz kliknąć, aby wrócić do strony tego runu. AI Chat nie wyszukuje w tym trybie „najnowszego runu” za Ciebie — potrzebuje dokładnego Run ID. Jeśli podasz kilka ID naraz, poprosi o jeden konkretny.
+AI Chat pobiera wtedy stan runu, jego DAG, daty rozpoczęcia/zakończenia i stany tasków. Jeśli pytasz o run po liście, użyj przycisku **Analizuj ten run** albo wpisz dokładny Run ID. Jeśli podasz kilka ID naraz, AI Chat poprosi o wybór jednego konkretnego.
 
 Możesz zadać pytanie uzupełniające w tej samej rozmowie, na przykład:
 
@@ -82,7 +92,7 @@ AI Chat użyje Run ID z poprzedniej wiadomości i pobierze aktualne dane ponowni
 
 ## Krok 6: poproś o logi tylko wtedy, gdy ich potrzebujesz
 
-Logi nie są pobierane przy zwykłym pytaniu o stan runu. Poproś o nie wprost, na przykład:
+Pozostań w trybie **Analiza runów**. Logi nie są pobierane przy zwykłym pytaniu o stan runu. Poproś o nie wprost, na przykład:
 
 ```text
 Pokaż logi taska extract z runu etl__r1.
@@ -107,13 +117,13 @@ Przycisk **Kopiuj komendę CLI** kopiuje tekst polecenia. Samo kopiowanie nie ur
 
 ## Skąd AI Chat bierze informacje?
 
-Przy pytaniu o funkcje Cronovy aplikacja przeszukuje wbudowaną bazę wiedzy, zbudowaną z wybranych dokumentów projektu, przykładowych DAG-ów i skryptów. Jeśli skonfigurowano **AI Provider**, może użyć go do ułożenia odpowiedzi na podstawie znalezionych fragmentów.
+W trybie **Dokumentacja** aplikacja przeszukuje wbudowaną bazę wiedzy, zbudowaną z wybranych dokumentów projektu, przykładowych DAG-ów i skryptów. Jeśli skonfigurowano **AI Provider**, może użyć go do ułożenia odpowiedzi na podstawie znalezionych fragmentów. Ten tryb nie odczytuje danych runtime.
 
-Przy pytaniu z konkretnym Run ID aplikacja pobiera stan tego runu i jego tasków bezpośrednio z bazy Cronovy. Logi odczytuje dopiero wtedy, gdy poprosisz o nie wprost. AI Chat nie musi znać każdego DAG-a utworzonego przez Ciebie ani każdej zmiany w Twoim projekcie. Traktuj ją jak pomoc w odnajdywaniu informacji, a nie jak kogoś, kto na pewno widział wszystko, co znajduje się na Twoim komputerze.
+W trybie **Analiza runów** aplikacja może pokazać maksymalnie 10 najnowszych runów aktywnych DAG-ów albo pobrać stan konkretnego runu i jego tasków bezpośrednio z bazy Cronovy. Logi odczytuje dopiero wtedy, gdy poprosisz o nie wprost. AI Chat nie musi znać każdego DAG-a utworzonego przez Ciebie ani każdej zmiany w Twoim projekcie. Traktuj ją jak pomoc w odnajdywaniu informacji, a nie jak kogoś, kto na pewno widział wszystko, co znajduje się na Twoim komputerze.
 
 ## Czy AI Provider jest potrzebny?
 
-**AI Chat może działać również bez skonfigurowanego AI Provider.** Wtedy Cronova nadal przeszukuje bazę wiedzy, a pytanie o konkretny run pokaże dostępne dane runtime bez modelu. Odpowiedź może być prostsza.
+**AI Chat może działać również bez skonfigurowanego AI Provider.** W trybie Dokumentacja Cronova nadal przeszukuje bazę wiedzy. W trybie Analiza runów może wyświetlić znalezioną listę, status i taski bez modelu. Odpowiedź może być prostsza.
 
 Po skonfigurowaniu providera odpowiedzi mogą być układane przez model. To jednak nie gwarantuje, że model będzie dostępny ani że zawsze odpowie poprawnie. Przed ważną zmianą sprawdź podane źródło lub dokumentację.
 
@@ -124,15 +134,15 @@ Spróbuj kolejno:
 1. Zadaj krótsze i bardziej konkretne pytanie.
 2. Dodaj nazwę funkcji, o którą pytasz, na przykład `DAG`, `task`, `retry` albo `harmonogram`.
 3. Otwórz podane źródło i sprawdź, czy dotyczy Twojego pytania.
-4. Jeśli pytasz o live run, sprawdź, czy skopiowałeś dokładny Run ID, np. `etl__r1`, a nie nazwę DAG-a.
+4. Jeśli pytasz o dane runtime, wybierz tryb **Analiza runów**; możesz najpierw poprosić o listę albo wkleić dokładny Run ID, np. `etl__r1`.
 5. Jeśli AI Chat odpowie, że runu nie znaleziono, sprawdź identyfikator i upewnij się, że run nie został już usunięty przez retencję.
 6. Jeśli ekran pokaże **Błąd połączenia z AI Chat**, sprawdź, czy jesteś zalogowany i czy konsola Cronova działa. Jeśli problem powtarza się po skonfigurowaniu providera, administrator powinien sprawdzić jego endpoint, model, token i dostępność usługi.
 7. Jeśli generowanie odpowiedzi przez AI się nie powiedzie, sprawdź wyświetlone dane/źródło runtime; sama awaria modelu nie oznacza, że odczyt stanu runu się nie udał.
 
 ## Czy rozmowa zostaje zapisana?
 
-Na ekranie AI Chat nie ma funkcji trwałego zapisywania ani przeglądania historii rozmów. W tej samej otwartej stronie AI Chat może użyć ostatnich wiadomości, aby zrozumieć pytanie uzupełniające, na przykład „A dlaczego?”. Rozmowa nie jest przechowywana na stałe. Jeśli odpowiedź jest ważna, skopiuj ją samodzielnie.
+Na ekranie AI Chat nie ma funkcji trwałego zapisywania ani przeglądania historii rozmów. W tej samej otwartej stronie AI Chat zachowuje oddzielny, tymczasowy kontekst dla każdego trybu, aby pytania z Dokumentacji nie mieszały się z Analizą runów. Historia nie jest przechowywana na stałe. Jeśli odpowiedź jest ważna, skopiuj ją samodzielnie.
 
 ## Gotowe
 
-Potrafisz już zadać pytanie w AI Chat, sprawdzić źródło, odczytać stan wskazanego runu i poprosić o ograniczone fragmenty jego logów — wiedząc, że logi mogą zostać wysłane do skonfigurowanego AI Provider.
+Potrafisz już wybrać tryb AI Chat, znaleźć dokumentację, wyświetlić najnowsze runy, przeanalizować konkretny run i poprosić o ograniczone fragmenty jego logów — wiedząc, że dane runtime i żądane logi mogą zostać wysłane do skonfigurowanego AI Provider.

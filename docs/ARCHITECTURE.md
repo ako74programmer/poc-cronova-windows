@@ -744,6 +744,15 @@ Key messages:
 | `GET` | `/metrics` | Prometheus metrics |
 | `GET` | `/openapi.json` | OpenAPI spec |
 
+#### AI Chat modes and request data
+
+`POST /api/ask` accepts `question`, `lang`, optional `mode`, and optional `history`. Supported modes are `documentation` and `run_analysis`; an omitted `mode` defaults to `documentation`, while an unknown value returns HTTP 400.
+
+- `documentation` searches the embedded documentation knowledge base (BM25/RAG) and does not fetch live run data.
+- `run_analysis` does not search documentation. For a specific Run ID it reads run/task state; for an explicit list request it calls `Store.RecentRuns(ctx, 10)`. The list contains up to 10 most recent runs belonging to active DAGs. Responses include `runs/<run_id>` sources and explicit run-selection actions.
+- Logs are read only when an explicit log request is recognized. At most three tail excerpts, up to 8 KiB each, are included after redaction of common secret patterns. Redaction cannot guarantee detection of every secret.
+- `history` is bounded to the last 8 messages and is used to resolve follow-up questions. The UI keeps separate histories for each mode; conversations are not persisted.
+
 ### Web UI modules
 
 - DAG list with pause toggle, last run status, next schedule;

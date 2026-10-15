@@ -59,6 +59,14 @@ type Message struct {
 	Content string `json:"content"`
 }
 
+// ChatMode selects which evidence domain the chat is allowed to query.
+type ChatMode string
+
+const (
+	ModeDocumentation ChatMode = "documentation"
+	ModeRunAnalysis   ChatMode = "run_analysis"
+)
+
 // Source points to a document, DAG, or script.
 type Source struct {
 	Type    string `json:"type"`
@@ -71,6 +79,7 @@ type Action struct {
 	Type    string `json:"type"`
 	Label   string `json:"label"`
 	DagID   string `json:"dag_id,omitempty"`
+	RunID   string `json:"run_id,omitempty"`
 	Path    string `json:"path,omitempty"`
 	Command string `json:"command,omitempty"`
 }
@@ -103,21 +112,22 @@ func (w *Wiki) Ask(ctx context.Context, question, lang string) Answer {
 // conversation context. History resolves follow-up references but is not treated
 // as factual evidence in place of retrieved sources.
 func (w *Wiki) AskWithHistory(ctx context.Context, question, lang string, history []Message) Answer {
+	return w.AskWithModeHistory(ctx, question, lang, ModeDocumentation, history)
+}
+
+// AskWithModeHistory answers using only the evidence domain selected by mode.
+// An empty or unknown mode fails closed to documentation mode.
+func (w *Wiki) AskWithModeHistory(ctx context.Context, question, lang string, mode ChatMode, history []Message) Answer {
 	w.refreshLLM(ctx)
 	history = boundedHistory(history)
-	runID, ambiguous := requestedRunID(question, history)
-	if ambiguous {
-		return Answer{Answer: "W pytaniu znalazłem więcej niż jeden run_id. Podaj jeden konkretny identyfikator runu, który mam sprawdzić."}
+	if mode == ModeRunAnalysis {
+		return w.askRunAnalysis(ctx, question, lang, history)
 	}
-	if runID != "" {
-		chunks, err := w.runtimeContext(ctx, runID, logRequestPattern.MatchString(question), question)
-		if err != nil {
-			if errors.Is(err, store.ErrNotFound) {
-				return Answer{Answer: fmt.Sprintf("Nie znalazłem runu `%s` w bazie Cronovy.", runID)}
-			}
-			return Answer{Answer: fmt.Sprintf("Nie udało się odczytać danych runu `%s` z Cronovy.", runID)}
+	if isRuntimeRequest(question, history) {
+		if isPolishLanguage(lang) {
+			return Answer{Answer: "To pytanie dotyczy danych runtime. Przełącz **Tryb** na **Analiza runów**, aby wyświetlić listę runów lub sprawdzić konkretny Run ID."}
 		}
-		return w.answerRuntime(ctx, question, history, chunks)
+		return Answer{Answer: "This question is about live runtime data. Switch **Mode** to **Run analysis** to list runs or inspect a specific Run ID."}
 	}
 	queries := []string{question}
 	if w.llm != nil {
@@ -163,6 +173,124 @@ func (w *Wiki) AskWithHistory(ctx context.Context, question, lang string, histor
 		sources = append(sources, Source{Type: h.chunk.Type, Path: h.chunk.Source, Section: h.chunk.Section})
 	}
 	return Answer{Answer: answer, Sources: sources, Actions: suggestActions(hits[0].chunk, lang)}
+}
+
+func (w *Wiki) askRunAnalysis(ctx context.Context, question, lang string, history []Message) Answer {
+	runID, ambiguous := requestedRunID(question, history)
+	if ambiguous {
+		if isPolishLanguage(lang) {
+			return Answer{Answer: "W pytaniu lub historii jest więcej niż jeden Run ID. Wybierz jeden konkretny run albo poproś o listę najnowszych runów."}
+		}
+		return Answer{Answer: "The question or conversation contains more than one Run ID. Select one run, or ask for the latest-runs list."}
+	}
+	if runID != "" {
+		chunks, err := w.runtimeContext(ctx, runID, logRequestPattern.MatchString(question), question)
+		if err != nil {
+			if errors.Is(err, store.ErrNotFound) {
+				if isPolishLanguage(lang) {
+					return Answer{Answer: fmt.Sprintf("Nie znalazłem runu `%s` w bazie Cronovy.", runID)}
+				}
+				return Answer{Answer: fmt.Sprintf("Run `%s` was not found in the Cronova database.", runID)}
+			}
+			if isPolishLanguage(lang) {
+				return Answer{Answer: fmt.Sprintf("Nie udało się odczytać danych runu `%s` z Cronovy.", runID)}
+			}
+			return Answer{Answer: fmt.Sprintf("Could not read run `%s` from Cronova.", runID)}
+		}
+		return w.answerRuntimeForLang(ctx, question, history, chunks, lang)
+	}
+	if isRunListRequest(question) {
+		chunks, actions, err := w.recentRunsContext(ctx, 10, lang)
+		if err != nil {
+			if isPolishLanguage(lang) {
+				return Answer{Answer: "Nie udało się pobrać listy runów z bazy Cronovy."}
+			}
+			return Answer{Answer: "Could not retrieve recent runs from the Cronova database."}
+		}
+		if len(chunks) == 0 {
+			if isPolishLanguage(lang) {
+				return Answer{Answer: "Nie znaleziono runów dla aktywnych DAG-ów."}
+			}
+			return Answer{Answer: "No runs were found for active DAGs."}
+		}
+		answer := w.answerRuntimeForLang(ctx, question, history, chunks, lang)
+		answer.Actions = actions
+		return answer
+	}
+	if isPolishLanguage(lang) {
+		return Answer{Answer: "W trybie Analiza runów podaj Run ID albo poproś o listę najnowszych runów. Na przykład: „Pokaż ostatnie runy”."}
+	}
+	return Answer{Answer: "In Run analysis mode, provide a Run ID or ask for the latest-runs list, e.g. “Show recent runs”."}
+}
+
+func (w *Wiki) recentRunsContext(ctx context.Context, limit int, lang string) ([]Chunk, []Action, error) {
+	if w.store == nil {
+		return nil, nil, fmt.Errorf("runtime store is unavailable")
+	}
+	runs, err := w.store.RecentRuns(ctx, limit)
+	if err != nil {
+		return nil, nil, err
+	}
+	chunks := make([]Chunk, 0, len(runs))
+	actions := make([]Action, 0, len(runs))
+	for i, run := range runs {
+		if i >= limit {
+			break
+		}
+		if run == nil || run.RunID == "" {
+			continue
+		}
+		var details strings.Builder
+		fmt.Fprintf(&details, "Run ID: %s\nDAG ID: %s\nState: %s\nTrigger: %s\nLogical date (UTC): %s\nStarted at: %s\nFinished at: %s\n",
+			run.RunID, run.DagID, run.State, run.TriggerType, run.LogicalDate.UTC().Format(time.RFC3339), formatRuntimeTime(run.StartedAt), formatRuntimeTime(run.FinishedAt))
+		chunks = append(chunks, Chunk{ID: "runtime-recent-" + run.RunID, Type: "runtime", Source: "runs/" + run.RunID, Section: "Recent runs", Text: details.String()})
+		label := "Inspect this run"
+		if isPolishLanguage(lang) {
+			label = "Analizuj ten run"
+		}
+		actions = append(actions, Action{Type: "inspect_run", Label: label, RunID: run.RunID})
+	}
+	return chunks, actions, nil
+}
+
+func isRunListRequest(question string) bool {
+	directListWords := map[string]bool{
+		"pokaż": true, "pokaz": true, "wyświetl": true, "wyswietl": true,
+		"wymień": true, "wymien": true, "lista": true, "list": true,
+		"show": true, "display": true, "recent": true, "latest": true,
+		"ostatnie": true, "najnowsze": true,
+	}
+	questionWords := map[string]bool{"jakie": true, "jakich": true, "what": true, "which": true}
+	availabilityWords := map[string]bool{
+		"masz": true, "macie": true, "have": true, "available": true,
+		"dostępne": true, "dostepne": true, "baza": true, "bazie": true,
+		"database": true, "databases": true, "ostatnie": true, "najnowsze": true,
+		"recent": true, "latest": true, "all": true,
+	}
+	pluralRunWords := map[string]bool{
+		"runy": true, "runów": true, "runow": true, "runs": true, "executions": true,
+		"uruchomienia": true, "uruchomień": true, "uruchomien": true,
+		"wykonania": true, "wykonań": true, "wykonan": true,
+	}
+	hasDirectListWord, hasQuestionWord, hasAvailabilityWord, hasPluralRun := false, false, false, false
+	for _, token := range strings.FieldsFunc(strings.ToLower(question), func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	}) {
+		hasDirectListWord = hasDirectListWord || directListWords[token]
+		hasQuestionWord = hasQuestionWord || questionWords[token]
+		hasAvailabilityWord = hasAvailabilityWord || availabilityWords[token]
+		hasPluralRun = hasPluralRun || pluralRunWords[token]
+	}
+	return hasPluralRun && (hasDirectListWord || (hasQuestionWord && hasAvailabilityWord))
+}
+
+func isRuntimeRequest(question string, history []Message) bool {
+	runID, ambiguous := requestedRunID(question, history)
+	return runID != "" || ambiguous || isRunListRequest(question)
+}
+
+func isPolishLanguage(lang string) bool {
+	return strings.HasPrefix(strings.ToLower(strings.TrimSpace(lang)), "pl")
 }
 
 func (w *Wiki) searchQueries(queries []string, topN int) []scoredChunk {
@@ -280,6 +408,10 @@ func sourceExcerptAnswer(c Chunk, generationFailed bool, question string) string
 }
 
 func (w *Wiki) answerRuntime(ctx context.Context, question string, history []Message, chunks []Chunk) Answer {
+	return w.answerRuntimeForLang(ctx, question, history, chunks, "pl")
+}
+
+func (w *Wiki) answerRuntimeForLang(ctx context.Context, question string, history []Message, chunks []Chunk, lang string) Answer {
 	answer := ""
 	generationFailed := false
 	if w.llm != nil {
@@ -292,15 +424,27 @@ func (w *Wiki) answerRuntime(ctx context.Context, question string, history []Mes
 	}
 	if answer == "" {
 		var text strings.Builder
-		if generationFailed {
-			text.WriteString("AI nie wygenerowało odpowiedzi. Oto dane runtime znalezione w Cronovie:\n")
+		if isPolishLanguage(lang) {
+			if generationFailed {
+				text.WriteString("AI nie wygenerowało odpowiedzi. Oto dane runtime znalezione w Cronovie:\n")
+			} else {
+				text.WriteString("Dane runtime znalezione w Cronovie:\n")
+			}
 		} else {
-			text.WriteString("Dane runtime znalezione w Cronovie:\n")
+			if generationFailed {
+				text.WriteString("AI could not generate an answer. Here is the runtime data found in Cronova:\n")
+			} else {
+				text.WriteString("Runtime data found in Cronova:\n")
+			}
 		}
 		remaining := 12000
 		for i, chunk := range chunks {
 			if remaining <= 0 {
-				text.WriteString("\n[Dalsze dane pominięto, aby ograniczyć rozmiar odpowiedzi.]\n")
+				if isPolishLanguage(lang) {
+					text.WriteString("\n[Dalsze dane pominięto, aby ograniczyć rozmiar odpowiedzi.]\n")
+				} else {
+					text.WriteString("\n[Additional data omitted to limit the response size.]\n")
+				}
 				break
 			}
 			contentRunes := []rune(chunk.Text)
@@ -310,12 +454,20 @@ func (w *Wiki) answerRuntime(ctx context.Context, question string, history []Mes
 			}
 			content := string(contentRunes)
 			if truncated {
-				content += "\n[Fragment ucięto ze względu na limit rozmiaru odpowiedzi.]"
+				if isPolishLanguage(lang) {
+					content += "\n[Fragment ucięto ze względu na limit rozmiaru odpowiedzi.]"
+				} else {
+					content += "\n[Excerpt truncated to limit response size.]"
+				}
 			}
 			fmt.Fprintf(&text, "\n%s:\n%s\n", chunk.Section, content)
 			remaining -= len(contentRunes)
 			if remaining <= 0 && i < len(chunks)-1 {
-				text.WriteString("\n[Dalsze dane pominięto, aby ograniczyć rozmiar odpowiedzi.]\n")
+				if isPolishLanguage(lang) {
+					text.WriteString("\n[Dalsze dane pominięto, aby ograniczyć rozmiar odpowiedzi.]\n")
+				} else {
+					text.WriteString("\n[Additional data omitted to limit the response size.]\n")
+				}
 				break
 			}
 		}

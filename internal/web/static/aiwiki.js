@@ -6,18 +6,35 @@
   let inputEl = null;
   let sendBtn = null;
   let micBtn = null;
+  let modeEl = null;
   let recognition = null;
   let voiceListening = false;
-  let transcript = [];
-  let conversationHistory = [];
+  let activeMode = 'documentation';
+  const conversations = {
+    documentation: { transcript: [], history: [] },
+    run_analysis: { transcript: [], history: [] },
+  };
+
+  function currentConversation() {
+    return conversations[activeMode] || conversations.documentation;
+  }
 
   function buildUI() {
     resetVoiceRecognition();
+    const conversation = currentConversation();
+    const modeSub = activeMode === 'run_analysis' ? 'aiwiki_runs_sub' : 'aiwiki_sub';
+    const placeholder = activeMode === 'run_analysis' ? 'aiwiki_runs_placeholder' : 'aiwiki_placeholder';
     main.innerHTML = `<div class="aiwiki-page">
-      <div class="aiwiki-page-head"><h1>${esc(t('aiwiki_title'))}</h1><p>${esc(t('aiwiki_sub'))}</p></div>
+      <div class="aiwiki-page-head"><h1>${esc(t('aiwiki_title'))}</h1><p>${esc(t(modeSub))}</p></div>
+      <div class="aiwiki-mode-row"><label for="aiwiki-mode">${esc(t('aiwiki_mode_label'))}</label>
+        <select id="aiwiki-mode" aria-label="${esc(t('aiwiki_mode_label'))}">
+          <option value="documentation">${esc(t('aiwiki_mode_docs'))}</option>
+          <option value="run_analysis">${esc(t('aiwiki_mode_runs'))}</option>
+        </select>
+      </div>
       <div class="aiwiki-msgs" id="aiwiki-msgs"></div>
       <div class="aiwiki-input">
-        <input id="aiwiki-q" type="text" placeholder="${esc(t('aiwiki_placeholder'))}" autocomplete="off" />
+        <input id="aiwiki-q" type="text" placeholder="${esc(t(placeholder))}" autocomplete="off" />
         <button id="aiwiki-mic" class="icon aiwiki-mic" type="button" aria-label="${esc(t('aiwiki_voice_start'))}" title="${esc(t('aiwiki_voice_start'))}">🎙</button>
         <button id="aiwiki-send" class="primary">${esc(t('aiwiki_send'))}</button>
       </div>
@@ -26,12 +43,22 @@
     inputEl = $('aiwiki-q');
     sendBtn = $('aiwiki-send');
     micBtn = $('aiwiki-mic');
+    modeEl = $('aiwiki-mode');
+    modeEl.value = activeMode;
+    modeEl.disabled = busy;
+    modeEl.onchange = () => {
+      if (busy) return;
+      activeMode = modeEl.value === 'run_analysis' ? 'run_analysis' : 'documentation';
+      buildUI();
+    };
+    sendBtn.disabled = busy;
     sendBtn.onclick = ask;
     setupVoiceInput();
     inputEl.onkeydown = e => { if (e.key === 'Enter') ask(); };
     inputEl.focus();
-    if (!transcript.length) addMsg(t('aiwiki_welcome'), 'bot');
-    else transcript.forEach(renderMessage);
+    if (!conversation.transcript.length) {
+      addMsg(t(activeMode === 'run_analysis' ? 'aiwiki_runs_welcome' : 'aiwiki_welcome'), 'bot');
+    } else conversation.transcript.forEach(renderMessage);
   }
 
   window.showAIWiki = function () {
@@ -142,16 +169,15 @@
   }
   window.renderAIWiki = buildUI;
 
-  function addMsg(text, who, extras) {
-    if (!msgsEl) return;
+  function addMsg(text, who, extras, conversation = currentConversation()) {
     const item = {
       text,
       who,
       sources: extras && Array.isArray(extras.sources) ? extras.sources : [],
       actions: extras && Array.isArray(extras.actions) ? extras.actions : [],
     };
-    transcript.push(item);
-    renderMessage(item);
+    conversation.transcript.push(item);
+    if (msgsEl && conversation === currentConversation() && view === 'aiwiki') renderMessage(item);
   }
 
   function renderMessage(item) {
@@ -306,6 +332,7 @@
       const btn = document.createElement('button');
       btn.dataset.actionType = a.type;
       if (a.dag_id) btn.dataset.dagId = a.dag_id;
+      if (a.run_id) btn.dataset.runId = a.run_id;
       if (a.path) btn.dataset.path = a.path;
       if (a.command) btn.dataset.command = a.command;
       btn.textContent = actionLabel(a);
@@ -349,6 +376,12 @@
             .catch(e => window.toast && window.toast('Error: ' + e.message, 'error'));
         }
         break;
+      case 'inspect_run':
+        if (a.run_id && inputEl && activeMode === 'run_analysis') {
+          inputEl.value = t('aiwiki_inspect_run_prompt') + a.run_id;
+          ask();
+        }
+        break;
       case 'open_editor':
         if (a.path && a.path.startsWith('dags/')) {
           const dagId = a.path.replace('dags/', '').replace('.yaml', '');
@@ -378,9 +411,12 @@
     if (!inputEl || !sendBtn) return;
     const q = inputEl.value.trim();
     if (!q || busy) return;
+    const mode = activeMode;
+    const conversation = currentConversation();
     busy = true;
     sendBtn.disabled = true;
-    addMsg(q, 'user');
+    if (modeEl) modeEl.disabled = true;
+    addMsg(q, 'user', null, conversation);
     inputEl.value = '';
 
     try {
@@ -390,25 +426,31 @@
         body: JSON.stringify({
           question: q,
           lang: (typeof lang !== 'undefined' ? lang : 'en'),
-          history: conversationHistory.slice(-8),
+          mode,
+          history: conversation.history.slice(-8),
         }),
       });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const data = await resp.json();
       const answer = data.answer || t('aiwiki_fallback');
-      addMsg(answer, 'bot', { sources: data.sources, actions: data.actions });
-      const runtimeSource = (data.sources || []).find(s => s.type === 'runtime' || s.type === 'runtime_log');
-      const historyAnswer = runtimeSource
+      const sources = data.sources || [];
+      addMsg(answer, 'bot', { sources, actions: data.actions }, conversation);
+      const runtimeSource = sources.find(s => s.type === 'runtime' || s.type === 'runtime_log');
+      const isRecentRunsList = mode === 'run_analysis' && sources.some(s => s.section === 'Recent runs');
+      const historyAnswer = isRecentRunsList
+        ? 'Cronova returned a list of recent runs. Select one specific Run ID for follow-up.'
+        : runtimeSource
         ? 'Cronova runtime data was shown for ' + runtimeSource.path.replace(/^runs\//, '') + '.'
         : answer;
-      conversationHistory.push({ role: 'user', content: q }, { role: 'assistant', content: historyAnswer });
-      if (conversationHistory.length > 8) conversationHistory = conversationHistory.slice(-8);
+      conversation.history.push({ role: 'user', content: q }, { role: 'assistant', content: historyAnswer });
+      if (conversation.history.length > 8) conversation.history = conversation.history.slice(-8);
     } catch (e) {
-      addMsg(t('aiwiki_error') + e.message, 'bot');
+      addMsg(t('aiwiki_error') + e.message, 'bot', null, conversation);
     } finally {
       busy = false;
-      sendBtn.disabled = false;
-      inputEl.focus();
+      if (sendBtn) sendBtn.disabled = false;
+      if (modeEl) modeEl.disabled = false;
+      if (inputEl && view === 'aiwiki') inputEl.focus();
     }
   }
 

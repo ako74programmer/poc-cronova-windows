@@ -236,6 +236,7 @@ func (s *Server) askWiki(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Question string           `json:"question"`
 		Lang     string           `json:"lang"`
+		Mode     aiwiki.ChatMode  `json:"mode"`
 		History  []aiwiki.Message `json:"history"`
 	}
 	if err := decodeJSON(r, &req); err != nil {
@@ -246,7 +247,15 @@ func (s *Server) askWiki(w http.ResponseWriter, r *http.Request) {
 		httpErr(w, http.StatusBadRequest, "question is required")
 		return
 	}
-	answer := s.wiki.AskWithHistory(r.Context(), req.Question, req.Lang, req.History)
+	if req.Mode != "" && req.Mode != aiwiki.ModeDocumentation && req.Mode != aiwiki.ModeRunAnalysis {
+		httpErr(w, http.StatusBadRequest, "invalid chat mode")
+		return
+	}
+	mode := req.Mode
+	if mode == "" {
+		mode = aiwiki.ModeDocumentation
+	}
+	answer := s.wiki.AskWithModeHistory(r.Context(), req.Question, req.Lang, mode, req.History)
 	writeJSON(w, http.StatusOK, answer)
 }
 
