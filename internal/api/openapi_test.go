@@ -74,11 +74,20 @@ func TestSamplesReflectMethodAndAuth(t *testing.T) {
 	}
 	// Authenticated POST with a body.
 	curl := sampleCurl(trigger)
-	if !strings.Contains(curl, "-X POST") || !strings.Contains(curl, "Authorization: Bearer") {
+	if !strings.Contains(curl, "curl.exe -X POST") || !strings.Contains(curl, "Authorization: Bearer "+sampleTokenPlaceholder) {
 		t.Errorf("trigger curl missing method/auth:\n%s", curl)
 	}
 	if !strings.Contains(curl, "etl_daily/trigger") {
 		t.Errorf("trigger curl missing filled path:\n%s", curl)
+	}
+	if strings.Contains(curl, "$CRONOVA_TOKEN") || strings.Contains(curl, " \\\n") {
+		t.Errorf("trigger curl contains bash-only syntax:\n%s", curl)
+	}
+	if strings.Contains(curl, "\n") {
+		t.Errorf("trigger curl should be a single copy/pasteable Windows command:\n%s", curl)
+	}
+	if !strings.Contains(curl, "-d '{\"params\":{\"date\":\"2026-07-05\",\"region\":\"us\"},\"priority\":10}'") {
+		t.Errorf("trigger curl body is not PowerShell-compatible compact JSON:\n%s", curl)
 	}
 	py := samplePython(trigger)
 	if !strings.Contains(py, "requests.post(") || !strings.Contains(py, "data=payload") {
@@ -90,6 +99,9 @@ func TestSamplesReflectMethodAndAuth(t *testing.T) {
 	}
 	// Unauthenticated GET: no auth header, simplest curl form.
 	hc := sampleCurl(health)
+	if !strings.HasPrefix(hc, "curl.exe ") {
+		t.Errorf("healthz curl must invoke Windows curl.exe:\n%s", hc)
+	}
 	if strings.Contains(hc, "Authorization") {
 		t.Errorf("healthz curl should not include auth:\n%s", hc)
 	}

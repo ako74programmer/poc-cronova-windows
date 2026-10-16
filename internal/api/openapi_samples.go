@@ -1,13 +1,14 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/url"
 	"strings"
 )
 
-// This file generates the per-endpoint x-codeSamples (curl / Go / Python / Java)
+// This file generates the per-endpoint x-codeSamples (cURL / Go / Python / Java)
 // from the same catalog that builds the OpenAPI paths, so the in-page language
 // switcher always matches the real routes.
 
@@ -78,19 +79,31 @@ func sampleCurl(ep apiEndpoint) string {
 	u := sampleURL(ep)
 	body, hasBody := sampleBody(ep)
 	var lines []string
-	first := "curl -X " + ep.Method + " \"" + u + "\""
+	// Cronova is a Windows application. Use curl.exe explicitly because
+	// `curl` is an alias for Invoke-WebRequest in Windows PowerShell. Keep the
+	// sample on one line: bash's `\` continuation is not valid PowerShell.
+	first := "curl.exe -X " + ep.Method + " \"" + u + "\""
 	if ep.Method == http.MethodGet && !hasBody && ep.NoAuth {
-		return "curl \"" + u + "\""
+		return "curl.exe \"" + u + "\""
 	}
 	lines = append(lines, first)
 	if !ep.NoAuth {
-		lines = append(lines, "-H \"Authorization: Bearer $CRONOVA_TOKEN\"")
+		lines = append(lines, "-H \"Authorization: Bearer "+sampleTokenPlaceholder+"\"")
 	}
 	if hasBody {
 		lines = append(lines, "-H \"Content-Type: "+sampleContentType(ep)+"\"")
+		// Single quotes are understood by PowerShell and keep JSON double quotes
+		// intact. Compact JSON also makes the generated command copy/pasteable.
+		if ep.RequestType != "yaml" {
+			var compact bytes.Buffer
+			if err := json.Compact(&compact, []byte(body)); err == nil {
+				body = compact.String()
+			}
+		}
+		body = strings.ReplaceAll(body, "'", "''")
 		lines = append(lines, "-d '"+body+"'")
 	}
-	return strings.Join(lines, " \\\n  ")
+	return strings.Join(lines, " ")
 }
 
 func sampleGo(ep apiEndpoint) string {
