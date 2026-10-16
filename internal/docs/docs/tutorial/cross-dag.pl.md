@@ -91,7 +91,7 @@ W kolumnie `TRIGGER` widnieje `dependency`, a `LOGICAL_DATE` dokładnie pasuje d
 
 ## Zobacz to na grafie DAG-ów
 
-Otwórz konsolę na **http://localhost:8090** i kliknij **Graph** w nawigacji. Widok **DAG Graph** rysuje zależności triggerów między DAG-ami — zobaczysz krawędź od `upstream_ingest` do `downstream_report`. Gdy twój scheduler workflow rozrośnie się do dziesiątek DAG-ów, ten graf pozwoli ci błyskawicznie odpowiedzieć na pytanie „co uruchamia co?”.
+Otwórz konsolę na **http://localhost:8090** i kliknij **Graf zależności** w nawigacji. Widok rysuje wyłącznie zależności `trigger_after` między całymi DAG-ami — zobaczysz krawędź od `upstream_ingest` do `downstream_report`. Niezależne DAG-i nie są pokazywane, ponieważ ten widok jest mapą powiązań, a nie drugą listą wszystkich przepływów. Gdy scheduler workflow rozrośnie się do dziesiątek DAG-ów, graf pozwoli ci błyskawicznie odpowiedzieć na pytanie „co uruchamia co?”. Graf zadań na stronie pojedynczego przepływu pokazuje osobno zależności wewnątrz tego jednego DAG-a.
 
 ## Powiadomienia webhook za pomocą `notify`
 

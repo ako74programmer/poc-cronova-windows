@@ -212,9 +212,14 @@ func TestAskHonorsExplicitRunAnalysisModeAndRejectsUnknownMode(t *testing.T) {
 func TestDagGraph(t *testing.T) {
 	h, st, _, _ := setup(t)
 	ctx := context.Background()
-	// `report` triggers after `etl` (exists) and `ghost` (missing).
+	// `report` triggers after `etl` (exists) and `ghost` (missing). An unrelated
+	// DAG must not appear because this endpoint is a dependency graph, not the
+	// complete DAG catalog.
 	yaml := "dag_id: report\ntasks:\n  - id: build\n    command: \"echo x\"\ntrigger_after:\n  - dag_id: etl\n  - dag_id: ghost\n"
 	if err := st.UpsertDAG(ctx, &model.DAG{DagID: "report", DefinitionYAML: yaml, MaxActiveRuns: 1, StartDate: time.Now().UTC()}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.UpsertDAG(ctx, &model.DAG{DagID: "independent", DefinitionYAML: "dag_id: independent\ntasks:\n  - id: task\n    command: \"echo independent\"\n", MaxActiveRuns: 1, StartDate: time.Now().UTC()}); err != nil {
 		t.Fatal(err)
 	}
 	rec, body := get(t, h, "GET", "/api/dag-graph")
@@ -238,6 +243,9 @@ func TestDagGraph(t *testing.T) {
 	}
 	if byID["ghost"] == nil || byID["ghost"]["missing"] != true {
 		t.Errorf("ghost node = %v, want missing=true", byID["ghost"])
+	}
+	if _, ok := byID["independent"]; ok {
+		t.Error("independent DAG unexpectedly included in dependency graph")
 	}
 	// edges: etl->report and ghost->report.
 	want := map[string]bool{"etl->report": false, "ghost->report": false}

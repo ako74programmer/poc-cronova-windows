@@ -498,9 +498,11 @@ func (s *Server) listDAGs(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, dags)
 }
 
-// dagGraph returns the cross-DAG dependency graph: one node per DAG plus an edge
-// from each upstream DAG to every DAG that declares trigger_after on it. Edges to
-// unknown DAGs are surfaced as nodes flagged `missing` so dangling refs are visible.
+// dagGraph returns the cross-DAG dependency graph: one node per DAG participating
+// in a trigger_after edge plus an edge from each upstream DAG to every DAG that
+// declares trigger_after on it. Independent DAGs are intentionally omitted because
+// this view explains relationships, not the complete DAG catalog. Edges to unknown
+// DAGs are surfaced as nodes flagged `missing` so dangling refs remain visible.
 func (s *Server) dagGraph(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	dags, err := s.store.ListDAGs(ctx)
@@ -526,6 +528,9 @@ func (s *Server) dagGraph(w http.ResponseWriter, r *http.Request) {
 	nodes := make([]node, 0, len(dags))
 	edges := make([]edge, 0)
 	seenMissing := map[string]bool{}
+	missingOrder := make([]string, 0)
+	knownNodes := make(map[string]node, len(dags))
+	linked := make(map[string]bool)
 	for _, d := range dags {
 		typ := "manual"
 		var upstreams []string
@@ -544,14 +549,24 @@ func (s *Server) dagGraph(w http.ResponseWriter, r *http.Request) {
 		if runs, _ := s.store.ListDagRuns(ctx, d.DagID, 1); len(runs) > 0 {
 			latest = string(runs[0].State)
 		}
-		nodes = append(nodes, node{DagID: d.DagID, Type: typ, Paused: d.Paused, LatestState: latest})
+		knownNodes[d.DagID] = node{DagID: d.DagID, Type: typ, Paused: d.Paused, LatestState: latest}
 		for _, up := range upstreams {
 			edges = append(edges, edge{From: up, To: d.DagID})
+			linked[up] = true
+			linked[d.DagID] = true
 			if !known[up] && !seenMissing[up] {
 				seenMissing[up] = true
-				nodes = append(nodes, node{DagID: up, Type: "manual", Missing: true})
+				missingOrder = append(missingOrder, up)
 			}
 		}
+	}
+	for _, d := range dags {
+		if linked[d.DagID] {
+			nodes = append(nodes, knownNodes[d.DagID])
+		}
+	}
+	for _, missing := range missingOrder {
+		nodes = append(nodes, node{DagID: missing, Type: "manual", Missing: true})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"nodes": nodes, "edges": edges})
 }

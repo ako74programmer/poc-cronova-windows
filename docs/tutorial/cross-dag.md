@@ -94,7 +94,7 @@ The `TRIGGER` column reads `dependency`, and `LOGICAL_DATE` matches the upstream
 
 ## See it in the DAG Graph
 
-Open the console at **http://localhost:8090** and click **Graph** in the navigation. The **DAG Graph** view draws the trigger dependencies between DAGs — you'll see an edge from `upstream_ingest` to `downstream_report`. As your workflow scheduler grows to dozens of DAGs, this graph is how you answer "what runs after what?" at a glance.
+Open the console at **http://localhost:8090** and click **Dependency graph** in the navigation. The view draws only the `trigger_after` dependencies between complete DAGs — you'll see an edge from `upstream_ingest` to `downstream_report`. Independent DAGs are omitted because this page is a relationship map, not a second catalog of all workflows. As your workflow scheduler grows to dozens of DAGs, this graph is how you answer "what runs after what?" at a glance. The task graph on an individual workflow page remains separate and shows dependencies inside that one DAG.
 
 ## Webhook notifications with `notify`
 

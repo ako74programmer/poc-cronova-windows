@@ -4,7 +4,7 @@ The operations pages of the cronova web console: the cross-DAG dependency graph,
 
 ## Cross-DAG graph (`#/graph`)
 
-The **Graph** page draws every [`trigger_after`](../tutorial/cross-dag.md) relationship in your installation as one picture — which DAGs fire which other DAGs when they finish.
+The **Dependency graph** page draws only the [`trigger_after`](../tutorial/cross-dag.md) relationships in your installation as one picture — which DAGs fire which other DAGs when they finish. Independent DAGs are omitted because the page is a relationship map, not a second DAG catalog.
 
 ![cross-DAG graph](../img/graph.png)
 
@@ -19,7 +19,7 @@ How to read it:
 
 Navigate large graphs by **dragging to pan** and zooming with ++ctrl++ / ++cmd++ + mouse wheel — a plain wheel still scrolls the page. The overlay buttons in the corner zoom in (`+`), zoom out (`−`), and fit the whole graph to the viewport (`⤢`).
 
-If no DAG declares `trigger_after`, the page shows an empty state instead of a graph.
+If no DAG declares `trigger_after`, the page shows an empty state instead of a graph. The task graph on an individual DAG page remains separate: it shows dependencies between tasks inside that one workflow.
 
 ## Pools (`#/pools`)
 
