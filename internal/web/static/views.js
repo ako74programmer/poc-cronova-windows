@@ -3192,7 +3192,13 @@ async function showGraph() {
       <div class="page-sub" style="margin:-6px 0 10px">${t("graph_view_hint")}</div>
       <div class="b-graph" id="dag-graph">${renderGraph(tasks, stateByTask, { clickable: true, dashed })}</div>`}`;
   main.querySelectorAll("#dag-graph [data-node]").forEach((n) => {
-    if (known.has(n.dataset.node)) n.onclick = () => showDag(n.dataset.node);
+    if (known.has(n.dataset.node)) {
+      n.onclick = () => showDag(n.dataset.node);
+      n.onkeydown = (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault(); showDag(n.dataset.node);
+      };
+    }
   });
   attachPanZoom(main.querySelector("#dag-graph .graph-wrap"));
   finishRouteRender();

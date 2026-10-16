@@ -212,7 +212,7 @@ const DICT = {
     dod_fail: "błąd", dod_skip: "pomiń",
     parent_run: "Uruchomienie nadrzędne", child_run: "Uruchomienie podrzędne",
     nav_graph: "Graf zależności", graph_title: "Graf zależności przepływów", graph_sub: "Pokazuje wyłącznie zależności trigger_after między całymi przepływami; niezależne przepływy są ukryte",
-    graph_none: "Brak zależności między przepływami (żaden nie deklaruje trigger_after)", graph_view_hint: "Wskazówka: strzałka oznacza „po sukcesie przepływu źródłowego uruchom docelowy”; kliknij węzeł, aby otworzyć przepływ; przerywane węzły to nieznane przepływy",
+    graph_none: "Brak zależności między przepływami (żaden nie deklaruje trigger_after)", graph_view_hint: "Wskazówka: strzałka oznacza „po sukcesie przepływu źródłowego uruchom docelowy”; kliknij węzeł, aby otworzyć przepływ; przerywane węzły to nieznane przepływy", graph_node_aria: (id) => `Otwórz przepływ ${id}`,
     ss_saved: "Zapisano", ss_saving: "Zapisywanie…", ss_invalid: "Napraw błędy, aby zapisać", ss_error: "Zapis nie powiódł się",
     dag_no_tasks_title: "Brak zadań", dag_no_tasks_sub: "Dodaj zadanie, aby włączyć ten przepływ", dag_disabled_hint: "Dodaj zadanie, aby umożliwić wyzwalanie",
     nd_title: "Nowy przepływ", nd_create: "Utwórz", nd_cancel: "Anuluj", nd_dagid_dup: "DAG o tym id już istnieje",
@@ -520,7 +520,7 @@ const DICT = {
     dod_fail: "fail", dod_skip: "skip",
     parent_run: "Parent run", child_run: "Child run",
     nav_graph: "Dependency graph", graph_title: "Workflow dependency graph", graph_sub: "Shows only trigger_after dependencies between complete workflows; independent workflows are hidden",
-    graph_none: "No workflow dependencies yet (none declares trigger_after)", graph_view_hint: "Tip: an arrow means 'after the source workflow succeeds, run the target'; click a node to open that workflow; dashed nodes are unknown workflows",
+    graph_none: "No workflow dependencies yet (none declares trigger_after)", graph_view_hint: "Tip: an arrow means 'after the source workflow succeeds, run the target'; click a node to open that workflow; dashed nodes are unknown workflows", graph_node_aria: (id) => `Open workflow ${id}`,
     ss_saved: "Saved", ss_saving: "Saving…", ss_invalid: "Fix errors to save", ss_error: "Save failed",
     dag_no_tasks_title: "No tasks yet", dag_no_tasks_sub: "Add a task to enable this workflow", dag_disabled_hint: "Add a task to enable triggering",
     nd_title: "New workflow", nd_create: "Create", nd_cancel: "Cancel", nd_dagid_dup: "A DAG with this id already exists",
@@ -906,7 +906,7 @@ function renderGraph(tasks, stateByTask, opts) {
     // dependency can be selected/removed by pointer or keyboard.
     const hit = opts.editable && !isExt
       ? `<path class="edge-hit" d="${dPath}" tabindex="0" role="button" aria-label="${esc(t("ge_edge_aria", d, t2.id))}"/>` : "";
-    edges += `<g class="edge-g${isExt ? " ext" : ""}" data-efrom="${esc(d)}" data-eto="${esc(t2.id)}"><path class="graph-edge" d="${dPath}"/>${hit}</g>`;
+    edges += `<g class="edge-g${isExt ? " ext" : ""}" data-efrom="${esc(d)}" data-eto="${esc(t2.id)}"><path class="graph-edge" d="${dPath}" marker-end="url(#graph-arrow)"/>${hit}</g>`;
   }));
   all.forEach((t2) => {
     const p = pos[t2.id];
@@ -921,7 +921,7 @@ function renderGraph(tasks, stateByTask, opts) {
     // tag: expose data-node for live patching without making the node clickable
     const clickable = opts.editable || opts.clickable;
     const attrs = clickable
-      ? ` data-node="${esc(t2.id)}" style="cursor:pointer"${opts.editable ? ` tabindex="0" role="button" aria-label="${esc(t("ge_node_aria", t2.id))}"` : ""}`
+      ? ` data-node="${esc(t2.id)}" style="cursor:pointer" tabindex="0" role="button" aria-label="${esc(opts.editable ? t("ge_node_aria", t2.id) : t("graph_node_aria", t2.id))}"`
       : (opts.tag ? ` data-node="${esc(t2.id)}"` : "");
     const cls = "graph-node" + (opts.tag && stateByTask && stateByTask[t2.id] === "running" ? " g-running" : "") + (t2.subdag ? " subdag" : "");
     // subdag task: double border + ⧉ marker + the target dag id as a subtitle
@@ -943,7 +943,8 @@ function renderGraph(tasks, stateByTask, opts) {
     <button class="gz" data-z="in" aria-label="${t("gz_in")}" title="${t("gz_in")}">+</button>
     <button class="gz" data-z="fit" aria-label="${t("gz_fit")}" title="${esc(t("gz_hint"))}">⤢</button>
     <button class="gz" data-z="out" aria-label="${t("gz_out")}" title="${t("gz_out")}">−</button></div>`;
-  return `<div class="graph-wrap" style="height:${wrapH}px" title="${esc(t("gz_hint"))}"><svg class="graph-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${edges}${nodes}</svg>${zoom}</div>`;
+  const defs = `<defs><marker id="graph-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 8 4 L 0 8 z" style="fill:var(--line-2)"/></marker></defs>`;
+  return `<div class="graph-wrap" style="height:${wrapH}px" title="${esc(t("gz_hint"))}"><svg class="graph-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${defs}${edges}${nodes}</svg>${zoom}</div>`;
 }
 // Pan/zoom controller for a .graph-wrap. Operates via a CSS transform on the
 // inner <svg> (vectors stay crisp; node click handlers + live rect-fill patching
@@ -1011,7 +1012,9 @@ function attachPanZoom(wrap, store) {
       }
     }
     drag = true; moved = false; sx = e.clientX; sy = e.clientY; otx = tx; oty = ty;
-    try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
+    // Do not capture immediately: SVG pointer capture retargets the subsequent
+    // click to .graph-wrap, so a click on a node never reaches its handler.
+    // Capture after the drag threshold is crossed instead.
   });
   wrap.addEventListener("pointermove", (e) => {
     if (e.pointerType === "touch" && touches.has(e.pointerId)) {
@@ -1031,6 +1034,7 @@ function attachPanZoom(wrap, store) {
     const dx = e.clientX - sx, dy = e.clientY - sy;
     if (!moved && Math.hypot(dx, dy) < 4) return; // below threshold: still a click
     moved = true; wrap.classList.add("panning");
+    try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
     tx = otx + dx; ty = oty + dy; clamp(); apply();
   });
   const end = (e) => {
