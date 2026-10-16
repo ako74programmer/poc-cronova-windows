@@ -2,7 +2,7 @@
 
 > A workflow scheduler inspired by Airflow / Azkaban.
 > Version: v1 (single-node first, distributed evolution prepared)
-> Last updated: 2026-09-18
+> Last updated: 2026-10-16
 
 ---
 
@@ -156,7 +156,7 @@ cronova/
 │   ├── operator/             # hold/release, mark, retry operators
 │   ├── metrics/              # Prometheus metrics
 │   ├── mcp/                  # MCP server integration
-│   └── aiwiki/               # AI Chat retrieval and response generation
+│   └── aiwiki/               # AI Chat documentation RAG and runtime tool agent
 ├── proto/
 │   └── cronova/
 │       ├── executor/v1/executor.proto   # local executor gRPC
@@ -749,9 +749,12 @@ Key messages:
 `POST /api/ask` accepts `question`, `lang`, optional `mode`, and optional `history`. Supported modes are `documentation` and `run_analysis`; an omitted `mode` defaults to `documentation`, while an unknown value returns HTTP 400.
 
 - `documentation` searches the embedded documentation knowledge base (BM25/RAG) and does not fetch live run data.
-- `run_analysis` does not search documentation. For a specific Run ID it reads run/task state; for an explicit list request it calls `Store.RecentRuns(ctx, 10)`. The list contains up to 10 most recent runs belonging to active DAGs. Responses include `runs/<run_id>` sources and explicit run-selection actions.
-- Logs are read only when an explicit log request is recognized. At most three tail excerpts, up to 8 KiB each, are included after redaction of common secret patterns. Redaction cannot guarantee detection of every secret.
-- `history` is bounded to the last 8 messages and is used to resolve follow-up questions. The UI keeps separate histories for each mode; conversations are not persisted.
+- `run_analysis` does not search documentation. With an AI Provider configured, it operates as an agent using OpenAI-compatible tool/function calling; the provider/model must support `tools` and `tool_calls` responses. The model chooses tools from the user's question and conversation history instead of relying on fixed keyword routing.
+- The agent's allowlist is read-only: `list_recent_runs` (up to 10 runs through `Store.RecentRuns`), `find_recent_task` (exact `task_id` lookup across at most 10 recent runs), `inspect_run` (run and task-instance states), `inspect_task` (task instance plus the command from the immutable run definition when available), and `get_task_logs` (one selected log tail). No tool can trigger, edit, delete, or reconfigure data.
+- One agent answer is bounded to 8 tool calls and 5 model rounds, including at most 3 `get_task_logs` calls; each reads at most 8 KiB. Logs and commands are redacted using common secret patterns, but redaction cannot guarantee detection of every secret. The log tool accepts exact Run ID/task ID and gets the path from the stored task instance, not from user-supplied paths.
+- Recent-run results contain up to 10 runs belonging to active DAGs. Responses include `runs/<run_id>` sources and `inspect_run` selection actions.
+- When no AI Provider is configured, a simpler deterministic fallback remains for an explicit recent-runs request or a specific Run ID; free-form interpretation and follow-ups require a model with tool calling. Provider compatibility failures do not enable write operations.
+- `history` is bounded to the last 8 messages. Analysis mode passes at most 6,000 Unicode characters per message to the model; runtime UI history retains identifiers and sources rather than full logs. The UI keeps separate histories for each mode; conversations are not persisted.
 
 ### Web UI modules
 

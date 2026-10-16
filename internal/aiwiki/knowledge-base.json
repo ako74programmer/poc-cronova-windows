@@ -1303,7 +1303,7 @@
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "cronova Architecture",
-      "text": "> A workflow scheduler inspired by Airflow / Azkaban.\n> Version: v1 (single-node first, distributed evolution prepared)\n> Last updated: 2026-09-18\n\n---",
+      "text": "> A workflow scheduler inspired by Airflow / Azkaban.\n> Version: v1 (single-node first, distributed evolution prepared)\n> Last updated: 2026-10-16\n\n---",
       "topics": [
         "schedule",
         "ai"
@@ -1391,7 +1391,7 @@
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "4. Module layout",
-      "text": "```\ncronova/\n├── cmd/\n│   ├── cronova/              # main process: scheduler + api + web\n│   └── cronova-executor/     # standalone executor process (gRPC server)\n├── internal/\n│   ├── scheduler/\n│   │   ├── parser/           # YAML parsing + DAG cycle detection\n│   │   ├── scheduler.go      # trigger, loop, state machine, recovery\n│   │   └── *_test.go         # extensive scenario tests\n│   ├── executor/             # subprocess runner, gRPC client/server, state reporter\n│   ├── worker/               # remote worker client (dials WorkerHub)\n│   ├── workerhub/            # scheduler-side worker hub (mTLS, assignments, log streaming)\n│   ├── store/\n│   │   ├── store.go          # Store interface\n│   │   └── sqlite/           # SQLite implementation + schema.sql\n│   ├── model/                # DAG / DagRun / TaskInstance / Pool domain models + state machine\n│   ├── api/                  # REST + SSE handlers\n│   ├── auth/                 # login, sessions, API tokens\n│   ├── secrets/              # AES-256-GCM for connection passwords\n│   ├── certs/                # internal CA for worker mTLS\n│   ├── datetmpl/             # {{ logical_date }} and other template resolution\n│   ├── projectfs/            # uploaded project staging\n│   ├── operator/             # hold/release, mark, retry operators\n│   ├── metrics/              # Prometheus metrics\n│   ├── mcp/                  # MCP server integration\n│   └── aiwiki/               # AI wiki RAG chat\n├── proto/\n│   └── cronova/\n│       ├── executor/v1/executor.proto   # local executor gRPC\n│       └── worker/v1/worker.proto       # remote worker gRPC\n├── web/                      # embedded static UI\n├── dags/                     # user YAML DAG directory (configurable)\n└── docs/\n    └── ARCHITECTURE.md       # this file\n```",
+      "text": "```\ncronova/\n├── cmd/\n│   ├── cronova/              # main process: scheduler + api + web\n│   └── cronova-executor/     # standalone executor process (gRPC server)\n├── internal/\n│   ├── scheduler/\n│   │   ├── parser/           # YAML parsing + DAG cycle detection\n│   │   ├── scheduler.go      # trigger, loop, state machine, recovery\n│   │   └── *_test.go         # extensive scenario tests\n│   ├── executor/             # subprocess runner, gRPC client/server, state reporter\n│   ├── worker/               # remote worker client (dials WorkerHub)\n│   ├── workerhub/            # scheduler-side worker hub (mTLS, assignments, log streaming)\n│   ├── store/\n│   │   ├── store.go          # Store interface\n│   │   └── sqlite/           # SQLite implementation + schema.sql\n│   ├── model/                # DAG / DagRun / TaskInstance / Pool domain models + state machine\n│   ├── api/                  # REST + SSE handlers\n│   ├── auth/                 # login, sessions, API tokens\n│   ├── secrets/              # AES-256-GCM for connection passwords\n│   ├── certs/                # internal CA for worker mTLS\n│   ├── datetmpl/             # {{ logical_date }} and other template resolution\n│   ├── projectfs/            # uploaded project staging\n│   ├── operator/             # hold/release, mark, retry operators\n│   ├── metrics/              # Prometheus metrics\n│   ├── mcp/                  # MCP server integration\n│   └── aiwiki/               # AI Chat documentation RAG and runtime tool agent\n├── proto/\n│   └── cronova/\n│       ├── executor/v1/executor.proto   # local executor gRPC\n│       └── worker/v1/worker.proto       # remote worker gRPC\n├── web/                      # embedded static UI\n├── dags/                     # user YAML DAG directory (configurable)\n└── docs/\n    └── ARCHITECTURE.md       # this file\n```",
       "topics": [
         "dag",
         "schedule",
@@ -1732,7 +1732,7 @@
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "17. API and Web UI",
-      "text": "| Method | Path | Description |\n|---|---|---|\n| `GET` | `/api/info` | server info |\n| `GET` | `/api/dags` | list DAGs |\n| `POST` | `/api/dags` | create/update DAG |\n| `POST` | `/api/dags/validate` | validate YAML |\n| `GET` | `/api/dags/{id}` | get DAG |\n| `POST` | `/api/dags/{id}/trigger` | manual trigger |\n| `POST` | `/api/dags/{id}/backfill` | backfill runs |\n| `POST` | `/api/dags/{id}/pause` | pause/resume schedule |\n| `GET` | `/api/dags/{id}/runs` | run history |\n| `GET` | `/api/runs/{runID}` | run details |\n| `POST` | `/api/runs/{runID}/cancel` | cancel run |\n| `POST` | `/api/runs/{runID}/retry` | retry run |\n| `POST` | `/api/runs/{runID}/tasks/{taskID}/retry` | retry task |\n| `POST` | `/api/runs/{runID}/tasks/{taskID}/mark` | mark task state |\n| `GET` | `/api/tasks/{tiID}/log` | task log |\n| `GET` | `/api/tasks/{tiID}/log/stream` | SSE log stream |\n| `GET/POST/DELETE` | `/api/pools/{name}` | pool management |\n| `GET/POST/DELETE` | `/api/variables/{key}` | variables |\n| `GET/POST/DELETE` | `/api/connections/{id}` | connections |\n| `GET/POST/DELETE` | `/api/alert-groups/{name}` | alert groups |\n| `GET/POST/DELETE` | `/api/ai-providers/{id}` | AI providers |\n| `GET/POST/DELETE` | `/api/projects/{name}` | uploaded projects |\n| `GET/POST` | `/api/workers`, `/api/worker-tokens` | worker management |\n| `POST` | `/api/events` | external event |\n| `POST` | `/api/hooks/{dag}/{secret}` | webhook trigger |\n| `POST` | `/api/ask` | AI wiki chat |\n| `GET` | `/metrics` | Prometheus metrics |\n| `GET` | `/openapi.json` | OpenAPI spec |",
+      "text": "| Method | Path | Description |\n|---|---|---|\n| `GET` | `/api/info` | server info |\n| `GET` | `/api/dags` | list DAGs |\n| `POST` | `/api/dags` | create/update DAG |\n| `POST` | `/api/dags/validate` | validate YAML |\n| `GET` | `/api/dags/{id}` | get DAG |\n| `POST` | `/api/dags/{id}/trigger` | manual trigger |\n| `POST` | `/api/dags/{id}/backfill` | backfill runs |\n| `POST` | `/api/dags/{id}/pause` | pause/resume schedule |\n| `GET` | `/api/dags/{id}/runs` | run history |\n| `GET` | `/api/runs/{runID}` | run details |\n| `POST` | `/api/runs/{runID}/cancel` | cancel run |\n| `POST` | `/api/runs/{runID}/retry` | retry run |\n| `POST` | `/api/runs/{runID}/tasks/{taskID}/retry` | retry task |\n| `POST` | `/api/runs/{runID}/tasks/{taskID}/mark` | mark task state |\n| `GET` | `/api/tasks/{tiID}/log` | task log |\n| `GET` | `/api/tasks/{tiID}/log/stream` | SSE log stream |\n| `GET/POST/DELETE` | `/api/pools/{name}` | pool management |\n| `GET/POST/DELETE` | `/api/variables/{key}` | variables |\n| `GET/POST/DELETE` | `/api/connections/{id}` | connections |\n| `GET/POST/DELETE` | `/api/alert-groups/{name}` | alert groups |\n| `GET/POST/DELETE` | `/api/ai-providers/{id}` | AI providers |\n| `GET/POST/DELETE` | `/api/projects/{name}` | uploaded projects |\n| `GET/POST` | `/api/workers`, `/api/worker-tokens` | worker management |\n| `POST` | `/api/events` | external event |\n| `POST` | `/api/hooks/{dag}/{secret}` | webhook trigger |\n| `POST` | `/api/ask` | AI Chat interface |\n| `GET` | `/metrics` | Prometheus metrics |\n| `GET` | `/openapi.json` | OpenAPI spec |",
       "topics": [
         "dag",
         "schedule",
@@ -1749,7 +1749,28 @@
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "17. API and Web UI",
-      "text": "### Web UI modules\n\n- DAG list with pause toggle, last run status, next schedule;\n- DAG detail / graph view with colored task states;\n- Run history by `logical_date` with manual trigger/backfill;\n- Task log viewer with live tail;\n- YAML editor with online validation (cycle detection, field checks);\n- AI wiki chat panel.\n\n---",
+      "text": "#### AI Chat modes and request data\n\n`POST /api/ask` accepts `question`, `lang`, optional `mode`, and optional `history`. Supported modes are `documentation` and `run_analysis`; an omitted `mode` defaults to `documentation`, while an unknown value returns HTTP 400.",
+      "topics": [
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-137",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "17. API and Web UI",
+      "text": "- `documentation` searches the embedded documentation knowledge base (BM25/RAG) and does not fetch live run data.\n- `run_analysis` does not search documentation. With an AI Provider configured, it operates as an agent using OpenAI-compatible tool/function calling; the provider/model must support `tools` and `tool_calls` responses. The model chooses tools from the user's question and conversation history instead of relying on fixed keyword routing.\n- The agent's allowlist is read-only: `list_recent_runs` (up to 10 runs through `Store.RecentRuns`), `find_recent_task` (exact `task_id` lookup across at most 10 recent runs), `inspect_run` (run and task-instance states), `inspect_task` (task instance plus the command from the immutable run definition when available), and `get_task_logs` (one selected log tail). No tool can trigger, edit, delete, or reconfigure data.\n- One agent answer is bounded to 8 tool calls and 5 model rounds, including at most 3 `get_task_logs` calls; each reads at most 8 KiB. Logs and commands are redacted using common secret patterns, but redaction cannot guarantee detection of every secret. The log tool accepts exact Run ID/task ID and gets the path from the stored task instance, not from user-supplied paths.\n- Recent-run results contain up to 10 runs belonging to active DAGs. Responses include `runs/<run_id>` sources and `inspect_run` selection actions.\n- When no AI Provider is configured, a simpler deterministic fallback remains for an explicit recent-runs request or a specific Run ID; free-form interpretation and follow-ups require a model with tool calling. Provider compatibility failures do not enable write operations.\n- `history` is bounded to the last 8 messages. Analysis mode passes at most 6,000 Unicode characters per message to the model; runtime UI history retains identifiers and sources rather than full logs. The UI keeps separate histories for each mode; conversations are not persisted.",
+      "topics": [
+        "dag",
+        "ai"
+      ]
+    },
+    {
+      "id": "doc-architecture-138",
+      "type": "doc",
+      "source": "docs/ARCHITECTURE.md",
+      "section": "17. API and Web UI",
+      "text": "### Web UI modules\n\n- DAG list with pause toggle, last run status, next schedule;\n- DAG detail / graph view with colored task states;\n- Run history by `logical_date` with manual trigger/backfill;\n- Task log viewer with live tail;\n- YAML editor with online validation (cycle detection, field checks);\n- AI Chat interface panel.\n\n---",
       "topics": [
         "dag",
         "schedule",
@@ -1757,7 +1778,7 @@
       ]
     },
     {
-      "id": "doc-architecture-137",
+      "id": "doc-architecture-139",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "18. Security model",
@@ -1768,7 +1789,7 @@
       ]
     },
     {
-      "id": "doc-architecture-138",
+      "id": "doc-architecture-140",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "19. Delivery roadmap",
@@ -1784,7 +1805,7 @@
       ]
     },
     {
-      "id": "doc-architecture-139",
+      "id": "doc-architecture-141",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "20. Evolution: single-node → distributed",
@@ -1796,7 +1817,7 @@
       ]
     },
     {
-      "id": "doc-architecture-140",
+      "id": "doc-architecture-142",
       "type": "doc",
       "source": "docs/ARCHITECTURE.md",
       "section": "21. Risks and open questions",
@@ -1810,7 +1831,7 @@
       ]
     },
     {
-      "id": "doc-deploy-141",
+      "id": "doc-deploy-143",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Deploying cronova on Windows",
@@ -1822,7 +1843,7 @@
       ]
     },
     {
-      "id": "doc-deploy-142",
+      "id": "doc-deploy-144",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Requirements",
@@ -1832,7 +1853,7 @@
       ]
     },
     {
-      "id": "doc-deploy-143",
+      "id": "doc-deploy-145",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Quick install for recipients (setup.cmd)",
@@ -1845,7 +1866,7 @@
       ]
     },
     {
-      "id": "doc-deploy-144",
+      "id": "doc-deploy-146",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Quick install for recipients (setup.cmd)",
@@ -1859,7 +1880,7 @@
       ]
     },
     {
-      "id": "doc-deploy-145",
+      "id": "doc-deploy-147",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Install from a release ZIP",
@@ -1875,7 +1896,7 @@
       ]
     },
     {
-      "id": "doc-deploy-146",
+      "id": "doc-deploy-148",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Install from a release ZIP",
@@ -1888,7 +1909,7 @@
       ]
     },
     {
-      "id": "doc-deploy-147",
+      "id": "doc-deploy-149",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Data and configuration",
@@ -1903,7 +1924,7 @@
       ]
     },
     {
-      "id": "doc-deploy-148",
+      "id": "doc-deploy-150",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Service operations",
@@ -1914,7 +1935,7 @@
       ]
     },
     {
-      "id": "doc-deploy-149",
+      "id": "doc-deploy-151",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Task execution and process containment",
@@ -1928,7 +1949,7 @@
       ]
     },
     {
-      "id": "doc-deploy-150",
+      "id": "doc-deploy-152",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Task execution and process containment",
@@ -1941,7 +1962,7 @@
       ]
     },
     {
-      "id": "doc-deploy-151",
+      "id": "doc-deploy-153",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Upgrade and uninstall",
@@ -1953,7 +1974,7 @@
       ]
     },
     {
-      "id": "doc-deploy-152",
+      "id": "doc-deploy-154",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Build and package from source",
@@ -1967,11 +1988,11 @@
       ]
     },
     {
-      "id": "doc-deploy-153",
+      "id": "doc-deploy-155",
       "type": "doc",
       "source": "docs/DEPLOY.md",
       "section": "Verification status",
-      "text": "There is no hosted CI. All checks run locally on Windows with one script, which any future pipeline (e.g. a GitLab Windows runner) can call unchanged:\n\n```powershell\n.\\scripts\\windows\\check-all.ps1            # gofmt, go mod verify, docs mirror, AI wiki KB, vet, tests, PowerShell tests\n.\\scripts\\windows\\check-all.ps1 -Full      # + race detector and govulncheck\n.\\scripts\\windows\\check-all.ps1 -Package   # + build the release ZIP and verify its DAG references\n```\n\n Cross-compiling `windows/amd64` from another host cannot replace native validation of Windows Services, Job Objects, ACLs, clean installation, service recovery or descendant-process termination.",
+      "text": "There is no hosted CI. All checks run locally on Windows with one script, which any future pipeline (e.g. a GitLab Windows runner) can call unchanged:\n\n```powershell\n.\\scripts\\windows\\check-all.ps1            # gofmt, go mod verify, docs mirror, AI Chat KB, vet, tests, PowerShell tests\n.\\scripts\\windows\\check-all.ps1 -Full      # + race detector and govulncheck\n.\\scripts\\windows\\check-all.ps1 -Package   # + build the release ZIP and verify its DAG references\n```\n\n Cross-compiling `windows/amd64` from another host cannot replace native validation of Windows Services, Job Objects, ACLs, clean installation, service recovery or descendant-process termination.",
       "topics": [
         "dag",
         "project",
@@ -1981,7 +2002,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_angular-154",
+      "id": "dag-sdlc_angular-156",
       "type": "dag",
       "source": "dags/sdlc_angular.yaml",
       "section": "DAG sdlc_angular",
@@ -1996,7 +2017,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_fullstack-155",
+      "id": "dag-sdlc_fullstack-157",
       "type": "dag",
       "source": "dags/sdlc_fullstack.yaml",
       "section": "DAG sdlc_fullstack",
@@ -2010,7 +2031,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_maven_luhn-156",
+      "id": "dag-sdlc_maven_luhn-158",
       "type": "dag",
       "source": "dags/sdlc_maven_luhn.yaml",
       "section": "DAG sdlc_maven_luhn",
@@ -2027,7 +2048,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_rest-157",
+      "id": "dag-sdlc_springboot_rest-159",
       "type": "dag",
       "source": "dags/sdlc_springboot_rest.yaml",
       "section": "DAG sdlc_springboot_rest",
@@ -2043,7 +2064,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_startio-158",
+      "id": "dag-sdlc_springboot_startio-160",
       "type": "dag",
       "source": "dags/sdlc_springboot_startio.yaml",
       "section": "DAG sdlc_springboot_startio",
@@ -2060,7 +2081,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_template_crud-159",
+      "id": "dag-sdlc_springboot_template_crud-161",
       "type": "dag",
       "source": "dags/sdlc_springboot_template_crud.yaml",
       "section": "DAG sdlc_springboot_template_crud",
@@ -2078,7 +2099,7 @@
       ]
     },
     {
-      "id": "dag-sdlc_springboot_variant-160",
+      "id": "dag-sdlc_springboot_variant-162",
       "type": "dag",
       "source": "dags/sdlc_springboot_variant.yaml",
       "section": "DAG sdlc_springboot_variant",
@@ -2094,7 +2115,7 @@
       ]
     },
     {
-      "id": "script-copy-template-to-workspace-ps1-161",
+      "id": "script-copy-template-to-workspace-ps1-163",
       "type": "script",
       "source": "internal/scripts/copy-template-to-workspace.ps1",
       "section": "Script copy-template-to-workspace.ps1",
@@ -2107,7 +2128,7 @@
       ]
     },
     {
-      "id": "script-fetch-springboot-project-ps1-162",
+      "id": "script-fetch-springboot-project-ps1-164",
       "type": "script",
       "source": "internal/scripts/fetch-springboot-project.ps1",
       "section": "Script fetch-springboot-project.ps1",
@@ -2122,7 +2143,7 @@
       ]
     },
     {
-      "id": "script-generate-maven-archetype-ps1-163",
+      "id": "script-generate-maven-archetype-ps1-165",
       "type": "script",
       "source": "internal/scripts/generate-maven-archetype.ps1",
       "section": "Script generate-maven-archetype.ps1",
@@ -2135,7 +2156,7 @@
       ]
     },
     {
-      "id": "script-maven-compile-ps1-164",
+      "id": "script-maven-compile-ps1-166",
       "type": "script",
       "source": "internal/scripts/maven-compile.ps1",
       "section": "Script maven-compile.ps1",
@@ -2148,7 +2169,7 @@
       ]
     },
     {
-      "id": "script-maven-test-ps1-165",
+      "id": "script-maven-test-ps1-167",
       "type": "script",
       "source": "internal/scripts/maven-test.ps1",
       "section": "Script maven-test.ps1",
@@ -2161,7 +2182,7 @@
       ]
     },
     {
-      "id": "script-ai-java-mvn-generate-feature-ps1-166",
+      "id": "script-ai-java-mvn-generate-feature-ps1-168",
       "type": "script",
       "source": "internal/scripts/ai-java-mvn-generate-feature.ps1",
       "section": "Script ai-java-mvn-generate-feature.ps1",
@@ -2176,7 +2197,7 @@
       ]
     },
     {
-      "id": "script-java-maven-compile-fix-loop-ps1-167",
+      "id": "script-java-maven-compile-fix-loop-ps1-169",
       "type": "script",
       "source": "internal/scripts/java-maven-compile-fix-loop.ps1",
       "section": "Script java-maven-compile-fix-loop.ps1",
@@ -2193,7 +2214,7 @@
       ]
     },
     {
-      "id": "script-angular-validate-config-ps1-168",
+      "id": "script-angular-validate-config-ps1-170",
       "type": "script",
       "source": "internal/scripts/angular-validate-config.ps1",
       "section": "Script angular-validate-config.ps1",
@@ -2204,7 +2225,7 @@
       ]
     },
     {
-      "id": "script-angular-scaffold-from-config-ps1-169",
+      "id": "script-angular-scaffold-from-config-ps1-171",
       "type": "script",
       "source": "internal/scripts/angular-scaffold-from-config.ps1",
       "section": "Script angular-scaffold-from-config.ps1",
@@ -2217,7 +2238,7 @@
       ]
     },
     {
-      "id": "script-fullstack-run-stack-e2e-ps1-170",
+      "id": "script-fullstack-run-stack-e2e-ps1-172",
       "type": "script",
       "source": "internal/scripts/fullstack-run-stack-e2e.ps1",
       "section": "Script fullstack-run-stack-e2e.ps1",
@@ -2227,7 +2248,7 @@
       ]
     },
     {
-      "id": "script-springboot-validate-config-ps1-171",
+      "id": "script-springboot-validate-config-ps1-173",
       "type": "script",
       "source": "internal/scripts/springboot-validate-config.ps1",
       "section": "Script springboot-validate-config.ps1",
@@ -2240,7 +2261,7 @@
       ]
     },
     {
-      "id": "script-readme-md-172",
+      "id": "script-readme-md-174",
       "type": "script",
       "source": "internal/scripts/README.md",
       "section": "Script README.md",

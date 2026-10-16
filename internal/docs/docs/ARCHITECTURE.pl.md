@@ -2,7 +2,7 @@
 
 > Scheduler workflow inspirowany Airflow / Azkaban.
 > Wersja: v1 (najpierw jeden węzeł, przygotowane do rozproszenia)
-> Ostatnia aktualizacja: 2026-09-18
+> Ostatnia aktualizacja: 2026-10-16
 
 ---
 
@@ -156,7 +156,7 @@ cronova/
 │   ├── operator/             # hold/release, mark, retry operatorów
 │   ├── metrics/              # metryki Prometheus
 │   ├── mcp/                  # integracja serwera MCP
-│   └── aiwiki/               # retrieval RAG używany przez AI Chat
+│   └── aiwiki/               # RAG dokumentacji i agent narzędzi runtime dla AI Chat
 ├── proto/
 │   └── cronova/
 │       ├── executor/v1/executor.proto   # lokalny executor gRPC
@@ -749,9 +749,12 @@ Kluczowe komunikaty:
 `POST /api/ask` przyjmuje `question`, `lang`, opcjonalne `mode` oraz opcjonalną historię `history`. Dozwolone tryby to `documentation` i `run_analysis`; brak `mode` oznacza `documentation`, a nieznana wartość zwraca HTTP 400.
 
 - `documentation` przeszukuje wbudowaną bazę dokumentacji (BM25/RAG) i nie pobiera danych runtime runów.
-- `run_analysis` nie przeszukuje dokumentacji. Dla konkretnego Run ID pobiera status runu/tasków; dla jawnej prośby o listę odpytuje `Store.RecentRuns(ctx, 10)`. Lista obejmuje do 10 najnowszych runów aktywnych DAG-ów. Odpowiedź zawiera źródła `runs/<run_id>` i akcje wyboru runu.
-- Logi są odczytywane wyłącznie po rozpoznaniu wyraźnej prośby; do odpowiedzi/modelu trafiają maksymalnie trzy końcowe fragmenty, po maksymalnie 8 KiB każdy, po zastosowaniu redakcji typowych wzorców sekretów. Redakcja nie gwarantuje wykrycia wszystkich sekretów.
-- `history` jest ograniczana do ostatnich 8 wiadomości i służy do rozumienia pytań uzupełniających. UI utrzymuje odrębne historie dla trybów; rozmowy nie są trwale zapisywane.
+- `run_analysis` nie przeszukuje dokumentacji. Przy skonfigurowanym AI Provider tryb działa jako agent z OpenAI-compatible tool/function calling; provider/model musi obsługiwać `tools` i odpowiedzi `tool_calls`. Agent sam wybiera narzędzie na podstawie pytania i historii rozmowy, zamiast polegać na dopasowaniu pytania do stałych słów kluczowych.
+- Allowlista agenta jest wyłącznie odczytowa: `list_recent_runs` (do 10 runów z `Store.RecentRuns`), `find_recent_task` (dokładne `task_id` w maksymalnie 10 najnowszych runach), `inspect_run` (stan runu i task instances), `inspect_task` (task instance oraz polecenie z niezmiennej definicji runu, jeśli jest dostępna) i `get_task_logs` (jedna wskazana końcówka logu). Nie ma narzędzi do triggerowania, edycji, kasowania ani zmiany konfiguracji.
+- Pojedyncza odpowiedź agenta ma limit 8 wywołań narzędzi i 5 rund modelu; do 3 wywołań `get_task_logs`, każde odczytuje maksymalnie 8 KiB. Logi i polecenia są redagowane według typowych wzorców sekretów; redakcja nie gwarantuje wykrycia wszystkich sekretów. Narzędzie logów działa na dokładnym Run ID/task ID, a jego ścieżkę pliku bierze z rekordu task instance, nie z argumentu użytkownika.
+- Lista runów obejmuje do 10 najnowszych runów aktywnych DAG-ów. Odpowiedź zawiera źródła `runs/<run_id>` oraz akcje `inspect_run` do wyboru runu.
+- Gdy AI Provider nie jest skonfigurowany, pozostaje prostszy, deterministyczny fallback dla jawnej listy runów lub konkretnego Run ID; interpretacja swobodnych pytań i follow-upów wymaga modelu z tool calling. Błąd kompatybilności providera nie uruchamia operacji zapisu.
+- `history` jest ograniczana do ostatnich 8 wiadomości. Tryb analizy przekazuje modelowi maksymalnie 6000 znaków Unicode na wiadomość; w historii UI odpowiedzi runtime zachowują identyfikatory i źródła, nie pełne logi. UI utrzymuje odrębne historie dla trybów; rozmowy nie są trwale zapisywane.
 
 ### Moduły Web UI
 

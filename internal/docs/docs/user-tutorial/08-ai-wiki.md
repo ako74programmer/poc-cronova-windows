@@ -64,15 +64,19 @@ Jeśli przeglądarka nie obsługuje czytania tekstu, przycisk może pokazać ost
 
 ## Krok 5: wybierz tryb Analiza runów
 
-Gdy chcesz sprawdzić wykonania w bazie, na liście **Tryb** wybierz **Analiza runów**. Możesz poprosić o listę najnowszych runów:
+Gdy chcesz sprawdzić wykonania zapisane w bazie Cronovy, na liście **Tryb** wybierz **Analiza runów**. To tryb rozmowy z agentem: model może samodzielnie wywoływać ograniczone, tylko do odczytu narzędzia Cronovy. Nie musi rozpoznawać pytania po jednym sztywnym słowie i nie musisz za każdym razem powtarzać identyfikatorów z poprzednich wiadomości.
+
+Agent potrzebuje skonfigurowanego AI Provider, którego model obsługuje **OpenAI-compatible tool/function calling**. Bez providera aplikacja nadal może pokazać prostą listę runów lub dane runu wskazanego pełnym Run ID, ale nie ma wtedy modelowego agenta, który rozumie pytania uzupełniające.
+
+Możesz poprosić o listę najnowszych runów:
 
 ```text
 Pokaż ostatnie runy
 ```
 
-Cronova pokaże maksymalnie 10 najnowszych runów należących do aktywnych DAG-ów. Przy każdym runie pojawi się przycisk **Analizuj ten run**. Kliknij go, aby w czacie sprawdzić status i taski. Możesz też kliknąć źródło `runs/<run_id>`, aby otworzyć stronę szczegółów runu.
+Agent użyje narzędzia do pobrania maksymalnie 10 najnowszych runów należących do aktywnych DAG-ów. W odpowiedzi pojawią się źródła i przycisk **Analizuj ten run**. Kliknij go, aby zadać pytanie o wskazane wykonanie. Możesz też kliknąć źródło `runs/<run_id>`, aby otworzyć stronę szczegółów runu.
 
-Jeśli znasz identyfikator, możesz pominąć listę i wpisać **Run ID** ręcznie. Znajdziesz go w nagłówku szczegółów runu.
+Jeśli znasz identyfikator, możesz pominąć listę i wpisać **Run ID** ręcznie. Znajdziesz go w nagłówku szczegółów runu. Jeśli znasz tylko nazwę taska, możesz o niego zapytać — agent sprawdzi tę nazwę w maksymalnie 10 najnowszych runach. Gdy znajdzie kilka pasujących wykonań, poprosi Cię o wskazanie właściwego zamiast zgadywać.
 
 W pytaniu podaj pełny identyfikator, na przykład:
 
@@ -80,7 +84,7 @@ W pytaniu podaj pełny identyfikator, na przykład:
 Jaki jest stan runu etl__r1 i które taski się nie powiodły?
 ```
 
-AI Chat pobiera wtedy stan runu, jego DAG, daty rozpoczęcia/zakończenia i stany tasków. Jeśli pytasz o run po liście, użyj przycisku **Analizuj ten run** albo wpisz dokładny Run ID. Jeśli podasz kilka ID naraz, AI Chat poprosi o wybór jednego konkretnego.
+Agent pobiera wtedy z bazy stan runu, daty i stany tasków. Narzędzia w tym trybie są tylko do odczytu — nie uruchamiają ani nie zmieniają DAG-ów. Jeśli podasz kilka Run ID i nie będzie jasne, które analizować, agent poprosi o wybór jednego konkretnego.
 
 Możesz zadać pytanie uzupełniające w tej samej rozmowie, na przykład:
 
@@ -88,7 +92,7 @@ Możesz zadać pytanie uzupełniające w tej samej rozmowie, na przykład:
 A dlaczego ten run się nie powiódł?
 ```
 
-AI Chat użyje Run ID z poprzedniej wiadomości i pobierze aktualne dane ponownie. Historia rozmowy nie jest zapisywana na stałe.
+Agent użyje kontekstu wcześniejszych pytań i źródeł, aby odnaleźć Run ID oraz task. Następnie pobierze potrzebne dane ponownie, zamiast zgadywać na podstawie opisu. Nie musisz powtarzać Run ID, jeśli rozmowa jasno wskazuje właściwy run. Historia jest tymczasowa i nie jest zapisywana na stałe.
 
 ## Krok 6: poproś o logi tylko wtedy, gdy ich potrzebujesz
 
@@ -98,9 +102,17 @@ Pozostań w trybie **Analiza runów**. Logi nie są pobierane przy zwykłym pyta
 Pokaż logi taska extract z runu etl__r1.
 ```
 
-AI Chat dołącza maksymalnie trzy końcowe fragmenty logów, po maksymalnie 8 KiB każdy. Najpierw wybiera task wymieniony w pytaniu, a potem taski zakończone błędem lub timeoutem. Fragmenty są redagowane pod kątem typowych zapisów sekretów, ale **redakcja może nie wykryć każdego sekretu**.
+Agent użyje narzędzia do odczytania końcówki logu wskazanego taska. Na jedną odpowiedź może odczytać logi maksymalnie trzech tasków, a każdy fragment ma limit 8 KiB. Fragmenty są redagowane pod kątem typowych zapisów sekretów, ale **redakcja może nie wykryć każdego sekretu**.
 
-Gdy w konsoli jest skonfigurowany AI Provider, dane runu/tasków z pytania o Run ID są wysyłane do tego providera w celu ułożenia odpowiedzi. Jeśli poprosisz o logi, do providera trafią również wybrane, ograniczone fragmenty logów. Nie proś o analizę logów zawierających dane, których nie wolno wysyłać do skonfigurowanego providera. Pełne logi nadal sprawdzisz na stronie runu.
+Po odpowiedzi o logach możesz dopytać zwykłym językiem, na przykład:
+
+```text
+Jaki skrypt był użyty w tym kroku?
+```
+
+Agent powinien użyć kontekstu rozmowy, odnaleźć Run ID i task, a potem odczytać polecenie z zapisanej definicji runu. Nie trzeba powtarzać całego Run ID. Jeśli nie ma dość kontekstu albo task występuje w kilku runach, agent powinien poprosić o wskazanie właściwego.
+
+Gdy w konsoli jest skonfigurowany AI Provider, agent wysyła do niego pytanie i tylko te dane runu/taska, których potrzebuje do odpowiedzi. Gdy pytasz o użyty skrypt, może przekazać modelowi polecenie zapisane w definicji runu. Gdy prosisz o logi (albo odpowiedź wymaga sprawdzenia wyniku wykonania), do providera trafiają również wybrane, ograniczone fragmenty logów. Nie proś o analizę danych, których nie wolno wysyłać do skonfigurowanego providera. Pełne logi nadal sprawdzisz na stronie runu.
 
 ## Krok 7: uważaj na przyciski działań
 
@@ -119,11 +131,11 @@ Przycisk **Kopiuj komendę CLI** kopiuje tekst polecenia. Samo kopiowanie nie ur
 
 W trybie **Dokumentacja** aplikacja przeszukuje wbudowaną bazę wiedzy, zbudowaną z wybranych dokumentów projektu, przykładowych DAG-ów i skryptów. Jeśli skonfigurowano **AI Provider**, może użyć go do ułożenia odpowiedzi na podstawie znalezionych fragmentów. Ten tryb nie odczytuje danych runtime.
 
-W trybie **Analiza runów** aplikacja może pokazać maksymalnie 10 najnowszych runów aktywnych DAG-ów albo pobrać stan konkretnego runu i jego tasków bezpośrednio z bazy Cronovy. Logi odczytuje dopiero wtedy, gdy poprosisz o nie wprost. AI Chat nie musi znać każdego DAG-a utworzonego przez Ciebie ani każdej zmiany w Twoim projekcie. Traktuj ją jak pomoc w odnajdywaniu informacji, a nie jak kogoś, kto na pewno widział wszystko, co znajduje się na Twoim komputerze.
+W trybie **Analiza runów** agent korzysta z ograniczonych narzędzi odczytowych: może znaleźć maksymalnie 10 najnowszych runów, sprawdzić konkretny run lub task, odczytać polecenie taska z niezmiennej definicji runu oraz — gdy jest to potrzebne — pobrać redagowaną końcówkę logu. Nie ma narzędzi do uruchamiania, edycji ani usuwania danych. Agent widzi tylko dane dostępne w bazie Cronovy i dostępnych plikach logów; może nie widzieć każdej zmiany w plikach projektu.
 
 ## Czy AI Provider jest potrzebny?
 
-**AI Chat może działać również bez skonfigurowanego AI Provider.** W trybie Dokumentacja Cronova nadal przeszukuje bazę wiedzy. W trybie Analiza runów może wyświetlić znalezioną listę, status i taski bez modelu. Odpowiedź może być prostsza.
+W trybie **Dokumentacja** provider jest opcjonalny: bez niego Cronova nadal przeszukuje bazę wiedzy i pokazuje znalezione fragmenty. W trybie **Analiza runów** do naturalnej rozmowy, wyszukiwania taska bez Run ID i pytań uzupełniających potrzebny jest AI Provider z modelem obsługującym tool/function calling. Bez providera pozostaje prostszy odczyt listy lub runu wskazanego pełnym Run ID.
 
 Po skonfigurowaniu providera odpowiedzi mogą być układane przez model. To jednak nie gwarantuje, że model będzie dostępny ani że zawsze odpowie poprawnie. Przed ważną zmianą sprawdź podane źródło lub dokumentację.
 
@@ -134,15 +146,15 @@ Spróbuj kolejno:
 1. Zadaj krótsze i bardziej konkretne pytanie.
 2. Dodaj nazwę funkcji, o którą pytasz, na przykład `DAG`, `task`, `retry` albo `harmonogram`.
 3. Otwórz podane źródło i sprawdź, czy dotyczy Twojego pytania.
-4. Jeśli pytasz o dane runtime, wybierz tryb **Analiza runów**; możesz najpierw poprosić o listę albo wkleić dokładny Run ID, np. `etl__r1`.
+4. Jeśli pytasz o dane runtime, wybierz tryb **Analiza runów**. Możesz podać Run ID, nazwać task albo poprosić o listę; jeśli jest kilka pasujących runów, wskaż właściwy.
 5. Jeśli AI Chat odpowie, że runu nie znaleziono, sprawdź identyfikator i upewnij się, że run nie został już usunięty przez retencję.
-6. Jeśli ekran pokaże **Błąd połączenia z AI Chat**, sprawdź, czy jesteś zalogowany i czy konsola Cronova działa. Jeśli problem powtarza się po skonfigurowaniu providera, administrator powinien sprawdzić jego endpoint, model, token i dostępność usługi.
+6. Jeśli ekran pokaże **Błąd połączenia z AI Chat**, sprawdź, czy jesteś zalogowany i czy konsola Cronova działa. Jeśli Analiza runów pokaże, że provider/model nie obsługuje tool/function calling, wybierz model zgodny z OpenAI-compatible tool calling.
 7. Jeśli generowanie odpowiedzi przez AI się nie powiedzie, sprawdź wyświetlone dane/źródło runtime; sama awaria modelu nie oznacza, że odczyt stanu runu się nie udał.
 
 ## Czy rozmowa zostaje zapisana?
 
-Na ekranie AI Chat nie ma funkcji trwałego zapisywania ani przeglądania historii rozmów. W tej samej otwartej stronie AI Chat zachowuje oddzielny, tymczasowy kontekst dla każdego trybu, aby pytania z Dokumentacji nie mieszały się z Analizą runów. Historia nie jest przechowywana na stałe. Jeśli odpowiedź jest ważna, skopiuj ją samodzielnie.
+Na ekranie AI Chat nie ma funkcji trwałego zapisywania ani przeglądania historii rozmów. W tej samej otwartej stronie AI Chat zachowuje oddzielny, tymczasowy kontekst dla każdego trybu, aby pytania z Dokumentacji nie mieszały się z Analizą runów. W trybie Analiza kontekst pomaga agentowi odnaleźć wcześniejsze Run ID i taski; pełne logi nie są dopisywane do kolejnych pytań, a potrzebne dane agent pobiera ponownie przez narzędzia. Historia nie jest przechowywana na stałe. Jeśli odpowiedź jest ważna, skopiuj ją samodzielnie.
 
 ## Gotowe
 
-Potrafisz już wybrać tryb AI Chat, znaleźć dokumentację, wyświetlić najnowsze runy, przeanalizować konkretny run i poprosić o ograniczone fragmenty jego logów — wiedząc, że dane runtime i żądane logi mogą zostać wysłane do skonfigurowanego AI Provider.
+Potrafisz już wybrać tryb AI Chat, znaleźć dokumentację, rozmawiać z agentem o runach i taskach, odszukać task bez powtarzania Run ID oraz poprosić o ograniczone fragmenty logów — wiedząc, że potrzebne dane runtime, polecenia i żądane logi mogą zostać wysłane do skonfigurowanego AI Provider.

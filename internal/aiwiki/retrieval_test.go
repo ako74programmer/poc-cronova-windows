@@ -23,9 +23,44 @@ type chatRequest struct {
 	} `json:"messages"`
 }
 
+type agentChatRequest struct {
+	ToolChoice string `json:"tool_choice"`
+	Tools      []struct {
+		Type     string `json:"type"`
+		Function struct {
+			Name string `json:"name"`
+		} `json:"function"`
+	} `json:"tools"`
+	Messages []struct {
+		Role       string          `json:"role"`
+		Content    string          `json:"content"`
+		ToolCallID string          `json:"tool_call_id"`
+		ToolCalls  json.RawMessage `json:"tool_calls"`
+	} `json:"messages"`
+}
+
 func writeChatResponse(w http.ResponseWriter, content string) {
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = fmt.Fprintf(w, `{"choices":[{"message":{"content":%q}}]}`, content)
+}
+
+func writeToolCallResponse(w http.ResponseWriter, name string, args any) {
+	w.Header().Set("Content-Type", "application/json")
+	arguments, err := json.Marshal(args)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	response := map[string]any{
+		"choices": []any{map[string]any{"message": map[string]any{
+			"role": "assistant",
+			"tool_calls": []any{map[string]any{
+				"id": "call-test-1", "type": "function",
+				"function": map[string]any{"name": name, "arguments": string(arguments)},
+			}},
+		}}},
+	}
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 func TestAskExpansionFindsInstallDocsWithTypoAndFollowUpHistory(t *testing.T) {
@@ -402,14 +437,31 @@ func TestAskReadsLogsFromRunIDInPunctuatedRuntimeHistory(t *testing.T) {
 }
 
 func TestAskPassesRuntimeEvidenceToConfiguredProvider(t *testing.T) {
+	calls := 0
 	var received string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var req chatRequest
+		calls++
+		var req agentChatRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Errorf("decode request: %v", err)
 		}
+		if calls == 1 {
+			var hasInspectRun bool
+			for _, tool := range req.Tools {
+				if tool.Function.Name == "inspect_run" {
+					hasInspectRun = true
+				}
+			}
+			if req.ToolChoice != "auto" || !hasInspectRun {
+				t.Errorf("agent did not offer the read-only inspect_run tool: %+v", req)
+			}
+			writeToolCallResponse(w, "inspect_run", map[string]string{"run_id": "etl__r1"})
+			return
+		}
 		for _, msg := range req.Messages {
-			received += msg.Content
+			if msg.Role == "tool" {
+				received += msg.Content
+			}
 		}
 		writeChatResponse(w, "Run etl__r1 failed; task extract also failed.")
 	}))
@@ -420,6 +472,9 @@ func TestAskPassesRuntimeEvidenceToConfiguredProvider(t *testing.T) {
 	if !strings.Contains(answer.Answer, "task extract") {
 		t.Fatalf("unexpected model answer: %s", answer.Answer)
 	}
+	if calls != 2 {
+		t.Fatalf("provider calls = %d, want one tool call and one final answer", calls)
+	}
 	if !strings.Contains(received, "Run ID: etl__r1") || !strings.Contains(received, "Task extract: state=failed") {
 		t.Fatalf("provider did not receive the live runtime fields: %s", received)
 	}
@@ -429,14 +484,22 @@ func TestAskPassesRuntimeEvidenceToConfiguredProvider(t *testing.T) {
 }
 
 func TestAskSendsOnlyRedactedLogExcerptToProvider(t *testing.T) {
+	calls := 0
 	var received string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var req chatRequest
+		calls++
+		var req agentChatRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Errorf("decode request: %v", err)
 		}
+		if calls == 1 {
+			writeToolCallResponse(w, "get_task_logs", map[string]string{"run_id": "etl__r1", "task_id": "extract"})
+			return
+		}
 		for _, msg := range req.Messages {
-			received += msg.Content
+			if msg.Role == "tool" {
+				received += msg.Content
+			}
 		}
 		writeChatResponse(w, "The log reports a disk error.")
 	}))
@@ -449,6 +512,149 @@ func TestAskSendsOnlyRedactedLogExcerptToProvider(t *testing.T) {
 	}
 	if !strings.Contains(received, "error: disk unavailable") {
 		t.Fatalf("provider did not receive the requested log evidence: %s", received)
+	}
+	if calls != 2 {
+		t.Fatalf("provider calls = %d, want one tool call and one final answer", calls)
+	}
+}
+
+func TestRedactLogCoversCLISecretFlags(t *testing.T) {
+	input := `Bearer bearer-secret --api-key="key-secret" -Token token-secret --password password-secret`
+	got := redactLog(input)
+	for _, secret := range []string{"bearer-secret", "key-secret", "token-secret", "password-secret"} {
+		if strings.Contains(got, secret) {
+			t.Fatalf("redacted text still contains %q: %s", secret, got)
+		}
+	}
+	if strings.Count(got, "[REDACTED]") < 4 {
+		t.Fatalf("expected bearer and CLI flag values to be redacted: %s", got)
+	}
+}
+
+func TestRunAnalysisAgentResolvesScriptFollowUpFromHistory(t *testing.T) {
+	calls := 0
+	var sawToolResult bool
+	var sawCommandRedacted bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		var req agentChatRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
+		if calls == 1 {
+			var sawCurrentQuestion, sawPriorTaskAndRun bool
+			var hasInspectTask bool
+			for _, message := range req.Messages {
+				if message.Role == "user" && strings.Contains(message.Content, "jaki skrypt był użyty") {
+					sawCurrentQuestion = true
+				}
+				if message.Role == "assistant" && strings.Contains(message.Content, "runs/etl__r1") && strings.Contains(message.Content, "springboot_validate_config") {
+					sawPriorTaskAndRun = true
+				}
+			}
+			for _, tool := range req.Tools {
+				if tool.Function.Name == "inspect_task" {
+					hasInspectTask = true
+				}
+			}
+			if !sawCurrentQuestion || !sawPriorTaskAndRun || !hasInspectTask {
+				t.Errorf("agent request omitted current follow-up, prior run/task context, or tool: %+v", req)
+			}
+			writeToolCallResponse(w, "inspect_task", map[string]string{
+				"run_id": "etl__r1", "task_id": "springboot_validate_config",
+			})
+			return
+		}
+		for _, message := range req.Messages {
+			if message.Role == "tool" && strings.Contains(message.Content, `"configured_command"`) {
+				sawToolResult = strings.Contains(message.Content, "springboot-validate-config.ps1")
+				sawCommandRedacted = strings.Contains(message.Content, "[REDACTED]") && !strings.Contains(message.Content, "command-secret")
+			}
+		}
+		writeChatResponse(w, "W tasku springboot_validate_config użyto skryptu springboot-validate-config.ps1.")
+	}))
+	defer server.Close()
+
+	wiki, stub := setupRuntimeWiki(t, "")
+	stub.tasks[0].TaskID = "springboot_validate_config"
+	stub.tasks[0].State = model.TaskSuccess
+	stub.run.DefinitionYAML = `dag_id: etl
+start_date: "2026-10-10"
+tasks:
+  - id: springboot_validate_config
+    type: powershell
+    command: '& .\\internal\\scripts\\springboot-validate-config.ps1 -Token command-secret -Config configs\\sdlc-springboot.yaml -Artifacts artifacts\\springboot'
+`
+	stub.providers = []*model.AIProvider{{ID: "test", Name: "test", BaseURL: server.URL, Model: "test-model", Default: true}}
+	answer := wiki.AskWithModeHistory(context.Background(), "jaki skrypt był użyty w tym kroku?", "pl", ModeRunAnalysis, []Message{
+		{Role: "user", Content: "daj mi logi: springboot_validate_config"},
+		{Role: "assistant", Content: "Runtime answer shown. Sources:\nruns/etl__r1 — Task springboot_validate_config log (redacted tail)"},
+	})
+	if calls != 2 || !sawToolResult || !sawCommandRedacted {
+		t.Fatalf("agent did not safely inspect the task command through tools (calls=%d, tool result=%v, redacted=%v)", calls, sawToolResult, sawCommandRedacted)
+	}
+	if !strings.Contains(answer.Answer, "springboot-validate-config.ps1") {
+		t.Fatalf("agent did not answer the script follow-up: %s", answer.Answer)
+	}
+	if len(answer.Sources) == 0 || !strings.Contains(answer.Sources[0].Section, "springboot_validate_config") {
+		t.Fatalf("agent did not cite the task source: %+v", answer.Sources)
+	}
+}
+
+func TestRunAnalysisAgentFindsTaskAndReadsLogWithoutRunID(t *testing.T) {
+	calls := 0
+	var sawTaskMatch, sawRedactedLog bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		var req agentChatRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
+		switch calls {
+		case 1:
+			writeToolCallResponse(w, "find_recent_task", map[string]any{"task_id": "springboot_validate_config", "limit": 10})
+		case 2:
+			for _, message := range req.Messages {
+				if message.Role == "tool" && strings.Contains(message.Content, "run_id") && strings.Contains(message.Content, "etl__r1") {
+					sawTaskMatch = true
+				}
+			}
+			writeToolCallResponse(w, "get_task_logs", map[string]string{
+				"run_id": "etl__r1", "task_id": "springboot_validate_config",
+			})
+		default:
+			for _, message := range req.Messages {
+				if message.Role == "tool" && strings.Contains(message.Content, "log_tail_redacted") {
+					sawRedactedLog = strings.Contains(message.Content, "[REDACTED]") && !strings.Contains(message.Content, "do-not-send")
+				}
+			}
+			writeChatResponse(w, "Znalazłem log taska w runie etl__r1.")
+		}
+	}))
+	defer server.Close()
+
+	wiki, stub := setupRuntimeWiki(t, "password=do-not-send\ncommand: .\\internal\\scripts\\springboot-validate-config.ps1\n")
+	stub.tasks[0].TaskID = "springboot_validate_config"
+	stub.providers = []*model.AIProvider{{ID: "test", Name: "test", BaseURL: server.URL, Model: "test-model", Default: true}}
+	answer := wiki.AskWithModeHistory(context.Background(), "daj mi logi: springboot_validate_config", "pl", ModeRunAnalysis, nil)
+	if calls != 3 || !sawTaskMatch || !sawRedactedLog {
+		t.Fatalf("task-only request did not use find/log tools safely (calls=%d, match=%v, redacted=%v)", calls, sawTaskMatch, sawRedactedLog)
+	}
+	if !strings.Contains(answer.Answer, "etl__r1") || len(answer.Sources) == 0 {
+		t.Fatalf("agent did not return the matched run and source: %+v", answer)
+	}
+}
+
+func TestRecentRunActionsAreBuiltFromAgentSources(t *testing.T) {
+	sources := []Source{
+		{Type: "runtime", Path: "runs/etl__r1", Section: "Recent runs"},
+		{Type: "runtime", Path: "runs/etl__r2", Section: "Recent runs"},
+		{Type: "runtime", Path: "runs/etl__r1", Section: "Recent runs"},
+		{Type: "runtime", Path: "runs/etl__r3", Section: "Run status and task instances"},
+	}
+	actions := recentRunActions(sources, "pl")
+	if len(actions) != 2 || actions[0].Type != "inspect_run" || actions[0].RunID != "etl__r1" || actions[0].Label != "Analizuj ten run" || actions[1].RunID != "etl__r2" {
+		t.Fatalf("unexpected actions built from recent-run sources: %+v", actions)
 	}
 }
 

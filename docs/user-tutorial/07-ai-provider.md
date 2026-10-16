@@ -75,6 +75,8 @@ Po zapisaniu provider pojawi się na liście. Zobaczysz jego ID, nazwę, adres, 
 
 W formularzu nie ma przycisku **Test connection**. Zapisanie konfiguracji oznacza, że Cronova ją przyjęła — **nie potwierdza**, że adres, token i model zadziałają podczas prawdziwego zapytania. Sprawdzimy to w kolejnej części, używając AI Chat.
 
+Ważne: dla trybu **Analiza runów** wybierz usługę i model obsługujące **OpenAI-compatible tool/function calling** (`tools` i `tool_calls`). Sam fakt, że provider odpowiada na zwykłe pytanie tekstowe, nie potwierdza obsługi narzędzi. Jeśli nie masz pewności, sprawdź dokumentację dostawcy albo poproś administratora.
+
 ## Jeśli edytujesz istniejący provider
 
 Pole tokena przy edycji może być puste. Jeśli token był już zapisany i chcesz go zachować, zostaw to pole puste. Wpisanie nowego tokena zastąpi poprzedni.

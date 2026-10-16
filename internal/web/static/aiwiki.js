@@ -435,12 +435,10 @@
       const answer = data.answer || t('aiwiki_fallback');
       const sources = data.sources || [];
       addMsg(answer, 'bot', { sources, actions: data.actions }, conversation);
-      const runtimeSource = sources.find(s => s.type === 'runtime' || s.type === 'runtime_log');
-      const isRecentRunsList = mode === 'run_analysis' && sources.some(s => s.section === 'Recent runs');
-      const historyAnswer = isRecentRunsList
-        ? 'Cronova returned a list of recent runs. Select one specific Run ID for follow-up.'
-        : runtimeSource
-        ? 'Cronova runtime data was shown for ' + runtimeSource.path.replace(/^runs\//, '') + '.'
+      const runtimeSources = sources.filter(s => s.type === 'runtime' || s.type === 'runtime_log');
+      const historyAnswer = mode === 'run_analysis' && runtimeSources.length
+        ? 'A runtime answer was shown to the user. Use the preceding user messages to resolve references, and call read-only tools again for evidence. Do not assume this summary contains the runtime facts. Sources:\n' +
+          runtimeSources.map(s => `${s.path}${s.section ? ' — ' + s.section : ''}`).join('\n')
         : answer;
       conversation.history.push({ role: 'user', content: q }, { role: 'assistant', content: historyAnswer });
       if (conversation.history.length > 8) conversation.history = conversation.history.slice(-8);

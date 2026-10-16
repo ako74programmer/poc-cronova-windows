@@ -27,6 +27,7 @@ var runFollowUpPattern = regexp.MustCompile(`(?i)\b(?:run|status|state|failed|fa
 var polishRunStatePattern = regexp.MustCompile(`(?i)(^|[^\pL])stan(?:$|[^\pL])`)
 var bearerSecretPattern = regexp.MustCompile(`(?i)\b(bearer\s+)[A-Za-z0-9._~+/-]+=*`)
 var assignmentSecretPattern = regexp.MustCompile(`(?i)("?(?:api[ _-]?(?:key|token)|access[_-]?token|refresh[_-]?token|token|password|passwd|secret|client[_-]?secret)"?\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s,;]+)`)
+var flagSecretPattern = regexp.MustCompile(`(?i)(--?(?:api[ _-]?(?:key|token)|access[_-]?token|refresh[_-]?token|token|password|passwd|secret|client[_-]?secret)(?:\s+|=)\s*)("[^"]*"|'[^']*'|[^\s,;]+)`)
 
 //go:embed knowledge-base.json
 var knowledgeBaseJSON []byte
@@ -119,10 +120,10 @@ func (w *Wiki) AskWithHistory(ctx context.Context, question, lang string, histor
 // An empty or unknown mode fails closed to documentation mode.
 func (w *Wiki) AskWithModeHistory(ctx context.Context, question, lang string, mode ChatMode, history []Message) Answer {
 	w.refreshLLM(ctx)
-	history = boundedHistory(history)
 	if mode == ModeRunAnalysis {
-		return w.askRunAnalysis(ctx, question, lang, history)
+		return w.askRunAnalysis(ctx, question, lang, boundedAgentHistory(history))
 	}
+	history = boundedHistory(history)
 	if isRuntimeRequest(question, history) {
 		if isPolishLanguage(lang) {
 			return Answer{Answer: "To pytanie dotyczy danych runtime. Przełącz **Tryb** na **Analiza runów**, aby wyświetlić listę runów lub sprawdzić konkretny Run ID."}
@@ -176,6 +177,41 @@ func (w *Wiki) AskWithModeHistory(ctx context.Context, question, lang string, mo
 }
 
 func (w *Wiki) askRunAnalysis(ctx context.Context, question, lang string, history []Message) Answer {
+	if w.llm != nil {
+		answer, sources, err := w.llm.runAnalysisAgent(ctx, question, history, w.executeRuntimeTool)
+		if err != nil {
+			if isPolishLanguage(lang) {
+				return Answer{Answer: "Nie udało się dokończyć analizy runów przez AI Provider. Sprawdź, czy provider i model obsługują OpenAI-compatible tool/function calling.", Sources: sources}
+			}
+			return Answer{Answer: "The run-analysis agent could not complete this request. Check that the configured provider and model support OpenAI-compatible tool/function calling.", Sources: sources}
+		}
+		return Answer{Answer: answer, Sources: sources, Actions: recentRunActions(sources, lang)}
+	}
+	return w.askRunAnalysisWithoutProvider(ctx, question, lang, history)
+}
+
+func recentRunActions(sources []Source, lang string) []Action {
+	actions := make([]Action, 0)
+	seen := make(map[string]bool)
+	label := "Analyze this run"
+	if isPolishLanguage(lang) {
+		label = "Analizuj ten run"
+	}
+	for _, source := range sources {
+		if source.Section != "Recent runs" || !strings.HasPrefix(source.Path, "runs/") {
+			continue
+		}
+		runID := strings.TrimPrefix(source.Path, "runs/")
+		if runID == "" || seen[runID] {
+			continue
+		}
+		seen[runID] = true
+		actions = append(actions, Action{Type: "inspect_run", Label: label, RunID: runID})
+	}
+	return actions
+}
+
+func (w *Wiki) askRunAnalysisWithoutProvider(ctx context.Context, question, lang string, history []Message) Answer {
 	runID, ambiguous := requestedRunID(question, history)
 	if ambiguous {
 		if isPolishLanguage(lang) {
@@ -685,7 +721,8 @@ func readLogTail(path string, maxBytes int64) (string, error) {
 
 func redactLog(text string) string {
 	text = bearerSecretPattern.ReplaceAllString(text, `${1}[REDACTED]`)
-	return assignmentSecretPattern.ReplaceAllString(text, `${1}[REDACTED]`)
+	text = assignmentSecretPattern.ReplaceAllString(text, `${1}[REDACTED]`)
+	return flagSecretPattern.ReplaceAllString(text, `${1}[REDACTED]`)
 }
 
 // isRelevant decides whether the top BM25 hit is strong enough to base an

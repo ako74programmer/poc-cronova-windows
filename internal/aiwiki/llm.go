@@ -130,6 +130,61 @@ func (c *LLMClient) complete(ctx context.Context, messages []map[string]string) 
 	return result.Choices[0].Message.Content, nil
 }
 
+// completeWithTools asks an OpenAI-compatible chat completions endpoint to
+// answer or request one or more function calls. The caller validates and
+// executes every requested function against its own read-only allowlist.
+func (c *LLMClient) completeWithTools(ctx context.Context, messages []agentChatMessage, tools []agentToolSpec) (agentChatMessage, error) {
+	if c == nil || c.provider == nil {
+		return agentChatMessage{}, fmt.Errorf("no AI provider configured")
+	}
+	body, err := json.Marshal(map[string]any{
+		"model":       c.provider.Model,
+		"messages":    messages,
+		"tools":       tools,
+		"tool_choice": "auto",
+		"temperature": 0.2,
+	})
+	if err != nil {
+		return agentChatMessage{}, err
+	}
+	endpoint, err := chatCompletionsURL(c.provider.BaseURL)
+	if err != nil {
+		return agentChatMessage{}, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
+	if err != nil {
+		return agentChatMessage{}, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if c.provider.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.provider.Token)
+	}
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return agentChatMessage{}, err
+	}
+	defer resp.Body.Close()
+	respBody, err := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
+	if err != nil {
+		return agentChatMessage{}, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return agentChatMessage{}, fmt.Errorf("LLM tool request returned %d: %s", resp.StatusCode, string(respBody))
+	}
+	var result struct {
+		Choices []struct {
+			Message agentChatMessage `json:"message"`
+		} `json:"choices"`
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return agentChatMessage{}, err
+	}
+	if len(result.Choices) == 0 {
+		return agentChatMessage{}, fmt.Errorf("no choices in LLM response")
+	}
+	return result.Choices[0].Message, nil
+}
+
 func parseQueryVariants(content string) []string {
 	content = strings.TrimSpace(content)
 	content = strings.TrimPrefix(content, "```json")
