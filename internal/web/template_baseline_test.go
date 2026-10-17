@@ -29,6 +29,9 @@ func TestStarterTemplateBaseline(t *testing.T) {
 	if strings.Contains(text, "const NV_TEMPLATES = {") {
 		t.Fatal("novice starter definitions are duplicated outside the shared catalog")
 	}
+	if !strings.Contains(text, "function expertTemplateGroupsHtml()") || !strings.Contains(text, "DAG_TEMPLATES.filter((tp) => tp.category === category)") {
+		t.Fatal("expert starter modal no longer renders category groups from the catalog")
+	}
 
 	for _, key := range []string{"key: \"blank\"", "key: \"etl\"", "key: \"report\"", "key: \"fanout\"", "key: \"build\"", "key: \"quality_gate\""} {
 		if got := strings.Count(text, key); got != 1 {
@@ -40,11 +43,13 @@ func TestStarterTemplateBaseline(t *testing.T) {
 		name string
 		want string
 	}{
-		{"blank has no tasks", "key: \"blank\", name: \"tpl_blank\", desc: \"tpl_blank_d\", tasks: []"},
+		{"blank has no tasks", "key: \"blank\", category: \"general\", name: \"tpl_blank\", desc: \"tpl_blank_d\", tasks: []"},
+		{"build is software delivery", "key: \"build\", category: \"sdlc\", name: \"tpl_build\""},
+		{"quality gate is software delivery", "key: \"quality_gate\", category: \"sdlc\", name: \"tpl_quality_gate\""},
 		{"etl extract task", "{ id: \"extract\", type: \"powershell\", command: \"Write-Output extract {{ logical_date }}; Start-Sleep 1\" }"},
 		{"etl transform dependency", "{ id: \"transform\", type: \"powershell\", command: \"Write-Output transform; Start-Sleep 1\", deps: [\"extract\"] }"},
 		{"etl load dependency", "{ id: \"load\", type: \"powershell\", command: \"Write-Output load run={{ run_id }}; Start-Sleep 1\", deps: [\"transform\"] }"},
-		{"report schedule", "key: \"report\", name: \"tpl_report\", desc: \"tpl_report_d\", schedule: \"0 8 * * *\""},
+		{"report schedule", "key: \"report\", category: \"general\", name: \"tpl_report\", desc: \"tpl_report_d\", schedule: \"0 8 * * *\""},
 		{"report fetch task", "{ id: \"fetch\", type: \"powershell\", command: \"Write-Output fetch data for {{ logical_date }}; Start-Sleep 1\" }"},
 		{"report render dependency", "{ id: \"render\", type: \"powershell\", command: \"Write-Output render report; Start-Sleep 1\", deps: [\"fetch\"] }"},
 		{"fanout start task", "{ id: \"start\", type: \"powershell\", command: \"Write-Output start; Start-Sleep 1\" }"},

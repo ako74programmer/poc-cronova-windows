@@ -176,13 +176,13 @@ function wireSchedBody() {
 // /api/dags/build endpoint.
 const WORKFLOW_TEMPLATES = [
   {
-    key: "blank", name: "tpl_blank", desc: "tpl_blank_d", tasks: [],
+    key: "blank", category: "general", name: "tpl_blank", desc: "tpl_blank_d", tasks: [],
     novice: { defName: "my_first_flow", steps: [
       { id: "step_1", cmd: "Write-Output hello cronova" },
     ] },
   },
   {
-    key: "etl", name: "tpl_etl", desc: "tpl_etl_d", tasks: [
+    key: "etl", category: "general", name: "tpl_etl", desc: "tpl_etl_d", tasks: [
       { id: "extract", type: "powershell", command: "Write-Output extract {{ logical_date }}; Start-Sleep 1" },
       { id: "transform", type: "powershell", command: "Write-Output transform; Start-Sleep 1", deps: ["extract"] },
       { id: "load", type: "powershell", command: "Write-Output load run={{ run_id }}; Start-Sleep 1", deps: ["transform"] },
@@ -194,7 +194,7 @@ const WORKFLOW_TEMPLATES = [
     ] },
   },
   {
-    key: "report", name: "tpl_report", desc: "tpl_report_d", schedule: "0 8 * * *", tasks: [
+    key: "report", category: "general", name: "tpl_report", desc: "tpl_report_d", schedule: "0 8 * * *", tasks: [
       { id: "fetch", type: "powershell", command: "Write-Output fetch data for {{ logical_date }}; Start-Sleep 1" },
       { id: "render", type: "powershell", command: "Write-Output render report; Start-Sleep 1", deps: ["fetch"] },
     ],
@@ -204,7 +204,7 @@ const WORKFLOW_TEMPLATES = [
     ] },
   },
   {
-    key: "fanout", name: "tpl_fanout", desc: "tpl_fanout_d", tasks: [
+    key: "fanout", category: "general", name: "tpl_fanout", desc: "tpl_fanout_d", tasks: [
       { id: "start", type: "powershell", command: "Write-Output start; Start-Sleep 1" },
       { id: "branch_a", type: "powershell", command: "Write-Output branch A; Start-Sleep 1", deps: ["start"] },
       { id: "branch_b", type: "powershell", command: "Write-Output branch B; Start-Sleep 1", deps: ["start"] },
@@ -212,14 +212,14 @@ const WORKFLOW_TEMPLATES = [
     ],
   },
   {
-    key: "build", name: "tpl_build", desc: "tpl_build_d", tasks: [
+    key: "build", category: "sdlc", name: "tpl_build", desc: "tpl_build_d", tasks: [
       { id: "build", type: "powershell", command: "Write-Output 'Build step - replace with your build command'" },
       { id: "test", type: "powershell", command: "Write-Output 'Test step - replace with your test command'", deps: ["build"] },
       { id: "package", type: "powershell", command: "Write-Output 'Package step - replace with your package command'", deps: ["test"] },
     ],
   },
   {
-    key: "quality_gate", name: "tpl_quality_gate", desc: "tpl_quality_gate_d", tasks: [
+    key: "quality_gate", category: "sdlc", name: "tpl_quality_gate", desc: "tpl_quality_gate_d", tasks: [
       { id: "lint", type: "powershell", command: "Write-Output 'Lint check - replace with your lint command'" },
       { id: "unit_tests", type: "powershell", command: "Write-Output 'Unit tests - replace with your test command'" },
       { id: "security_scan", type: "powershell", command: "Write-Output 'Security scan - replace with your scan command'" },
@@ -227,13 +227,21 @@ const WORKFLOW_TEMPLATES = [
     ],
   },
 ];
-const DAG_TEMPLATES = WORKFLOW_TEMPLATES.map(({ key, name, desc, schedule, tasks }) => ({ key, name, desc, schedule, tasks }));
+const DAG_TEMPLATES = WORKFLOW_TEMPLATES.map(({ key, category, name, desc, schedule, tasks }) => ({ key, category, name, desc, schedule, tasks }));
 const NV_TEMPLATES = Object.fromEntries(WORKFLOW_TEMPLATES.filter((tp) => tp.novice).map((tp) => [tp.key, tp.novice]));
 const NV_TEMPLATE_KEYS = WORKFLOW_TEMPLATES.filter((tp) => tp.novice).map((tp) => tp.key);
 function newDagModal() {
   const blank = () => parseScheduleState({ dag_id: "", schedule: "", start_date: "", catchup: false, max_active_runs: 1, default_retries: 0 });
   api("/api/dags").then((list) => { ND = { existing: new Set(list.map((d) => d.dag_id)), dag: blank(), template: "blank" }; renderNewDag(); })
     .catch(() => { ND = { existing: new Set(), dag: blank(), template: "blank" }; renderNewDag(); });
+}
+function expertTemplateGroupsHtml() {
+  const card = (tp) => `<div class="tpl-card ${ND.template === tp.key ? "on" : ""}" data-tpl="${tp.key}" role="button" tabindex="0" aria-pressed="${ND.template === tp.key}"><div class="tpl-name">${t(tp.name)}</div><div class="tpl-desc">${t(tp.desc)}</div>${tp.tasks.length ? `<div class="tpl-meta">${tp.tasks.length} ${t("tpl_tasks")}${tp.schedule ? " · cron" : ""}</div>` : ""}</div>`;
+  return ["general", "sdlc"].map((category) => {
+    const templates = DAG_TEMPLATES.filter((tp) => tp.category === category);
+    if (!templates.length) return "";
+    return `<div class="tpl-group"><div class="b-sec">${t("tpl_cat_" + category)}</div><div class="tpl-cards">${templates.map(card).join("")}</div></div>`;
+  }).join("");
 }
 function renderNewDag() {
   const opener = document.activeElement; // restore focus here on close
@@ -246,7 +254,7 @@ function renderNewDag() {
       <div style="margin-top:14px"><a class="raw-toggle" id="nd-toyaml">${t("nd_import_yaml")}</a></div>`;
   const formBody = `
       <div class="b-sec">${t("tpl_start")}</div>
-      <div class="tpl-cards">${DAG_TEMPLATES.map((tp) => `<div class="tpl-card ${ND.template === tp.key ? "on" : ""}" data-tpl="${tp.key}" role="button" tabindex="0" aria-pressed="${ND.template === tp.key}"><div class="tpl-name">${t(tp.name)}</div><div class="tpl-desc">${t(tp.desc)}</div>${tp.tasks.length ? `<div class="tpl-meta">${tp.tasks.length} ${t("tpl_tasks")}${tp.schedule ? " · cron" : ""}</div>` : ""}</div>`).join("")}</div>
+      ${expertTemplateGroupsHtml()}
       <div class="b-field" style="margin-top:14px"><label>${t("f_dag_id")}</label><input id="nd-id" placeholder="my_workflow" value="${esc(ND.dag.dag_id)}"></div>
       <div class="nd-err" id="nd-err"></div>
       <div style="margin-top:12px"><a class="raw-toggle" id="nd-adv">${ND.advanced ? t("nd_less") : t("nd_more")}</a></div>
