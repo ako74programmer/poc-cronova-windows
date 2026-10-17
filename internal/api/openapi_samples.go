@@ -262,16 +262,51 @@ const docsHTML = `<!doctype html>
        black text renders on the UA's dark canvas). */
     html { color-scheme: light; background: #ffffff; }
     body { margin: 0; padding: 0; background: #ffffff; color: #1a1a2e; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-    #redoc-loading { padding: 3rem; color: #6b7bff; font: 500 15px/1.5 system-ui, sans-serif; }
-  </style>
+	#redoc-loading { padding: 3rem; color: #6b7bff; font: 500 15px/1.5 system-ui, sans-serif; }
+	#sample-auth { margin: 1rem auto 0; max-width: 1180px; padding: 1rem 1.25rem; border: 1px solid #dfe3f2; border-radius: 10px; background: #f8f9ff; color: #1a1a2e; font: 14px/1.45 system-ui, sans-serif; }
+	#sample-auth label { display: block; margin-bottom: .4rem; font-weight: 600; }
+	#sample-auth .sample-auth-row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+	#sample-auth input { box-sizing: border-box; flex: 1 1 28rem; min-width: 16rem; padding: .55rem .7rem; border: 1px solid #bfc6e6; border-radius: 6px; font: 14px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+	#sample-auth button { padding: .55rem .8rem; border: 1px solid #aeb7e2; border-radius: 6px; background: #fff; color: #29356f; cursor: pointer; font: 600 14px system-ui, sans-serif; }
+	#sample-auth button.primary { border-color: #6b7bff; background: #6b7bff; color: #fff; }
+	#sample-auth .sample-auth-note { margin: .55rem 0 0; color: #596079; font-size: 12px; }
+	#sample-auth-status { min-height: 1.2em; margin: .45rem 0 0; color: #356b45; font-size: 12px; }
+	</style>
 </head>
 <body>
-  <div id="redoc-container"><div id="redoc-loading">Loading cronova API reference…</div></div>
-  <script src="/redoc.standalone.js"></script>
-  <script>
-    Redoc.init('/openapi.json', {
-      hideDownloadButton: false,
-      expandResponses: '200,201',
+	<div id="sample-auth" role="region" aria-labelledby="sample-auth-title">
+	  <div id="sample-auth-title" style="font-weight:700;margin-bottom:.35rem">Token do przykładów API</div>
+	  <label for="sample-auth-token">Token Bearer</label>
+	  <div class="sample-auth-row">
+	    <input id="sample-auth-token" type="password" autocomplete="off" spellcheck="false" placeholder="Wklej token API (opcjonalnie)"/>
+	    <button id="sample-auth-apply" class="primary" type="button">Zastosuj</button>
+	    <button id="sample-auth-clear" type="button">Wyczyść</button>
+	  </div>
+	  <p class="sample-auth-note">Token jest używany wyłącznie lokalnie do uzupełnienia przykładów cURL, Go, Python i Java. Nie jest zapisywany ani wysyłany przez ten panel.</p>
+	  <div id="sample-auth-status" role="status" aria-live="polite"></div>
+	</div>
+	  <div id="redoc-container"><div id="redoc-loading">Loading cronova API reference…</div></div>
+	  <script src="/redoc.standalone.js"></script>
+	  <script>
+	    const sampleAuthToken = 'YOUR_API_TOKEN';
+	    let sampleOpenApiSpec = null;
+	    const sampleAuthInput = document.getElementById('sample-auth-token');
+	    const sampleAuthStatus = document.getElementById('sample-auth-status');
+	    function sampleSpecWithToken(token) {
+	      const spec = JSON.parse(JSON.stringify(sampleOpenApiSpec));
+	      if (!token) return spec;
+	      Object.values(spec.paths || {}).forEach((path) => Object.values(path || {}).forEach((operation) => {
+	        (operation['x-codeSamples'] || []).forEach((sample) => {
+	          if (typeof sample.source === 'string') sample.source = sample.source.split(sampleAuthToken).join(token);
+	        });
+	      }));
+	      return spec;
+	    }
+	    function renderSampleDocs(token) {
+	      document.getElementById('redoc-container').innerHTML = '<div id="redoc-loading">Loading cronova API reference…</div>';
+	      Redoc.init(sampleSpecWithToken(token), {
+	      hideDownloadButton: false,
+	      expandResponses: '200,201',
       requiredPropsFirst: true,
       pathInMiddlePanel: true,
       theme: {
@@ -282,7 +317,30 @@ const docsHTML = `<!doctype html>
           code: { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' }
         }
       }
-    }, document.getElementById('redoc-container'));
-  </script>
+	      }, document.getElementById('redoc-container'));
+	    }
+	    fetch('/openapi.json').then((response) => {
+	      if (!response.ok) throw new Error('Unable to load OpenAPI document');
+	      return response.json();
+	    }).then((spec) => {
+	      sampleOpenApiSpec = spec;
+	      renderSampleDocs('');
+	    }).catch((error) => {
+	      sampleAuthStatus.textContent = error.message;
+	      document.getElementById('redoc-container').innerHTML = '<div id="redoc-loading">Unable to load API reference.</div>';
+	    });
+	    document.getElementById('sample-auth-apply').addEventListener('click', () => {
+	      if (!sampleOpenApiSpec) return;
+	      const token = sampleAuthInput.value.trim();
+	      renderSampleDocs(token);
+	      sampleAuthStatus.textContent = token ? 'Token zastosowany lokalnie w przykładach.' : 'Przywrócono placeholder YOUR_API_TOKEN.';
+	    });
+    document.getElementById('sample-auth-clear').addEventListener('click', () => {
+      sampleAuthInput.value = '';
+      if (!sampleOpenApiSpec) return;
+      renderSampleDocs('');
+      sampleAuthStatus.textContent = 'Przywrócono placeholder YOUR_API_TOKEN.';
+    });
+	  </script>
 </body>
 </html>`

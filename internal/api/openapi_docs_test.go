@@ -41,10 +41,17 @@ func TestDocsPageEndpoint(t *testing.T) {
 		t.Errorf("Content-Type = %q, want text/html", ct)
 	}
 	page := body.(string)
-	for _, want := range []string{"Redoc.init", "/openapi.json", "cronova API reference"} {
+	for _, want := range []string{
+		"Redoc.init", "/openapi.json", "cronova API reference",
+		"sample-auth-token", "sample-auth-apply", "sample-auth-clear",
+		"sampleSpecWithToken", "YOUR_API_TOKEN", "x-codeSamples",
+	} {
 		if !strings.Contains(page, want) {
 			t.Errorf("/docs page missing %q", want)
 		}
+	}
+	if strings.Contains(page, "localStorage") || strings.Contains(page, "sessionStorage") {
+		t.Error("/docs must not persist the API token in browser storage")
 	}
 }
 
