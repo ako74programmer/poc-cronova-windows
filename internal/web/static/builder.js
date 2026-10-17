@@ -167,22 +167,41 @@ function wireSchedBody() {
 // New-DAG minimal modal: collects dag_id (+ optional schedule), creates a
 // 0-task shell, then drops into its operation page to add tasks.
 // ============================================================================
-// starter templates: selecting one creates a populated, editable DAG (client-side
-// spec -> the existing /api/dags/build). "blank" is the 0-task shell.
-const DAG_TEMPLATES = [
-  { key: "blank", name: "tpl_blank", desc: "tpl_blank_d", tasks: [] },
+// The single source of truth for starter workflows. Each entry can expose an
+// expert definition (full DAG builder) and an optional novice definition (the
+// three-step wizard). The two variants intentionally keep their existing
+// commands and defaults: the wizard optimizes for a first green run, while the
+// expert modal demonstrates template variables and the full DAG graph.
+// Selecting a starter creates a populated, editable DAG through the existing
+// /api/dags/build endpoint.
+const WORKFLOW_TEMPLATES = [
+  {
+    key: "blank", name: "tpl_blank", desc: "tpl_blank_d", tasks: [],
+    novice: { defName: "my_first_flow", steps: [
+      { id: "step_1", cmd: "Write-Output hello cronova" },
+    ] },
+  },
   {
     key: "etl", name: "tpl_etl", desc: "tpl_etl_d", tasks: [
       { id: "extract", type: "powershell", command: "Write-Output extract {{ logical_date }}; Start-Sleep 1" },
       { id: "transform", type: "powershell", command: "Write-Output transform; Start-Sleep 1", deps: ["extract"] },
       { id: "load", type: "powershell", command: "Write-Output load run={{ run_id }}; Start-Sleep 1", deps: ["transform"] },
     ],
+    novice: { defName: "my_daily_etl", steps: [
+      { id: "extract", cmd: "Start-Sleep 1; Write-Output extract" },
+      { id: "transform", cmd: "Start-Sleep 1; Write-Output transform", deps: ["extract"] },
+      { id: "load", cmd: "Start-Sleep 1; Write-Output load run={{ run_id }}", deps: ["transform"] },
+    ] },
   },
   {
     key: "report", name: "tpl_report", desc: "tpl_report_d", schedule: "0 8 * * *", tasks: [
       { id: "fetch", type: "powershell", command: "Write-Output fetch data for {{ logical_date }}; Start-Sleep 1" },
       { id: "render", type: "powershell", command: "Write-Output render report; Start-Sleep 1", deps: ["fetch"] },
     ],
+    novice: { defName: "daily_report", daily: "08:00", steps: [
+      { id: "fetch", cmd: "Start-Sleep 1; Write-Output fetch data" },
+      { id: "render", cmd: "Start-Sleep 1; Write-Output render report", deps: ["fetch"] },
+    ] },
   },
   {
     key: "fanout", name: "tpl_fanout", desc: "tpl_fanout_d", tasks: [
@@ -193,6 +212,9 @@ const DAG_TEMPLATES = [
     ],
   },
 ];
+const DAG_TEMPLATES = WORKFLOW_TEMPLATES.map(({ key, name, desc, schedule, tasks }) => ({ key, name, desc, schedule, tasks }));
+const NV_TEMPLATES = Object.fromEntries(WORKFLOW_TEMPLATES.filter((tp) => tp.novice).map((tp) => [tp.key, tp.novice]));
+const NV_TEMPLATE_KEYS = WORKFLOW_TEMPLATES.filter((tp) => tp.novice).map((tp) => tp.key);
 function newDagModal() {
   const blank = () => parseScheduleState({ dag_id: "", schedule: "", start_date: "", catchup: false, max_active_runs: 1, default_retries: 0 });
   api("/api/dags").then((list) => { ND = { existing: new Set(list.map((d) => d.dag_id)), dag: blank(), template: "blank" }; renderNewDag(); })
@@ -305,20 +327,6 @@ async function submitNewDag() {
 // their real scripts in step 2 or later from the detail page.
 // ============================================================================
 let W = null; // wizard state; survives navigating away mid-flow, cleared on create
-const NV_TEMPLATES = {
-  etl: { defName: "my_daily_etl", steps: [
-    { id: "extract", cmd: "Start-Sleep 1; Write-Output extract" },
-    { id: "transform", cmd: "Start-Sleep 1; Write-Output transform", deps: ["extract"] },
-    { id: "load", cmd: "Start-Sleep 1; Write-Output load run={{ run_id }}", deps: ["transform"] },
-  ] },
-  report: { defName: "daily_report", daily: "08:00", steps: [
-    { id: "fetch", cmd: "Start-Sleep 1; Write-Output fetch data" },
-    { id: "render", cmd: "Start-Sleep 1; Write-Output render report", deps: ["fetch"] },
-  ] },
-  blank: { defName: "my_first_flow", steps: [
-    { id: "step_1", cmd: "Write-Output hello cronova" },
-  ] },
-};
 function wzSteps() {
   return NV_TEMPLATES[W.tpl].steps.map((s, i) => ({ ...s, cmd: W.cmdEdits[s.id] ?? s.cmd, num: i + 1 }));
 }
@@ -365,7 +373,7 @@ function renderWizard() {
     body = `
       <h1>${esc(t("wz1_title"))}</h1>
       <div class="page-sub" style="margin-bottom:18px">${esc(t("wz1_sub"))}</div>
-      <div class="tpl-grid">${card("etl")}${card("report")}${card("blank")}</div>
+      <div class="tpl-grid">${NV_TEMPLATE_KEYS.map(card).join("")}</div>
       <div class="wz-foot end"><button class="primary" style="padding:9px 22px" id="wz-next">${esc(t("wz1_next"))}</button></div>`;
   } else if (W.step === 2) {
     const steps = wzSteps();

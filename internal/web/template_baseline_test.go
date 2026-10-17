@@ -17,8 +17,17 @@ func TestStarterTemplateBaseline(t *testing.T) {
 	}
 	text := string(src)
 
-	if !strings.Contains(text, "const DAG_TEMPLATES = [") {
-		t.Fatal("builder.js no longer contains the starter template catalog")
+	if !strings.Contains(text, "const WORKFLOW_TEMPLATES = [") {
+		t.Fatal("builder.js no longer contains the shared starter template catalog")
+	}
+	if !strings.Contains(text, "const DAG_TEMPLATES = WORKFLOW_TEMPLATES.map") {
+		t.Fatal("expert starter catalog is not derived from the shared catalog")
+	}
+	if !strings.Contains(text, "const NV_TEMPLATES = Object.fromEntries") {
+		t.Fatal("novice starter catalog is not derived from the shared catalog")
+	}
+	if strings.Contains(text, "const NV_TEMPLATES = {") {
+		t.Fatal("novice starter definitions are duplicated outside the shared catalog")
 	}
 
 	for _, key := range []string{"key: \"blank\"", "key: \"etl\"", "key: \"report\"", "key: \"fanout\""} {
