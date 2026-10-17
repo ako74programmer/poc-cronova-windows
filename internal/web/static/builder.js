@@ -211,6 +211,13 @@ const WORKFLOW_TEMPLATES = [
       { id: "join", type: "powershell", command: "Write-Output join; Start-Sleep 1", deps: ["branch_a", "branch_b"] },
     ],
   },
+  {
+    key: "build", name: "tpl_build", desc: "tpl_build_d", tasks: [
+      { id: "build", type: "powershell", command: "Write-Output 'Build step - replace with your build command'" },
+      { id: "test", type: "powershell", command: "Write-Output 'Test step - replace with your test command'", deps: ["build"] },
+      { id: "package", type: "powershell", command: "Write-Output 'Package step - replace with your package command'", deps: ["test"] },
+    ],
+  },
 ];
 const DAG_TEMPLATES = WORKFLOW_TEMPLATES.map(({ key, name, desc, schedule, tasks }) => ({ key, name, desc, schedule, tasks }));
 const NV_TEMPLATES = Object.fromEntries(WORKFLOW_TEMPLATES.filter((tp) => tp.novice).map((tp) => [tp.key, tp.novice]));

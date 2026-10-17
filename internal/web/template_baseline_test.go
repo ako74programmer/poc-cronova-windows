@@ -7,7 +7,7 @@ import (
 )
 
 // TestStarterTemplateBaseline documents the current expert-mode starter
-// contract before the template catalog is refactored. The starters are plain
+// contract. The starters are plain
 // JavaScript data consumed by the browser, so this test intentionally checks
 // the source contract rather than trying to execute the whole DOM builder.
 func TestStarterTemplateBaseline(t *testing.T) {
@@ -30,7 +30,7 @@ func TestStarterTemplateBaseline(t *testing.T) {
 		t.Fatal("novice starter definitions are duplicated outside the shared catalog")
 	}
 
-	for _, key := range []string{"key: \"blank\"", "key: \"etl\"", "key: \"report\"", "key: \"fanout\""} {
+	for _, key := range []string{"key: \"blank\"", "key: \"etl\"", "key: \"report\"", "key: \"fanout\"", "key: \"build\""} {
 		if got := strings.Count(text, key); got != 1 {
 			t.Errorf("starter %q occurs %d times, want exactly once", key, got)
 		}
@@ -51,6 +51,9 @@ func TestStarterTemplateBaseline(t *testing.T) {
 		{"fanout branch A dependency", "{ id: \"branch_a\", type: \"powershell\", command: \"Write-Output branch A; Start-Sleep 1\", deps: [\"start\"] }"},
 		{"fanout branch B dependency", "{ id: \"branch_b\", type: \"powershell\", command: \"Write-Output branch B; Start-Sleep 1\", deps: [\"start\"] }"},
 		{"fanout join dependencies", "{ id: \"join\", type: \"powershell\", command: \"Write-Output join; Start-Sleep 1\", deps: [\"branch_a\", \"branch_b\"] }"},
+		{"build task", "{ id: \"build\", type: \"powershell\", command: \"Write-Output 'Build step - replace with your build command'\" }"},
+		{"test depends on build", "{ id: \"test\", type: \"powershell\", command: \"Write-Output 'Test step - replace with your test command'\", deps: [\"build\"] }"},
+		{"package depends on test", "{ id: \"package\", type: \"powershell\", command: \"Write-Output 'Package step - replace with your package command'\", deps: [\"test\"] }"},
 	}
 	for _, check := range checks {
 		if !strings.Contains(text, check.want) {
