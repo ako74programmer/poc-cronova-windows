@@ -218,6 +218,14 @@ const WORKFLOW_TEMPLATES = [
       { id: "package", type: "powershell", command: "Write-Output 'Package step - replace with your package command'", deps: ["test"] },
     ],
   },
+  {
+    key: "quality_gate", name: "tpl_quality_gate", desc: "tpl_quality_gate_d", tasks: [
+      { id: "lint", type: "powershell", command: "Write-Output 'Lint check - replace with your lint command'" },
+      { id: "unit_tests", type: "powershell", command: "Write-Output 'Unit tests - replace with your test command'" },
+      { id: "security_scan", type: "powershell", command: "Write-Output 'Security scan - replace with your scan command'" },
+      { id: "quality_gate", type: "powershell", command: "Write-Output 'Quality gate passed'", deps: ["lint", "unit_tests", "security_scan"] },
+    ],
+  },
 ];
 const DAG_TEMPLATES = WORKFLOW_TEMPLATES.map(({ key, name, desc, schedule, tasks }) => ({ key, name, desc, schedule, tasks }));
 const NV_TEMPLATES = Object.fromEntries(WORKFLOW_TEMPLATES.filter((tp) => tp.novice).map((tp) => [tp.key, tp.novice]));

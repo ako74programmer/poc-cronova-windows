@@ -30,7 +30,7 @@ func TestStarterTemplateBaseline(t *testing.T) {
 		t.Fatal("novice starter definitions are duplicated outside the shared catalog")
 	}
 
-	for _, key := range []string{"key: \"blank\"", "key: \"etl\"", "key: \"report\"", "key: \"fanout\"", "key: \"build\""} {
+	for _, key := range []string{"key: \"blank\"", "key: \"etl\"", "key: \"report\"", "key: \"fanout\"", "key: \"build\"", "key: \"quality_gate\""} {
 		if got := strings.Count(text, key); got != 1 {
 			t.Errorf("starter %q occurs %d times, want exactly once", key, got)
 		}
@@ -54,6 +54,10 @@ func TestStarterTemplateBaseline(t *testing.T) {
 		{"build task", "{ id: \"build\", type: \"powershell\", command: \"Write-Output 'Build step - replace with your build command'\" }"},
 		{"test depends on build", "{ id: \"test\", type: \"powershell\", command: \"Write-Output 'Test step - replace with your test command'\", deps: [\"build\"] }"},
 		{"package depends on test", "{ id: \"package\", type: \"powershell\", command: \"Write-Output 'Package step - replace with your package command'\", deps: [\"test\"] }"},
+		{"quality lint task", "{ id: \"lint\", type: \"powershell\", command: \"Write-Output 'Lint check - replace with your lint command'\" }"},
+		{"quality unit tests task", "{ id: \"unit_tests\", type: \"powershell\", command: \"Write-Output 'Unit tests - replace with your test command'\" }"},
+		{"quality security scan task", "{ id: \"security_scan\", type: \"powershell\", command: \"Write-Output 'Security scan - replace with your scan command'\" }"},
+		{"quality gate joins all checks", "{ id: \"quality_gate\", type: \"powershell\", command: \"Write-Output 'Quality gate passed'\", deps: [\"lint\", \"unit_tests\", \"security_scan\"] }"},
 	}
 	for _, check := range checks {
 		if !strings.Contains(text, check.want) {
